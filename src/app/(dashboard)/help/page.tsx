@@ -1,3 +1,5 @@
+"use client";
+
 import { HelpCircle } from "lucide-react";
 import { ModulePlaceholder } from "@/components/shared/module-placeholder";
 

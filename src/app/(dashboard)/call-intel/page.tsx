@@ -1,3 +1,5 @@
+"use client";
+
 import { FileAudio } from "lucide-react";
 import { ModulePlaceholder } from "@/components/shared/module-placeholder";
 
