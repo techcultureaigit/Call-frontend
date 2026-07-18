@@ -1,21 +1,27 @@
-import { Geist, Geist_Mono } from "next/font/google";
+import { Plus_Jakarta_Sans, Space_Grotesk, Geist_Mono } from "next/font/google";
 import type { FontConfig } from "@/types";
 
-const geistSans = Geist({
+const sans = Plus_Jakarta_Sans({
   subsets: ["latin"],
-  variable: "--font-geist-sans",
+  variable: "--font-sans",
   display: "swap",
 });
 
-const geistMono = Geist_Mono({
+const display = Space_Grotesk({
   subsets: ["latin"],
-  variable: "--font-geist-mono",
+  variable: "--font-display",
+  display: "swap",
+});
+
+const mono = Geist_Mono({
+  subsets: ["latin"],
+  variable: "--font-mono",
   display: "swap",
 });
 
 export const fonts: FontConfig = {
-  sans: geistSans,
-  mono: geistMono,
+  sans,
+  mono,
 };
 
-export const fontVariables = `${geistSans.variable} ${geistMono.variable}`;
+export const fontVariables = `${sans.variable} ${display.variable} ${mono.variable}`;

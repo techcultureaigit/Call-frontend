@@ -22,7 +22,7 @@ export function VoiceFiltersSidebar({
 }: VoiceFiltersSidebarProps) {
   return (
     <aside className="space-y-5 rounded-2xl border border-border/40 bg-card p-5 shadow-card">
-      <h2 className="text-sm font-semibold text-[#1e3a5f] dark:text-foreground">
+      <h2 className="text-sm font-semibold text-foreground dark:text-foreground">
         Filters
       </h2>
 

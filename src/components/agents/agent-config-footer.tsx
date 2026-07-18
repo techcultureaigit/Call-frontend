@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowLeft, ArrowRight } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface AgentConfigFooterProps {
@@ -9,6 +9,8 @@ interface AgentConfigFooterProps {
   isFirst?: boolean;
   isLast?: boolean;
   isSaving?: boolean;
+  step?: number;
+  total?: number;
 }
 
 export function AgentConfigFooter({
@@ -17,22 +19,48 @@ export function AgentConfigFooter({
   isFirst,
   isLast,
   isSaving,
+  step = 1,
+  total = 5,
 }: AgentConfigFooterProps) {
+  const pct = Math.round((step / total) * 100);
+
   return (
-    <div className="flex items-center justify-between border-t border-border/40 pt-6">
-      <Button
-        variant="outline"
-        onClick={onBack}
-        disabled={isFirst}
-        className="rounded-xl"
-      >
-        <ArrowLeft className="size-4" />
-        Back
-      </Button>
-      <Button onClick={onNext} disabled={isSaving} className="rounded-xl">
-        {isLast ? "Save" : "Save & Next"}
-        <ArrowRight className="size-4" />
-      </Button>
+    <div className="mt-8 flex flex-col gap-4 border-t border-border/50 pt-6 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
+          <span className="tabular-nums">
+            Step <span className="text-foreground">{step}</span> of {total}
+          </span>
+        </div>
+        <div className="h-1.5 w-28 overflow-hidden rounded-full bg-muted">
+          <div
+            className="h-full rounded-full bg-brand transition-all duration-500"
+            style={{ width: `${pct}%` }}
+          />
+        </div>
+      </div>
+
+      <div className="flex items-center gap-2">
+        <Button variant="outline" onClick={onBack} disabled={isFirst}>
+          <ArrowLeft className="size-4" />
+          Back
+        </Button>
+        <Button onClick={onNext} disabled={isSaving} className="min-w-[140px]">
+          {isSaving ? (
+            <Loader2 className="size-4 animate-spin" />
+          ) : isLast ? (
+            <>
+              <Check className="size-4" />
+              Save agent
+            </>
+          ) : (
+            <>
+              Save &amp; Next
+              <ArrowRight className="size-4" />
+            </>
+          )}
+        </Button>
+      </div>
     </div>
   );
 }

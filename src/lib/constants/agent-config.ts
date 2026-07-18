@@ -9,11 +9,11 @@ export const AGENT_TOP_NAV = [
 ] as const;
 
 export const AGENT_CONFIG_TABS = [
-  { id: "persona", label: "Persona" },
-  { id: "prompts", label: "Prompts" },
-  { id: "wisdom", label: "Wisdom" },
-  { id: "functions", label: "Functions" },
-  { id: "post-call", label: "Post Call Config" },
+  { id: "persona", label: "Identity" },
+  { id: "prompts", label: "Instructions" },
+  { id: "wisdom", label: "Knowledge" },
+  { id: "functions", label: "Tools" },
+  { id: "post-call", label: "Wrap-up" },
 ] as const;
 
 export const AGENT_LANGUAGES = [

@@ -15,7 +15,7 @@ export function SavedActionsPanel({ actions, onDelete }: SavedActionsPanelProps)
   return (
     <div className="flex h-full flex-col overflow-hidden rounded-2xl border border-border/40 bg-card shadow-card">
       <div className="flex items-center gap-2 border-b border-border/40 px-5 py-4">
-        <h2 className="text-base font-semibold text-[#1e3a5f] dark:text-foreground">
+        <h2 className="text-base font-semibold text-foreground dark:text-foreground">
           Saved Actions
         </h2>
         <Badge className="min-w-[22px] justify-center rounded-full px-2 py-0.5 text-[11px]">

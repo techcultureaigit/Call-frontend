@@ -25,7 +25,8 @@ export function AppHeader({ className }: AppHeaderProps) {
   return (
     <header
       className={cn(
-        "sticky top-0 z-30 flex h-14 shrink-0 items-center gap-3 border-b border-border/60 bg-background/80 px-4 backdrop-blur-md supports-[backdrop-filter]:bg-background/60",
+        "glass-strong sticky top-0 z-30 flex h-14 shrink-0 items-center gap-3 px-4",
+        "border-b border-border/50 shadow-[0_1px_0_0_color-mix(in_oklch,var(--brand)_10%,transparent)]",
         "md:gap-4 lg:px-6",
         className
       )}

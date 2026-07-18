@@ -13,6 +13,8 @@ const dashboardData: DashboardData = {
       changeLabel: "vs last month",
       trend: "up",
       icon: "phone",
+      accent: "blue",
+      spark: [820, 932, 901, 934, 1090, 1130, 1120, 1230, 1247, 1285],
     },
     {
       id: "success-rate",
@@ -22,6 +24,8 @@ const dashboardData: DashboardData = {
       changeLabel: "vs last month",
       trend: "up",
       icon: "check-circle",
+      accent: "emerald",
+      spark: [71, 73, 70, 74, 76, 75, 77, 78, 77, 79],
     },
     {
       id: "active-campaigns",
@@ -31,6 +35,8 @@ const dashboardData: DashboardData = {
       changeLabel: "vs last month",
       trend: "down",
       icon: "megaphone",
+      accent: "violet",
+      spark: [28, 27, 29, 26, 27, 25, 26, 25, 24, 24],
     },
     {
       id: "total-customers",
@@ -40,6 +46,8 @@ const dashboardData: DashboardData = {
       changeLabel: "vs last month",
       trend: "up",
       icon: "users",
+      accent: "cyan",
+      spark: [2810, 2905, 2980, 3040, 3105, 3160, 3205, 3240, 3270, 3291],
     },
     {
       id: "survey-responses",
@@ -49,6 +57,8 @@ const dashboardData: DashboardData = {
       changeLabel: "vs last month",
       trend: "up",
       icon: "clipboard",
+      accent: "indigo",
+      spark: [1420, 1510, 1560, 1620, 1700, 1740, 1810, 1870, 1920, 1956],
     },
     {
       id: "avg-call-duration",
@@ -58,6 +68,8 @@ const dashboardData: DashboardData = {
       changeLabel: "vs last month",
       trend: "neutral",
       icon: "clock",
+      accent: "slate",
+      spark: [268, 275, 271, 274, 270, 273, 272, 271, 272, 272],
     },
   ],
   callSuccessTrend: [

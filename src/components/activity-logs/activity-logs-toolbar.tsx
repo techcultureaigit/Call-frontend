@@ -59,7 +59,7 @@ export function ActivityLogsToolbar({
     <div className="space-y-4">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <h2 className="text-xl font-semibold tracking-tight text-foreground">
+          <h2 className="font-display text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
             Activity Logs
           </h2>
           <p className="mt-1 text-sm text-muted-foreground">

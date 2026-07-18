@@ -16,7 +16,7 @@ export function useKeyboardShortcut(
       const isShiftMatch = shiftKey ? event.shiftKey : !event.shiftKey;
 
       if (
-        event.key.toLowerCase() === key.toLowerCase() &&
+        event.key?.toLowerCase() === key.toLowerCase() &&
         isModifierPressed &&
         isShiftMatch
       ) {

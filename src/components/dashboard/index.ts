@@ -1,5 +1,7 @@
 export { DashboardView } from "./dashboard-view";
 export { DashboardCard } from "./dashboard-card";
+export { DashboardHeader } from "./dashboard-header";
+export { QuickActions } from "./quick-actions";
 export { KpiCard } from "./kpi-card";
 export { KpiGrid } from "./kpi-grid";
 export { CallSuccessChart } from "./call-success-chart";

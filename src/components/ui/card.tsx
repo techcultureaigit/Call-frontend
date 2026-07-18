@@ -1,18 +1,19 @@
 import * as React from "react";
 import { cn } from "@/lib/utils";
 
+export const cardBaseClass =
+  "rounded-2xl border border-border/70 bg-card text-card-foreground shadow-card";
+
+export const cardInteractiveClass = cn(
+  cardBaseClass,
+  "transition-all duration-300 ease-out hover:-translate-y-0.5 hover:border-border hover:shadow-elevated"
+);
+
 const Card = React.forwardRef<
   HTMLDivElement,
   React.HTMLAttributes<HTMLDivElement>
 >(({ className, ...props }, ref) => (
-  <div
-    ref={ref}
-    className={cn(
-      "rounded-xl border border-border/60 bg-card text-card-foreground shadow-card",
-      className
-    )}
-    {...props}
-  />
+  <div ref={ref} className={cn(cardBaseClass, className)} {...props} />
 ));
 Card.displayName = "Card";
 

@@ -60,7 +60,9 @@ export function CampaignsToolbar({
         <div>
           <div className="flex items-center gap-2">
             <Megaphone className="size-5 text-primary" />
-            <h2 className="text-xl font-semibold tracking-tight">Campaigns</h2>
+            <h2 className="font-display text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
+              Campaigns
+            </h2>
           </div>
           <p className="mt-1 text-sm text-muted-foreground">
             Create, manage, and monitor outbound campaigns.

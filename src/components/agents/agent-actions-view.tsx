@@ -141,8 +141,8 @@ export function AgentActionsView() {
   };
 
   return (
-    <div className="-mx-4 bg-gradient-to-br from-sky-100/70 via-sky-50/50 to-blue-50/40 px-4 pt-6 pb-4 lg:-mx-8 lg:px-8 dark:from-sky-950/25 dark:via-background dark:to-background">
-      <PageContainer size="wide" className="px-0 py-0">
+    <div className="bg-linear-to-b from-brand/5 to-transparent">
+      <PageContainer size="full">
         <motion.div
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
@@ -150,7 +150,7 @@ export function AgentActionsView() {
           className="space-y-6"
         >
           <div className="flex items-start justify-between gap-4">
-            <h1 className="text-2xl font-bold tracking-tight text-[#1e3a5f] sm:text-3xl dark:text-sky-100">
+            <h1 className="font-display text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
               Agent Actions Management
             </h1>
             <button
@@ -463,7 +463,7 @@ function FieldSection({
 }) {
   return (
     <div className="space-y-3">
-      <h3 className="text-sm font-semibold text-[#1e3a5f] dark:text-foreground">
+      <h3 className="text-sm font-semibold text-foreground dark:text-foreground">
         {title}
       </h3>
 

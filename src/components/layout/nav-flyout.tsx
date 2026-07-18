@@ -46,29 +46,38 @@ export function NavFlyout({
           <Link
             href={item.href}
             className={cn(
-              "group relative flex items-center justify-center rounded-lg px-2.5 py-2.5",
-              "transition-all duration-200 ease-out",
-              "hover:bg-sidebar-hover",
+              "group relative flex items-center justify-center rounded-[14px] px-2.5 py-2.5",
+              "transition-[background-color,box-shadow] duration-[280ms] ease-out",
               isActive
-                ? "bg-sidebar-active text-sidebar-active-foreground shadow-[inset_0_0_0_1px_var(--sidebar-active-border)]"
-                : "text-sidebar-foreground/65"
+                ? "text-sidebar-active-foreground shadow-[inset_0_0_0_1px_color-mix(in_oklch,var(--sidebar-primary)_22%,transparent)]"
+                : "text-sidebar-foreground/60 hover:bg-sidebar-elevated"
             )}
             aria-label={item.title}
           >
             {isActive && (
+              <span
+                className="absolute inset-0 rounded-[14px]"
+                style={{
+                  background:
+                    "linear-gradient(135deg, color-mix(in oklch, var(--sidebar-primary) 20%, transparent) 0%, transparent 75%)",
+                }}
+              />
+            )}
+            {isActive && (
               <motion.span
                 layoutId="sidebar-active-indicator"
-                className="absolute inset-y-2 left-0 w-[3px] rounded-r-full bg-sidebar-primary"
-                transition={{ type: "spring", stiffness: 420, damping: 32 }}
+                className="absolute inset-y-2 left-0 w-[3px] rounded-r-full bg-sidebar-primary shadow-[0_0_10px_1px_var(--sidebar-primary)]"
+                transition={{ type: "spring", stiffness: 380, damping: 34 }}
               />
             )}
             <Icon
               className={cn(
-                "size-[18px] transition-colors duration-200",
+                "relative size-[18px] transition-colors duration-[280ms]",
                 isActive
                   ? "text-sidebar-primary"
-                  : "text-sidebar-foreground/45 group-hover:text-sidebar-foreground/80"
+                  : "text-sidebar-foreground/45 group-hover:text-sidebar-foreground/90"
               )}
+              strokeWidth={isActive ? 2.25 : 2}
             />
           </Link>
         </TooltipTrigger>
@@ -88,9 +97,9 @@ export function NavFlyout({
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -6 }}
             transition={{ duration: 0.15 }}
-            className="absolute left-full top-0 z-50 ml-2 min-w-[200px] rounded-lg border border-sidebar-border bg-sidebar p-2 shadow-elevated"
+            className="absolute left-full top-0 z-50 ml-3 min-w-[210px] rounded-2xl border border-sidebar-border/60 bg-sidebar-elevated/95 p-2 shadow-[0_24px_48px_-16px_rgb(0_0_0/0.55)] backdrop-blur-xl"
           >
-            <p className="mb-1 px-2 py-1.5 text-[10px] font-semibold uppercase tracking-widest text-sidebar-foreground/40">
+            <p className="mb-1.5 px-2.5 py-1.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-sidebar-foreground/40">
               {item.title}
             </p>
             <ul className="space-y-0.5">
@@ -107,10 +116,10 @@ export function NavFlyout({
                       href={child.href}
                       onClick={onNavigate}
                       className={cn(
-                        "block rounded-md px-2.5 py-2 text-[12.5px] font-medium transition-colors duration-200",
+                        "block rounded-xl px-2.5 py-2 text-[12.5px] font-medium transition-colors duration-[280ms]",
                         "hover:bg-sidebar-hover hover:text-sidebar-foreground",
                         isChildActive
-                          ? "bg-sidebar-active text-sidebar-active-foreground"
+                          ? "bg-sidebar-primary/12 text-sidebar-active-foreground ring-1 ring-inset ring-sidebar-primary/20"
                           : "text-sidebar-foreground/65"
                       )}
                     >

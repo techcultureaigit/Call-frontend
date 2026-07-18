@@ -53,6 +53,7 @@ export function RecentNotificationsList({
     <DashboardCard
       title="Recent Notifications"
       description="System alerts & updates"
+      icon={Bell}
       action={
         unreadCount > 0 ? (
           <Badge variant="secondary" className="text-[10px]">

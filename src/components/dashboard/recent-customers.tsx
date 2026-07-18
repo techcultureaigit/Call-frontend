@@ -42,7 +42,11 @@ export function RecentCustomers({ customers, isLoading }: RecentCustomersProps) 
   }
 
   return (
-    <DashboardCard title="Recent Customers" description="Latest customer interactions">
+    <DashboardCard
+      title="Recent Customers"
+      description="Latest customer interactions"
+      icon={Users}
+    >
       <ul className="space-y-1">
         {customers.map((customer, index) => {
           const [firstName, ...rest] = customer.name.split(" ");

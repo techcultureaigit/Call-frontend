@@ -4,6 +4,14 @@ import type { NotificationType } from "./notification";
 
 export type TrendDirection = "up" | "down" | "neutral";
 
+export type KpiAccent =
+  | "blue"
+  | "emerald"
+  | "violet"
+  | "cyan"
+  | "indigo"
+  | "slate";
+
 export interface DashboardKpi {
   id: string;
   label: string;
@@ -12,6 +20,8 @@ export interface DashboardKpi {
   changeLabel: string;
   trend: TrendDirection;
   icon: string;
+  accent?: KpiAccent;
+  spark?: number[];
 }
 
 export interface ChartDataPoint {

@@ -47,27 +47,38 @@ export function NavItem({
   const isCta = variant === "cta";
 
   const className = cn(
-    "group relative flex items-center gap-3 rounded-lg text-[13px] font-medium",
-    "transition-all duration-200 ease-out",
+    "group relative flex items-center gap-3 rounded-[14px] text-[13px] font-medium",
+    "transition-[background-color,color,box-shadow,transform] duration-[280ms] ease-out",
     nested ? "px-3 py-2" : "px-3 py-2.5",
     collapsed && !nested && "justify-center px-2.5 py-2.5",
     disabled && "pointer-events-none opacity-40",
     isActive
       ? nested
-        ? "bg-sidebar-active/80 text-sidebar-active-foreground"
-        : "bg-sidebar-active text-sidebar-active-foreground shadow-[inset_0_0_0_1px_var(--sidebar-active-border)]"
+        ? "text-sidebar-active-foreground"
+        : "nav-active-shadow text-sidebar-active-foreground"
       : isCta
         ? "border border-dashed border-sidebar-primary/30 text-sidebar-primary hover:border-sidebar-primary/50 hover:bg-sidebar-primary/5"
-        : "text-sidebar-foreground/65 hover:bg-sidebar-hover hover:text-sidebar-foreground"
+        : "text-sidebar-foreground/60 hover:-translate-y-px hover:bg-sidebar-elevated hover:text-sidebar-foreground hover:shadow-[0_6px_18px_-12px_rgb(0_0_0/0.6)]"
   );
 
   const content = (
     <>
       {isActive && !nested && (
         <motion.span
-          layoutId={`sidebar-active-indicator-${href}`}
-          className="absolute inset-y-2 left-0 w-[3px] rounded-r-full bg-sidebar-primary"
-          transition={{ type: "spring", stiffness: 420, damping: 32 }}
+          layoutId="sidebar-active-bg"
+          className="absolute inset-0 rounded-[14px]"
+          style={{
+            background:
+              "linear-gradient(100deg, color-mix(in oklch, var(--sidebar-primary) 20%, transparent) 0%, color-mix(in oklch, var(--sidebar-primary) 7%, transparent) 42%, transparent 100%)",
+          }}
+          transition={{ type: "spring", stiffness: 380, damping: 34 }}
+        />
+      )}
+      {isActive && !nested && (
+        <motion.span
+          layoutId="sidebar-active-indicator"
+          className="absolute inset-y-2 left-0 w-[3px] rounded-r-full bg-sidebar-primary shadow-[0_0_10px_1px_var(--sidebar-primary)]"
+          transition={{ type: "spring", stiffness: 380, damping: 34 }}
         />
       )}
       {isActive && nested && (
@@ -79,20 +90,23 @@ export function NavItem({
       )}
       <Icon
         className={cn(
-          "shrink-0 transition-colors duration-200",
+          "relative shrink-0 transition-[color,transform] duration-[280ms] ease-out",
           nested ? "size-4" : "size-[18px]",
           isActive
             ? "text-sidebar-primary"
             : isCta
               ? "text-sidebar-primary/75 group-hover:text-sidebar-primary"
-              : "text-sidebar-foreground/45 group-hover:text-sidebar-foreground/80"
+              : "text-sidebar-foreground/45 group-hover:translate-x-0.5 group-hover:text-sidebar-foreground/90"
         )}
+        strokeWidth={isActive ? 2.25 : 2}
       />
       {(!collapsed || nested) && (
         <>
-          <span className="flex-1 truncate tracking-[-0.01em]">{title}</span>
+          <span className="relative flex-1 truncate tracking-[-0.01em]">
+            {title}
+          </span>
           {badge && (
-            <span className="rounded-md bg-sidebar-primary/12 px-1.5 py-0.5 text-[10px] font-semibold tabular-nums text-sidebar-primary">
+            <span className="relative rounded-md bg-sidebar-primary/15 px-1.5 py-0.5 text-[10px] font-semibold tabular-nums text-sidebar-primary ring-1 ring-inset ring-sidebar-primary/20">
               {badge}
             </span>
           )}

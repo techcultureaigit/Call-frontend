@@ -62,7 +62,7 @@ export function AgentTemplatesView() {
   };
 
   return (
-    <PageContainer size="wide">
+    <PageContainer size="full">
       <motion.div
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
@@ -71,7 +71,7 @@ export function AgentTemplatesView() {
       >
         <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div className="space-y-1">
-            <h1 className="text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
+            <h1 className="font-display text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
               Conversational Voice AI for Your Business
             </h1>
             <p className="max-w-2xl text-sm text-muted-foreground">

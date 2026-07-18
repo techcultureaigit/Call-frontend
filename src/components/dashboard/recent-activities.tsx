@@ -55,7 +55,11 @@ export function RecentActivities({ activities, isLoading }: RecentActivitiesProp
   }
 
   return (
-    <DashboardCard title="Recent Activities" description="Latest team actions">
+    <DashboardCard
+      title="Recent Activities"
+      description="Latest team actions"
+      icon={Activity}
+    >
       <ul className="space-y-1">
         {activities.map((activity, index) => {
           const Icon = activityIcons[activity.type] ?? Activity;

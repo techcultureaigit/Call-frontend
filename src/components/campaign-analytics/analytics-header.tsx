@@ -61,7 +61,7 @@ export function AnalyticsHeader({
     >
       <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
         <div className="space-y-1">
-          <h1 className="text-2xl font-semibold tracking-tight">
+          <h1 className="font-display text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
             Campaign Analytics
           </h1>
           <p className="max-w-2xl text-sm text-muted-foreground">

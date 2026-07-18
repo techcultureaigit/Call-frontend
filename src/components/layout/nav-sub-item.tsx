@@ -32,30 +32,27 @@ export function NavSubItem({
         href={href}
         onClick={onNavigate}
         className={cn(
-          "group relative flex items-center gap-2.5 rounded-md py-2 pl-9 pr-3 text-[12.5px] font-medium tracking-[-0.01em]",
-          "transition-all duration-200 ease-out",
-          "hover:bg-sidebar-hover hover:text-sidebar-foreground",
+          "group relative flex items-center gap-2.5 rounded-[12px] py-2 pl-9 pr-3 text-[12.5px] font-medium tracking-[-0.01em]",
+          "transition-[background-color,color] duration-[280ms] ease-out",
+          "hover:bg-sidebar-elevated hover:text-sidebar-foreground",
           isActive
-            ? "bg-sidebar-active/80 text-sidebar-active-foreground"
+            ? "text-sidebar-active-foreground"
             : "text-sidebar-foreground/55"
         )}
         aria-current={isActive ? "page" : undefined}
       >
+        {/* Guide rail */}
+        <span className="absolute inset-y-1 left-[1.15rem] w-px bg-sidebar-border/50" />
         {isActive && (
           <motion.span
             layoutId="sidebar-nested-active-dot"
-            className="absolute left-4 top-1/2 size-1.5 -translate-y-1/2 rounded-full bg-sidebar-primary"
+            className="absolute left-[0.95rem] top-1/2 size-2 -translate-y-1/2 rounded-full bg-sidebar-primary shadow-[0_0_8px_1px_var(--sidebar-primary)] ring-2 ring-sidebar/60"
             transition={{ type: "spring", stiffness: 420, damping: 32 }}
           />
         )}
-        <span
-          className={cn(
-            "absolute left-4 top-1/2 size-1.5 -translate-y-1/2 rounded-full transition-colors duration-200",
-            isActive
-              ? "bg-transparent"
-              : "bg-sidebar-foreground/20 group-hover:bg-sidebar-foreground/35"
-          )}
-        />
+        {!isActive && (
+          <span className="absolute left-[1.15rem] top-1/2 size-1.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-sidebar-foreground/25 transition-colors duration-[280ms] group-hover:bg-sidebar-foreground/50" />
+        )}
         <span className="truncate">{title}</span>
       </Link>
     </motion.li>

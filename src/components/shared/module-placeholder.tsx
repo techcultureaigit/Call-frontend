@@ -48,7 +48,9 @@ export function ModulePlaceholder({
             <Sparkles className="absolute -right-1 -top-1 size-4 text-amber-500" />
           </div>
         </div>
-        <h1 className="text-2xl font-semibold tracking-tight">{title}</h1>
+        <h1 className="font-display text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
+          {title}
+        </h1>
         <p className="mt-2 max-w-md text-sm text-muted-foreground">
           {description}
         </p>

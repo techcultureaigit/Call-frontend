@@ -60,7 +60,7 @@ export function VoiceCard({
 
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-center gap-2">
-          <h3 className="text-base font-semibold tracking-tight text-[#1e3a5f] dark:text-foreground">
+          <h3 className="text-base font-semibold tracking-tight text-foreground dark:text-foreground">
             {voice.name}
           </h3>
           {voice.isCloned && (

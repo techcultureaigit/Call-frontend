@@ -56,7 +56,7 @@ export function TemplatesHeader({
     >
       <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
         <div className="space-y-1">
-          <h1 className="text-2xl font-semibold tracking-tight">
+          <h1 className="font-display text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
             Campaign Templates
           </h1>
           <p className="max-w-xl text-sm text-muted-foreground">

@@ -8,8 +8,8 @@ interface PageContainerProps {
 }
 
 const sizeClasses = {
-  default: "max-w-7xl",
-  wide: "max-w-[1400px]",
+  default: "max-w-none",
+  wide: "max-w-none",
   full: "max-w-none",
 } as const;
 

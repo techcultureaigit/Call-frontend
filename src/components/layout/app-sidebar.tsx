@@ -60,9 +60,8 @@ export function AppSidebar({ className }: AppSidebarProps) {
         }}
         transition={sidebarTransition}
         className={cn(
-          "flex shrink-0 flex-col overflow-hidden",
-          "border-r border-sidebar-border bg-sidebar",
-          "shadow-[1px_0_0_0_var(--sidebar-glow)]",
+          "relative flex shrink-0 flex-col overflow-hidden bg-sidebar text-sidebar-foreground",
+          "shadow-[inset_-1px_0_0_0_color-mix(in_oklch,var(--sidebar-border)_55%,transparent)]",
           isMobile
             ? "fixed inset-y-0 left-0 z-50 h-svh"
             : "relative z-auto h-svh",
@@ -72,22 +71,32 @@ export function AppSidebar({ className }: AppSidebarProps) {
           maxWidth: isMobile ? LAYOUT.sidebar.expanded : undefined,
         }}
       >
+        {/* Layered depth: soft top accent wash */}
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-0 z-0"
+          style={{
+            background:
+              "radial-gradient(120% 42% at 8% 0%, color-mix(in oklch, var(--sidebar-primary) 9%, transparent) 0%, transparent 52%)",
+          }}
+        />
+
         <div
           className={cn(
-            "flex h-14 shrink-0 items-center border-b border-sidebar-border/80 px-4",
+            "relative z-10 flex h-16 shrink-0 items-center px-4",
             effectiveCollapsed && "justify-center px-3"
           )}
         >
           <SidebarLogo />
         </div>
 
-        <ScrollArea className="min-h-0 flex-1 px-2.5 py-4">
+        <ScrollArea className="relative z-10 min-h-0 flex-1 px-3 py-3">
           <SidebarNav collapsed={effectiveCollapsed} />
         </ScrollArea>
 
         <div
           className={cn(
-            "shrink-0 border-t border-sidebar-border/80 p-2.5",
+            "relative z-10 shrink-0 p-3",
             effectiveCollapsed && "flex justify-center"
           )}
         >
@@ -98,18 +107,18 @@ export function AppSidebar({ className }: AppSidebarProps) {
                 size={effectiveCollapsed ? "icon-sm" : "sm"}
                 onClick={toggleCollapsed}
                 className={cn(
-                  "w-full gap-2 text-sidebar-foreground/55",
-                  "hover:bg-sidebar-hover hover:text-sidebar-foreground",
-                  effectiveCollapsed && "size-9"
+                  "group w-full justify-start gap-2.5 rounded-xl text-sidebar-foreground/55 transition-all duration-300",
+                  "hover:bg-sidebar-elevated hover:text-sidebar-foreground",
+                  effectiveCollapsed && "size-10 justify-center"
                 )}
                 aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
               >
                 {isCollapsed ? (
-                  <PanelLeftOpen className="size-4" />
+                  <PanelLeftOpen className="size-[18px] transition-transform duration-300 group-hover:translate-x-0.5" />
                 ) : (
                   <>
-                    <PanelLeftClose className="size-4" />
-                    <span className="text-xs font-medium">Collapse</span>
+                    <PanelLeftClose className="size-[18px] transition-transform duration-300 group-hover:-translate-x-0.5" />
+                    <span className="text-[13px] font-medium">Collapse</span>
                   </>
                 )}
               </Button>
@@ -118,7 +127,7 @@ export function AppSidebar({ className }: AppSidebarProps) {
               <TooltipContent
                 side="right"
                 sideOffset={14}
-                className="border-sidebar-border bg-sidebar text-sidebar-foreground"
+                className="border-sidebar-border bg-sidebar-elevated text-sidebar-foreground"
               >
                 Expand sidebar
               </TooltipContent>

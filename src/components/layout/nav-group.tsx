@@ -68,42 +68,54 @@ export function NavGroup({
     >
       <div
         className={cn(
-          "group/nav relative rounded-lg transition-all duration-200",
-          isActive && "bg-sidebar-active/40",
-          isHovered && !isActive && "bg-sidebar-hover/50"
+          "group/nav relative rounded-[14px] transition-[background-color,box-shadow] duration-[280ms] ease-out",
+          isActive && "nav-active-shadow",
+          isHovered && !isActive && "bg-sidebar-elevated"
         )}
       >
         {isActive && (
           <motion.span
+            layoutId="sidebar-active-bg"
+            className="absolute inset-0 rounded-[14px]"
+            style={{
+              background:
+                "linear-gradient(100deg, color-mix(in oklch, var(--sidebar-primary) 20%, transparent) 0%, color-mix(in oklch, var(--sidebar-primary) 7%, transparent) 42%, transparent 100%)",
+            }}
+            transition={{ type: "spring", stiffness: 380, damping: 34 }}
+          />
+        )}
+        {isActive && (
+          <motion.span
             layoutId="sidebar-active-indicator"
-            className="absolute inset-y-1.5 left-0 w-[3px] rounded-r-full bg-sidebar-primary"
-            transition={{ type: "spring", stiffness: 420, damping: 32 }}
+            className="absolute inset-y-2 left-0 z-10 w-[3px] rounded-r-full bg-sidebar-primary shadow-[0_0_10px_1px_var(--sidebar-primary)]"
+            transition={{ type: "spring", stiffness: 380, damping: 34 }}
           />
         )}
 
-        <div className="flex items-center">
+        <div className="relative flex items-center">
           <Link
             href={item.href}
             onClick={onNavigate}
             className={cn(
-              "flex min-w-0 flex-1 items-center gap-3 rounded-lg px-3 py-2.5 text-[13px] font-medium tracking-[-0.01em]",
-              "transition-colors duration-200 hover:text-sidebar-foreground",
+              "flex min-w-0 flex-1 items-center gap-3 rounded-[14px] px-3 py-2.5 text-[13px] font-medium tracking-[-0.01em]",
+              "transition-colors duration-[280ms] hover:text-sidebar-foreground",
               isActive
                 ? "text-sidebar-active-foreground"
-                : "text-sidebar-foreground/65"
+                : "text-sidebar-foreground/60"
             )}
           >
             <Icon
               className={cn(
-                "size-[18px] shrink-0 transition-colors duration-200",
+                "size-[18px] shrink-0 transition-[color,transform] duration-[280ms] ease-out",
                 isActive
                   ? "text-sidebar-primary"
-                  : "text-sidebar-foreground/45 group-hover/nav:text-sidebar-foreground/80"
+                  : "text-sidebar-foreground/45 group-hover/nav:translate-x-0.5 group-hover/nav:text-sidebar-foreground/90"
               )}
+              strokeWidth={isActive ? 2.25 : 2}
             />
             <span className="flex-1 truncate text-left">{item.title}</span>
             {item.badge && (
-              <span className="rounded-md bg-sidebar-primary/12 px-1.5 py-0.5 text-[10px] font-semibold text-sidebar-primary">
+              <span className="rounded-md bg-sidebar-primary/15 px-1.5 py-0.5 text-[10px] font-semibold text-sidebar-primary ring-1 ring-inset ring-sidebar-primary/20">
                 {item.badge}
               </span>
             )}
@@ -115,10 +127,10 @@ export function NavGroup({
                 type="button"
                 onClick={() => toggleGroup(item.id)}
                 className={cn(
-                  "mr-1.5 inline-flex size-7 shrink-0 items-center justify-center rounded-md",
-                  "text-sidebar-foreground/45 transition-all duration-200",
-                  "hover:bg-sidebar-hover hover:text-sidebar-foreground",
-                  isExpanded && "text-sidebar-foreground"
+                  "relative z-10 mr-1.5 inline-flex size-7 shrink-0 items-center justify-center rounded-lg",
+                  "text-sidebar-foreground/40 transition-all duration-[280ms]",
+                  "hover:bg-sidebar-elevated hover:text-sidebar-foreground",
+                  isExpanded && "text-sidebar-foreground/70"
                 )}
                 aria-label={isExpanded ? `Collapse ${item.title}` : `Expand ${item.title}`}
                 aria-expanded={isExpanded}

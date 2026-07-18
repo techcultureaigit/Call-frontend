@@ -45,10 +45,10 @@ export function AgentCard({ agent, index = 0, onDelete }: AgentCardProps) {
       className="group"
     >
       <div className="overflow-hidden rounded-2xl border border-border/40 bg-card shadow-card transition-all duration-300 group-hover:border-primary/20 group-hover:shadow-elevated">
-        <div className="bg-gradient-to-r from-sky-100/90 via-blue-50/70 to-sky-50/40 px-4 py-3.5 dark:from-sky-950/40 dark:via-blue-950/30 dark:to-transparent">
+        <div className="bg-linear-to-r from-brand/10 via-brand/5 to-transparent px-4 py-3.5">
           <div className="flex items-center gap-3">
             <AgentAvatar seed={agent.uuid} />
-            <h3 className="truncate text-base font-semibold tracking-tight text-[#1e3a5f] dark:text-sky-100">
+            <h3 className="truncate text-base font-semibold tracking-tight text-foreground">
               {agent.name}
             </h3>
           </div>
@@ -119,7 +119,7 @@ function MetaField({
       </p>
       <p
         className={cn(
-          "mt-1 truncate text-sm font-semibold text-[#1e3a5f] dark:text-foreground",
+          "mt-1 truncate text-sm font-semibold text-foreground dark:text-foreground",
           muted && "text-muted-foreground"
         )}
       >

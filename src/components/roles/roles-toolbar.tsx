@@ -21,7 +21,7 @@ export function RolesToolbar({
     <div className="space-y-4">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h2 className="text-xl font-semibold tracking-tight">
+          <h2 className="font-display text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
             Roles & Permissions
           </h2>
           <p className="mt-1 text-sm text-muted-foreground">

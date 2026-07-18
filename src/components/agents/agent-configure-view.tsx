@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { motion } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import { toast } from "sonner";
 import { PageContainer } from "@/components/layout";
 import { usePageMeta } from "@/hooks";
@@ -41,6 +41,7 @@ export function AgentConfigureView({
   const searchParams = useSearchParams();
   const templateId = searchParams.get("template");
   const [activeTab, setActiveTab] = useState<AgentConfigTab>("persona");
+  const [showPreview, setShowPreview] = useState(false);
   const [uuid] = useState(agent?.uuid ?? generateAgentUuid());
   const [config, setConfig] = useState<AgentConfig>(
     agent?.config ?? structuredClone(DEFAULT_AGENT_CONFIG)
@@ -162,10 +163,18 @@ export function AgentConfigureView({
         animate={{ opacity: 1, y: 0 }}
         className="space-y-6"
       >
-        <AgentTopNav active="configure" />
+        <AgentTopNav
+          active="configure"
+          previewOpen={showPreview}
+          onTogglePreview={() => setShowPreview((v) => !v)}
+        />
 
-        <div className="grid gap-6 xl:grid-cols-[1fr_320px]">
-          <div className="min-w-0 rounded-2xl border border-border/50 bg-card/80 p-5 shadow-card backdrop-blur-sm sm:p-6 lg:p-8">
+        <div className="flex flex-col gap-6 xl:flex-row xl:items-start">
+          <motion.div
+            layout
+            transition={{ type: "spring", stiffness: 300, damping: 34 }}
+            className="min-w-0 flex-1 rounded-2xl border border-border/60 bg-card/70 p-5 shadow-card backdrop-blur-sm sm:p-6 lg:p-7"
+          >
             <AgentConfigTabs active={activeTab} onChange={setActiveTab} />
 
             <motion.div
@@ -184,13 +193,29 @@ export function AgentConfigureView({
               isFirst={isFirst}
               isLast={isLast}
               isSaving={isSaving}
+              step={tabIndex + 1}
+              total={TAB_ORDER.length}
             />
-          </div>
+          </motion.div>
 
-          <AgentConfigSidebar
-            uuid={uuid}
-            agentName={config.persona.name}
-          />
+          <AnimatePresence initial={false} mode="popLayout">
+            {showPreview && (
+              <motion.div
+                key="agent-preview"
+                layout
+                initial={{ opacity: 0, x: 28 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 28 }}
+                transition={{ type: "spring", stiffness: 300, damping: 34 }}
+                className="w-full shrink-0 xl:w-[360px]"
+              >
+                <AgentConfigSidebar
+                  uuid={uuid}
+                  agentName={config.persona.name}
+                />
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       </motion.div>
     </PageContainer>

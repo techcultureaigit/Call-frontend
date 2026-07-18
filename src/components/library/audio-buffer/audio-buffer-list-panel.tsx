@@ -25,7 +25,7 @@ export function AudioBufferListPanel({
   return (
     <div className="flex flex-col">
       <div className="border-b border-border/40 px-5 py-4">
-        <h2 className="text-sm font-semibold text-[#1e3a5f] dark:text-foreground">
+        <h2 className="text-sm font-semibold text-foreground dark:text-foreground">
           🎙️ {title}
         </h2>
       </div>

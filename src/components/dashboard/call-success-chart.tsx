@@ -45,10 +45,31 @@ export function CallSuccessChart({ data, isLoading }: CallSuccessChartProps) {
     );
   }
 
+  const values = data.map((d) => Number(d.success) || 0);
+  const avg = Math.round(values.reduce((a, b) => a + b, 0) / values.length);
+  const best = Math.max(...values);
+
   return (
     <DashboardCard
       title="Call Success Rate"
       description="Weekly performance trend"
+      icon={TrendingUp}
+      action={
+        <div className="flex items-center gap-4 text-right">
+          <div>
+            <p className="text-lg font-semibold tabular-nums leading-none text-foreground">
+              {avg}%
+            </p>
+            <p className="mt-1 text-[10px] text-muted-foreground">Average</p>
+          </div>
+          <div className="hidden sm:block">
+            <p className="text-lg font-semibold tabular-nums leading-none text-emerald-600 dark:text-emerald-400">
+              {best}%
+            </p>
+            <p className="mt-1 text-[10px] text-muted-foreground">Best day</p>
+          </div>
+        </div>
+      }
     >
       <div className="h-[280px] w-full">
         {mounted && (
@@ -56,7 +77,7 @@ export function CallSuccessChart({ data, isLoading }: CallSuccessChartProps) {
             <AreaChart data={data} margin={{ top: 8, right: 8, left: -20, bottom: 0 }}>
               <defs>
                 <linearGradient id="successGradient" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="var(--chart-2)" stopOpacity={0.3} />
+                  <stop offset="0%" stopColor="var(--chart-2)" stopOpacity={0.35} />
                   <stop offset="100%" stopColor="var(--chart-2)" stopOpacity={0} />
                 </linearGradient>
               </defs>
@@ -86,15 +107,23 @@ export function CallSuccessChart({ data, isLoading }: CallSuccessChartProps) {
                   border: "1px solid var(--border)",
                   borderRadius: "8px",
                   fontSize: "12px",
+                  boxShadow: "var(--shadow-elevated)",
                 }}
                 formatter={(value: number) => [`${value}%`, "Success Rate"]}
+                cursor={{ stroke: "var(--border)", strokeWidth: 1 }}
               />
               <Area
                 type="monotone"
                 dataKey="success"
                 stroke="var(--chart-2)"
-                strokeWidth={2}
+                strokeWidth={2.5}
                 fill="url(#successGradient)"
+                activeDot={{
+                  r: 4,
+                  strokeWidth: 2,
+                  stroke: "var(--card)",
+                  fill: "var(--chart-2)",
+                }}
               />
             </AreaChart>
           </ResponsiveContainer>

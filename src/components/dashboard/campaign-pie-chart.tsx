@@ -47,8 +47,9 @@ export function CampaignPieChart({ data, isLoading }: CampaignPieChartProps) {
     <DashboardCard
       title="Campaign Distribution"
       description="By campaign type"
+      icon={PieChartIcon}
     >
-      <div className="h-[220px] w-full">
+      <div className="relative h-[220px] w-full">
         {mounted && (
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>
@@ -56,9 +57,10 @@ export function CampaignPieChart({ data, isLoading }: CampaignPieChartProps) {
                 data={data}
                 cx="50%"
                 cy="50%"
-                innerRadius={55}
+                innerRadius={58}
                 outerRadius={85}
                 paddingAngle={3}
+                cornerRadius={4}
                 dataKey="value"
                 strokeWidth={0}
               >
@@ -72,12 +74,21 @@ export function CampaignPieChart({ data, isLoading }: CampaignPieChartProps) {
                   border: "1px solid var(--border)",
                   borderRadius: "8px",
                   fontSize: "12px",
+                  boxShadow: "var(--shadow-elevated)",
                 }}
                 formatter={(value: number, name: string) => [`${value}%`, name]}
               />
             </PieChart>
           </ResponsiveContainer>
         )}
+        <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
+          <span className="text-2xl font-semibold tabular-nums text-foreground">
+            {data.length}
+          </span>
+          <span className="text-[10px] uppercase tracking-wider text-muted-foreground">
+            Types
+          </span>
+        </div>
       </div>
 
       <div className="mt-2 grid grid-cols-2 gap-2">
