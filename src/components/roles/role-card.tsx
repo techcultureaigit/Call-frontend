@@ -64,18 +64,12 @@ export function RoleCard({
           : "border-border/60"
       )}
     >
-      <div
-        className="absolute inset-x-0 top-0 h-1 rounded-t-xl"
-        style={{ backgroundColor: role.color }}
-      />
+      <div className="absolute inset-x-0 top-0 h-1 rounded-t-xl bg-primary/40" />
 
       <div className="flex items-start justify-between gap-2">
         <div className="flex items-center gap-2.5">
-          <div
-            className="flex size-9 items-center justify-center rounded-lg"
-            style={{ backgroundColor: `${role.color}18` }}
-          >
-            <Shield className="size-4" style={{ color: role.color }} />
+          <div className="flex size-9 items-center justify-center rounded-lg bg-primary/10">
+            <Shield className="size-4 text-primary" />
           </div>
           <div>
             <div className="flex items-center gap-2">
@@ -143,11 +137,8 @@ export function RoleCard({
         </div>
         <div className="h-1.5 overflow-hidden rounded-full bg-muted">
           <div
-            className="h-full rounded-full transition-all duration-300"
-            style={{
-              width: `${progress}%`,
-              backgroundColor: role.color,
-            }}
+            className="h-full rounded-full bg-primary transition-all duration-300"
+            style={{ width: `${progress}%` }}
           />
         </div>
       </div>

@@ -29,10 +29,10 @@ export function AgentTemplatesView() {
   const debouncedSearch = useDebounce(search, 300);
 
   const { applyMeta, resetPageMeta } = usePageMeta({
-    title: "Agent Templates",
+    title: "Survey Template",
     breadcrumbs: [
       { label: "Agents", href: "/agents" },
-      { label: "Templates" },
+      { label: "Survey Template" },
     ],
   });
 

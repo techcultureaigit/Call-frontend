@@ -10,6 +10,7 @@ import { Breadcrumbs } from "./breadcrumbs";
 import { HeaderSearch } from "./header-search";
 import { NotificationBell } from "./notification-bell";
 import { ProfileDropdown } from "./profile-dropdown";
+import { SidebarCollapseToggle } from "./sidebar-collapse-toggle";
 import { ThemeToggle } from "./theme-toggle";
 import { headerItemVariants } from "./motion";
 
@@ -25,7 +26,7 @@ export function AppHeader({ className }: AppHeaderProps) {
   return (
     <header
       className={cn(
-        "glass-strong sticky top-0 z-30 flex h-14 shrink-0 items-center gap-3 px-4",
+        "glass-strong sticky top-0 z-30 flex h-14 shrink-0 items-center gap-3 pl-2 pr-4",
         "border-b border-border/50 shadow-[0_1px_0_0_color-mix(in_oklch,var(--brand)_10%,transparent)]",
         "md:gap-4 lg:px-6",
         className
@@ -36,7 +37,7 @@ export function AppHeader({ className }: AppHeaderProps) {
         initial="hidden"
         animate="visible"
         variants={headerItemVariants}
-        className="flex shrink-0 items-center gap-2"
+        className="flex shrink-0 items-center gap-1"
       >
         <Button
           variant="ghost"
@@ -47,6 +48,7 @@ export function AppHeader({ className }: AppHeaderProps) {
         >
           <Menu className="size-4" />
         </Button>
+        <SidebarCollapseToggle />
       </motion.div>
 
       <motion.div

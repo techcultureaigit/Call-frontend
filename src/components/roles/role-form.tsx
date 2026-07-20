@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useForm, Controller } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -10,10 +10,8 @@ import { Label } from "@/components/ui/label";
 import { createEmptyPermissions } from "@/config/permission-modules";
 import {
   roleFormSchema,
-  ROLE_COLOR_OPTIONS,
   type RoleFormValues,
 } from "@/lib/validators/role";
-import { cn } from "@/lib/utils";
 import { PermissionMatrix } from "./permission-matrix";
 import type { Role, RolePermissions } from "@/types/role";
 
@@ -30,7 +28,6 @@ interface RoleFormProps {
 const defaultValues: RoleFormValues = {
   name: "",
   description: "",
-  color: ROLE_COLOR_OPTIONS[1].value,
 };
 
 export function RoleForm({
@@ -48,7 +45,6 @@ export function RoleForm({
     register,
     handleSubmit,
     reset,
-    control,
     formState: { errors },
   } = useForm<RoleFormValues>({
     resolver: zodResolver(roleFormSchema),
@@ -61,7 +57,6 @@ export function RoleForm({
         ? {
             name: role.name,
             description: role.description,
-            color: role.color,
           }
         : defaultValues
     );
@@ -104,33 +99,6 @@ export function RoleForm({
                 {errors.description.message}
               </p>
             )}
-          </div>
-
-          <div className="space-y-2 sm:col-span-2">
-            <Label>Color</Label>
-            <Controller
-              name="color"
-              control={control}
-              render={({ field }) => (
-                <div className="flex flex-wrap gap-2">
-                  {ROLE_COLOR_OPTIONS.map((option) => (
-                    <button
-                      key={option.value}
-                      type="button"
-                      onClick={() => field.onChange(option.value)}
-                      className={cn(
-                        "flex size-8 items-center justify-center rounded-lg border-2 transition-all",
-                        field.value === option.value
-                          ? "border-foreground scale-110"
-                          : "border-transparent hover:scale-105"
-                      )}
-                      style={{ backgroundColor: option.value }}
-                      aria-label={option.label}
-                    />
-                  ))}
-                </div>
-              )}
-            />
           </div>
         </div>
 

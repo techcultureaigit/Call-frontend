@@ -4,9 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   ChevronDown,
-  CreditCard,
   LogOut,
-  Settings,
   User,
 } from "lucide-react";
 import { motion } from "framer-motion";
@@ -89,18 +87,6 @@ export function ProfileDropdown() {
             <Link href={routePaths.users}>
               <User className="size-4" />
               Profile
-            </Link>
-          </DropdownMenuItem>
-          <DropdownMenuItem asChild>
-            <Link href={routePaths.settings.general}>
-              <Settings className="size-4" />
-              Settings
-            </Link>
-          </DropdownMenuItem>
-          <DropdownMenuItem asChild>
-            <Link href={routePaths.settings.billing}>
-              <CreditCard className="size-4" />
-              Billing
             </Link>
           </DropdownMenuItem>
         </DropdownMenuGroup>

@@ -1,16 +1,9 @@
 "use client";
 
-import { PanelLeftClose, PanelLeftOpen } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useSidebarStore } from "@/stores";
 import { useIsMobile, useIsTablet } from "@/hooks";
-import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { LAYOUT } from "./constants";
@@ -25,7 +18,6 @@ interface AppSidebarProps {
 export function AppSidebar({ className }: AppSidebarProps) {
   const isCollapsed = useSidebarStore((state) => state.isCollapsed);
   const isMobileOpen = useSidebarStore((state) => state.isMobileOpen);
-  const toggleCollapsed = useSidebarStore((state) => state.toggleCollapsed);
   const closeMobile = useSidebarStore((state) => state.closeMobile);
   const isMobile = useIsMobile();
   const isTablet = useIsTablet();
@@ -93,47 +85,6 @@ export function AppSidebar({ className }: AppSidebarProps) {
         <ScrollArea className="relative z-10 min-h-0 flex-1 px-3 py-3">
           <SidebarNav collapsed={effectiveCollapsed} />
         </ScrollArea>
-
-        <div
-          className={cn(
-            "relative z-10 shrink-0 p-3",
-            effectiveCollapsed && "flex justify-center"
-          )}
-        >
-          <Tooltip delayDuration={0}>
-            <TooltipTrigger asChild>
-              <Button
-                variant="ghost"
-                size={effectiveCollapsed ? "icon-sm" : "sm"}
-                onClick={toggleCollapsed}
-                className={cn(
-                  "group w-full justify-start gap-2.5 rounded-xl text-sidebar-foreground/55 transition-all duration-300",
-                  "hover:bg-sidebar-elevated hover:text-sidebar-foreground",
-                  effectiveCollapsed && "size-10 justify-center"
-                )}
-                aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
-              >
-                {isCollapsed ? (
-                  <PanelLeftOpen className="size-[18px] transition-transform duration-300 group-hover:translate-x-0.5" />
-                ) : (
-                  <>
-                    <PanelLeftClose className="size-[18px] transition-transform duration-300 group-hover:-translate-x-0.5" />
-                    <span className="text-[13px] font-medium">Collapse</span>
-                  </>
-                )}
-              </Button>
-            </TooltipTrigger>
-            {effectiveCollapsed && (
-              <TooltipContent
-                side="right"
-                sideOffset={14}
-                className="border-sidebar-border bg-sidebar-elevated text-sidebar-foreground"
-              >
-                Expand sidebar
-              </TooltipContent>
-            )}
-          </Tooltip>
-        </div>
       </motion.aside>
     </TooltipProvider>
   );

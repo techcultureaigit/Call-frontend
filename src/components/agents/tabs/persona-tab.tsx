@@ -469,7 +469,7 @@ const MODES = [
     sub: "Speech-to-Speech",
     icon: AudioLines,
     features: ["Lowest latency", "Single unified model"],
-    price: "$18",
+
   },
   {
     id: "quantum",
@@ -477,7 +477,7 @@ const MODES = [
     sub: "STT · LLM · TTS",
     icon: Layers,
     features: ["Full pipeline control", "Best flexibility"],
-    price: "$11",
+
   },
 ] as const;
 
@@ -603,12 +603,7 @@ export function PersonaTab({ values, onChange }: PersonaTabProps) {
                         </li>
                       ))}
                     </ul>
-                    <p className="mt-3 text-[11px] font-medium text-muted-foreground">
-                      <span className="text-sm font-semibold text-foreground">
-                        {mode.price}
-                      </span>
-                      <span className="ml-1">/ 1k min</span>
-                    </p>
+                
                   </button>
                 );
               })}
