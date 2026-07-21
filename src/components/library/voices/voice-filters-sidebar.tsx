@@ -21,14 +21,9 @@ export function VoiceFiltersSidebar({
   onReset,
 }: VoiceFiltersSidebarProps) {
   return (
-    <aside className="space-y-5 rounded-2xl border border-border/40 bg-card p-5 shadow-card">
-      <h2 className="text-sm font-semibold text-foreground dark:text-foreground">
-        Filters
-      </h2>
-
-      <div className="space-y-2">
-        <p className="text-xs font-medium text-muted-foreground">Search</p>
-        <div className="relative">
+    <div className="rounded-2xl border border-border/40 bg-card p-4 shadow-card">
+      <div className="flex flex-col gap-3 xl:flex-row xl:items-center">
+        <div className="relative min-w-0 flex-1">
           <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             value={filters.search}
@@ -37,86 +32,108 @@ export function VoiceFiltersSidebar({
             }
             placeholder="Search voices..."
             className="h-10 rounded-xl pl-9"
+            aria-label="Search voices"
           />
         </div>
-      </div>
 
-      <div className="space-y-2">
-        <p className="text-xs font-medium text-muted-foreground">Voice Type</p>
-        <div className="grid grid-cols-1 gap-2">
-          <FilterToggle
-            active={filters.voiceType === "all"}
-            onClick={() => onChange({ ...filters, voiceType: "all" })}
+        <div className="flex flex-wrap items-center gap-2">
+          <FilterGroup label="Type">
+            <FilterToggle
+              active={filters.voiceType === "all"}
+              onClick={() => onChange({ ...filters, voiceType: "all" })}
+            >
+              All
+            </FilterToggle>
+            <FilterToggle
+              active={filters.voiceType === "cloned"}
+              onClick={() => onChange({ ...filters, voiceType: "cloned" })}
+              icon={<span className="text-amber-500">★</span>}
+            >
+              Cloned
+            </FilterToggle>
+          </FilterGroup>
+
+          <FilterGroup label="Gender">
+            <FilterToggle
+              active={filters.gender === "all"}
+              onClick={() => onChange({ ...filters, gender: "all" })}
+            >
+              All
+            </FilterToggle>
+            <FilterToggle
+              active={filters.gender === "masculine"}
+              onClick={() =>
+                onChange({
+                  ...filters,
+                  gender: "masculine" as VoiceGenderFilter,
+                })
+              }
+            >
+              ♂
+            </FilterToggle>
+            <FilterToggle
+              active={filters.gender === "feminine"}
+              onClick={() =>
+                onChange({
+                  ...filters,
+                  gender: "feminine" as VoiceGenderFilter,
+                })
+              }
+            >
+              ♀
+            </FilterToggle>
+            <FilterToggle
+              active={filters.gender === "neutral"}
+              onClick={() =>
+                onChange({
+                  ...filters,
+                  gender: "neutral" as VoiceGenderFilter,
+                })
+              }
+            >
+              ⚲
+            </FilterToggle>
+          </FilterGroup>
+
+          <Select
+            value={filters.language}
+            onChange={(e) =>
+              onChange({ ...filters, language: e.target.value })
+            }
+            options={VOICE_LANGUAGE_OPTIONS}
+            placeholder="Language"
+            className="h-10 w-full rounded-xl sm:w-45"
+            aria-label="Available languages"
+          />
+
+          <Button
+            type="button"
+            variant="outline"
+            className="h-10 shrink-0 rounded-xl"
+            onClick={onReset}
           >
-            All Voices
-          </FilterToggle>
-          <FilterToggle
-            active={filters.voiceType === "cloned"}
-            onClick={() => onChange({ ...filters, voiceType: "cloned" })}
-            icon={<span className="text-amber-500">★</span>}
-          >
-            Cloned Voices
-          </FilterToggle>
+            Reset
+          </Button>
         </div>
       </div>
+    </div>
+  );
+}
 
-      <div className="space-y-2">
-        <p className="text-xs font-medium text-muted-foreground">Gender</p>
-        <div className="grid grid-cols-2 gap-2 sm:grid-cols-1">
-          <FilterToggle
-            active={filters.gender === "masculine"}
-            onClick={() =>
-              onChange({ ...filters, gender: "masculine" as VoiceGenderFilter })
-            }
-          >
-            ♂ Masculine
-          </FilterToggle>
-          <FilterToggle
-            active={filters.gender === "feminine"}
-            onClick={() =>
-              onChange({ ...filters, gender: "feminine" as VoiceGenderFilter })
-            }
-          >
-            ♀ Feminine
-          </FilterToggle>
-          <FilterToggle
-            active={filters.gender === "neutral"}
-            onClick={() =>
-              onChange({ ...filters, gender: "neutral" as VoiceGenderFilter })
-            }
-          >
-            ⚲ Gender-neutral
-          </FilterToggle>
-          <FilterToggle
-            active={filters.gender === "all"}
-            onClick={() => onChange({ ...filters, gender: "all" })}
-          >
-            All
-          </FilterToggle>
-        </div>
-      </div>
-
-      <div className="space-y-2">
-        <p className="text-xs font-medium text-muted-foreground">
-          Available Languages
-        </p>
-        <Select
-          value={filters.language}
-          onChange={(e) => onChange({ ...filters, language: e.target.value })}
-          options={VOICE_LANGUAGE_OPTIONS}
-          placeholder="Select a language..."
-          className="h-10 rounded-xl"
-        />
-      </div>
-
-      <Button
-        type="button"
-        className="w-full rounded-xl"
-        onClick={onReset}
-      >
-        Reset Filters
-      </Button>
-    </aside>
+function FilterGroup({
+  label,
+  children,
+}: {
+  label: string;
+  children: ReactNode;
+}) {
+  return (
+    <div className="flex items-center gap-1.5 rounded-xl border border-border/50 bg-muted/20 p-1">
+      <span className="hidden px-2 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground lg:inline">
+        {label}
+      </span>
+      {children}
+    </div>
   );
 }
 
@@ -136,10 +153,10 @@ function FilterToggle({
       type="button"
       onClick={onClick}
       className={cn(
-        "flex items-center justify-center gap-2 rounded-xl border px-3 py-2.5 text-sm font-medium transition-all",
+        "inline-flex h-8 items-center justify-center gap-1.5 rounded-lg px-2.5 text-xs font-medium transition-all",
         active
-          ? "border-primary/30 bg-primary text-primary-foreground shadow-sm"
-          : "border-border/50 bg-background text-muted-foreground hover:border-primary/20 hover:bg-muted/40 hover:text-foreground"
+          ? "bg-primary text-primary-foreground shadow-sm"
+          : "text-muted-foreground hover:bg-background hover:text-foreground"
       )}
     >
       {icon}

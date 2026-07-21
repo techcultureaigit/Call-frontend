@@ -55,7 +55,6 @@ export const queryKeys = {
       ["reports", "sales", params] as const,
     data: (params?: Record<string, unknown>) =>
       ["reports", "data", params] as const,
-    campaigns: () => ["reports", "campaigns"] as const,
   },
   dashboard: {
     overview: ["dashboard", "overview"] as const,
@@ -71,23 +70,6 @@ export const queryKeys = {
     module: (params?: Record<string, unknown>) =>
       ["customers", "module", params] as const,
     detail: (id: string) => ["customers", "detail", id] as const,
-  },
-  campaigns: {
-    all: ["campaigns"] as const,
-    module: (params?: Record<string, unknown>) =>
-      ["campaigns", "module", params] as const,
-    detail: (id: string) => ["campaigns", "detail", id] as const,
-    stats: (id: string) => ["campaigns", "stats", id] as const,
-    aggregate: () => ["campaigns", "aggregate"] as const,
-    analytics: (params?: Record<string, unknown>) =>
-      ["campaigns", "analytics", params] as const,
-  },
-  campaignTemplates: {
-    all: ["campaignTemplates"] as const,
-    list: (params?: Record<string, unknown>) =>
-      ["campaignTemplates", "list", params] as const,
-    stats: () => ["campaignTemplates", "stats"] as const,
-    detail: (id: string) => ["campaignTemplates", "detail", id] as const,
   },
   surveys: {
     all: ["surveys"] as const,

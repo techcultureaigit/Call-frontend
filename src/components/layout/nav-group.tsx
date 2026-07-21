@@ -11,7 +11,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { isNavItemActive } from "@/lib/navigation";
+import { isNavItemActive, isRouteActive } from "@/lib/navigation";
 import { useSidebarStore, selectIsGroupExpanded } from "@/stores";
 import { cn } from "@/lib/utils";
 import { NavSubItem } from "./nav-sub-item";
@@ -28,7 +28,7 @@ interface NavGroupProps {
 export function NavGroup({
   item,
   collapsed,
-  activeGroupIds,
+  activeGroupIds: _activeGroupIds,
   index,
   onNavigate,
 }: NavGroupProps) {
@@ -37,15 +37,15 @@ export function NavGroup({
   const toggleGroup = useSidebarStore((state) => state.toggleGroup);
   const [isHovered, setIsHovered] = useState(false);
 
-  const isExpanded = selectIsGroupExpanded(
-    expandedGroups,
-    item.id,
-    activeGroupIds
-  );
+  const isExpanded = selectIsGroupExpanded(expandedGroups, item.id);
   const isActive = isNavItemActive(pathname, item);
   const children = item.children ?? [];
   const siblingHrefs = children.map((child) => child.href);
+  const isSelfActive = isRouteActive(pathname, item.href, siblingHrefs);
   const Icon = item.icon;
+
+  // Category row: light tint (never pure white)
+  const categoryHighlight = isSelfActive || isExpanded || isActive;
 
   if (collapsed) {
     return (
@@ -66,60 +66,45 @@ export function NavGroup({
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      <div
-        className={cn(
-          "group/nav relative rounded-[14px] transition-[background-color,box-shadow] duration-[280ms] ease-out",
-          isActive && "nav-active-shadow",
-          isHovered && !isActive && "bg-sidebar-elevated"
-        )}
-      >
-        {isActive && (
-          <motion.span
-            layoutId="sidebar-active-bg"
-            className="absolute inset-0 rounded-[14px]"
-            style={{
-              background:
-                "linear-gradient(100deg, color-mix(in oklch, var(--sidebar-primary) 20%, transparent) 0%, color-mix(in oklch, var(--sidebar-primary) 7%, transparent) 42%, transparent 100%)",
-            }}
-            transition={{ type: "spring", stiffness: 380, damping: 34 }}
-          />
-        )}
-        {isActive && (
-          <motion.span
-            layoutId="sidebar-active-indicator"
-            className="absolute inset-y-2 left-0 z-10 w-[3px] rounded-r-full bg-sidebar-primary shadow-[0_0_10px_1px_var(--sidebar-primary)]"
-            transition={{ type: "spring", stiffness: 380, damping: 34 }}
-          />
-        )}
-
-        <div className="relative flex items-center">
-          <Link
-            href={item.href}
-            onClick={onNavigate}
+      <div className="group/nav relative space-y-0.5">
+        <div
+          className={cn(
+            "relative flex items-center rounded-[6px] transition-[background-color,box-shadow] duration-[280ms] ease-out",
+            categoryHighlight
+              ? "bg-[#f3f0f0]/14 text-sidebar-foreground"
+              : isHovered
+                ? "bg-sidebar-elevated"
+                : "bg-transparent"
+          )}
+        >
+          <button
+            type="button"
+            onClick={() => toggleGroup(item.id)}
             className={cn(
-              "flex min-w-0 flex-1 items-center gap-3 rounded-[14px] px-3 py-2.5 text-[13px] font-medium tracking-[-0.01em]",
-              "transition-colors duration-[280ms] hover:text-sidebar-foreground",
-              isActive
-                ? "text-sidebar-active-foreground"
-                : "text-sidebar-foreground/60"
+              "flex min-w-0 flex-1 items-center gap-3 rounded-[6px] px-3 py-2.5 text-left text-[13px] font-medium tracking-[-0.01em]",
+              "transition-colors duration-[280ms] text-sidebar-foreground"
             )}
+            aria-expanded={isExpanded}
+            aria-label={`${isExpanded ? "Collapse" : "Expand"} ${item.title}`}
           >
             <Icon
-              className={cn(
-                "size-[18px] shrink-0 transition-[color,transform] duration-[280ms] ease-out",
-                isActive
-                  ? "text-sidebar-primary"
-                  : "text-sidebar-foreground/45 group-hover/nav:translate-x-0.5 group-hover/nav:text-sidebar-foreground/90"
-              )}
-              strokeWidth={isActive ? 2.25 : 2}
+              className="size-[18px] shrink-0 text-sidebar-foreground transition-transform duration-[280ms] group-hover/nav:translate-x-0.5"
+              strokeWidth={categoryHighlight ? 2.25 : 2}
             />
-            <span className="flex-1 truncate text-left">{item.title}</span>
+            <span
+              className={cn(
+                "flex-1 truncate",
+                categoryHighlight && "font-semibold"
+              )}
+            >
+              {item.title}
+            </span>
             {item.badge && (
-              <span className="rounded-md bg-sidebar-primary/15 px-1.5 py-0.5 text-[10px] font-semibold text-sidebar-primary ring-1 ring-inset ring-sidebar-primary/20">
+              <span className="rounded-md bg-white/10 px-1.5 py-0.5 text-[10px] font-semibold text-sidebar-foreground ring-1 ring-inset ring-white/15">
                 {item.badge}
               </span>
             )}
-          </Link>
+          </button>
 
           <Tooltip delayDuration={400}>
             <TooltipTrigger asChild>
@@ -127,12 +112,13 @@ export function NavGroup({
                 type="button"
                 onClick={() => toggleGroup(item.id)}
                 className={cn(
-                  "relative z-10 mr-1.5 inline-flex size-7 shrink-0 items-center justify-center rounded-lg",
-                  "text-sidebar-foreground/40 transition-all duration-[280ms]",
-                  "hover:bg-sidebar-elevated hover:text-sidebar-foreground",
-                  isExpanded && "text-sidebar-foreground/70"
+                  "relative z-10 mr-1.5 inline-flex size-7 shrink-0 items-center justify-center rounded-md",
+                  "text-sidebar-foreground transition-all duration-[280ms]",
+                  "hover:bg-white/10"
                 )}
-                aria-label={isExpanded ? `Collapse ${item.title}` : `Expand ${item.title}`}
+                aria-label={
+                  isExpanded ? `Collapse ${item.title}` : `Expand ${item.title}`
+                }
                 aria-expanded={isExpanded}
               >
                 <motion.span
@@ -158,7 +144,7 @@ export function NavGroup({
               transition={{ duration: 0.22, ease: [0.25, 0.1, 0.25, 1] }}
               className="overflow-hidden"
             >
-              <ul className="space-y-0.5 pb-2 pt-0.5">
+              <ul className="space-y-0.5 pb-1 pt-0.5">
                 {children.map((child) => (
                   <NavSubItem
                     key={child.id}

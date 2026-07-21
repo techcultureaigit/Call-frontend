@@ -2,11 +2,10 @@
 
 import { Menu } from "lucide-react";
 import { motion } from "framer-motion";
-import { useUIStore, useSidebarStore } from "@/stores";
+import { useSidebarStore } from "@/stores";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
-import { Breadcrumbs } from "./breadcrumbs";
 import { HeaderSearch } from "./header-search";
 import { NotificationBell } from "./notification-bell";
 import { ProfileDropdown } from "./profile-dropdown";
@@ -19,15 +18,13 @@ interface AppHeaderProps {
 }
 
 export function AppHeader({ className }: AppHeaderProps) {
-  const pageTitle = useUIStore((state) => state.pageTitle);
-  const breadcrumbs = useUIStore((state) => state.breadcrumbs);
   const toggleMobile = useSidebarStore((state) => state.toggleMobile);
 
   return (
     <header
       className={cn(
         "glass-strong sticky top-0 z-30 flex h-14 shrink-0 items-center gap-3 pl-2 pr-4",
-        "border-b border-border/50 shadow-[0_1px_0_0_color-mix(in_oklch,var(--brand)_10%,transparent)]",
+        "border-b border-border/60 bg-card/90",
         "md:gap-4 lg:px-6",
         className
       )}
@@ -51,23 +48,10 @@ export function AppHeader({ className }: AppHeaderProps) {
         <SidebarCollapseToggle />
       </motion.div>
 
-      <motion.div
-        custom={1}
-        initial="hidden"
-        animate="visible"
-        variants={headerItemVariants}
-        className="hidden min-w-0 flex-1 flex-col gap-0.5 md:flex md:max-w-xs lg:max-w-none"
-      >
-        {pageTitle && (
-          <h1 className="truncate text-sm font-semibold tracking-tight">
-            {pageTitle}
-          </h1>
-        )}
-        <Breadcrumbs items={breadcrumbs} />
-      </motion.div>
+      <div className="hidden min-w-0 flex-1 md:block" aria-hidden />
 
       <motion.div
-        custom={2}
+        custom={1}
         initial="hidden"
         animate="visible"
         variants={headerItemVariants}
@@ -77,11 +61,11 @@ export function AppHeader({ className }: AppHeaderProps) {
       </motion.div>
 
       <motion.div
-        custom={3}
+        custom={2}
         initial="hidden"
         animate="visible"
         variants={headerItemVariants}
-        className="flex shrink-0 items-center gap-0.5"
+        className="flex shrink-0 items-center gap-1.5"
       >
         <ThemeToggle />
 

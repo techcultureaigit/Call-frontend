@@ -1,126 +1,169 @@
 "use client";
 
 import {
+  Bot,
   CheckCircle2,
   ClipboardList,
   Clock,
-  Megaphone,
-  Minus,
+  Database,
+  FilePlus2,
+  Loader,
   Phone,
-  TrendingDown,
-  TrendingUp,
-  Users,
+  PhoneIncoming,
+  PhoneMissed,
   type LucideIcon,
 } from "lucide-react";
 import { motion } from "framer-motion";
-import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
-import type {
-  DashboardKpi,
-  KpiAccent,
-  TrendDirection,
-} from "@/types/dashboard";
+import type { DashboardKpi } from "@/types/dashboard";
 
-const iconMap: Record<string, LucideIcon> = {
+export const kpiIconMap: Record<string, LucideIcon> = {
   phone: Phone,
+  "phone-incoming": PhoneIncoming,
+  "phone-missed": PhoneMissed,
   "check-circle": CheckCircle2,
-  megaphone: Megaphone,
-  users: Users,
   clipboard: ClipboardList,
   clock: Clock,
+  database: Database,
+  "file-plus": FilePlus2,
+  loader: Loader,
+  bot: Bot,
 };
 
-const accentTile: Record<KpiAccent, string> = {
-  blue: "bg-blue-500/10 text-blue-600 ring-blue-500/20 dark:text-blue-400",
-  emerald: "bg-emerald-500/10 text-emerald-600 ring-emerald-500/20 dark:text-emerald-400",
-  violet: "bg-violet-500/10 text-violet-600 ring-violet-500/20 dark:text-violet-400",
-  cyan: "bg-cyan-500/10 text-cyan-600 ring-cyan-500/20 dark:text-cyan-400",
-  indigo: "bg-indigo-500/10 text-indigo-600 ring-indigo-500/20 dark:text-indigo-400",
-  slate: "bg-teal-500/10 text-teal-600 ring-teal-500/20 dark:text-teal-400",
+type TileTone =
+  | "violet"
+  | "blue"
+  | "emerald"
+  | "cyan"
+  | "amber"
+  | "rose"
+  | "indigo"
+  | "teal";
+
+const toneStyles: Record<
+  TileTone,
+  { box: string; icon: string; label: string; wash: string }
+> = {
+  violet: {
+    box: "bg-violet-50 border-violet-200/80 dark:bg-violet-500/10 dark:border-violet-500/25",
+    icon: "bg-violet-500/15 text-violet-600 dark:text-violet-300",
+    label: "text-violet-700/80 dark:text-violet-300/80",
+    wash: "text-violet-500/[0.12] dark:text-violet-300/10",
+  },
+  blue: {
+    box: "bg-sky-50 border-sky-200/80 dark:bg-sky-500/10 dark:border-sky-500/25",
+    icon: "bg-sky-500/15 text-sky-600 dark:text-sky-300",
+    label: "text-sky-700/80 dark:text-sky-300/80",
+    wash: "text-sky-500/[0.12] dark:text-sky-300/10",
+  },
+  emerald: {
+    box: "bg-emerald-50 border-emerald-200/80 dark:bg-emerald-500/10 dark:border-emerald-500/25",
+    icon: "bg-emerald-500/15 text-emerald-600 dark:text-emerald-300",
+    label: "text-emerald-700/80 dark:text-emerald-300/80",
+    wash: "text-emerald-500/[0.12] dark:text-emerald-300/10",
+  },
+  cyan: {
+    box: "bg-cyan-50 border-cyan-200/80 dark:bg-cyan-500/10 dark:border-cyan-500/25",
+    icon: "bg-cyan-500/15 text-cyan-600 dark:text-cyan-300",
+    label: "text-cyan-700/80 dark:text-cyan-300/80",
+    wash: "text-cyan-500/[0.12] dark:text-cyan-300/10",
+  },
+  amber: {
+    box: "bg-amber-50 border-amber-200/80 dark:bg-amber-500/10 dark:border-amber-500/25",
+    icon: "bg-amber-500/15 text-amber-600 dark:text-amber-300",
+    label: "text-amber-700/80 dark:text-amber-300/80",
+    wash: "text-amber-500/[0.14] dark:text-amber-300/10",
+  },
+  rose: {
+    box: "bg-rose-50 border-rose-200/80 dark:bg-rose-500/10 dark:border-rose-500/25",
+    icon: "bg-rose-500/15 text-rose-600 dark:text-rose-300",
+    label: "text-rose-700/80 dark:text-rose-300/80",
+    wash: "text-rose-500/[0.12] dark:text-rose-300/10",
+  },
+  indigo: {
+    box: "bg-indigo-50 border-indigo-200/80 dark:bg-indigo-500/10 dark:border-indigo-500/25",
+    icon: "bg-indigo-500/15 text-indigo-600 dark:text-indigo-300",
+    label: "text-indigo-700/80 dark:text-indigo-300/80",
+    wash: "text-indigo-500/[0.12] dark:text-indigo-300/10",
+  },
+  teal: {
+    box: "bg-teal-50 border-teal-200/80 dark:bg-teal-500/10 dark:border-teal-500/25",
+    icon: "bg-teal-500/15 text-teal-600 dark:text-teal-300",
+    label: "text-teal-700/80 dark:text-teal-300/80",
+    wash: "text-teal-500/[0.12] dark:text-teal-300/10",
+  },
 };
 
-const accentGlow: Record<KpiAccent, string> = {
-  blue: "before:from-blue-500/12",
-  emerald: "before:from-emerald-500/12",
-  violet: "before:from-violet-500/12",
-  cyan: "before:from-cyan-500/12",
-  indigo: "before:from-indigo-500/12",
-  slate: "before:from-teal-500/12",
+const accentToTone: Record<string, TileTone> = {
+  blue: "blue",
+  emerald: "emerald",
+  violet: "violet",
+  cyan: "cyan",
+  indigo: "indigo",
+  slate: "teal",
+  amber: "amber",
+  rose: "rose",
 };
 
-interface KpiCardProps {
+/** Clear colored metric box — value + label + icon */
+export function MetricBox({
+  kpi,
+  index = 0,
+}: {
   kpi: DashboardKpi;
   index?: number;
-}
-
-function TrendBadge({
-  trend,
-  change,
-}: {
-  trend: TrendDirection;
-  change: number;
 }) {
-  const Icon =
-    trend === "up" ? TrendingUp : trend === "down" ? TrendingDown : Minus;
-
-  return (
-    <span
-      className={cn(
-        "inline-flex items-center gap-1 rounded-full px-2 py-1 text-[11px] font-semibold tabular-nums",
-        trend === "up" &&
-          "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
-        trend === "down" && "bg-red-500/10 text-red-600 dark:text-red-400",
-        trend === "neutral" && "bg-muted text-muted-foreground"
-      )}
-    >
-      <Icon className="size-3.5" />
-      {trend === "neutral" ? "—" : `${Math.abs(change)}%`}
-    </span>
-  );
-}
-
-export function KpiCard({ kpi, index = 0 }: KpiCardProps) {
-  const Icon = iconMap[kpi.icon] ?? Phone;
-  const accent = kpi.accent ?? "blue";
+  const Icon = kpiIconMap[kpi.icon] ?? ClipboardList;
+  const tone = accentToTone[kpi.accent ?? "violet"] ?? "violet";
+  const styles = toneStyles[tone];
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 10 }}
+      initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{
-        delay: index * 0.04,
-        duration: 0.3,
-        ease: [0.25, 0.1, 0.25, 1],
-      }}
+      transition={{ delay: index * 0.04, duration: 0.25 }}
+      className={cn(
+        "relative flex flex-col overflow-hidden rounded-[6px] border p-4 shadow-subtle",
+        styles.box
+      )}
     >
-      <Card
+      <Icon
+        aria-hidden
+        strokeWidth={1.15}
         className={cn(
-          "group relative overflow-hidden p-5 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-elevated",
-          "before:pointer-events-none before:absolute before:-right-8 before:-top-10 before:size-32 before:rounded-full before:bg-linear-to-br before:to-transparent before:blur-2xl before:opacity-70",
-          accentGlow[accent]
+          "pointer-events-none absolute -bottom-1 -right-1 size-12 rotate-[-10deg]",
+          styles.wash
         )}
-      >
-        <div className="relative flex items-center justify-between gap-3">
-          <div
-            className={cn(
-              "flex size-11 shrink-0 items-center justify-center rounded-xl ring-1 ring-inset transition-transform duration-300 group-hover:scale-105",
-              accentTile[accent]
-            )}
-          >
-            <Icon className="size-5" />
-          </div>
-          <TrendBadge trend={kpi.trend} change={kpi.change} />
-        </div>
+      />
 
-        <div className="relative mt-5 space-y-1">
-          <p className="text-[1.75rem] font-semibold leading-none tracking-tight tabular-nums text-foreground">
-            {kpi.value}
-          </p>
-          <p className="text-[13px] font-medium text-muted-foreground">
-            {kpi.label}
-          </p>
+      <div className="relative z-[1]">
+        <div
+          className={cn(
+            "flex size-9 items-center justify-center rounded-[6px]",
+            styles.icon
+          )}
+        >
+          <Icon className="size-4" strokeWidth={2.25} />
         </div>
-      </Card>
+      </div>
+
+      <p className="relative z-[1] mt-4 text-2xl font-semibold tabular-nums tracking-tight text-foreground">
+        {kpi.value}
+      </p>
+      <p className={cn("relative z-[1] mt-1 text-[12px] font-medium", styles.label)}>
+        {kpi.label}
+      </p>
     </motion.div>
   );
+}
+
+/** Flat grid fallback */
+export function KpiCard({
+  kpi,
+  index = 0,
+}: {
+  kpi: DashboardKpi;
+  index?: number;
+}) {
+  return <MetricBox kpi={kpi} index={index} />;
 }

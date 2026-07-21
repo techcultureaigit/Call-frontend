@@ -9,7 +9,7 @@ export type AgentConfigTab =
 
 export type AgentTopNav = "dashboard" | "configure" | "conversations" | "deploy" | "campaign";
 
-export type AgentModelMode = "orbit" | "quantum";
+export type AgentModelMode = "quantum";
 
 export interface AgentStackConfig {
   provider: string;

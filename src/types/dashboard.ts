@@ -10,7 +10,9 @@ export type KpiAccent =
   | "violet"
   | "cyan"
   | "indigo"
-  | "slate";
+  | "slate"
+  | "amber"
+  | "rose";
 
 export interface DashboardKpi {
   id: string;
@@ -28,12 +30,6 @@ export interface ChartDataPoint {
   label: string;
   value: number;
   [key: string]: string | number;
-}
-
-export interface CampaignDistribution {
-  name: string;
-  value: number;
-  fill: string;
 }
 
 export interface DashboardActivity {
@@ -54,15 +50,6 @@ export interface DashboardNotification {
   createdAt: string;
 }
 
-export interface TopCampaign {
-  id: ID;
-  name: string;
-  status: "active" | "paused" | "completed" | "draft";
-  calls: number;
-  successRate: number;
-  responses: number;
-}
-
 export interface RecentCustomer {
   id: ID;
   name: string;
@@ -73,13 +60,18 @@ export interface RecentCustomer {
   avatarUrl?: string;
 }
 
+export interface CallOutcomeSlice {
+  name: string;
+  value: number;
+  fill: string;
+}
+
 export interface DashboardData {
   kpis: DashboardKpi[];
   callSuccessTrend: ChartDataPoint[];
-  campaignDistribution: CampaignDistribution[];
   dailyCalls: ChartDataPoint[];
+  callOutcomes: CallOutcomeSlice[];
   recentActivities: DashboardActivity[];
   recentNotifications: DashboardNotification[];
-  topCampaigns: TopCampaign[];
   recentCustomers: RecentCustomer[];
 }

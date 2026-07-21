@@ -1,6 +1,9 @@
 import type { VoiceGender, VoiceProvider } from "@/types/voice";
 
-export const VOICES_PAGE_SIZE = 8;
+export const VOICES_PAGE_SIZE = 12;
+
+/** Dummy ringtone used for voice preview / listen actions */
+export const DUMMY_VOICE_RINGTONE = "/audio/dummy-ringtone.wav";
 
 export const VOICE_PROVIDER_STYLES: Record<
   VoiceProvider,

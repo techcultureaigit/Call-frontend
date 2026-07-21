@@ -5,7 +5,6 @@ export type NavModule =
   | "users"
   | "roles"
   | "customers"
-  | "campaigns"
   | "surveys"
   | "calls"
   | "responses"
@@ -26,7 +25,6 @@ export const ROLE_MODULE_ACCESS: Record<UserRole, readonly NavModule[]> = {
     "users",
     "roles",
     "customers",
-    "campaigns",
     "surveys",
     "calls",
     "responses",
@@ -44,7 +42,6 @@ export const ROLE_MODULE_ACCESS: Record<UserRole, readonly NavModule[]> = {
     "users",
     "roles",
     "customers",
-    "campaigns",
     "surveys",
     "calls",
     "responses",
@@ -62,7 +59,6 @@ export const ROLE_MODULE_ACCESS: Record<UserRole, readonly NavModule[]> = {
     "users",
     "roles",
     "customers",
-    "campaigns",
     "surveys",
     "calls",
     "responses",
@@ -78,7 +74,6 @@ export const ROLE_MODULE_ACCESS: Record<UserRole, readonly NavModule[]> = {
     "agents",
     "library",
     "customers",
-    "campaigns",
     "surveys",
     "calls",
     "responses",

@@ -26,14 +26,12 @@ export type { Task, TaskPriority, TaskStatus } from "./task";
 export type { Activity, ActivityType } from "./activity";
 export type { Notification, NotificationType } from "./notification";
 export type {
-  CampaignDistribution,
   ChartDataPoint,
   DashboardActivity,
   DashboardData,
   DashboardKpi,
   DashboardNotification,
   RecentCustomer,
-  TopCampaign,
   TrendDirection,
 } from "./dashboard";
 export type {
@@ -51,28 +49,6 @@ export type {
   CustomerSource,
   CustomerImportRow,
 } from "./customer";
-export type {
-  Campaign,
-  CampaignStatus,
-  CampaignType,
-  CampaignSchedule,
-  CampaignStats,
-  CreateCampaignPayload,
-  CampaignWizardValues,
-} from "./campaign";
-export type {
-  CampaignTemplate,
-  TemplateCategory,
-  TemplateStatus,
-  TemplateLanguage,
-  TemplateVoice,
-  TemplateAiModel,
-  TemplateQuestion,
-  TemplateSurveyStep,
-  TemplateStats,
-  CreateTemplatePayload,
-  TemplatesQueryParams,
-} from "./campaign-template";
 export type { Survey, SurveyStatus, SurveyDetail, SurveyQuestion, QuestionType, ConditionalRule, SaveSurveyPayload } from "./survey";
 export type {
   Call,
@@ -90,19 +66,6 @@ export type {
   ResponseCustomerSnapshot,
 } from "./response";
 export type { ReportsData, ReportKpi, ReportPieSlice, ReportsQueryParams } from "./reports";
-export type {
-  CampaignAnalyticsData,
-  CampaignAnalyticsKpi,
-  CampaignAnalyticsQueryParams,
-  CampaignAnalyticsFilters,
-  CampaignPerformanceRow,
-  TopPerformingCampaign,
-  AnalyticsActivity,
-  AnalyticsActivityType,
-  RealtimeMetrics,
-  AiAnalytics,
-  EngagementHeatmapCell,
-} from "./campaign-analytics";
 export type {
   ActivityLog,
   AuditAction,

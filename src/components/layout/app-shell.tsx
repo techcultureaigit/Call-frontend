@@ -16,14 +16,14 @@ export function AppShell({ children, className }: AppShellProps) {
     <div className="flex h-svh w-full overflow-hidden bg-background">
       <AppSidebar />
 
-      <div className="app-surface flex min-h-0 min-w-0 flex-1 flex-col overflow-y-auto">
+      <div className="app-surface flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
         <AppHeader />
 
         <motion.main
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.3, delay: 0.05 }}
-          className={cn(className)}
+          className={cn("min-h-0 flex-1 overflow-y-auto overflow-x-hidden", className)}
         >
           {children}
         </motion.main>

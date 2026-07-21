@@ -17,7 +17,7 @@ export function useReports(params: ReportsParams) {
 
 export function useReportCampaigns() {
   return useQuery({
-    queryKey: queryKeys.reports.campaigns(),
+    queryKey: [...queryKeys.reports.all, "filters"] as const,
     queryFn: () => reportsModuleService.getCampaigns(),
     staleTime: 120_000,
   });

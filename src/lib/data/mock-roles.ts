@@ -8,7 +8,7 @@ import type { Role, RolePermissions } from "@/types/role";
 function managerPermissions(): RolePermissions {
   const perms = createEmptyPermissions();
   const full = [
-    "dashboard", "users", "roles", "customers", "campaigns",
+    "dashboard", "users", "roles", "customers",
     "surveys", "calls", "responses", "reports", "notifications", "activity_logs",
   ] as const;
 
@@ -25,7 +25,7 @@ function managerPermissions(): RolePermissions {
 
 function salesRepPermissions(): RolePermissions {
   const perms = createEmptyPermissions();
-  ["dashboard", "customers", "campaigns", "surveys", "calls", "responses", "notifications"].forEach((mod) => {
+  ["dashboard", "customers", "surveys", "calls", "responses", "notifications"].forEach((mod) => {
     const m = mod as keyof RolePermissions;
     perms[m] = { create: true, read: true, update: true, delete: false };
   });
@@ -106,16 +106,15 @@ export const MOCK_ROLES: Role[] = [
   },
   {
     id: "role_006",
-    name: "Campaign Analyst",
-    slug: "campaign-analyst",
-    description: "Specialized role for campaign analytics and survey result analysis.",
+    name: "Survey Analyst",
+    slug: "survey-analyst",
+    description: "Specialized role for survey analytics and result analysis.",
     color: "#d97706",
     isSystem: false,
     userCount: 3,
     permissions: (() => {
       const p = createEmptyPermissions();
       p.dashboard = { create: false, read: true, update: false, delete: false };
-      p.campaigns = { create: false, read: true, update: false, delete: false };
       p.surveys = { create: false, read: true, update: false, delete: false };
       p.reports = { create: false, read: true, update: false, delete: false };
       p.responses = { create: false, read: true, update: false, delete: false };

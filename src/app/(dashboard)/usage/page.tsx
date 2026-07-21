@@ -9,8 +9,8 @@ export default function UsagePage() {
       title="Usage Details"
       description="Track API usage, call minutes, credits consumed, and billing metrics."
       icon={LineChart}
-      backHref="/campaigns/analytics"
-      backLabel="View Analytics"
+      backHref="/reports"
+      backLabel="View Reports"
     />
   );
 }

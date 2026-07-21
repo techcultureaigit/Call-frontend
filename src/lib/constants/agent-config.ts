@@ -5,7 +5,7 @@ export const AGENT_TOP_NAV = [
   { id: "configure", label: "Configure", href: "#" },
   { id: "conversations", label: "Conversations", href: "/agents/conversations" },
   { id: "deploy", label: "Deploy", href: "/agents/deploy" },
-  { id: "campaign", label: "Campaign", href: "/campaigns/new" },
+  { id: "campaign", label: "Survey", href: "/agents/templates" },
 ] as const;
 
 export const AGENT_CONFIG_TABS = [

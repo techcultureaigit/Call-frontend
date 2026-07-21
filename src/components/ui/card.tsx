@@ -2,7 +2,7 @@ import * as React from "react";
 import { cn } from "@/lib/utils";
 
 export const cardBaseClass =
-  "rounded-2xl border border-border/70 bg-card text-card-foreground shadow-card";
+  "rounded-[6px] border border-border/70 bg-card text-card-foreground shadow-card";
 
 export const cardInteractiveClass = cn(
   cardBaseClass,

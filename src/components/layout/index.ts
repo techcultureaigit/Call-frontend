@@ -13,4 +13,6 @@ export { NotificationBell } from "./notification-bell";
 export { ProfileDropdown } from "./profile-dropdown";
 export { ThemeToggle } from "./theme-toggle";
 export { SidebarLogo } from "./sidebar-logo";
+export { SidebarUserCard } from "./sidebar-user-card";
+export { SidebarSectionLabel } from "./sidebar-section-label";
 export { LAYOUT } from "./constants";

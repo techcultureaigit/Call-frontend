@@ -1,17 +1,71 @@
 "use client";
 
-import { useState } from "react";
-import { RefreshCw } from "lucide-react";
+import { useMemo, useState } from "react";
+import {
+  CalendarDays,
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+  RefreshCw,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 
-const RANGES = [
-  { id: "7d", label: "7D" },
-  { id: "30d", label: "30D" },
-  { id: "90d", label: "90D" },
-] as const;
 
-type RangeId = (typeof RANGES)[number]["id"];
+
+const WEEKDAYS = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
+
+function toKey(date: Date) {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, "0");
+  const d = String(date.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
+}
+
+function parseKey(value: string) {
+  const [y, m, d] = value.split("-").map(Number);
+  return new Date(y, m - 1, d);
+}
+
+function formatDisplayDate(value: string) {
+  const date = parseKey(value);
+  if (Number.isNaN(date.getTime())) return value;
+  return date.toLocaleDateString("en-US", {
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+}
+
+function sameDay(a: Date, b: Date) {
+  return (
+    a.getFullYear() === b.getFullYear() &&
+    a.getMonth() === b.getMonth() &&
+    a.getDate() === b.getDate()
+  );
+}
+
+function getMonthCells(view: Date) {
+  const year = view.getFullYear();
+  const month = view.getMonth();
+  const first = new Date(year, month, 1);
+  const startPad = first.getDay();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const cells: (Date | null)[] = [];
+
+  for (let i = 0; i < startPad; i++) cells.push(null);
+  for (let day = 1; day <= daysInMonth; day++) {
+    cells.push(new Date(year, month, day));
+  }
+  while (cells.length % 7 !== 0) cells.push(null);
+  return cells;
+}
 
 interface DashboardHeaderProps {
   onRefresh?: () => void;
@@ -22,54 +76,165 @@ export function DashboardHeader({
   onRefresh,
   isRefreshing,
 }: DashboardHeaderProps) {
-  const [range, setRange] = useState<RangeId>("30d");
+  const today = useMemo(() => {
+    const d = new Date();
+    d.setHours(0, 0, 0, 0);
+    return d;
+  }, []);
+
+  const [selectedDate, setSelectedDate] = useState(() => toKey(new Date()));
+  const [viewMonth, setViewMonth] = useState(() => parseKey(toKey(new Date())));
+  const [open, setOpen] = useState(false);
+
+  const selected = useMemo(() => parseKey(selectedDate), [selectedDate]);
+  const cells = useMemo(() => getMonthCells(viewMonth), [viewMonth]);
+  const monthLabel = viewMonth.toLocaleDateString("en-US", {
+    month: "long",
+    year: "numeric",
+  });
 
   return (
-    <div className="bg-mesh relative overflow-hidden rounded-2xl border border-border/70 bg-card px-5 py-5 shadow-card sm:px-6 sm:py-6">
-      <div className="relative flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div className="min-w-0">
-          <span className="mb-2 inline-flex items-center gap-1.5 rounded-full border border-brand/20 bg-brand/10 px-2.5 py-0.5 text-[11px] font-semibold text-brand">
-            <span className="size-1.5 animate-pulse rounded-full bg-brand" />
-            Live overview
-          </span>
-          <h2 className="font-display text-2xl font-semibold leading-tight tracking-[-0.02em] brand-text-gradient sm:text-3xl">
-            Dashboard
-          </h2>
-          <p className="mt-1.5 text-sm text-muted-foreground">
-            Welcome back! Here&apos;s what&apos;s happening with your platform
-            today.
-          </p>
-        </div>
+    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <div className="min-w-0">
+        <h2 className="font-display text-xl font-semibold tracking-tight text-foreground">
+         Survey Dashboard
+        </h2>
+        
+      </div>
 
-        <div className="flex items-center gap-2">
-          <div className="inline-flex items-center rounded-xl border border-border/70 bg-background/70 p-1 backdrop-blur">
-            {RANGES.map((r) => (
-              <button
-                key={r.id}
-                type="button"
-                onClick={() => setRange(r.id)}
+      <div className="flex flex-wrap items-center gap-2">
+        <DropdownMenu
+          open={open}
+          onOpenChange={(next) => {
+            setOpen(next);
+            if (next) setViewMonth(new Date(selected));
+          }}
+        >
+          <DropdownMenuTrigger asChild>
+            <button
+              type="button"
+              className={cn(
+                "inline-flex h-9 items-center gap-2 rounded-[6px] border border-border/60 bg-card px-3",
+                "text-[11px] font-medium text-muted-foreground shadow-subtle outline-none",
+                "transition-colors hover:border-brand/30 hover:text-foreground",
+                "focus-visible:ring-2 focus-visible:ring-brand/25",
+                open && "border-brand/40 text-foreground"
+              )}
+            >
+              <CalendarDays className="size-3.5 shrink-0 text-brand" />
+              <span className="min-w-[8.5rem] whitespace-nowrap tabular-nums text-foreground">
+                {formatDisplayDate(selectedDate)}
+              </span>
+              <ChevronDown
                 className={cn(
-                  "rounded-lg px-3 py-1.5 text-xs font-semibold tabular-nums transition-all",
-                  range === r.id
-                    ? "bg-brand text-brand-foreground shadow-brand"
-                    : "text-muted-foreground hover:text-foreground"
+                  "size-3.5 opacity-50 transition-transform",
+                  open && "rotate-180"
                 )}
-              >
-                {r.label}
-              </button>
-            ))}
-          </div>
+              />
+            </button>
+          </DropdownMenuTrigger>
 
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={onRefresh}
-            disabled={isRefreshing}
+          <DropdownMenuContent
+            align="end"
+            className="w-[280px] rounded-[6px] p-3"
           >
-            <RefreshCw className={cn(isRefreshing && "animate-spin")} />
-            Refresh
-          </Button>
-        </div>
+            <div className="mb-3 flex items-center justify-between gap-2">
+              <button
+                type="button"
+                className="inline-flex size-8 items-center justify-center rounded-[6px] text-muted-foreground hover:bg-muted hover:text-foreground"
+                onClick={() =>
+                  setViewMonth(
+                    new Date(viewMonth.getFullYear(), viewMonth.getMonth() - 1, 1)
+                  )
+                }
+                aria-label="Previous month"
+              >
+                <ChevronLeft className="size-4" />
+              </button>
+              <p className="text-sm font-semibold text-foreground">{monthLabel}</p>
+              <button
+                type="button"
+                className="inline-flex size-8 items-center justify-center rounded-[6px] text-muted-foreground hover:bg-muted hover:text-foreground"
+                onClick={() =>
+                  setViewMonth(
+                    new Date(viewMonth.getFullYear(), viewMonth.getMonth() + 1, 1)
+                  )
+                }
+                aria-label="Next month"
+              >
+                <ChevronRight className="size-4" />
+              </button>
+            </div>
+
+            <div className="mb-1 grid grid-cols-7 gap-1">
+              {WEEKDAYS.map((day) => (
+                <div
+                  key={day}
+                  className="py-1 text-center text-[10px] font-semibold uppercase tracking-wide text-muted-foreground"
+                >
+                  {day}
+                </div>
+              ))}
+            </div>
+
+            <div className="grid grid-cols-7 gap-1">
+              {cells.map((day, index) => {
+                if (!day) {
+                  return <div key={`empty-${index}`} className="size-8" />;
+                }
+
+                const isSelected = sameDay(day, selected);
+                const isToday = sameDay(day, today);
+                const isFuture = day > today;
+
+                return (
+                  <button
+                    key={toKey(day)}
+                    type="button"
+                    disabled={isFuture}
+                    onClick={() => {
+                      setSelectedDate(toKey(day));
+                      setOpen(false);
+                    }}
+                    className={cn(
+                      "size-8 rounded-[6px] text-[12px] font-medium tabular-nums transition-colors",
+                      isFuture && "cursor-not-allowed opacity-30",
+                      !isFuture &&
+                        !isSelected &&
+                        "text-foreground hover:bg-brand/10 hover:text-brand",
+                      isToday && !isSelected && "ring-1 ring-brand/30",
+                      isSelected &&
+                        "bg-brand text-brand-foreground shadow-brand hover:bg-brand"
+                    )}
+                  >
+                    {day.getDate()}
+                  </button>
+                );
+              })}
+            </div>
+
+            <div className="mt-3 flex items-center justify-between border-t border-border/50 pt-3">
+              <button
+                type="button"
+                className="text-[11px] font-semibold text-brand hover:underline"
+                onClick={() => {
+                  const key = toKey(today);
+                  setSelectedDate(key);
+                  setViewMonth(new Date(today));
+                  setOpen(false);
+                }}
+              >
+                Today
+              </button>
+              <span className="text-[10px] text-muted-foreground">
+                Select a date to filter
+              </span>
+            </div>
+          </DropdownMenuContent>
+        </DropdownMenu>
+
+       
+        
       </div>
     </div>
   );

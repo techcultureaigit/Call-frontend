@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect, useMemo } from "react";
+import { useMemo } from "react";
 import type { NavItemConfig, NavSection } from "@/config/navigation";
 import { useNavigation } from "@/hooks";
 import { useSidebarStore } from "@/stores";
 import { NavGroup } from "./nav-group";
 import { NavItem } from "./nav-item";
+import { SidebarSectionLabel } from "./sidebar-section-label";
 
 function collectNavHrefs(sections: NavSection[]): string[] {
   return sections.flatMap((section) =>
@@ -23,46 +24,27 @@ interface SidebarNavProps {
 export function SidebarNav({ collapsed }: SidebarNavProps) {
   const { navigation, activeGroupIds, pathname } = useNavigation();
   const closeMobile = useSidebarStore((state) => state.closeMobile);
-  const setExpandedGroups = useSidebarStore((state) => state.setExpandedGroups);
-  const expandedGroups = useSidebarStore((state) => state.expandedGroups);
   const allNavHrefs = useMemo(
     () => collectNavHrefs(navigation),
     [navigation]
   );
 
-  useEffect(() => {
-    if (activeGroupIds.length === 0) return;
-
-    const nextGroups = { ...expandedGroups };
-    let changed = false;
-
-    activeGroupIds.forEach((groupId) => {
-      if (!nextGroups[groupId]) {
-        nextGroups[groupId] = true;
-        changed = true;
-      }
-    });
-
-    if (changed) {
-      setExpandedGroups(nextGroups);
-    }
-  }, [activeGroupIds, expandedGroups, setExpandedGroups]);
-
   let navIndex = 0;
 
   return (
-    <nav className="space-y-8">
+    <nav className="space-y-5">
       {navigation.map((section, sectionIndex) => (
-        <div key={section.id}>
+        <div key={section.id} className="space-y-1">
           {section.label && !collapsed && (
-            <p className="mb-3 px-3 text-[10px] font-semibold uppercase tracking-[0.16em] text-sidebar-foreground/35">
-              {section.label}
-            </p>
+            <SidebarSectionLabel label={section.label} />
           )}
           {section.label && collapsed && sectionIndex > 0 && (
-            <div className="mx-auto mb-3 h-px w-6 bg-sidebar-border/40" />
+            <div className="mx-auto my-2 flex flex-col items-center gap-1">
+              <span className="nav-active-gradient size-1 rounded-full" />
+              <div className="h-px w-5 bg-[#f3f0f0]/15" />
+            </div>
           )}
-          <ul className="space-y-1">
+          <ul className="space-y-0.5">
             {section.items.map((item) => {
               const currentIndex = navIndex++;
               return (

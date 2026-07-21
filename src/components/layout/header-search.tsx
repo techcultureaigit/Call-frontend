@@ -51,12 +51,12 @@ export function HeaderSearch() {
       <Input
         ref={inputRef}
         type="search"
-        placeholder="Search users, customers, campaigns..."
+        placeholder="Search surveys..."
         className={cn(
-          "h-9 border-border/60 bg-muted/40 pl-9 pr-16 text-sm shadow-none transition-all",
+          "h-9 rounded-[6px] border-border/60 bg-muted/50 pl-9 pr-16 text-sm shadow-none transition-all",
           "placeholder:text-muted-foreground/70",
-          "hover:bg-muted/60 hover:border-border",
-          "focus-visible:bg-background focus-visible:border-border focus-visible:ring-1"
+          "hover:bg-muted/70 hover:border-border",
+          "focus-visible:bg-background focus-visible:border-brand/30 focus-visible:ring-1 focus-visible:ring-brand/20"
         )}
         onFocus={() => setIsFocused(true)}
         onBlur={() => setIsFocused(false)}
@@ -67,7 +67,7 @@ export function HeaderSearch() {
         }}
         aria-label="Search"
       />
-      <kbd className="pointer-events-none absolute right-2.5 top-1/2 hidden -translate-y-1/2 items-center gap-0.5 rounded border border-border bg-background px-1.5 py-0.5 font-mono text-[10px] font-medium text-muted-foreground sm:inline-flex">
+      <kbd className="pointer-events-none absolute right-2.5 top-1/2 hidden -translate-y-1/2 items-center gap-0.5 rounded-[6px] border border-border bg-background px-1.5 py-0.5 font-mono text-[10px] font-medium text-muted-foreground sm:inline-flex">
         <span className="text-xs">⌘</span>K
       </kbd>
     </motion.div>

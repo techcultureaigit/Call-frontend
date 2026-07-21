@@ -3,13 +3,9 @@ import {
   BarChart3,
   Bell,
   Briefcase,
-  ClipboardList,
   History,
   Inbox,
   LayoutDashboard,
-  LayoutGrid,
-  LineChart,
-  Megaphone,
   MessageSquareReply,
   Phone,
   PhoneCall,
@@ -17,13 +13,11 @@ import {
   Settings,
   Shield,
   ShieldCheck,
-  Sparkles,
   UserPlus,
   Users,
   UserSquare2,
   Voicemail,
   Volume2,
-  Workflow,
 } from "lucide-react";
 import type { NavModule } from "./permissions";
 
@@ -33,6 +27,7 @@ export interface NavItemConfig {
   href: string;
   icon: LucideIcon;
   module: NavModule;
+  description?: string;
   badge?: string;
   disabled?: boolean;
   external?: boolean;
@@ -61,7 +56,7 @@ export const dashboardNavigation: NavSection[] = [
   },
   {
     id: "agents",
-    label: "Agents",
+    label: "Survey Studio",
     items: [
       {
         id: "agents-create",
@@ -69,7 +64,6 @@ export const dashboardNavigation: NavSection[] = [
         href: "/agents/new",
         icon: UserPlus,
         module: "agents",
-        variant: "cta",
       },
       {
         id: "agents-templates",
@@ -78,12 +72,6 @@ export const dashboardNavigation: NavSection[] = [
         icon: Briefcase,
         module: "agents",
       },
-    ],
-  },
-  {
-    id: "library",
-    label: "Library",
-    items: [
       {
         id: "library-voices",
         title: "Voices",
@@ -97,6 +85,103 @@ export const dashboardNavigation: NavSection[] = [
         href: "/library/audio-buffer",
         icon: Inbox,
         module: "library",
+      },
+      {
+        id: "customers",
+        title: "Survey Data",
+        href: "/customers",
+        icon: UserSquare2,
+        module: "customers",
+      },
+    ],
+  },
+
+  {
+    id: "operations",
+    label: "Operations",
+    items: [
+      {
+        id: "calls",
+        title: "Calls",
+        href: "/calls",
+        icon: Phone,
+        module: "calls",
+        description: "Monitor live and historical call activity.",
+        children: [
+          {
+            id: "calls-live",
+            title: "Live Calls",
+            href: "/calls/live",
+            icon: PhoneCall,
+            module: "calls",
+            description: "Watch active calls in real time.",
+            badge: "Popular",
+          },
+          {
+            id: "calls-history",
+            title: "History",
+            href: "/calls/history",
+            icon: History,
+            module: "calls",
+            description: "Review past call records.",
+          },
+          {
+            id: "calls-recordings",
+            title: "Recordings",
+            href: "/calls/recordings",
+            icon: Voicemail,
+            module: "calls",
+            description: "Listen to stored call recordings.",
+          },
+        ],
+      },
+      {
+        id: "responses",
+        title: "Responses",
+        href: "/responses",
+        icon: MessageSquareReply,
+        module: "responses",
+        description: "Review inbound replies and flags.",
+        children: [
+          {
+            id: "responses-all",
+            title: "All Responses",
+            href: "/responses",
+            icon: MessageSquareReply,
+            module: "responses",
+            description: "See the full response inbox.",
+            badge: "Popular",
+          },
+          {
+            id: "responses-pending",
+            title: "Pending",
+            href: "/responses/pending",
+            icon: Inbox,
+            module: "responses",
+            description: "Items waiting for follow-up.",
+          },
+          {
+            id: "responses-flagged",
+            title: "Flagged",
+            href: "/responses/flagged",
+            icon: Shield,
+            module: "responses",
+            description: "Responses marked for review.",
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: "insights",
+    label: "Insights",
+    items: [
+      {
+        id: "reports",
+        title: "Reports",
+        href: "/reports",
+        icon: BarChart3,
+        module: "reports",
       },
     ],
   },
@@ -121,160 +206,8 @@ export const dashboardNavigation: NavSection[] = [
     ],
   },
   {
-    id: "engagement",
-    label: "Engagement",
-    items: [
-      {
-        id: "customers",
-        title: "Customers",
-        href: "/customers",
-        icon: UserSquare2,
-        module: "customers",
-      },
-      {
-        id: "campaigns",
-        title: "Campaigns",
-        href: "/campaigns",
-        icon: Megaphone,
-        module: "campaigns",
-        children: [
-          {
-            id: "campaigns-overview",
-            title: "Overview",
-            href: "/campaigns",
-            icon: LayoutGrid,
-            module: "campaigns",
-          },
-          {
-            id: "campaigns-templates",
-            title: "Templates",
-            href: "/campaigns/templates",
-            icon: Sparkles,
-            module: "campaigns",
-          },
-          {
-            id: "campaigns-analytics",
-            title: "Analytics",
-            href: "/campaigns/analytics",
-            icon: LineChart,
-            module: "campaigns",
-          },
-        ],
-      },
-      {
-        id: "surveys",
-        title: "Surveys",
-        href: "/surveys",
-        icon: ClipboardList,
-        module: "surveys",
-        children: [
-          {
-            id: "surveys-all",
-            title: "All Surveys",
-            href: "/surveys",
-            icon: ClipboardList,
-            module: "surveys",
-          },
-          {
-            id: "surveys-builder",
-            title: "Builder",
-            href: "/surveys/builder",
-            icon: Workflow,
-            module: "surveys",
-          },
-          {
-            id: "surveys-results",
-            title: "Results",
-            href: "/surveys/results",
-            icon: BarChart3,
-            module: "surveys",
-          },
-        ],
-      },
-    ],
-  },
-  {
-    id: "operations",
-    label: "Operations",
-    items: [
-      {
-        id: "calls",
-        title: "Calls",
-        href: "/calls",
-        icon: Phone,
-        module: "calls",
-        children: [
-          {
-            id: "calls-live",
-            title: "Live Calls",
-            href: "/calls/live",
-            icon: PhoneCall,
-            module: "calls",
-          },
-          {
-            id: "calls-history",
-            title: "History",
-            href: "/calls/history",
-            icon: History,
-            module: "calls",
-          },
-          {
-            id: "calls-recordings",
-            title: "Recordings",
-            href: "/calls/recordings",
-            icon: Voicemail,
-            module: "calls",
-          },
-        ],
-      },
-      {
-        id: "responses",
-        title: "Responses",
-        href: "/responses",
-        icon: MessageSquareReply,
-        module: "responses",
-        children: [
-          {
-            id: "responses-all",
-            title: "All Responses",
-            href: "/responses",
-            icon: MessageSquareReply,
-            module: "responses",
-          },
-          {
-            id: "responses-pending",
-            title: "Pending Review",
-            href: "/responses/pending",
-            icon: History,
-            module: "responses",
-          },
-          {
-            id: "responses-flagged",
-            title: "Flagged",
-            href: "/responses/flagged",
-            icon: Shield,
-            module: "responses",
-          },
-        ],
-      },
-    ],
-  },
-  {
-    id: "insights",
-    label: "Insights",
-    items: [
-      {
-        id: "reports",
-        title: "Reports",
-        href: "/reports",
-        icon: BarChart3,
-        module: "reports",
-      },
-    ],
-  },
-  {
     id: "system",
-    label: "System",
+    label: "Configurations",
     items: [
       {
         id: "notifications",
@@ -297,8 +230,10 @@ export const dashboardNavigation: NavSection[] = [
         icon: Settings,
         module: "settings",
       },
+      
     ],
   },
+
 ];
 
 export const authNavigation = {
@@ -324,11 +259,6 @@ export const routePaths = {
   users: "/users",
   roles: "/roles",
   customers: "/customers",
-  campaigns: {
-    root: "/campaigns",
-    templates: "/campaigns/templates",
-    analytics: "/campaigns/analytics",
-  },
   surveys: {
     root: "/surveys",
     builder: "/surveys/builder",

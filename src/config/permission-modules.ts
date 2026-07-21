@@ -38,7 +38,7 @@ export const PERMISSION_MODULE_GROUPS: PermissionModuleGroup[] = [
   },
   {
     id: "management",
-    label: "Management",
+    label: "Managementss",
     modules: [
       { id: "users", label: "Users" },
       { id: "roles", label: "Roles & Permissions" },
@@ -49,7 +49,6 @@ export const PERMISSION_MODULE_GROUPS: PermissionModuleGroup[] = [
     label: "Engagement",
     modules: [
       { id: "customers", label: "Customers" },
-      { id: "campaigns", label: "Campaigns" },
       { id: "surveys", label: "Surveys" },
       { id: "agents", label: "AI Agents" },
       { id: "library", label: "Library" },

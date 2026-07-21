@@ -3,13 +3,13 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { useSidebarStore } from "@/stores";
 import { useIsMobile, useIsTablet } from "@/hooks";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { LAYOUT } from "./constants";
 import { overlayTransition, sidebarTransition } from "./motion";
 import { SidebarLogo } from "./sidebar-logo";
 import { SidebarNav } from "./sidebar-nav";
+import { SidebarUserCard } from "./sidebar-user-card";
 
 interface AppSidebarProps {
   className?: string;
@@ -82,9 +82,23 @@ export function AppSidebar({ className }: AppSidebarProps) {
           <SidebarLogo />
         </div>
 
-        <ScrollArea className="relative z-10 min-h-0 flex-1 px-3 py-3">
+        <div
+          className={cn(
+            "relative z-10 min-h-0 flex-1 overflow-y-auto px-3 py-3",
+            "[scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
+          )}
+        >
           <SidebarNav collapsed={effectiveCollapsed} />
-        </ScrollArea>
+        </div>
+
+        <div
+          className={cn(
+            "relative z-10 shrink-0 border-t border-sidebar-border/60 p-3",
+            effectiveCollapsed && "px-2"
+          )}
+        >
+          <SidebarUserCard collapsed={effectiveCollapsed} />
+        </div>
       </motion.aside>
     </TooltipProvider>
   );

@@ -32,12 +32,12 @@ export function NavSubItem({
         href={href}
         onClick={onNavigate}
         className={cn(
-          "group relative flex items-center gap-2.5 rounded-[12px] py-2 pl-9 pr-3 text-[12.5px] font-medium tracking-[-0.01em]",
+          "group relative flex items-center gap-2.5 rounded-[6px] py-2 pl-9 pr-3 text-[12.5px] font-medium tracking-[-0.01em]",
           "transition-[background-color,color] duration-[280ms] ease-out",
           "hover:bg-sidebar-elevated hover:text-sidebar-foreground",
           isActive
-            ? "text-sidebar-active-foreground"
-            : "text-sidebar-foreground/55"
+            ? "bg-white text-neutral-900 shadow-[0_6px_16px_-8px_rgb(0_0_0/0.4)]"
+            : "text-sidebar-foreground"
         )}
         aria-current={isActive ? "page" : undefined}
       >
@@ -46,14 +46,14 @@ export function NavSubItem({
         {isActive && (
           <motion.span
             layoutId="sidebar-nested-active-dot"
-            className="absolute left-[0.95rem] top-1/2 size-2 -translate-y-1/2 rounded-full bg-sidebar-primary shadow-[0_0_8px_1px_var(--sidebar-primary)] ring-2 ring-sidebar/60"
+            className="absolute left-[0.95rem] top-1/2 size-2 -translate-y-1/2 rounded-full bg-neutral-900 ring-2 ring-white"
             transition={{ type: "spring", stiffness: 420, damping: 32 }}
           />
         )}
         {!isActive && (
-          <span className="absolute left-[1.15rem] top-1/2 size-1.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-sidebar-foreground/25 transition-colors duration-[280ms] group-hover:bg-sidebar-foreground/50" />
+          <span className="absolute left-[1.15rem] top-1/2 size-1.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-sidebar-foreground/50 transition-colors duration-[280ms] group-hover:bg-sidebar-foreground" />
         )}
-        <span className="truncate">{title}</span>
+        <span className={cn("truncate", isActive && "font-semibold")}>{title}</span>
       </Link>
     </motion.li>
   );

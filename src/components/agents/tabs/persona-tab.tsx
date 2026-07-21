@@ -1,12 +1,9 @@
 "use client";
 
 import {
-  AudioLines,
   BrainCircuit,
-  Check,
   ChevronDown,
   HelpCircle,
-  Layers,
   Mic,
   Music2,
   Sparkles,
@@ -283,47 +280,6 @@ function TtsAdvanced() {
   );
 }
 
-function OrbitAdvanced() {
-  const [temperature, setTemperature] = useState(0.7);
-  const [rate, setRate] = useState(1);
-  const [interrupt, setInterrupt] = useState(0.5);
-  const [noiseSuppression, setNoiseSuppression] = useState(true);
-  return (
-    <>
-      <RangeField
-        label="Temperature"
-        value={temperature}
-        min={0}
-        max={1}
-        step={0.1}
-        onChange={setTemperature}
-      />
-      <RangeField
-        label="Speaking rate"
-        value={rate}
-        min={0.5}
-        max={2}
-        step={0.1}
-        suffix="x"
-        onChange={setRate}
-      />
-      <RangeField
-        label="Interruption sensitivity"
-        value={interrupt}
-        min={0}
-        max={1}
-        step={0.1}
-        onChange={setInterrupt}
-      />
-      <ToggleRow
-        label="Noise suppression"
-        value={noiseSuppression}
-        onChange={setNoiseSuppression}
-      />
-    </>
-  );
-}
-
 function StackColumn({
   title,
   step,
@@ -462,35 +418,6 @@ function PipelineConnector() {
   );
 }
 
-const MODES = [
-  {
-    id: "orbit",
-    label: "Orbit",
-    sub: "Speech-to-Speech",
-    icon: AudioLines,
-    features: ["Lowest latency", "Single unified model"],
-
-  },
-  {
-    id: "quantum",
-    label: "Quantum",
-    sub: "STT · LLM · TTS",
-    icon: Layers,
-    features: ["Full pipeline control", "Best flexibility"],
-
-  },
-] as const;
-
-const S2S_PROVIDERS = [
-  { label: "OpenAI", value: "openai" },
-  { label: "Google", value: "google" },
-];
-
-const S2S_MODELS = [
-  { label: "GPT-4o Realtime", value: "gpt-4o-realtime" },
-  { label: "Gemini 2.0 Live", value: "gemini-live" },
-];
-
 const VOICE_OPTIONS = [
   { label: "Aakash", value: "Aakash" },
   { label: "Rachel", value: "Rachel" },
@@ -501,8 +428,6 @@ export function PersonaTab({ values, onChange }: PersonaTabProps) {
     key: K,
     val: AgentPersonaConfig[K]
   ) => onChange({ ...values, [key]: val });
-
-  const isOrbit = values.modelMode === "orbit";
 
   return (
     <div className="space-y-8">
@@ -541,73 +466,15 @@ export function PersonaTab({ values, onChange }: PersonaTabProps) {
         </header>
 
         <div className="space-y-7 p-5">
-          {/* Engine mode selection */}
-          <div className="space-y-3">
-            <FieldLabel>Engine mode</FieldLabel>
-            <div className="grid gap-3 sm:grid-cols-2">
-              {MODES.map((mode) => {
-                const isActive = values.modelMode === mode.id;
-                const ModeIcon = mode.icon;
-                return (
-                  <button
-                    key={mode.id}
-                    type="button"
-                    onClick={() => update("modelMode", mode.id)}
-                    className={cn(
-                      "group relative overflow-hidden rounded-2xl border p-4 text-left transition-all duration-300",
-                      isActive
-                        ? "border-brand/50 bg-brand/6 shadow-brand"
-                        : "border-border/70 bg-card hover:-translate-y-0.5 hover:border-border hover:shadow-elevated"
-                    )}
-                  >
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="flex items-center gap-3">
-                        <span
-                          className={cn(
-                            "flex size-11 items-center justify-center rounded-xl ring-1 ring-inset transition-colors",
-                            isActive
-                              ? "bg-brand text-brand-foreground ring-brand/30"
-                              : "bg-muted text-muted-foreground ring-border group-hover:text-foreground"
-                          )}
-                        >
-                          <ModeIcon className="size-5" />
-                        </span>
-                        <div>
-                          <p className="text-base font-semibold tracking-tight">
-                            {mode.label}
-                          </p>
-                          <p className="text-xs text-muted-foreground">
-                            {mode.sub}
-                          </p>
-                        </div>
-                      </div>
-                      <span
-                        className={cn(
-                          "flex size-5 items-center justify-center rounded-full border transition-all",
-                          isActive
-                            ? "border-brand bg-brand text-brand-foreground"
-                            : "border-border text-transparent"
-                        )}
-                      >
-                        <Check className="size-3" />
-                      </span>
-                    </div>
-                    <ul className="mt-3 space-y-1">
-                      {mode.features.map((f) => (
-                        <li
-                          key={f}
-                          className="flex items-center gap-1.5 text-xs text-muted-foreground"
-                        >
-                          <span className="size-1 rounded-full bg-brand/60" />
-                          {f}
-                        </li>
-                      ))}
-                    </ul>
-                
-                  </button>
-                );
-              })}
-            </div>
+          {/* Engine — Quantum (fixed) */}
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+            <FieldLabel>Engine</FieldLabel>
+            <p className="text-sm text-foreground">
+              Quantum
+              <span className="ml-2 text-muted-foreground">
+                · STT · LLM · TTS
+              </span>
+            </p>
           </div>
 
           {/* Global settings */}
@@ -654,130 +521,84 @@ export function PersonaTab({ values, onChange }: PersonaTabProps) {
             </div>
           </div>
 
-          {/* Model pipeline */}
+          {/* Model pipeline — Quantum STT → LLM → TTS */}
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <FieldLabel>Model pipeline</FieldLabel>
               <span className="hidden text-[11px] font-medium text-muted-foreground sm:block">
-                {isOrbit
-                  ? "Single unified speech-to-speech model"
-                  : "Audio flows left to right"}
+                Audio flows left to right
               </span>
             </div>
 
-            {isOrbit ? (
-              <motion.div
-                key="orbit-pipeline"
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.25 }}
-                className="max-w-xl"
-              >
-                <StackColumn
-                  title="Speech-to-Speech"
-                  step="Unified realtime model"
-                  icon={AudioLines}
-                  accent="brand"
-                  provider={values.llm.provider}
-                  model={values.llm.model}
-                  voice={values.tts.voice}
-                  providerOptions={S2S_PROVIDERS}
-                  modelOptions={S2S_MODELS}
-                  voiceOptions={VOICE_OPTIONS}
-                  onProviderChange={(v) =>
-                    update("llm", { ...values.llm, provider: v })
-                  }
-                  onModelChange={(v) =>
-                    update("llm", { ...values.llm, model: v })
-                  }
-                  onVoiceChange={(v) =>
-                    update("tts", { ...values.tts, voice: v })
-                  }
-                  advanced={<OrbitAdvanced />}
-                />
-                <p className="mt-2 flex items-center gap-1.5 text-[11px] text-muted-foreground">
-                  <Sparkles className="size-3.5 text-brand/70" />
-                  Orbit processes audio in a single model for the lowest latency
-                  — no separate STT / LLM / TTS stages.
-                </p>
-              </motion.div>
-            ) : (
-              <motion.div
-                key="quantum-pipeline"
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.25 }}
-                className="grid gap-3 lg:grid-cols-[1fr_auto_1fr_auto_1fr] lg:items-stretch"
-              >
-                <StackColumn
-                  title="Speech-to-Text"
-                  step="Input"
-                  icon={Mic}
-                  accent="teal"
-                  provider={values.stt.provider}
-                  model={values.stt.model}
-                  providerOptions={STT_PROVIDERS}
-                  modelOptions={[
-                    { label: "Saaras:v3", value: "Saaras:v3" },
-                    { label: "Nova-2", value: "nova-2" },
-                  ]}
-                  onProviderChange={(v) =>
-                    update("stt", { ...values.stt, provider: v })
-                  }
-                  onModelChange={(v) =>
-                    update("stt", { ...values.stt, model: v })
-                  }
-                  advanced={<SttAdvanced />}
-                />
-                <PipelineConnector />
-                <StackColumn
-                  title="Large Language Model"
-                  step="Reasoning"
-                  icon={BrainCircuit}
-                  accent="violet"
-                  provider={values.llm.provider}
-                  model={values.llm.model}
-                  providerOptions={LLM_PROVIDERS}
-                  modelOptions={[
-                    { label: "GPT-4o", value: "gpt-4o" },
-                    { label: "Claude Sonnet", value: "claude-sonnet" },
-                  ]}
-                  onProviderChange={(v) =>
-                    update("llm", { ...values.llm, provider: v })
-                  }
-                  onModelChange={(v) =>
-                    update("llm", { ...values.llm, model: v })
-                  }
-                  advanced={<LlmAdvanced />}
-                />
-                <PipelineConnector />
-                <StackColumn
-                  title="Text-to-Speech"
-                  step="Output"
-                  icon={Volume2}
-                  accent="amber"
-                  provider={values.tts.provider}
-                  model={values.tts.model}
-                  voice={values.tts.voice}
-                  providerOptions={TTS_PROVIDERS}
-                  modelOptions={[
-                    { label: "Google", value: "Google" },
-                    { label: "Neural2", value: "neural2" },
-                  ]}
-                  voiceOptions={VOICE_OPTIONS}
-                  onProviderChange={(v) =>
-                    update("tts", { ...values.tts, provider: v })
-                  }
-                  onModelChange={(v) =>
-                    update("tts", { ...values.tts, model: v })
-                  }
-                  onVoiceChange={(v) =>
-                    update("tts", { ...values.tts, voice: v })
-                  }
-                  advanced={<TtsAdvanced />}
-                />
-              </motion.div>
-            )}
+            <div className="grid gap-3 lg:grid-cols-[1fr_auto_1fr_auto_1fr] lg:items-stretch">
+              <StackColumn
+                title="Speech-to-Text"
+                step="Input"
+                icon={Mic}
+                accent="teal"
+                provider={values.stt.provider}
+                model={values.stt.model}
+                providerOptions={STT_PROVIDERS}
+                modelOptions={[
+                  { label: "Saaras:v3", value: "Saaras:v3" },
+                  { label: "Nova-2", value: "nova-2" },
+                ]}
+                onProviderChange={(v) =>
+                  update("stt", { ...values.stt, provider: v })
+                }
+                onModelChange={(v) =>
+                  update("stt", { ...values.stt, model: v })
+                }
+                advanced={<SttAdvanced />}
+              />
+              <PipelineConnector />
+              <StackColumn
+                title="Large Language Model"
+                step="Reasoning"
+                icon={BrainCircuit}
+                accent="violet"
+                provider={values.llm.provider}
+                model={values.llm.model}
+                providerOptions={LLM_PROVIDERS}
+                modelOptions={[
+                  { label: "GPT-4o", value: "gpt-4o" },
+                  { label: "Claude Sonnet", value: "claude-sonnet" },
+                ]}
+                onProviderChange={(v) =>
+                  update("llm", { ...values.llm, provider: v })
+                }
+                onModelChange={(v) =>
+                  update("llm", { ...values.llm, model: v })
+                }
+                advanced={<LlmAdvanced />}
+              />
+              <PipelineConnector />
+              <StackColumn
+                title="Text-to-Speech"
+                step="Output"
+                icon={Volume2}
+                accent="amber"
+                provider={values.tts.provider}
+                model={values.tts.model}
+                voice={values.tts.voice}
+                providerOptions={TTS_PROVIDERS}
+                modelOptions={[
+                  { label: "Google", value: "Google" },
+                  { label: "Neural2", value: "neural2" },
+                ]}
+                voiceOptions={VOICE_OPTIONS}
+                onProviderChange={(v) =>
+                  update("tts", { ...values.tts, provider: v })
+                }
+                onModelChange={(v) =>
+                  update("tts", { ...values.tts, model: v })
+                }
+                onVoiceChange={(v) =>
+                  update("tts", { ...values.tts, voice: v })
+                }
+                advanced={<TtsAdvanced />}
+              />
+            </div>
           </div>
 
           {/* Background audio */}

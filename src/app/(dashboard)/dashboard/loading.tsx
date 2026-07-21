@@ -3,7 +3,7 @@ import { DashboardSkeleton } from "@/components/dashboard";
 
 export default function DashboardLoading() {
   return (
-    <PageContainer size="wide">
+    <PageContainer size="full">
       <DashboardSkeleton />
     </PageContainer>
   );

@@ -62,7 +62,7 @@ export const useSidebarStore = create<SidebarStore>()(
       name: storageKeys.sidebarCollapsed,
       partialize: (state) => ({
         isCollapsed: state.isCollapsed,
-        expandedGroups: state.expandedGroups,
+        // Don't persist open dropdowns — always start collapsed
       }),
     }
   )
@@ -71,10 +71,8 @@ export const useSidebarStore = create<SidebarStore>()(
 export function selectIsGroupExpanded(
   expandedGroups: Record<string, boolean>,
   groupId: string,
-  activeGroupIds: string[]
+  _activeGroupIds?: string[]
 ): boolean {
-  if (expandedGroups[groupId] !== undefined) {
-    return expandedGroups[groupId];
-  }
-  return activeGroupIds.includes(groupId);
+  // Only open when user explicitly expanded — closed by default
+  return expandedGroups[groupId] === true;
 }

@@ -1,4 +1,3 @@
-import { MOCK_CAMPAIGNS } from "@/lib/data/mock-campaigns";
 import type { ReportsData, ReportsQueryParams } from "@/types/reports";
 
 const CHART_COLORS = [
@@ -7,6 +6,15 @@ const CHART_COLORS = [
   "var(--chart-3)",
   "var(--chart-4)",
   "var(--chart-5)",
+];
+
+const SURVEY_OPTIONS = [
+  { id: "surv-1", name: "Enterprise NPS Survey", responses: 1240 },
+  { id: "surv-2", name: "Product Feedback Loop", responses: 980 },
+  { id: "surv-3", name: "Customer Renewal Follow-up", responses: 412 },
+  { id: "surv-4", name: "Support Satisfaction", responses: 578 },
+  { id: "surv-5", name: "Onboarding Check-in", responses: 298 },
+  { id: "surv-6", name: "Churn Prevention", responses: 356 },
 ];
 
 function defaultDateRange() {
@@ -19,15 +27,15 @@ function defaultDateRange() {
   };
 }
 
-function scaleValue(base: number, campaignId: string): number {
-  if (campaignId === "all") return base;
-  const idx = MOCK_CAMPAIGNS.findIndex((c) => c.id === campaignId);
+function scaleValue(base: number, surveyId: string): number {
+  if (surveyId === "all") return base;
+  const idx = SURVEY_OPTIONS.findIndex((c) => c.id === surveyId);
   if (idx === -1) return base;
   return Math.round(base * (0.6 + (idx % 5) * 0.08));
 }
 
 export function getReportCampaigns() {
-  return MOCK_CAMPAIGNS.map((c) => ({ id: c.id, name: c.name }));
+  return SURVEY_OPTIONS.map((c) => ({ id: c.id, name: c.name }));
 }
 
 export function generateReportsData(
@@ -38,7 +46,7 @@ export function generateReportsData(
     to: params.to ?? defaultDateRange().to,
   };
   const campaignId = params.campaignId ?? "all";
-  const campaign = MOCK_CAMPAIGNS.find((c) => c.id === campaignId);
+  const campaign = SURVEY_OPTIONS.find((c) => c.id === campaignId);
 
   const days = 7;
   const callsOverTime: ReportsData["callsOverTime"] = Array.from(
@@ -66,18 +74,15 @@ export function generateReportsData(
     failed: 32 - i * 2,
   }));
 
-  const responsesByCampaign = MOCK_CAMPAIGNS.slice(0, 6).map((c, i) => ({
-    label: c.name.length > 18 ? c.name.slice(0, 16) + "…" : c.name,
-    value: campaignId === "all" || campaignId === c.id
-      ? c.stats.responses
-      : campaignId === c.id
-        ? c.stats.responses
-        : 0,
-    responses:
-      campaignId === "all" || campaignId === c.id
-        ? c.stats.responses
-        : 0,
-  })).filter((r) => r.value > 0 || campaignId === "all");
+  const responsesByCampaign = SURVEY_OPTIONS.slice(0, 6)
+    .map((c) => ({
+      label: c.name.length > 18 ? c.name.slice(0, 16) + "…" : c.name,
+      value:
+        campaignId === "all" || campaignId === c.id ? c.responses : 0,
+      responses:
+        campaignId === "all" || campaignId === c.id ? c.responses : 0,
+    }))
+    .filter((r) => r.value > 0 || campaignId === "all");
 
   const campaignBreakdown: ReportsData["campaignBreakdown"] = [
     { name: "Outbound Sales", value: 35, fill: CHART_COLORS[0] },
@@ -162,7 +167,7 @@ export function generateReportsData(
     responsesByCampaign:
       responsesByCampaign.length > 0
         ? responsesByCampaign
-        : [{ label: campaign?.name ?? "Campaign", value: 0, responses: 0 }],
+        : [{ label: campaign?.name ?? "Survey", value: 0, responses: 0 }],
     campaignBreakdown,
     sentimentBreakdown,
     dateRange: range,
