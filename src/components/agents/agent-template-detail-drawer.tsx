@@ -27,7 +27,7 @@ export function AgentTemplateDetailDrawer({
       <SheetHeader onClose={() => onOpenChange(false)}>
         <div className="flex items-start gap-3">
           <div
-            className="flex size-12 items-center justify-center rounded-2xl border border-white/10 bg-primary/10"
+            className="flex size-12 items-center justify-center rounded-[6px] border border-white/10 bg-primary/10"
             style={{ backgroundColor: `${template.accent}18` }}
           >
             <Volume2 className="size-5" style={{ color: template.accent }} />
@@ -46,7 +46,7 @@ export function AgentTemplateDetailDrawer({
           {template.description}
         </p>
 
-        <div className="grid gap-3 rounded-2xl border border-border/50 bg-muted/20 p-4 sm:grid-cols-2">
+        <div className="grid gap-3 rounded-[6px] border border-border/50 bg-muted/20 p-4 sm:grid-cols-2">
           <div>
             <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
               Tone
@@ -93,7 +93,7 @@ export function AgentTemplateDetailDrawer({
           </div>
         </div>
 
-        <Button asChild className="w-full rounded-xl">
+        <Button asChild className="w-full rounded-[6px]">
           <Link href={`/agents/new?template=${template.id}`}>
             + Create Agent from Template
           </Link>

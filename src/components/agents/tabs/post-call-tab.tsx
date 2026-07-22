@@ -107,7 +107,7 @@ export function PostCallTab({ values, onChange }: PostCallTabProps) {
                 onChange({ ...values, callbackUrl: e.target.value })
               }
               placeholder="https://your-webhook-url.com/callback"
-              className="rounded-xl"
+              className="rounded-[6px]"
             />
           </div>
           <div className="space-y-1.5">
@@ -120,13 +120,13 @@ export function PostCallTab({ values, onChange }: PostCallTabProps) {
                   onChange({ ...values, callbackSecret: e.target.value })
                 }
                 placeholder="••••••••••••"
-                className="rounded-xl font-mono"
+                className="rounded-[6px] font-mono"
               />
               <Button
                 variant="outline"
                 size="icon"
                 onClick={copySecret}
-                className="shrink-0 rounded-xl"
+                className="shrink-0 rounded-[6px]"
               >
                 <Copy className="size-3.5" />
               </Button>
@@ -145,15 +145,15 @@ export function PostCallTab({ values, onChange }: PostCallTabProps) {
             value={bucketName}
             onChange={(e) => setBucketName(e.target.value)}
             placeholder="Bucket Name *"
-            className="rounded-xl"
+            className="rounded-[6px]"
           />
           <Input
             value={bucketDesc}
             onChange={(e) => setBucketDesc(e.target.value)}
             placeholder="Description *"
-            className="rounded-xl"
+            className="rounded-[6px]"
           />
-          <Button onClick={addBucket} size="icon" className="rounded-xl">
+          <Button onClick={addBucket} size="icon" className="rounded-[6px]">
             <Plus className="size-4" />
           </Button>
         </div>
@@ -179,15 +179,15 @@ export function PostCallTab({ values, onChange }: PostCallTabProps) {
             value={questionType}
             onChange={(e) => setQuestionType(e.target.value)}
             options={QUESTION_TYPES}
-            className="rounded-xl"
+            className="rounded-[6px]"
           />
           <Input
             value={questionText}
             onChange={(e) => setQuestionText(e.target.value)}
             placeholder="Question *"
-            className="rounded-xl"
+            className="rounded-[6px]"
           />
-          <Button onClick={addQuestion} size="icon" className="rounded-xl">
+          <Button onClick={addQuestion} size="icon" className="rounded-[6px]">
             <Plus className="size-4" />
           </Button>
         </div>

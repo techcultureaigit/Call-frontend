@@ -57,7 +57,7 @@ export function RoleCard({
         }
       }}
       className={cn(
-        "group relative w-full cursor-pointer rounded-xl border bg-card p-5 text-left shadow-card transition-all duration-200",
+        "group relative w-full cursor-pointer rounded-[6px] border bg-card p-5 text-left shadow-card transition-all duration-200",
         "hover:shadow-elevated hover:border-border",
         isSelected
           ? "border-primary/40 ring-2 ring-primary/20 shadow-elevated"

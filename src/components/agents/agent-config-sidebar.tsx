@@ -83,7 +83,7 @@ export function AgentConfigSidebar({
   return (
     <aside className="space-y-4 lg:sticky lg:top-4">
       {/* UUID card */}
-      <div className="rounded-2xl border border-border/70 bg-card p-4 shadow-card">
+      <div className="rounded-[6px] border border-border/70 bg-card p-4 shadow-card">
         <div className="flex items-center justify-between">
           <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
             Agent UUID
@@ -114,7 +114,7 @@ export function AgentConfigSidebar({
       </div>
 
       {/* Voice & Chat preview */}
-      <div className="flex flex-col overflow-hidden rounded-2xl border border-border/70 bg-card shadow-card">
+      <div className="flex flex-col overflow-hidden rounded-[6px] border border-border/70 bg-card shadow-card">
         <div className="flex items-center justify-between border-b border-border/50 bg-muted/30 px-4 py-3">
           <div className="flex items-center gap-2.5">
             <span className="flex size-8 items-center justify-center rounded-lg bg-brand/10 text-brand ring-1 ring-inset ring-brand/15">
@@ -180,8 +180,8 @@ export function AgentConfigSidebar({
           {messages.length === 0 ? (
             <div className="flex flex-1 flex-col items-center justify-center px-6 py-12 text-center">
               <div className="relative mb-5">
-                <div className="absolute inset-0 animate-pulse rounded-2xl bg-brand/10 blur-xl" />
-                <div className="relative flex size-16 items-center justify-center rounded-2xl border border-border/70 bg-card shadow-elevated">
+                <div className="absolute inset-0 animate-pulse rounded-[6px] bg-brand/10 blur-xl" />
+                <div className="relative flex size-16 items-center justify-center rounded-[6px] border border-border/70 bg-card shadow-elevated">
                   <Bot className="size-8 text-brand/70" />
                 </div>
               </div>
@@ -200,7 +200,7 @@ export function AgentConfigSidebar({
                   initial={{ opacity: 0, y: 6 }}
                   animate={{ opacity: 1, y: 0 }}
                   className={cn(
-                    "max-w-[90%] rounded-2xl px-3.5 py-2 text-sm shadow-subtle",
+                    "max-w-[90%] rounded-[6px] px-3.5 py-2 text-sm shadow-subtle",
                     msg.role === "user"
                       ? "ml-auto rounded-br-md brand-gradient text-brand-foreground"
                       : "rounded-bl-md border border-border/60 bg-card text-foreground"

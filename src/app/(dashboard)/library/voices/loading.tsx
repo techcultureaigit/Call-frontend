@@ -10,10 +10,10 @@ export default function VoicesLoading() {
           <Skeleton className="h-4 w-96 max-w-full" />
         </div>
         <div className="grid gap-6 lg:grid-cols-[280px_1fr]">
-          <Skeleton className="h-[520px] rounded-2xl" />
+          <Skeleton className="h-[520px] rounded-[6px]" />
           <div className="grid gap-4 lg:grid-cols-2">
             {Array.from({ length: 8 }).map((_, i) => (
-              <Skeleton key={i} className="h-32 rounded-2xl" />
+              <Skeleton key={i} className="h-32 rounded-[6px]" />
             ))}
           </div>
         </div>

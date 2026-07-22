@@ -137,7 +137,7 @@ export function ActivityLogsTable({
 
   if (isLoading) {
     return (
-      <div className="overflow-hidden rounded-xl border border-border/60 bg-card shadow-card">
+      <div className="overflow-hidden rounded-[6px] border border-border/60 bg-card shadow-card">
         <div className="space-y-0 divide-y divide-border/50 p-4">
           {Array.from({ length: 8 }).map((_, i) => (
             <div key={i} className="flex gap-4 py-4">
@@ -153,7 +153,7 @@ export function ActivityLogsTable({
 
   if (logs.length === 0) {
     return (
-      <div className="overflow-hidden rounded-xl border border-border/60 bg-card shadow-card">
+      <div className="overflow-hidden rounded-[6px] border border-border/60 bg-card shadow-card">
         <EmptyState
           icon={ScrollText}
           title="No activity logs found"
@@ -164,7 +164,7 @@ export function ActivityLogsTable({
   }
 
   return (
-    <div className="overflow-hidden rounded-xl border border-border/60 bg-card shadow-card">
+    <div className="overflow-hidden rounded-[6px] border border-border/60 bg-card shadow-card">
       <div className="overflow-x-auto">
         <table className="w-full min-w-[900px]">
           <thead>

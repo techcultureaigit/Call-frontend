@@ -195,7 +195,7 @@ export function TelephonyView() {
 
           <div className="grid gap-6 lg:grid-cols-3">
             <div className="lg:col-span-2">
-              <div className="overflow-hidden rounded-2xl border border-border/40 bg-card shadow-card">
+              <div className="overflow-hidden rounded-[6px] border border-border/40 bg-card shadow-card">
                 <div className="flex border-b border-border/40">
                   {TELEPHONY_TABS.map((tab) => {
                     const isActive = activeTab === tab.id;
@@ -308,7 +308,7 @@ function BuyNumberForm({
           value={values.label}
           onChange={(e) => onChange({ ...values, label: e.target.value })}
           placeholder="e.g. Marketing Number, Support Line"
-          className="h-10 rounded-xl"
+          className="h-10 rounded-[6px]"
         />
       </div>
 
@@ -321,7 +321,7 @@ function BuyNumberForm({
             onChange={(e) => onCountryChange(e.target.value)}
             options={TELEPHONY_COUNTRIES}
             placeholder="Select country"
-            className="h-10 rounded-xl"
+            className="h-10 rounded-[6px]"
           />
         </div>
         <div className="space-y-2">
@@ -335,7 +335,7 @@ function BuyNumberForm({
               values.country ? "Select number" : "Select country first"
             }
             disabled={!values.country}
-            className="h-10 rounded-xl"
+            className="h-10 rounded-[6px]"
           />
         </div>
       </div>
@@ -351,7 +351,7 @@ function BuyNumberForm({
         <Button
           type="submit"
           disabled={isSubmitting}
-          className="rounded-xl px-6"
+          className="rounded-[6px] px-6"
         >
           Buy Number
         </Button>
@@ -414,7 +414,7 @@ function SipTrunkForm({
               onChange({ ...values, trunkName: e.target.value })
             }
             placeholder="My SIP Trunk"
-            className="h-10 rounded-xl"
+            className="h-10 rounded-[6px]"
           />
         </div>
         <div className="space-y-2">
@@ -428,12 +428,12 @@ function SipTrunkForm({
               onChange({ ...values, sipIpAddress: e.target.value })
             }
             placeholder="e.g., 44.229.228.186/32"
-            className="h-10 rounded-xl"
+            className="h-10 rounded-[6px]"
           />
         </div>
       </div>
 
-      <div className="flex gap-3 rounded-xl border border-border/40 bg-muted/30 p-4">
+      <div className="flex gap-3 rounded-[6px] border border-border/40 bg-muted/30 p-4">
         <Info className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
         <p className="text-xs leading-relaxed text-muted-foreground">
           <span className="font-semibold text-foreground">
@@ -458,7 +458,7 @@ function SipTrunkForm({
               onChange({ ...values, countryCode: e.target.value })
             }
             options={SIP_COUNTRY_CODES}
-            className="h-10 rounded-xl"
+            className="h-10 rounded-[6px]"
           />
           <p className="text-[11px] text-muted-foreground">
             Select the country ISO code
@@ -475,7 +475,7 @@ function SipTrunkForm({
               onChange({ ...values, phoneNumber: e.target.value })
             }
             placeholder="e.g., 919898989797"
-            className="h-10 rounded-xl"
+            className="h-10 rounded-[6px]"
           />
           <p className="text-[11px] text-muted-foreground">
             Enter the number as per SIP
@@ -499,7 +499,7 @@ function SipTrunkForm({
                 onChange({ ...values, username: e.target.value })
               }
               placeholder="Authentication username"
-              className="h-10 rounded-xl"
+              className="h-10 rounded-[6px]"
             />
           </div>
           <div className="space-y-2">
@@ -514,7 +514,7 @@ function SipTrunkForm({
                 onChange({ ...values, password: e.target.value })
               }
               placeholder="Authentication password"
-              className="h-10 rounded-xl"
+              className="h-10 rounded-[6px]"
             />
           </div>
         </div>
@@ -524,7 +524,7 @@ function SipTrunkForm({
         <Button
           type="submit"
           disabled={isSubmitting}
-          className="rounded-xl px-6"
+          className="rounded-[6px] px-6"
         >
           Integrate SIP Trunk
         </Button>

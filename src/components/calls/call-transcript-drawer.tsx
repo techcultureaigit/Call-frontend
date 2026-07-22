@@ -80,7 +80,7 @@ export function CallTranscriptDrawer({
             <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
               Transcript
             </h3>
-            <div className="space-y-3 rounded-xl border border-border/60 bg-card p-4">
+            <div className="space-y-3 rounded-[6px] border border-border/60 bg-card p-4">
               {call.transcript.map((line, i) => (
                 <div
                   key={i}

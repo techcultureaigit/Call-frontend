@@ -35,7 +35,7 @@ export function ReportsKpiGrid({
     return (
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
         {Array.from({ length: 6 }).map((_, i) => (
-          <Skeleton key={i} className="h-28 rounded-xl" />
+          <Skeleton key={i} className="h-28 rounded-[6px]" />
         ))}
       </div>
     );
@@ -52,7 +52,7 @@ export function ReportsKpiGrid({
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: i * 0.04 }}
-            className="rounded-xl border border-border/60 bg-card p-4 shadow-card"
+            className="rounded-[6px] border border-border/60 bg-card p-4 shadow-card"
           >
             <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
               {kpi.label}

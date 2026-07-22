@@ -28,7 +28,7 @@ export function ActivityLogsTimeline({
 }: ActivityLogsTimelineProps) {
   if (isLoading) {
     return (
-      <div className="space-y-4 rounded-xl border border-border/60 bg-card p-6 shadow-card">
+      <div className="space-y-4 rounded-[6px] border border-border/60 bg-card p-6 shadow-card">
         {Array.from({ length: 6 }).map((_, i) => (
           <div key={i} className="flex gap-4">
             <Skeleton className="size-8 rounded-full" />
@@ -44,7 +44,7 @@ export function ActivityLogsTimeline({
 
   if (logs.length === 0) {
     return (
-      <div className="rounded-xl border border-border/60 bg-card shadow-card">
+      <div className="rounded-[6px] border border-border/60 bg-card shadow-card">
         <EmptyState
           icon={ScrollText}
           title="No activity logs found"
@@ -55,7 +55,7 @@ export function ActivityLogsTimeline({
   }
 
   return (
-    <div className="rounded-xl border border-border/60 bg-card p-4 shadow-card sm:p-6">
+    <div className="rounded-[6px] border border-border/60 bg-card p-4 shadow-card sm:p-6">
       <div className="space-y-0">
         {logs.map((log, index) => {
           const [first, last] = log.performedBy.name.split(" ");
@@ -82,7 +82,7 @@ export function ActivityLogsTimeline({
               <button
                 type="button"
                 onClick={() => onItemClick(log)}
-                className="min-w-0 flex-1 rounded-xl border border-border/50 bg-muted/10 p-4 text-left transition-colors hover:border-border hover:bg-muted/25"
+                className="min-w-0 flex-1 rounded-[6px] border border-border/50 bg-muted/10 p-4 text-left transition-colors hover:border-border hover:bg-muted/25"
               >
                 <div className="flex flex-wrap items-center gap-2">
                   <ActivityLogActionBadge action={log.action} />

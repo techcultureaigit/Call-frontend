@@ -37,7 +37,7 @@ export function SettingsSaveBar({
                 size="sm"
                 onClick={onDiscard}
                 disabled={isSaving}
-                className="rounded-xl"
+                className="rounded-[6px]"
               >
                 <RotateCcw className="size-3.5" />
                 Discard
@@ -46,7 +46,7 @@ export function SettingsSaveBar({
                 size="sm"
                 onClick={onSave}
                 disabled={isSaving}
-                className="rounded-xl"
+                className="rounded-[6px]"
               >
                 <Save className="size-3.5" />
                 Save Changes

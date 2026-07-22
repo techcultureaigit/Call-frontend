@@ -35,7 +35,7 @@ export function SystemSection({ values, onChange }: SystemSectionProps) {
           <Input
             value={values.applicationName}
             onChange={(e) => update("applicationName", e.target.value)}
-            className="rounded-xl"
+            className="rounded-[6px]"
           />
         </SettingsField>
         <SettingsField label="Company Logo">
@@ -43,13 +43,13 @@ export function SystemSection({ values, onChange }: SystemSectionProps) {
             <Input
               readOnly
               value={values.companyLogoUrl ? "Logo uploaded" : "No logo"}
-              className="rounded-xl"
+              className="rounded-[6px]"
             />
             <Button
               type="button"
               variant="outline"
               size="icon"
-              className="shrink-0 rounded-xl"
+              className="shrink-0 rounded-[6px]"
               onClick={() => logoRef.current?.click()}
             >
               <Upload className="size-4" />
@@ -66,7 +66,7 @@ export function SystemSection({ values, onChange }: SystemSectionProps) {
               { label: "UTC", value: "UTC" },
               { label: "India (IST)", value: "Asia/Kolkata" },
             ]}
-            className="rounded-xl"
+            className="rounded-[6px]"
           />
         </SettingsField>
         <SettingsField label="Default Language">
@@ -78,7 +78,7 @@ export function SystemSection({ values, onChange }: SystemSectionProps) {
               { label: "Spanish", value: "es" },
               { label: "Hindi", value: "hi" },
             ]}
-            className="rounded-xl"
+            className="rounded-[6px]"
           />
         </SettingsField>
         <SettingsField label="Backup Schedule">
@@ -90,12 +90,12 @@ export function SystemSection({ values, onChange }: SystemSectionProps) {
               { label: "Weekly (Sunday)", value: "weekly-sun" },
               { label: "Monthly (1st)", value: "monthly-1st" },
             ]}
-            className="rounded-xl"
+            className="rounded-[6px]"
           />
         </SettingsField>
       </div>
 
-      <div className="flex items-center justify-between rounded-xl border border-amber-500/30 bg-amber-500/5 px-4 py-3">
+      <div className="flex items-center justify-between rounded-[6px] border border-amber-500/30 bg-amber-500/5 px-4 py-3">
         <div>
           <Label className="text-sm font-medium">Maintenance Mode</Label>
           <p className="mt-0.5 text-xs text-muted-foreground">

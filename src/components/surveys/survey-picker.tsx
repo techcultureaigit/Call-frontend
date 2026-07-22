@@ -20,7 +20,7 @@ export function SurveyPicker({ onSelect, onCreate, isCreating }: SurveyPickerPro
     <div className="flex min-h-[calc(100vh-8rem)] flex-col items-center justify-center px-4 py-12">
       <div className="w-full max-w-2xl space-y-8 text-center">
         <div>
-          <div className="mx-auto flex size-16 items-center justify-center rounded-2xl bg-primary/10">
+          <div className="mx-auto flex size-16 items-center justify-center rounded-[6px] bg-primary/10">
             <Sparkles className="size-8 text-primary" />
           </div>
           <h1 className="mt-4 text-2xl font-bold tracking-tight">
@@ -47,7 +47,7 @@ export function SurveyPicker({ onSelect, onCreate, isCreating }: SurveyPickerPro
           {isLoading ? (
             <div className="space-y-2">
               {Array.from({ length: 4 }).map((_, i) => (
-                <Skeleton key={i} className="h-16 rounded-xl" />
+                <Skeleton key={i} className="h-16 rounded-[6px]" />
               ))}
             </div>
           ) : (

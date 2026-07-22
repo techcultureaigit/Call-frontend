@@ -67,7 +67,7 @@ export function DangerSection() {
           {DANGER_ACTIONS.map((item) => (
             <div
               key={item.id}
-              className="flex flex-col gap-3 rounded-xl border border-destructive/20 bg-destructive/5 px-4 py-4 sm:flex-row sm:items-center sm:justify-between"
+              className="flex flex-col gap-3 rounded-[6px] border border-destructive/20 bg-destructive/5 px-4 py-4 sm:flex-row sm:items-center sm:justify-between"
             >
               <div>
                 <p className="text-sm font-semibold text-destructive">
@@ -81,7 +81,7 @@ export function DangerSection() {
                 variant="destructive"
                 size="sm"
                 onClick={() => setAction(item.id)}
-                className="shrink-0 rounded-xl"
+                className="shrink-0 rounded-[6px]"
               >
                 <Trash2 className="size-3.5" />
                 {item.title}
@@ -100,7 +100,7 @@ export function DangerSection() {
           }
         }}
       >
-        <DialogContent className="rounded-2xl sm:max-w-md">
+        <DialogContent className="rounded-[6px] sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-destructive">
               <AlertTriangle className="size-5" />
@@ -120,7 +120,7 @@ export function DangerSection() {
               value={confirmInput}
               onChange={(e) => setConfirmInput(e.target.value)}
               placeholder={current?.confirmText}
-              className="rounded-xl font-mono"
+              className="rounded-[6px] font-mono"
             />
           </div>
           <DialogFooter>
@@ -130,7 +130,7 @@ export function DangerSection() {
                 setAction(null);
                 setConfirmInput("");
               }}
-              className="rounded-xl"
+              className="rounded-[6px]"
             >
               Cancel
             </Button>
@@ -138,7 +138,7 @@ export function DangerSection() {
               variant="destructive"
               disabled={confirmInput !== current?.confirmText}
               onClick={handleConfirm}
-              className="rounded-xl"
+              className="rounded-[6px]"
             >
               Confirm
             </Button>

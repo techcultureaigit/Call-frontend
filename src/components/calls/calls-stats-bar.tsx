@@ -21,7 +21,7 @@ export function CallsStatsBar({ stats, isLoading }: CallsStatsBarProps) {
     return (
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         {Array.from({ length: 4 }).map((_, i) => (
-          <Skeleton key={i} className="h-20 rounded-xl" />
+          <Skeleton key={i} className="h-20 rounded-[6px]" />
         ))}
       </div>
     );
@@ -68,7 +68,7 @@ export function CallsStatsBar({ stats, isLoading }: CallsStatsBarProps) {
           initial={{ opacity: 0, y: 6 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: i * 0.05 }}
-          className="flex items-center gap-3 rounded-xl border border-border/60 bg-card p-4 shadow-card"
+          className="flex items-center gap-3 rounded-[6px] border border-border/60 bg-card p-4 shadow-card"
         >
           <div className={`rounded-lg p-2.5 ${item.bg}`}>
             <item.icon className={`size-4 ${item.color}`} />

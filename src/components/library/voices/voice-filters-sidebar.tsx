@@ -21,7 +21,7 @@ export function VoiceFiltersSidebar({
   onReset,
 }: VoiceFiltersSidebarProps) {
   return (
-    <div className="rounded-2xl border border-border/40 bg-card p-4 shadow-card">
+    <div className="rounded-[6px] border border-border/40 bg-card p-4 shadow-card">
       <div className="flex flex-col gap-3 xl:flex-row xl:items-center">
         <div className="relative min-w-0 flex-1">
           <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
@@ -31,7 +31,7 @@ export function VoiceFiltersSidebar({
               onChange({ ...filters, search: e.target.value })
             }
             placeholder="Search voices..."
-            className="h-10 rounded-xl pl-9"
+            className="h-10 rounded-[6px] pl-9"
             aria-label="Search voices"
           />
         </div>
@@ -102,14 +102,14 @@ export function VoiceFiltersSidebar({
             }
             options={VOICE_LANGUAGE_OPTIONS}
             placeholder="Language"
-            className="h-10 w-full rounded-xl sm:w-45"
+            className="h-10 w-full rounded-[6px] sm:w-45"
             aria-label="Available languages"
           />
 
           <Button
             type="button"
             variant="outline"
-            className="h-10 shrink-0 rounded-xl"
+            className="h-10 shrink-0 rounded-[6px]"
             onClick={onReset}
           >
             Reset
@@ -128,7 +128,7 @@ function FilterGroup({
   children: ReactNode;
 }) {
   return (
-    <div className="flex items-center gap-1.5 rounded-xl border border-border/50 bg-muted/20 p-1">
+    <div className="flex items-center gap-1.5 rounded-[6px] border border-border/50 bg-muted/20 p-1">
       <span className="hidden px-2 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground lg:inline">
         {label}
       </span>
@@ -153,7 +153,7 @@ function FilterToggle({
       type="button"
       onClick={onClick}
       className={cn(
-        "inline-flex h-8 items-center justify-center gap-1.5 rounded-lg px-2.5 text-xs font-medium transition-all",
+        "inline-flex h-8 items-center justify-center gap-1.5 rounded-[6px] px-2.5 text-xs font-medium transition-all",
         active
           ? "bg-primary text-primary-foreground shadow-sm"
           : "text-muted-foreground hover:bg-background hover:text-foreground"

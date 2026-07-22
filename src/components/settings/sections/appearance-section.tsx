@@ -54,7 +54,7 @@ export function AppearanceSection({
                 type="button"
                 onClick={() => update("theme", opt.value)}
                 className={cn(
-                  "flex flex-col items-center gap-2 rounded-xl border px-4 py-4 transition-all",
+                  "flex flex-col items-center gap-2 rounded-[6px] border px-4 py-4 transition-all",
                   selected
                     ? "border-primary/40 bg-primary/10 shadow-subtle"
                     : "border-border/40 bg-muted/20 hover:bg-muted/40"
@@ -85,7 +85,7 @@ export function AppearanceSection({
               type="button"
               onClick={() => update("accentColor", color.value)}
               className={cn(
-                "flex items-center gap-2 rounded-xl border px-3 py-2 transition-all",
+                "flex items-center gap-2 rounded-[6px] border px-3 py-2 transition-all",
                 values.accentColor === color.value
                   ? "border-primary/40 bg-primary/5"
                   : "border-border/40 hover:bg-muted/30"
@@ -117,10 +117,10 @@ export function AppearanceSection({
                 { label: "Compact", value: "compact" },
                 { label: "Floating", value: "floating" },
               ]}
-              className="rounded-xl"
+              className="rounded-[6px]"
             />
           </div>
-          <div className="flex items-center justify-between rounded-xl border border-border/40 bg-muted/20 px-4 py-3">
+          <div className="flex items-center justify-between rounded-[6px] border border-border/40 bg-muted/20 px-4 py-3">
             <div>
               <Label className="text-sm font-medium">Compact Mode</Label>
               <p className="mt-0.5 text-xs text-muted-foreground">

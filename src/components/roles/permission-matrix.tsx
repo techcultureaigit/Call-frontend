@@ -88,7 +88,7 @@ export function PermissionMatrix({
   };
 
   return (
-    <div className={cn("overflow-hidden rounded-xl border border-border/60", className)}>
+    <div className={cn("overflow-hidden rounded-[6px] border border-border/60", className)}>
       <div className="overflow-x-auto">
         <table className="w-full min-w-[560px]">
           <thead>

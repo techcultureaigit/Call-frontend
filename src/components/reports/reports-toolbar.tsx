@@ -78,7 +78,7 @@ export function ReportsToolbar({
         </div>
       </div>
 
-      <div className="rounded-xl border border-border/60 bg-card p-4 shadow-card">
+      <div className="rounded-[6px] border border-border/60 bg-card p-4 shadow-card">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-end">
           <div className="flex flex-1 flex-col gap-3 sm:flex-row sm:items-end">
             <div className="space-y-1.5">

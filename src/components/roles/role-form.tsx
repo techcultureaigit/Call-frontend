@@ -70,7 +70,7 @@ export function RoleForm({
   return (
     <form
       onSubmit={handleFormSubmit}
-      className="w-full space-y-6 rounded-xl border border-border/60 bg-card shadow-card"
+      className="w-full space-y-6 rounded-[6px] border border-border/60 bg-card shadow-card"
     >
       <div className="space-y-5 p-6 lg:p-8">
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">

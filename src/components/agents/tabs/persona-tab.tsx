@@ -314,11 +314,11 @@ function StackColumn({
   const [expanded, setExpanded] = useState(false);
 
   return (
-    <div className="group relative flex flex-col rounded-2xl border border-border/70 bg-card p-4 shadow-card transition-all duration-300 hover:-translate-y-0.5 hover:shadow-elevated">
+    <div className="group relative flex flex-col rounded-[6px] border border-border/70 bg-card p-4 shadow-card transition-all duration-300 hover:-translate-y-0.5 hover:shadow-elevated">
       <div className="mb-4 flex items-center gap-3">
         <span
           className={cn(
-            "flex size-10 items-center justify-center rounded-xl ring-1 ring-inset",
+            "flex size-10 items-center justify-center rounded-[6px] ring-1 ring-inset",
             STAGE_ACCENT[accent]
           )}
         >
@@ -398,7 +398,7 @@ function StackColumn({
             transition={{ duration: 0.22, ease: [0.25, 0.1, 0.25, 1] }}
             className="overflow-hidden"
           >
-            <div className="mt-3 space-y-3 rounded-xl border border-border/60 bg-muted/25 p-3">
+            <div className="mt-3 space-y-3 rounded-[6px] border border-border/60 bg-muted/25 p-3">
               {advanced}
             </div>
           </motion.div>
@@ -450,9 +450,9 @@ export function PersonaTab({ values, onChange }: PersonaTabProps) {
       </div>
 
       {/* Voice AI configuration */}
-      <section className="overflow-hidden rounded-2xl border border-border/70 bg-card/60 shadow-card">
+      <section className="overflow-hidden rounded-[6px] border border-border/70 bg-card/60 shadow-card">
         <header className="flex items-center gap-3 border-b border-border/50 bg-muted/30 px-5 py-4">
-          <span className="flex size-10 items-center justify-center rounded-xl bg-brand/10 text-brand ring-1 ring-inset ring-brand/15">
+          <span className="flex size-10 items-center justify-center rounded-[6px] bg-brand/10 text-brand ring-1 ring-inset ring-brand/15">
             <Waypoints className="size-5" />
           </span>
           <div>
@@ -478,7 +478,7 @@ export function PersonaTab({ values, onChange }: PersonaTabProps) {
           </div>
 
           {/* Global settings */}
-          <div className="grid gap-4 rounded-2xl border border-border/60 bg-muted/20 p-4 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid gap-4 rounded-[6px] border border-border/60 bg-muted/20 p-4 sm:grid-cols-2 lg:grid-cols-4">
             <div className="space-y-2">
               <FieldLabel>Language</FieldLabel>
               <Select

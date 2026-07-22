@@ -29,7 +29,7 @@ export function NotificationsList({
 }: NotificationsListProps) {
   if (isLoading) {
     return (
-      <div className="space-y-3 rounded-xl border border-border/60 bg-card p-4 shadow-card">
+      <div className="space-y-3 rounded-[6px] border border-border/60 bg-card p-4 shadow-card">
         {Array.from({ length: 6 }).map((_, i) => (
           <div key={i} className="flex gap-4 py-3">
             <Skeleton className="size-2.5 shrink-0 rounded-full" />
@@ -46,7 +46,7 @@ export function NotificationsList({
 
   if (notifications.length === 0) {
     return (
-      <div className="rounded-xl border border-border/60 bg-card shadow-card">
+      <div className="rounded-[6px] border border-border/60 bg-card shadow-card">
         <EmptyState
           icon={Bell}
           title="No notifications found"
@@ -57,7 +57,7 @@ export function NotificationsList({
   }
 
   return (
-    <div className="overflow-hidden rounded-xl border border-border/60 bg-card shadow-card">
+    <div className="overflow-hidden rounded-[6px] border border-border/60 bg-card shadow-card">
       <ul className="divide-y divide-border/50">
         {notifications.map((notification, index) => (
           <motion.li

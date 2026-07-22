@@ -75,7 +75,7 @@ export function ApiKeysSection({ values, onChange }: ApiKeysSectionProps) {
       helpTooltip="Keys are encrypted at rest. Rotate regularly and never share in plain text."
       gradient="from-amber-500/10 to-transparent"
       action={
-        <Button variant="outline" size="sm" onClick={generateKey} className="rounded-xl">
+        <Button variant="outline" size="sm" onClick={generateKey} className="rounded-[6px]">
           <Plus className="size-3.5" />
           Generate Key
         </Button>
@@ -85,7 +85,7 @@ export function ApiKeysSection({ values, onChange }: ApiKeysSectionProps) {
         {values.map((entry) => (
           <div
             key={entry.provider}
-            className="rounded-xl border border-border/50 bg-muted/20 p-4"
+            className="rounded-[6px] border border-border/50 bg-muted/20 p-4"
           >
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div className="flex items-center gap-2">
@@ -112,7 +112,7 @@ export function ApiKeysSection({ values, onChange }: ApiKeysSectionProps) {
                 value={
                   revealed[entry.provider] ? entry.fullKey : entry.maskedKey
                 }
-                className="rounded-xl font-mono text-xs"
+                className="rounded-[6px] font-mono text-xs"
               />
               <Button
                 variant="outline"

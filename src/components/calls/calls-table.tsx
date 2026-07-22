@@ -194,7 +194,7 @@ export function CallsTable({
 
   if (calls.length === 0) {
     return (
-      <div className="rounded-xl border border-border/60 bg-card shadow-card">
+      <div className="rounded-[6px] border border-border/60 bg-card shadow-card">
         <EmptyState
           icon={Phone}
           title="No calls found"
@@ -205,7 +205,7 @@ export function CallsTable({
   }
 
   return (
-    <div className="overflow-hidden rounded-xl border border-border/60 bg-card shadow-card">
+    <div className="overflow-hidden rounded-[6px] border border-border/60 bg-card shadow-card">
       <div className="overflow-x-auto">
         <table className="w-full min-w-[900px]">
           <thead>
@@ -275,7 +275,7 @@ export function CallsTable({
 
 function CallsTableSkeleton() {
   return (
-    <div className="overflow-hidden rounded-xl border border-border/60 bg-card shadow-card">
+    <div className="overflow-hidden rounded-[6px] border border-border/60 bg-card shadow-card">
       {Array.from({ length: 8 }).map((_, i) => (
         <div
           key={i}

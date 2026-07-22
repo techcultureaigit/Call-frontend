@@ -49,7 +49,7 @@ export function ActivityLogDetailDrawer({
       </SheetHeader>
 
       <SheetContent className="space-y-6">
-        <div className="grid gap-3 rounded-xl border border-border/60 bg-muted/20 p-4 sm:grid-cols-2">
+        <div className="grid gap-3 rounded-[6px] border border-border/60 bg-muted/20 p-4 sm:grid-cols-2">
           <div>
             <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
               Resource
@@ -98,7 +98,7 @@ export function ActivityLogDetailDrawer({
         </div>
 
         {(log.ipAddress || log.userAgent) && (
-          <div className="rounded-xl border border-border/60 bg-muted/20 p-4">
+          <div className="rounded-[6px] border border-border/60 bg-muted/20 p-4">
             <p className="mb-2 text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
               Session Details
             </p>

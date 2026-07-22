@@ -29,7 +29,7 @@ export function ActivityLogsStatsBar({
     return (
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
         {Array.from({ length: 5 }).map((_, i) => (
-          <Skeleton key={i} className="h-20 rounded-xl" />
+          <Skeleton key={i} className="h-20 rounded-[6px]" />
         ))}
       </div>
     );
@@ -83,7 +83,7 @@ export function ActivityLogsStatsBar({
           initial={{ opacity: 0, y: 6 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: i * 0.04 }}
-          className="flex items-center gap-3 rounded-xl border border-border/60 bg-card p-4 shadow-card"
+          className="flex items-center gap-3 rounded-[6px] border border-border/60 bg-card p-4 shadow-card"
         >
           <div className={`rounded-lg p-2.5 ${item.bg}`}>
             <item.icon className={`size-4 ${item.color}`} />

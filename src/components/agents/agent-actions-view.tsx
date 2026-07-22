@@ -164,7 +164,7 @@ export function AgentActionsView() {
 
           <div className="grid gap-6 lg:grid-cols-3">
             <div className="lg:col-span-2">
-              <div className="overflow-hidden rounded-2xl border border-border/40 bg-card shadow-card">
+              <div className="overflow-hidden rounded-[6px] border border-border/40 bg-card shadow-card">
                 <div className="flex border-b border-border/40">
                   {AGENT_ACTION_TABS.map((tab) => {
                     const isActive = activeTab === tab.id;
@@ -260,7 +260,7 @@ function McpActionForm({
           value={values.name}
           onChange={(e) => onChange({ ...values, name: e.target.value })}
           placeholder="Enter Action Name"
-          className="h-10 rounded-xl"
+          className="h-10 rounded-[6px]"
         />
       </div>
 
@@ -275,7 +275,7 @@ function McpActionForm({
             onChange({ ...values, mcpServerUrl: e.target.value })
           }
           placeholder="https://your-mcp-server.com/api"
-          className="h-10 rounded-xl"
+          className="h-10 rounded-[6px]"
         />
       </div>
 
@@ -306,7 +306,7 @@ function McpActionForm({
         <Button
           type="submit"
           disabled={isSubmitting}
-          className="rounded-xl px-6"
+          className="rounded-[6px] px-6"
         >
           <Zap className="size-4" />
           Create Action
@@ -351,7 +351,7 @@ function CustomApiActionForm({
           value={values.name}
           onChange={(e) => onChange({ ...values, name: e.target.value })}
           placeholder="Enter Action Name"
-          className="h-10 rounded-xl"
+          className="h-10 rounded-[6px]"
         />
       </div>
 
@@ -364,7 +364,7 @@ function CustomApiActionForm({
             onChange({ ...values, description: e.target.value })
           }
           placeholder="Brief description of the API"
-          className="h-10 rounded-xl"
+          className="h-10 rounded-[6px]"
         />
       </div>
 
@@ -380,7 +380,7 @@ function CustomApiActionForm({
               onChange({ ...values, endpoint: e.target.value })
             }
             placeholder="https://your-api.com/endpoint"
-            className="h-10 flex-1 rounded-xl"
+            className="h-10 flex-1 rounded-[6px]"
           />
           <Select
             value={values.method}
@@ -391,7 +391,7 @@ function CustomApiActionForm({
               })
             }
             options={HTTP_METHODS}
-            className="h-10 w-full rounded-xl sm:w-28"
+            className="h-10 w-full rounded-[6px] sm:w-28"
           />
         </div>
       </div>
@@ -436,7 +436,7 @@ function CustomApiActionForm({
         <Button
           type="submit"
           disabled={isSubmitting}
-          className="rounded-xl px-6"
+          className="rounded-[6px] px-6"
         >
           <Zap className="size-4" />
           Create Action
@@ -491,7 +491,7 @@ function FieldSection({
         type="button"
         variant="outline"
         size="sm"
-        className="rounded-xl border-primary/30 text-primary hover:bg-primary/5"
+        className="rounded-[6px] border-primary/30 text-primary hover:bg-primary/5"
         onClick={onAdd}
       >
         <Plus className="size-4" /> Add {title === "Headers" ? "Header" : "Parameter"}

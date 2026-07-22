@@ -106,7 +106,7 @@ export function CustomersImportView() {
           description="Upload a CSV or Excel file to bulk import customers. Duplicate emails will be skipped."
         />
 
-        <div className="w-full space-y-4 rounded-xl border border-border/60 bg-card p-6 shadow-card lg:p-8">
+        <div className="w-full space-y-4 rounded-[6px] border border-border/60 bg-card p-6 shadow-card lg:p-8">
           <div
             onDragOver={(e) => {
               e.preventDefault();
@@ -116,7 +116,7 @@ export function CustomersImportView() {
             onDrop={handleDrop}
             onClick={() => inputRef.current?.click()}
             className={cn(
-              "flex cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed px-6 py-10 transition-colors",
+              "flex cursor-pointer flex-col items-center justify-center rounded-[6px] border-2 border-dashed px-6 py-10 transition-colors",
               dragOver
                 ? "border-primary bg-primary/5"
                 : "border-border/60 bg-muted/20 hover:border-primary/40 hover:bg-muted/40"

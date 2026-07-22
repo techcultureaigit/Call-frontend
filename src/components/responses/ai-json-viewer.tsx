@@ -49,7 +49,7 @@ export function AiJsonViewer({ data, className }: AiJsonViewerProps) {
   return (
     <div
       className={cn(
-        "overflow-hidden rounded-xl border border-border/60 bg-[#0d1117] shadow-card",
+        "overflow-hidden rounded-[6px] border border-border/60 bg-[#0d1117] shadow-card",
         className
       )}
     >

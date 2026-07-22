@@ -29,7 +29,7 @@ export function QuestionSettingsPanel({
     return (
       <aside className="hidden w-72 shrink-0 flex-col border-l border-border/60 bg-muted/10 xl:flex">
         <div className="flex flex-1 flex-col items-center justify-center p-6 text-center">
-          <div className="flex size-12 items-center justify-center rounded-xl bg-muted">
+          <div className="flex size-12 items-center justify-center rounded-[6px] bg-muted">
             <GitBranch className="size-5 text-muted-foreground" />
           </div>
           <p className="mt-3 text-sm font-medium">Question Settings</p>

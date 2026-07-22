@@ -173,7 +173,7 @@ export function AgentConfigureView({
           <motion.div
             layout
             transition={{ type: "spring", stiffness: 300, damping: 34 }}
-            className="min-w-0 flex-1 rounded-2xl border border-border/60 bg-card/70 p-5 shadow-card backdrop-blur-sm sm:p-6 lg:p-7"
+            className="min-w-0 flex-1 rounded-[6px] border border-border/60 bg-card/70 p-5 shadow-card backdrop-blur-sm sm:p-6 lg:p-7"
           >
             <AgentConfigTabs active={activeTab} onChange={setActiveTab} />
 

@@ -37,7 +37,7 @@ export function AiSection({ values, onChange }: AiSectionProps) {
               { label: "Google Gemini", value: "google" },
               { label: "Azure OpenAI", value: "azure" },
             ]}
-            className="rounded-xl"
+            className="rounded-[6px]"
           />
         </SettingsField>
         <SettingsField label="Model Selection">
@@ -50,7 +50,7 @@ export function AiSection({ values, onChange }: AiSectionProps) {
               { label: "Claude Sonnet", value: "claude-sonnet" },
               { label: "Gemini Pro", value: "gemini-pro" },
             ]}
-            className="rounded-xl"
+            className="rounded-[6px]"
           />
         </SettingsField>
         <SettingsField
@@ -72,7 +72,7 @@ export function AiSection({ values, onChange }: AiSectionProps) {
             type="number"
             value={values.maxTokens}
             onChange={(e) => update("maxTokens", Number(e.target.value))}
-            className="rounded-xl"
+            className="rounded-[6px]"
           />
         </SettingsField>
         <SettingsField label="Response Style">
@@ -85,7 +85,7 @@ export function AiSection({ values, onChange }: AiSectionProps) {
               { label: "Concise", value: "concise" },
               { label: "Empathetic", value: "empathetic" },
             ]}
-            className="rounded-xl"
+            className="rounded-[6px]"
           />
         </SettingsField>
         <SettingsField label="Retry Count">
@@ -95,7 +95,7 @@ export function AiSection({ values, onChange }: AiSectionProps) {
             max={10}
             value={values.retryCount}
             onChange={(e) => update("retryCount", Number(e.target.value))}
-            className="rounded-xl"
+            className="rounded-[6px]"
           />
         </SettingsField>
         <SettingsField label="Fallback Model">
@@ -107,12 +107,12 @@ export function AiSection({ values, onChange }: AiSectionProps) {
               { label: "GPT-3.5 Turbo", value: "gpt-3.5-turbo" },
               { label: "Claude Haiku", value: "claude-haiku" },
             ]}
-            className="rounded-xl"
+            className="rounded-[6px]"
           />
         </SettingsField>
       </div>
 
-      <div className="flex items-center justify-between rounded-xl border border-border/40 bg-muted/20 px-4 py-3">
+      <div className="flex items-center justify-between rounded-[6px] border border-border/40 bg-muted/20 px-4 py-3">
         <div>
           <Label className="text-sm font-medium">Conversation Memory</Label>
           <p className="mt-0.5 text-xs text-muted-foreground">

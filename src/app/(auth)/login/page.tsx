@@ -45,7 +45,7 @@ function LoginForm() {
       className="w-full"
     >
       <div className="mb-8 text-center">
-        <div className="mx-auto mb-4 flex size-12 items-center justify-center rounded-xl bg-primary shadow-subtle">
+        <div className="mx-auto mb-4 flex size-12 items-center justify-center rounded-[6px] bg-primary shadow-subtle">
           <span className="text-lg font-bold text-primary-foreground">C</span>
         </div>
         <h1 className="text-2xl font-semibold tracking-tight">
@@ -58,7 +58,7 @@ function LoginForm() {
 
       <form
         onSubmit={handleSubmit}
-        className="space-y-4 rounded-xl border border-border/60 bg-card p-6 shadow-card"
+        className="space-y-4 rounded-[6px] border border-border/60 bg-card p-6 shadow-card"
       >
         <div className="space-y-2">
           <label htmlFor="email" className="text-sm font-medium">
@@ -107,8 +107,8 @@ function LoginForm() {
 
 function LoginFormFallback() {
   return (
-    <div className="w-full space-y-4 rounded-xl border border-border/60 bg-card p-6 shadow-card">
-      <Skeleton className="mx-auto size-12 rounded-xl" />
+    <div className="w-full space-y-4 rounded-[6px] border border-border/60 bg-card p-6 shadow-card">
+      <Skeleton className="mx-auto size-12 rounded-[6px]" />
       <Skeleton className="mx-auto h-8 w-48" />
       <Skeleton className="h-10 w-full" />
       <Skeleton className="h-10 w-full" />

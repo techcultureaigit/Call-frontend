@@ -27,7 +27,7 @@ export function RoleCardsGrid({
     return (
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
         {Array.from({ length: 6 }).map((_, i) => (
-          <Skeleton key={i} className="h-[180px] rounded-xl" />
+          <Skeleton key={i} className="h-[180px] rounded-[6px]" />
         ))}
       </div>
     );
@@ -35,7 +35,7 @@ export function RoleCardsGrid({
 
   if (roles.length === 0) {
     return (
-      <div className="rounded-xl border border-border/60 bg-card shadow-card">
+      <div className="rounded-[6px] border border-border/60 bg-card shadow-card">
         <EmptyState
           icon={Shield}
           title="No roles found"

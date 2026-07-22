@@ -49,7 +49,7 @@ export function AgentConfigTabs({ active, onChange }: AgentConfigTabsProps) {
                 onClick={() => onChange(tab.id as AgentConfigTab)}
                 aria-current={isActive ? "step" : undefined}
                 className={cn(
-                  "group relative flex shrink-0 items-center gap-2.5 rounded-xl px-2.5 py-2 text-left transition-colors sm:gap-3",
+                  "group relative flex shrink-0 items-center gap-2.5 rounded-[6px] px-2.5 py-2 text-left transition-colors sm:gap-3",
                   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/45 focus-visible:ring-offset-2 focus-visible:ring-offset-card",
                   !isActive && "hover:bg-muted/60"
                 )}
@@ -57,13 +57,13 @@ export function AgentConfigTabs({ active, onChange }: AgentConfigTabsProps) {
                 {isActive && (
                   <motion.span
                     layoutId="agent-step-active-pill"
-                    className="absolute inset-0 z-0 rounded-xl bg-brand/8 ring-1 ring-inset ring-brand/15"
+                    className="absolute inset-0 z-0 rounded-[6px] bg-brand/8 ring-1 ring-inset ring-brand/15"
                     transition={{ type: "spring", stiffness: 380, damping: 34 }}
                   />
                 )}
                 <span
                   className={cn(
-                    "relative flex size-9 shrink-0 items-center justify-center rounded-xl text-sm font-semibold transition-all duration-300",
+                    "relative flex size-9 shrink-0 items-center justify-center rounded-[6px] text-sm font-semibold transition-all duration-300",
                     isActive &&
                       "brand-gradient text-brand-foreground shadow-brand ring-2 ring-brand/20",
                     isDone &&
@@ -76,7 +76,7 @@ export function AgentConfigTabs({ active, onChange }: AgentConfigTabsProps) {
                   {isActive && (
                     <motion.span
                       layoutId="agent-step-glow"
-                      className="absolute inset-0 rounded-xl ring-2 ring-brand/30"
+                      className="absolute inset-0 rounded-[6px] ring-2 ring-brand/30"
                       transition={{ type: "spring", stiffness: 400, damping: 32 }}
                     />
                   )}

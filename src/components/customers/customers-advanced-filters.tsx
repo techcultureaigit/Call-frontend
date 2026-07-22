@@ -66,7 +66,7 @@ export function CustomersAdvancedFilters({
           transition={{ duration: 0.2 }}
           className="overflow-hidden"
         >
-          <div className="rounded-xl border border-border/60 bg-card p-4 shadow-card">
+          <div className="rounded-[6px] border border-border/60 bg-card p-4 shadow-card">
             <div className="mb-4 flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Filter className="size-4 text-muted-foreground" />

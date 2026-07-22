@@ -44,9 +44,9 @@ export function WisdomTab({ values, onChange }: WisdomTabProps) {
             onChange={(e) => setUrlInput(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && addUrl()}
             placeholder="Enter website URL and press Enter"
-            className="rounded-xl"
+            className="rounded-[6px]"
           />
-          <Button onClick={addUrl} className="shrink-0 rounded-xl">
+          <Button onClick={addUrl} className="shrink-0 rounded-[6px]">
             <Plus className="size-4" />
             Add
           </Button>
@@ -88,9 +88,9 @@ export function WisdomTab({ values, onChange }: WisdomTabProps) {
           }
           rows={5}
           placeholder="Paste custom knowledge, FAQs, or product details..."
-          className="w-full rounded-xl border border-input bg-transparent px-3 py-2 text-sm shadow-subtle focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          className="w-full rounded-[6px] border border-input bg-transparent px-3 py-2 text-sm shadow-subtle focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         />
-        <Button variant="outline" className="rounded-xl">
+        <Button variant="outline" className="rounded-[6px]">
           <CloudUpload className="size-4" />
           Upload File
         </Button>
@@ -107,9 +107,9 @@ export function WisdomTab({ values, onChange }: WisdomTabProps) {
             onChange={(e) => setTopicInput(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && addTopic()}
             placeholder="Enter topic"
-            className="rounded-xl"
+            className="rounded-[6px]"
           />
-          <Button onClick={addTopic} className="shrink-0 rounded-xl">
+          <Button onClick={addTopic} className="shrink-0 rounded-[6px]">
             <Plus className="size-4" />
             Add
           </Button>

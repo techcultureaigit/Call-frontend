@@ -160,7 +160,7 @@ export function NavFlyout({
                 className="absolute -left-1.5 top-1/2 size-3 -translate-y-1/2 rotate-45 rounded-[2px] bg-white shadow-[-2px_2px_6px_-2px_rgb(0_0_0/0.12)]"
               />
 
-              <div className="relative overflow-hidden rounded-[10px] border border-border/70 bg-white shadow-[0_20px_50px_-16px_rgb(15_23_42/0.35)]">
+              <div className="relative overflow-hidden rounded-[6px] border border-border/70 bg-white shadow-[0_20px_50px_-16px_rgb(15_23_42/0.35)]">
                 <div className="border-b border-border/60 px-4 pb-3.5 pt-4">
                   <div className="flex items-start gap-3">
                     <div className="nav-active-gradient flex size-9 shrink-0 items-center justify-center rounded-lg shadow-brand">

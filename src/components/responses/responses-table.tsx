@@ -148,7 +148,7 @@ export function ResponsesTable({
 
   if (isLoading) {
     return (
-      <div className="space-y-0 overflow-hidden rounded-xl border border-border/60 bg-card shadow-card">
+      <div className="space-y-0 overflow-hidden rounded-[6px] border border-border/60 bg-card shadow-card">
         {Array.from({ length: 8 }).map((_, i) => (
           <div
             key={i}
@@ -169,7 +169,7 @@ export function ResponsesTable({
 
   if (responses.length === 0) {
     return (
-      <div className="rounded-xl border border-border/60 bg-card shadow-card">
+      <div className="rounded-[6px] border border-border/60 bg-card shadow-card">
         <EmptyState
           icon={MessageSquareReply}
           title="No responses found"
@@ -180,7 +180,7 @@ export function ResponsesTable({
   }
 
   return (
-    <div className="overflow-hidden rounded-xl border border-border/60 bg-card shadow-card">
+    <div className="overflow-hidden rounded-[6px] border border-border/60 bg-card shadow-card">
       <div className="overflow-x-auto">
         <table className="w-full min-w-[800px]">
           <thead>

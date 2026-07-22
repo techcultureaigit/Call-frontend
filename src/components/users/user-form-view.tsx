@@ -53,7 +53,7 @@ export function UserFormView({ userId }: UserFormViewProps) {
         <div className="w-full space-y-6">
           <Skeleton className="h-8 w-32" />
           <Skeleton className="h-24 w-full" />
-          <Skeleton className="h-[420px] w-full rounded-xl" />
+          <Skeleton className="h-[420px] w-full rounded-[6px]" />
         </div>
       </PageContainer>
     );

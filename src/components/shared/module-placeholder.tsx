@@ -42,8 +42,8 @@ export function ModulePlaceholder({
         className="flex min-h-[50vh] flex-col items-center justify-center text-center"
       >
         <div className="relative mb-6 size-20">
-          <div className="absolute inset-0 animate-pulse rounded-3xl bg-primary/10 blur-xl" />
-          <div className="relative flex size-full items-center justify-center rounded-3xl border border-border/50 bg-card shadow-elevated">
+          <div className="absolute inset-0 animate-pulse rounded-[6px] bg-primary/10 blur-xl" />
+          <div className="relative flex size-full items-center justify-center rounded-[6px] border border-border/50 bg-card shadow-elevated">
             <Icon className="size-9 text-primary" />
             <Sparkles className="absolute -right-1 -top-1 size-4 text-amber-500" />
           </div>
@@ -54,7 +54,7 @@ export function ModulePlaceholder({
         <p className="mt-2 max-w-md text-sm text-muted-foreground">
           {description}
         </p>
-        <Button asChild variant="outline" className="mt-6 rounded-xl">
+        <Button asChild variant="outline" className="mt-6 rounded-[6px]">
           <Link href={backHref}>
             <ArrowLeft className="size-4" />
             {backLabel}

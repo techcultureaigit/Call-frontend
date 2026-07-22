@@ -9,7 +9,7 @@ export default function AudioBufferLoading() {
           <Skeleton className="h-9 w-56" />
           <Skeleton className="h-4 w-80 max-w-full" />
         </div>
-        <Skeleton className="h-[480px] rounded-2xl" />
+        <Skeleton className="h-[480px] rounded-[6px]" />
       </PageContainer>
     </div>
   );

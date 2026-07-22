@@ -91,7 +91,7 @@ export function CustomersToolbar({
         </div>
       </div>
 
-      <div className="flex flex-col gap-3 rounded-xl border border-border/60 bg-card p-4 shadow-card lg:flex-row lg:items-center">
+      <div className="flex flex-col gap-3 rounded-[6px] border border-border/60 bg-card p-4 shadow-card lg:flex-row lg:items-center">
         <div className="relative flex-1">
           <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
           <Input

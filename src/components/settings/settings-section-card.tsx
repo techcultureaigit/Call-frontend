@@ -35,7 +35,7 @@ export function SettingsSectionCard({
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.35 }}
       className={cn(
-        "relative overflow-hidden rounded-2xl border border-border/50 bg-card/80 shadow-card backdrop-blur-sm",
+        "relative overflow-hidden rounded-[6px] border border-border/50 bg-card/80 shadow-card backdrop-blur-sm",
         className
       )}
     >

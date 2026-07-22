@@ -62,11 +62,11 @@ export function ProfileSection({
         <div className="flex flex-col gap-6 sm:flex-row sm:items-start">
           <div className="flex flex-col items-center gap-3">
             <div className="relative">
-              <Avatar className="size-20 rounded-2xl border-2 border-border/50 shadow-card">
+              <Avatar className="size-20 rounded-[6px] border-2 border-border/50 shadow-card">
                 {values.avatarUrl ? (
                   <AvatarImage src={values.avatarUrl} alt={values.fullName} />
                 ) : null}
-                <AvatarFallback className="rounded-2xl bg-primary/10 text-lg font-semibold text-primary">
+                <AvatarFallback className="rounded-[6px] bg-primary/10 text-lg font-semibold text-primary">
                   {getInitials(first, rest.join(" "))}
                 </AvatarFallback>
               </Avatar>
@@ -103,7 +103,7 @@ export function ProfileSection({
                 id="fullName"
                 value={values.fullName}
                 onChange={(e) => update("fullName", e.target.value)}
-                className="rounded-xl"
+                className="rounded-[6px]"
               />
             </SettingsField>
             <SettingsField
@@ -117,7 +117,7 @@ export function ProfileSection({
                 type="email"
                 value={values.email}
                 onChange={(e) => update("email", e.target.value)}
-                className="rounded-xl"
+                className="rounded-[6px]"
               />
             </SettingsField>
             <SettingsField label="Phone" htmlFor="phone">
@@ -125,7 +125,7 @@ export function ProfileSection({
                 id="phone"
                 value={values.phone}
                 onChange={(e) => update("phone", e.target.value)}
-                className="rounded-xl"
+                className="rounded-[6px]"
               />
             </SettingsField>
             <SettingsField label="Company" htmlFor="company">
@@ -133,7 +133,7 @@ export function ProfileSection({
                 id="company"
                 value={values.company}
                 onChange={(e) => update("company", e.target.value)}
-                className="rounded-xl"
+                className="rounded-[6px]"
               />
             </SettingsField>
             <SettingsField label="Job Title" htmlFor="jobTitle">
@@ -141,7 +141,7 @@ export function ProfileSection({
                 id="jobTitle"
                 value={values.jobTitle}
                 onChange={(e) => update("jobTitle", e.target.value)}
-                className="rounded-xl"
+                className="rounded-[6px]"
               />
             </SettingsField>
             <SettingsField
@@ -152,7 +152,7 @@ export function ProfileSection({
                 value={values.timezone}
                 onChange={(e) => update("timezone", e.target.value)}
                 options={TIMEZONES}
-                className="rounded-xl"
+                className="rounded-[6px]"
               />
             </SettingsField>
             <SettingsField label="Language">
@@ -160,7 +160,7 @@ export function ProfileSection({
                 value={values.language}
                 onChange={(e) => update("language", e.target.value)}
                 options={LANGUAGES}
-                className="rounded-xl"
+                className="rounded-[6px]"
               />
             </SettingsField>
           </div>

@@ -60,7 +60,7 @@ export function SecuritySection({ values, onChange }: SecuritySectionProps) {
               type="password"
               value={currentPassword}
               onChange={(e) => setCurrentPassword(e.target.value)}
-              className="rounded-xl"
+              className="rounded-[6px]"
             />
           </SettingsField>
           <div className="hidden sm:block" />
@@ -69,7 +69,7 @@ export function SecuritySection({ values, onChange }: SecuritySectionProps) {
               type="password"
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
-              className="rounded-xl"
+              className="rounded-[6px]"
             />
           </SettingsField>
           <SettingsField label="Confirm Password">
@@ -77,11 +77,11 @@ export function SecuritySection({ values, onChange }: SecuritySectionProps) {
               type="password"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
-              className="rounded-xl"
+              className="rounded-[6px]"
             />
           </SettingsField>
         </div>
-        <Button onClick={handlePasswordChange} className="rounded-xl">
+        <Button onClick={handlePasswordChange} className="rounded-[6px]">
           Update Password
         </Button>
       </SettingsSectionCard>
@@ -92,7 +92,7 @@ export function SecuritySection({ values, onChange }: SecuritySectionProps) {
         helpTooltip="Require a verification code from your authenticator app when signing in."
         gradient="from-emerald-500/10 to-transparent"
       >
-        <div className="flex items-center justify-between rounded-xl border border-border/40 bg-muted/20 px-4 py-3">
+        <div className="flex items-center justify-between rounded-[6px] border border-border/40 bg-muted/20 px-4 py-3">
           <div>
             <Label className="text-sm font-medium">
               Enable Two-Factor Authentication
@@ -119,7 +119,7 @@ export function SecuritySection({ values, onChange }: SecuritySectionProps) {
             variant="outline"
             size="sm"
             onClick={terminateAll}
-            className="rounded-xl text-destructive hover:text-destructive"
+            className="rounded-[6px] text-destructive hover:text-destructive"
           >
             <LogOut className="size-3.5" />
             Terminate All
@@ -130,7 +130,7 @@ export function SecuritySection({ values, onChange }: SecuritySectionProps) {
           {values.sessions.map((session) => (
             <div
               key={session.id}
-              className="flex items-center justify-between rounded-xl border border-border/40 px-4 py-3"
+              className="flex items-center justify-between rounded-[6px] border border-border/40 px-4 py-3"
             >
               <div className="flex items-center gap-3">
                 {session.device.includes("iPhone") ? (
@@ -214,7 +214,7 @@ export function SecuritySection({ values, onChange }: SecuritySectionProps) {
           {values.trustedDevices.map((device) => (
             <div
               key={device.id}
-              className="rounded-xl border border-border/40 bg-muted/20 px-3 py-2 text-sm"
+              className="rounded-[6px] border border-border/40 bg-muted/20 px-3 py-2 text-sm"
             >
               <p className="font-medium">{device.name}</p>
               <p className="text-[11px] text-muted-foreground">

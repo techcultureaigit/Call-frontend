@@ -12,10 +12,10 @@ export default function RolesLoading() {
         <Skeleton className="h-9 w-full max-w-md" />
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
           {Array.from({ length: 6 }).map((_, i) => (
-            <Skeleton key={i} className="h-[180px] rounded-xl" />
+            <Skeleton key={i} className="h-[180px] rounded-[6px]" />
           ))}
         </div>
-        <Skeleton className="h-[400px] w-full rounded-xl" />
+        <Skeleton className="h-[400px] w-full rounded-[6px]" />
       </div>
     </PageContainer>
   );

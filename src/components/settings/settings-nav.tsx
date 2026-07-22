@@ -19,7 +19,7 @@ export function SettingsNav({
   return (
     <nav
       className={cn(
-        "space-y-1 rounded-2xl border border-border/50 bg-card/40 p-2 shadow-card backdrop-blur-md",
+        "space-y-1 rounded-[6px] border border-border/50 bg-card/40 p-2 shadow-card backdrop-blur-md",
         className
       )}
     >
@@ -38,7 +38,7 @@ export function SettingsNav({
             transition={{ delay: i * 0.02 }}
             onClick={() => onChange(item.id)}
             className={cn(
-              "group relative flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-sm transition-all",
+              "group relative flex w-full items-center gap-2.5 rounded-[6px] px-3 py-2.5 text-left text-sm transition-all",
               isActive
                 ? item.danger
                   ? "font-medium text-destructive"
@@ -52,7 +52,7 @@ export function SettingsNav({
               <motion.span
                 layoutId="settings-nav-active"
                 className={cn(
-                  "absolute inset-0 rounded-xl border",
+                  "absolute inset-0 rounded-[6px] border",
                   item.danger
                     ? "border-destructive/20 bg-destructive/5"
                     : "border-primary/20 bg-primary/5"

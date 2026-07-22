@@ -34,7 +34,7 @@ export function CustomersBulkActions({
           transition={{ type: "spring", stiffness: 400, damping: 30 }}
           className="fixed bottom-6 left-1/2 z-40 w-[calc(100%-2rem)] max-w-2xl -translate-x-1/2"
         >
-          <div className="flex flex-col gap-3 rounded-xl border border-border/80 bg-background/95 px-4 py-3 shadow-elevated backdrop-blur-md sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex flex-col gap-3 rounded-[6px] border border-border/80 bg-background/95 px-4 py-3 shadow-elevated backdrop-blur-md sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-3">
               <span className="text-sm font-medium">
                 {selectedCount} selected

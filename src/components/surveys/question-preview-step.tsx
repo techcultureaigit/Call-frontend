@@ -40,7 +40,7 @@ export function QuestionPreviewStep({
           onChange={(e) => onChange(e.target.value)}
           placeholder={question.placeholder ?? "Type your answer..."}
           rows={4}
-          className="w-full resize-none rounded-xl border border-border/60 bg-background px-4 py-3 text-sm shadow-subtle focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          className="w-full resize-none rounded-[6px] border border-border/60 bg-background px-4 py-3 text-sm shadow-subtle focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         />
       )}
 
@@ -50,7 +50,7 @@ export function QuestionPreviewStep({
           value={value}
           onChange={(e) => onChange(e.target.value)}
           placeholder={question.placeholder ?? "0"}
-          className="h-12 rounded-xl text-lg"
+          className="h-12 rounded-[6px] text-lg"
         />
       )}
 
@@ -88,7 +88,7 @@ export function QuestionPreviewStep({
               type="button"
               onClick={() => onChange(opt)}
               className={cn(
-                "flex-1 rounded-xl border-2 px-6 py-4 text-base font-medium transition-all",
+                "flex-1 rounded-[6px] border-2 px-6 py-4 text-base font-medium transition-all",
                 value === opt
                   ? "border-primary bg-primary/5 text-primary"
                   : "border-border/60 hover:border-primary/40"
@@ -108,7 +108,7 @@ export function QuestionPreviewStep({
               type="button"
               onClick={() => onChange(opt)}
               className={cn(
-                "flex w-full items-center gap-3 rounded-xl border-2 px-4 py-3.5 text-left text-sm font-medium transition-all",
+                "flex w-full items-center gap-3 rounded-[6px] border-2 px-4 py-3.5 text-left text-sm font-medium transition-all",
                 value === opt
                   ? "border-primary bg-primary/5"
                   : "border-border/60 hover:border-primary/40"
@@ -142,7 +142,7 @@ export function QuestionPreviewStep({
                   onChange(next.join(","));
                 }}
                 className={cn(
-                  "flex w-full items-center gap-3 rounded-xl border-2 px-4 py-3.5 text-left text-sm font-medium transition-all",
+                  "flex w-full items-center gap-3 rounded-[6px] border-2 px-4 py-3.5 text-left text-sm font-medium transition-all",
                   selected
                     ? "border-primary bg-primary/5"
                     : "border-border/60 hover:border-primary/40"
@@ -164,7 +164,7 @@ export function QuestionPreviewStep({
             { label: "Select an option...", value: "" },
             ...(question.options ?? []).map((o) => ({ label: o, value: o })),
           ]}
-          className="h-12 rounded-xl text-sm"
+          className="h-12 rounded-[6px] text-sm"
         />
       )}
     </div>

@@ -12,8 +12,8 @@ export default function UsersLoading() {
           </div>
           <Skeleton className="h-9 w-32" />
         </div>
-        <Skeleton className="h-[72px] w-full rounded-xl" />
-        <Skeleton className="h-[480px] w-full rounded-xl" />
+        <Skeleton className="h-[72px] w-full rounded-[6px]" />
+        <Skeleton className="h-[480px] w-full rounded-[6px]" />
       </div>
     </PageContainer>
   );

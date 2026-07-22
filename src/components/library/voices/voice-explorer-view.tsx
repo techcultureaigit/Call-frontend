@@ -186,12 +186,12 @@ export function VoiceExplorerView() {
             {isLoading ? (
               <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
                 {Array.from({ length: 12 }).map((_, i) => (
-                  <Skeleton key={i} className="h-32 rounded-2xl" />
+                  <Skeleton key={i} className="h-32 rounded-[6px]" />
                 ))}
               </div>
             ) : voices.length === 0 ? (
-              <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-border/60 bg-card/60 px-6 py-20 text-center shadow-sm">
-                <div className="mb-4 flex size-16 items-center justify-center rounded-2xl bg-primary/10">
+              <div className="flex flex-col items-center justify-center rounded-[6px] border border-dashed border-border/60 bg-card/60 px-6 py-20 text-center shadow-sm">
+                <div className="mb-4 flex size-16 items-center justify-center rounded-[6px] bg-primary/10">
                   <Volume2 className="size-8 text-primary" />
                 </div>
                 <h3 className="text-lg font-semibold">No voices found</h3>
@@ -200,7 +200,7 @@ export function VoiceExplorerView() {
                 </p>
                 <Button
                   variant="outline"
-                  className="mt-4 rounded-xl"
+                  className="mt-4 rounded-[6px]"
                   onClick={handleReset}
                 >
                   Reset Filters

@@ -37,7 +37,7 @@ export function SettingsSearch({ onSelect }: SettingsSearchProps) {
         onFocus={() => setFocused(true)}
         onBlur={() => setTimeout(() => setFocused(false), 200)}
         placeholder="Search settings… (e.g. SMTP, 2FA, API keys)"
-        className="h-10 rounded-xl border-border/60 bg-background/80 pl-9 pr-4"
+        className="h-10 rounded-[6px] border-border/60 bg-background/80 pl-9 pr-4"
       />
 
       <AnimatePresence>
@@ -46,7 +46,7 @@ export function SettingsSearch({ onSelect }: SettingsSearchProps) {
             initial={{ opacity: 0, y: -4 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -4 }}
-            className="absolute left-0 right-0 top-full z-50 mt-2 overflow-hidden rounded-xl border border-border/60 bg-popover shadow-elevated"
+            className="absolute left-0 right-0 top-full z-50 mt-2 overflow-hidden rounded-[6px] border border-border/60 bg-popover shadow-elevated"
           >
             {results.length === 0 ? (
               <p className="px-4 py-3 text-sm text-muted-foreground">

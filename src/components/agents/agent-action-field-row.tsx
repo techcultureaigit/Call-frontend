@@ -24,7 +24,7 @@ export function AgentActionFieldRow({
   onRemove,
 }: AgentActionFieldRowProps) {
   return (
-    <div className="grid grid-cols-12 items-center gap-2 rounded-xl border border-border/40 bg-muted/20 p-2 sm:gap-3 sm:p-3">
+    <div className="grid grid-cols-12 items-center gap-2 rounded-[6px] border border-border/40 bg-muted/20 p-2 sm:gap-3 sm:p-3">
       <div className="col-span-12 sm:col-span-3">
         <p className="mb-1 text-[10px] font-medium uppercase tracking-wide text-muted-foreground sm:hidden">
           {keyLabel}

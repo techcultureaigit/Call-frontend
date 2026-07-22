@@ -55,7 +55,7 @@ export function ResponseDetailDrawer({
       </SheetHeader>
 
       <SheetContent className="space-y-6">
-        <div className="grid gap-3 rounded-xl border border-border/60 bg-muted/20 p-4 sm:grid-cols-2">
+        <div className="grid gap-3 rounded-[6px] border border-border/60 bg-muted/20 p-4 sm:grid-cols-2">
           <div>
             <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
               Campaign
@@ -90,7 +90,7 @@ export function ResponseDetailDrawer({
           <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
             AI Summary
           </h3>
-          <p className="rounded-xl border border-border/60 bg-card p-4 text-sm leading-relaxed">
+          <p className="rounded-[6px] border border-border/60 bg-card p-4 text-sm leading-relaxed">
             {aiExtracted.summary}
           </p>
         </div>

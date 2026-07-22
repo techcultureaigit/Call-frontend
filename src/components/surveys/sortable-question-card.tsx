@@ -65,7 +65,7 @@ export function SortableQuestionCard({
       style={style}
       onClick={onSelect}
       className={cn(
-        "group relative rounded-2xl border bg-card shadow-card transition-all",
+        "group relative rounded-[6px] border bg-card shadow-card transition-all",
         selected
           ? "border-primary/50 ring-2 ring-primary/20"
           : "border-border/60 hover:border-border",

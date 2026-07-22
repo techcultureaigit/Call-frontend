@@ -36,7 +36,7 @@ export function FunctionsTab({ values, onChange }: FunctionsTabProps) {
               type="button"
               onClick={() => toggleTool(tool.id)}
               className={cn(
-                "relative rounded-2xl border p-4 text-left transition-all hover:shadow-subtle",
+                "relative rounded-[6px] border p-4 text-left transition-all hover:shadow-subtle",
                 tool.enabled
                   ? "border-primary/40 bg-primary/5 ring-1 ring-primary/20"
                   : "border-border/50 bg-card/60"
@@ -74,7 +74,7 @@ export function FunctionsTab({ values, onChange }: FunctionsTabProps) {
       <div>
         <h3 className="text-sm font-semibold">Add Action</h3>
         {values.actions.length === 0 ? (
-          <div className="mt-4 flex flex-col items-center justify-center rounded-2xl border border-dashed border-border/60 bg-muted/20 px-6 py-12 text-center">
+          <div className="mt-4 flex flex-col items-center justify-center rounded-[6px] border border-dashed border-border/60 bg-muted/20 px-6 py-12 text-center">
             <div className="mb-4 flex size-14 items-center justify-center rounded-full bg-primary/10">
               <Plus className="size-7 text-primary" />
             </div>
@@ -82,7 +82,7 @@ export function FunctionsTab({ values, onChange }: FunctionsTabProps) {
             <p className="mt-1 text-xs text-muted-foreground">
               You haven&apos;t created any actions yet.
             </p>
-            <Button asChild className="mt-4 rounded-xl">
+            <Button asChild className="mt-4 rounded-[6px]">
               <Link href="/agents/actions">Create Your First Action</Link>
             </Button>
           </div>
@@ -91,7 +91,7 @@ export function FunctionsTab({ values, onChange }: FunctionsTabProps) {
             {values.actions.map((action) => (
               <li
                 key={action.id}
-                className="rounded-xl border border-border/50 px-4 py-3 text-sm"
+                className="rounded-[6px] border border-border/50 px-4 py-3 text-sm"
               >
                 {action.name}
               </li>

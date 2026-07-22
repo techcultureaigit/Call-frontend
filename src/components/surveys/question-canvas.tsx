@@ -43,8 +43,8 @@ export function QuestionCanvas({
     >
       <div className="mx-auto w-full max-w-2xl space-y-3">
         {questions.length === 0 ? (
-          <div className="flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-border/60 bg-card/50 px-8 py-20 text-center">
-            <div className="flex size-14 items-center justify-center rounded-2xl bg-primary/10">
+          <div className="flex flex-col items-center justify-center rounded-[6px] border-2 border-dashed border-border/60 bg-card/50 px-8 py-20 text-center">
+            <div className="flex size-14 items-center justify-center rounded-[6px] bg-primary/10">
               <Sparkles className="size-7 text-primary" />
             </div>
             <h3 className="mt-4 text-lg font-semibold tracking-tight">

@@ -76,7 +76,7 @@ export function VoiceCard({
         }
       }}
       className={cn(
-        "group flex cursor-pointer gap-3 rounded-2xl border bg-card p-4 shadow-card transition-all hover:shadow-elevated",
+        "group flex cursor-pointer gap-3 rounded-[6px] border bg-card p-4 shadow-card transition-all hover:shadow-elevated",
         selected
           ? "border-primary/50 ring-2 ring-primary/15"
           : "border-border/40 hover:border-primary/20",
@@ -86,7 +86,7 @@ export function VoiceCard({
       {dragHandleProps && (
         <button
           type="button"
-          className="mt-0.5 flex size-8 shrink-0 cursor-grab items-center justify-center self-start rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground active:cursor-grabbing"
+          className="mt-0.5 flex size-8 shrink-0 cursor-grab items-center justify-center self-start rounded-[6px] text-muted-foreground transition-colors hover:bg-muted hover:text-foreground active:cursor-grabbing"
           aria-label={`Reorder ${voice.name}`}
           onClick={(e) => e.stopPropagation()}
           {...dragHandleProps}
@@ -168,7 +168,7 @@ export function VoiceCard({
         <Button
           size="sm"
           variant="outline"
-          className="h-8 shrink-0 self-end rounded-lg border-primary/40 bg-primary/10 px-4 text-primary hover:bg-primary/15 hover:text-primary"
+          className="h-8 shrink-0 self-end rounded-[6px] border-primary/40 bg-primary/10 px-4 text-primary hover:bg-primary/15 hover:text-primary"
           disabled
           onClick={(e) => e.stopPropagation()}
         >
@@ -177,7 +177,7 @@ export function VoiceCard({
       ) : (
         <Button
           size="sm"
-          className="h-8 shrink-0 self-end rounded-lg px-4"
+          className="h-8 shrink-0 self-end rounded-[6px] px-4"
           onClick={(e) => {
             e.stopPropagation();
             onUse(voice);
@@ -242,7 +242,7 @@ interface VoiceCloneBannerProps {
 
 export function VoiceCloneButton({ onClone }: VoiceCloneBannerProps) {
   return (
-    <Button className="rounded-xl" onClick={onClone}>
+    <Button className="rounded-[6px]" onClick={onClone}>
       <Sparkles className="size-4" />
       Voice Clone
     </Button>

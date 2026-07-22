@@ -34,7 +34,7 @@ export function SidebarUserCard({ collapsed }: SidebarUserCardProps) {
     <Link
       href={routePaths.settings.root}
       className={cn(
-        "group flex items-center gap-3 rounded-xl border border-white/10 bg-white/5 p-2.5 transition-colors hover:bg-white/10",
+        "group flex items-center gap-3 rounded-[6px] border border-white/10 bg-white/5 p-2.5 transition-colors hover:bg-white/10",
         collapsed && "justify-center border-0 bg-transparent p-1.5 hover:bg-white/10"
       )}
     >

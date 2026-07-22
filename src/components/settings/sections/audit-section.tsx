@@ -38,7 +38,7 @@ export function AuditSection({ values }: AuditSectionProps) {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Search actions or users…"
-          className="rounded-xl"
+          className="rounded-[6px]"
         />
         <Select
           value={filter}
@@ -47,11 +47,11 @@ export function AuditSection({ values }: AuditSectionProps) {
             label: s === "all" ? "All sections" : s,
             value: s,
           }))}
-          className="rounded-xl sm:w-48"
+          className="rounded-[6px] sm:w-48"
         />
       </div>
 
-      <div className="overflow-x-auto rounded-xl border border-border/40">
+      <div className="overflow-x-auto rounded-[6px] border border-border/40">
         <table className="w-full min-w-[500px] text-sm">
           <thead className="border-b border-border/40 bg-muted/30">
             <tr>

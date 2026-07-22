@@ -200,7 +200,7 @@ export function UsersTable({
 
   if (users.length === 0) {
     return (
-      <div className="rounded-xl border border-border/60 bg-card shadow-card">
+      <div className="rounded-[6px] border border-border/60 bg-card shadow-card">
         <EmptyState
           icon={Users}
           title="No users found"
@@ -211,7 +211,7 @@ export function UsersTable({
   }
 
   return (
-    <div className="overflow-hidden rounded-xl border border-border/60 bg-card shadow-card">
+    <div className="overflow-hidden rounded-[6px] border border-border/60 bg-card shadow-card">
       <div className="overflow-x-auto">
         <table className="w-full min-w-[800px]">
           <thead>
@@ -281,7 +281,7 @@ export function UsersTable({
 
 function UsersTableSkeleton() {
   return (
-    <div className="overflow-hidden rounded-xl border border-border/60 bg-card shadow-card">
+    <div className="overflow-hidden rounded-[6px] border border-border/60 bg-card shadow-card">
       <div className="space-y-0">
         <div className="border-b border-border/60 bg-muted/30 px-4 py-3">
           <Skeleton className="h-4 w-full max-w-md" />

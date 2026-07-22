@@ -31,7 +31,7 @@ export function AudioBufferListPanel({
       </div>
 
       <div className="flex flex-1 flex-col p-5">
-        <div className="flex min-h-[240px] flex-1 flex-col rounded-xl border border-border/50 bg-muted/10">
+        <div className="flex min-h-[240px] flex-1 flex-col rounded-[6px] border border-border/50 bg-muted/10">
           {!selectedVoice ? (
             <div className="flex flex-1 items-center justify-center px-6 text-center">
               <p className="text-sm text-muted-foreground">

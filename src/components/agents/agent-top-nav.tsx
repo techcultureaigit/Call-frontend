@@ -24,7 +24,7 @@ export function AgentTopNav({
     <div className="flex items-center justify-between gap-3">
       <Link
         href="/agents"
-        className="group inline-flex h-9 items-center gap-2 rounded-xl px-2.5 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+        className="group inline-flex h-9 items-center gap-2 rounded-[6px] px-2.5 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
       >
         <span className="flex size-7 items-center justify-center rounded-lg border border-border/70 bg-card transition-colors group-hover:border-brand/40 group-hover:text-brand">
           <ArrowLeft className="size-4 transition-transform group-hover:-translate-x-0.5" />
@@ -39,7 +39,7 @@ export function AgentTopNav({
             onClick={onTogglePreview}
             aria-pressed={previewOpen}
             className={cn(
-              "inline-flex h-9 items-center gap-2 rounded-xl border px-3 text-[13px] font-medium transition-colors",
+              "inline-flex h-9 items-center gap-2 rounded-[6px] border px-3 text-[13px] font-medium transition-colors",
               previewOpen
                 ? "border-brand/30 bg-brand/10 text-brand"
                 : "border-border/70 bg-card text-muted-foreground hover:border-brand/40 hover:text-foreground"
@@ -62,7 +62,7 @@ export function AgentTopNav({
         </span>
         <button
           type="button"
-          className="inline-flex size-9 items-center justify-center rounded-xl text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+          className="inline-flex size-9 items-center justify-center rounded-[6px] text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
           aria-label="Help"
         >
           <HelpCircle className="size-4" />

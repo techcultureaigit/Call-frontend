@@ -9,8 +9,8 @@ export default function CustomersLoading() {
           <Skeleton className="h-7 w-40" />
           <Skeleton className="h-4 w-72" />
         </div>
-        <Skeleton className="h-[72px] w-full rounded-xl" />
-        <Skeleton className="h-[480px] w-full rounded-xl" />
+        <Skeleton className="h-[72px] w-full rounded-[6px]" />
+        <Skeleton className="h-[480px] w-full rounded-[6px]" />
       </div>
     </PageContainer>
   );

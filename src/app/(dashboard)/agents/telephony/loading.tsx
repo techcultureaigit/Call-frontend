@@ -7,8 +7,8 @@ export default function TelephonyLoading() {
       <PageContainer size="wide" className="space-y-6 px-0 py-0">
         <Skeleton className="h-9 w-80" />
         <div className="grid gap-6 lg:grid-cols-3">
-          <Skeleton className="h-[480px] rounded-2xl lg:col-span-2" />
-          <Skeleton className="h-[480px] rounded-2xl" />
+          <Skeleton className="h-[480px] rounded-[6px] lg:col-span-2" />
+          <Skeleton className="h-[480px] rounded-[6px]" />
         </div>
       </PageContainer>
     </div>

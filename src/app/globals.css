@@ -51,11 +51,16 @@
   --color-accent-warm: var(--accent-warm);
   --color-accent-warm-foreground: var(--accent-warm-foreground);
 
+  /* Keep every rounded-* utility at search-bar radius (6px) */
+  --radius: 6px;
+  --radius-xs: 6px;
   --radius-sm: 6px;
   --radius-md: 6px;
   --radius-lg: 6px;
   --radius-xl: 6px;
   --radius-2xl: 6px;
+  --radius-3xl: 6px;
+  --radius-4xl: 6px;
 
   --shadow-subtle: 0 1px 2px 0 rgb(20 30 48 / 0.05);
   --shadow-card:

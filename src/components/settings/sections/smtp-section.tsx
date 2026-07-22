@@ -36,7 +36,7 @@ export function SmtpSection({ values, onChange }: SmtpSectionProps) {
           <Input
             value={values.host}
             onChange={(e) => update("host", e.target.value)}
-            className="rounded-xl"
+            className="rounded-[6px]"
           />
         </SettingsField>
         <SettingsField label="SMTP Port">
@@ -44,14 +44,14 @@ export function SmtpSection({ values, onChange }: SmtpSectionProps) {
             type="number"
             value={values.port}
             onChange={(e) => update("port", Number(e.target.value))}
-            className="rounded-xl"
+            className="rounded-[6px]"
           />
         </SettingsField>
         <SettingsField label="Username">
           <Input
             value={values.username}
             onChange={(e) => update("username", e.target.value)}
-            className="rounded-xl"
+            className="rounded-[6px]"
           />
         </SettingsField>
         <SettingsField label="Password" tooltip="Stored encrypted">
@@ -59,7 +59,7 @@ export function SmtpSection({ values, onChange }: SmtpSectionProps) {
             type="password"
             value={values.password}
             onChange={(e) => update("password", e.target.value)}
-            className="rounded-xl font-mono"
+            className="rounded-[6px] font-mono"
           />
         </SettingsField>
         <SettingsField label="Encryption">
@@ -73,11 +73,11 @@ export function SmtpSection({ values, onChange }: SmtpSectionProps) {
               { label: "SSL", value: "ssl" },
               { label: "None", value: "none" },
             ]}
-            className="rounded-xl"
+            className="rounded-[6px]"
           />
         </SettingsField>
       </div>
-      <Button variant="outline" onClick={sendTest} className="rounded-xl">
+      <Button variant="outline" onClick={sendTest} className="rounded-[6px]">
         <Send className="size-3.5" />
         Send Test Email
       </Button>

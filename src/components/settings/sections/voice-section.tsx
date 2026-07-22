@@ -43,7 +43,7 @@ export function VoiceSection({ values, onChange }: VoiceSectionProps) {
               { label: "Google Cloud TTS", value: "google" },
               { label: "Amazon Polly", value: "polly" },
             ]}
-            className="rounded-xl"
+            className="rounded-[6px]"
           />
         </SettingsField>
         <SettingsField label="Voice Selection">
@@ -56,7 +56,7 @@ export function VoiceSection({ values, onChange }: VoiceSectionProps) {
               { label: "Bella (Energetic)", value: "bella-energy" },
               { label: "James (Neutral)", value: "james-neutral" },
             ]}
-            className="rounded-xl"
+            className="rounded-[6px]"
           />
         </SettingsField>
         <SettingsField
@@ -117,7 +117,7 @@ export function VoiceSection({ values, onChange }: VoiceSectionProps) {
         </div>
       </div>
 
-      <Button variant="outline" onClick={preview} className="rounded-xl">
+      <Button variant="outline" onClick={preview} className="rounded-[6px]">
         <Play className="size-3.5" />
         Voice Preview
       </Button>

@@ -95,7 +95,7 @@ export function CustomerDetailDrawer({
 
       <SheetContent>
         <div className="space-y-6">
-          <div className="grid gap-4 rounded-xl border border-border/60 bg-muted/20 p-4">
+          <div className="grid gap-4 rounded-[6px] border border-border/60 bg-muted/20 p-4">
             <div className="flex items-center justify-between">
               <span className="text-xs text-muted-foreground">
                 Lifetime Value

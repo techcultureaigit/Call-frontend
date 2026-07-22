@@ -112,9 +112,9 @@ export function AudioBufferView() {
           </div>
 
           {isLoading ? (
-            <Skeleton className="h-[480px] rounded-2xl" />
+            <Skeleton className="h-[480px] rounded-[6px]" />
           ) : (
-            <div className="overflow-hidden rounded-2xl border border-border/40 bg-card shadow-card">
+            <div className="overflow-hidden rounded-[6px] border border-border/40 bg-card shadow-card">
               <div className="grid lg:grid-cols-[minmax(240px,32%)_1fr]">
                 <AvailableVoicesPanel
                   voices={voices}
@@ -132,7 +132,7 @@ export function AudioBufferView() {
           )}
 
           {!isLoading && voices.length === 0 && (
-            <div className="flex items-center justify-center gap-2 rounded-xl border border-dashed border-border/60 bg-card/50 px-4 py-6 text-center text-sm text-muted-foreground">
+            <div className="flex items-center justify-center gap-2 rounded-[6px] border border-dashed border-border/60 bg-card/50 px-4 py-6 text-center text-sm text-muted-foreground">
               <Mic className="size-4 shrink-0" />
               Cached audio appears here after agents generate TTS snippets during
               calls.

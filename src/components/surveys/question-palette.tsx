@@ -31,7 +31,7 @@ function PaletteItem({
       type="button"
       onClick={() => onAdd(type)}
       className={cn(
-        "group flex w-full items-center gap-3 rounded-xl border border-border/50 bg-card p-3 text-left transition-all hover:border-primary/30 hover:shadow-card",
+        "group flex w-full items-center gap-3 rounded-[6px] border border-border/50 bg-card p-3 text-left transition-all hover:border-primary/30 hover:shadow-card",
         isDragging && "opacity-40"
       )}
       {...listeners}

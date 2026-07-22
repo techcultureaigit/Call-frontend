@@ -119,9 +119,9 @@ export function SettingsView() {
     if (isLoading) {
       return (
         <div className="space-y-4">
-          <Skeleton className="h-8 w-48 rounded-xl" />
-          <Skeleton className="h-64 rounded-2xl" />
-          <Skeleton className="h-48 rounded-2xl" />
+          <Skeleton className="h-8 w-48 rounded-[6px]" />
+          <Skeleton className="h-64 rounded-[6px]" />
+          <Skeleton className="h-48 rounded-[6px]" />
         </div>
       );
     }

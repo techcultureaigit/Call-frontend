@@ -13,7 +13,7 @@ interface SavedActionsPanelProps {
 
 export function SavedActionsPanel({ actions, onDelete }: SavedActionsPanelProps) {
   return (
-    <div className="flex h-full flex-col overflow-hidden rounded-2xl border border-border/40 bg-card shadow-card">
+    <div className="flex h-full flex-col overflow-hidden rounded-[6px] border border-border/40 bg-card shadow-card">
       <div className="flex items-center gap-2 border-b border-border/40 px-5 py-4">
         <h2 className="text-base font-semibold text-foreground dark:text-foreground">
           Saved Actions
@@ -26,7 +26,7 @@ export function SavedActionsPanel({ actions, onDelete }: SavedActionsPanelProps)
       <div className="flex flex-1 flex-col p-5">
         {actions.length === 0 ? (
           <div className="flex flex-1 flex-col items-center justify-center py-12 text-center">
-            <div className="mb-4 flex size-14 items-center justify-center rounded-2xl bg-muted/60">
+            <div className="mb-4 flex size-14 items-center justify-center rounded-[6px] bg-muted/60">
               <Zap className="size-7 text-muted-foreground/50" />
             </div>
             <p className="text-sm font-medium text-muted-foreground">
@@ -41,7 +41,7 @@ export function SavedActionsPanel({ actions, onDelete }: SavedActionsPanelProps)
             {actions.map((action) => (
               <li
                 key={action.id}
-                className="group rounded-xl border border-border/40 bg-muted/20 p-3 transition-colors hover:border-primary/20 hover:bg-muted/40"
+                className="group rounded-[6px] border border-border/40 bg-muted/20 p-3 transition-colors hover:border-primary/20 hover:bg-muted/40"
               >
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0 flex-1">

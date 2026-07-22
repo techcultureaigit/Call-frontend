@@ -16,7 +16,7 @@ export function ActivityLogsPagination({
   const to = Math.min(page * limit, total);
 
   return (
-    <div className="flex flex-col gap-3 rounded-xl border border-border/60 bg-card px-4 py-4 shadow-card sm:flex-row sm:items-center sm:justify-between">
+    <div className="flex flex-col gap-3 rounded-[6px] border border-border/60 bg-card px-4 py-4 shadow-card sm:flex-row sm:items-center sm:justify-between">
       <p className="text-xs text-muted-foreground">
         Showing <span className="font-medium text-foreground">{from}</span> to{" "}
         <span className="font-medium text-foreground">{to}</span> of{" "}

@@ -7,11 +7,11 @@ export default function ResponsesLoading() {
       <div className="space-y-6">
         <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
           {Array.from({ length: 5 }).map((_, i) => (
-            <Skeleton key={i} className="h-20 rounded-xl" />
+            <Skeleton key={i} className="h-20 rounded-[6px]" />
           ))}
         </div>
-        <Skeleton className="h-32 w-full rounded-xl" />
-        <Skeleton className="h-[480px] w-full rounded-xl" />
+        <Skeleton className="h-32 w-full rounded-[6px]" />
+        <Skeleton className="h-[480px] w-full rounded-[6px]" />
       </div>
     </PageContainer>
   );

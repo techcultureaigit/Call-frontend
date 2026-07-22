@@ -50,7 +50,7 @@ export function IntegrationsSection({
         {values.map((integration) => (
           <div
             key={integration.id}
-            className="flex flex-col justify-between rounded-xl border border-border/50 bg-muted/20 p-4"
+            className="flex flex-col justify-between rounded-[6px] border border-border/50 bg-muted/20 p-4"
           >
             <div className="space-y-2">
               <div className="flex items-center justify-between">
@@ -73,7 +73,7 @@ export function IntegrationsSection({
               variant={integration.connected ? "outline" : "default"}
               size="sm"
               onClick={() => toggle(integration.id)}
-              className="mt-4 w-full rounded-xl"
+              className="mt-4 w-full rounded-[6px]"
             >
               {integration.connected ? (
                 <>

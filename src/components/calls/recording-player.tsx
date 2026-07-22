@@ -47,7 +47,7 @@ export function RecordingPlayer({
   return (
     <div
       className={cn(
-        "rounded-xl border border-border/60 bg-muted/20 p-4",
+        "rounded-[6px] border border-border/60 bg-muted/20 p-4",
         className
       )}
     >

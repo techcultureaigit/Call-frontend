@@ -122,7 +122,7 @@ export function CustomersImportModal({
             onDrop={handleDrop}
             onClick={() => inputRef.current?.click()}
             className={cn(
-              "flex cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed px-6 py-10 transition-colors",
+              "flex cursor-pointer flex-col items-center justify-center rounded-[6px] border-2 border-dashed px-6 py-10 transition-colors",
               dragOver
                 ? "border-primary bg-primary/5"
                 : "border-border/60 bg-muted/20 hover:border-primary/40 hover:bg-muted/40"

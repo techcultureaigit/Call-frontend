@@ -44,7 +44,7 @@ export function AgentCard({ agent, index = 0, onDelete }: AgentCardProps) {
       whileHover={{ y: -3 }}
       className="group"
     >
-      <div className="overflow-hidden rounded-2xl border border-border/40 bg-card shadow-card transition-all duration-300 group-hover:border-primary/20 group-hover:shadow-elevated">
+      <div className="overflow-hidden rounded-[6px] border border-border/40 bg-card shadow-card transition-all duration-300 group-hover:border-primary/20 group-hover:shadow-elevated">
         <div className="bg-linear-to-r from-brand/10 via-brand/5 to-transparent px-4 py-3.5">
           <div className="flex items-center gap-3">
             <AgentAvatar seed={agent.uuid} />

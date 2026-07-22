@@ -73,7 +73,7 @@ export function UserForm({
   return (
     <form
       onSubmit={handleFormSubmit}
-      className="w-full rounded-xl border border-border/60 bg-card p-6 shadow-card lg:p-8"
+      className="w-full rounded-[6px] border border-border/60 bg-card p-6 shadow-card lg:p-8"
     >
       <div className="space-y-6">
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">

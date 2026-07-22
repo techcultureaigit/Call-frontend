@@ -81,21 +81,21 @@ export function AgentTemplatesView() {
           </div>
           <button
             type="button"
-            className="inline-flex size-9 shrink-0 items-center justify-center self-start rounded-xl border border-border/60 text-muted-foreground transition-colors hover:bg-muted lg:self-auto"
+            className="inline-flex size-9 shrink-0 items-center justify-center self-start rounded-[6px] border border-border/60 text-muted-foreground transition-colors hover:bg-muted lg:self-auto"
             aria-label="Help"
           >
             <HelpCircle className="size-4" />
           </button>
         </div>
 
-        <div className="flex flex-col gap-3 rounded-2xl border border-border/50 bg-card/50 p-4 shadow-card backdrop-blur-md sm:flex-row sm:items-center">
+        <div className="flex flex-col gap-3 rounded-[6px] border border-border/50 bg-card/50 p-4 shadow-card backdrop-blur-md sm:flex-row sm:items-center">
           <div className="relative min-w-0 flex-1">
             <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
             <Input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search templates..."
-              className="h-10 rounded-xl border-border/60 bg-background/80 pl-9"
+              className="h-10 rounded-[6px] border-border/60 bg-background/80 pl-9"
             />
           </div>
           <div className="w-full sm:w-52">
@@ -103,7 +103,7 @@ export function AgentTemplatesView() {
               value={industry}
               onChange={(e) => setIndustry(e.target.value)}
               options={AGENT_TEMPLATE_INDUSTRIES}
-              className="h-10 rounded-xl"
+              className="h-10 rounded-[6px]"
             />
           </div>
         </div>
@@ -111,12 +111,12 @@ export function AgentTemplatesView() {
         {isLoading ? (
           <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
             {Array.from({ length: 9 }).map((_, i) => (
-              <Skeleton key={i} className="h-64 rounded-2xl" />
+              <Skeleton key={i} className="h-64 rounded-[6px]" />
             ))}
           </div>
         ) : templates.length === 0 ? (
-          <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-border/60 bg-muted/20 px-6 py-20 text-center">
-            <div className="mb-4 flex size-16 items-center justify-center rounded-2xl bg-primary/10">
+          <div className="flex flex-col items-center justify-center rounded-[6px] border border-dashed border-border/60 bg-muted/20 px-6 py-20 text-center">
+            <div className="mb-4 flex size-16 items-center justify-center rounded-[6px] bg-primary/10">
               <Volume2 className="size-8 text-primary" />
             </div>
             <h3 className="text-lg font-semibold">No templates found</h3>
@@ -125,7 +125,7 @@ export function AgentTemplatesView() {
             </p>
             <Button
               variant="outline"
-              className="mt-4 rounded-xl"
+              className="mt-4 rounded-[6px]"
               onClick={() => {
                 setSearch("");
                 setIndustry("all");

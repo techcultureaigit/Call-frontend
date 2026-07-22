@@ -40,7 +40,7 @@ export function AvailableVoicesPanel({
                     type="button"
                     onClick={() => onSelect(voice.id)}
                     className={cn(
-                      "flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left transition-all",
+                      "flex w-full items-center gap-3 rounded-[6px] px-3 py-3 text-left transition-all",
                       isActive
                         ? "bg-primary/10 text-primary shadow-subtle ring-1 ring-primary/20"
                         : "text-foreground hover:bg-muted/50"

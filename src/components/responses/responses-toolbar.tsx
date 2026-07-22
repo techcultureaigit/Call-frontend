@@ -111,7 +111,7 @@ export function ResponsesToolbar({
         </Button>
       </div>
 
-      <div className="space-y-3 rounded-xl border border-border/60 bg-card p-4 shadow-card">
+      <div className="space-y-3 rounded-[6px] border border-border/60 bg-card p-4 shadow-card">
         <div className="relative">
           <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
           <Input

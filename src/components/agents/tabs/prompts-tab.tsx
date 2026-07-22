@@ -45,7 +45,7 @@ export function PromptsTab({ values, onChange }: PromptsTabProps) {
           onChange={(e) => update("greeting", e.target.value)}
           rows={3}
           maxLength={250}
-          className="w-full rounded-xl border border-input bg-transparent px-3 py-2 text-sm shadow-subtle focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          className="w-full rounded-[6px] border border-input bg-transparent px-3 py-2 text-sm shadow-subtle focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         />
         <p
           className={cn(
@@ -66,7 +66,7 @@ export function PromptsTab({ values, onChange }: PromptsTabProps) {
             { label: "Yes", value: "yes" },
             { label: "No", value: "no" },
           ]}
-          className="rounded-xl"
+          className="rounded-[6px]"
         />
       </div>
 
@@ -79,12 +79,12 @@ export function PromptsTab({ values, onChange }: PromptsTabProps) {
               size="sm"
               onClick={handleEditWithAi}
               disabled={loadingPrompt}
-              className="rounded-xl bg-gradient-to-r from-violet-500/10 to-fuchsia-500/10"
+              className="rounded-[6px] bg-gradient-to-r from-violet-500/10 to-fuchsia-500/10"
             >
               <Sparkles className="size-3.5 text-violet-600" />
               Edit with AI
             </Button>
-            <Button variant="outline" size="sm" className="rounded-xl">
+            <Button variant="outline" size="sm" className="rounded-[6px]">
               <History className="size-3.5" />
               Prompt History
             </Button>
@@ -92,7 +92,7 @@ export function PromptsTab({ values, onChange }: PromptsTabProps) {
         </div>
         <div className="relative">
           {loadingPrompt ? (
-            <div className="flex h-48 items-center justify-center rounded-2xl border border-border/50 bg-muted/20">
+            <div className="flex h-48 items-center justify-center rounded-[6px] border border-border/50 bg-muted/20">
               <Loader2 className="size-6 animate-spin text-primary" />
               <span className="ml-2 text-sm text-muted-foreground">
                 Loading...
@@ -103,7 +103,7 @@ export function PromptsTab({ values, onChange }: PromptsTabProps) {
               value={values.systemPrompt}
               onChange={(e) => update("systemPrompt", e.target.value)}
               rows={10}
-              className="w-full rounded-2xl border border-input bg-transparent px-4 py-3 text-sm leading-relaxed shadow-subtle focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              className="w-full rounded-[6px] border border-input bg-transparent px-4 py-3 text-sm leading-relaxed shadow-subtle focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               placeholder="Define your agent's system prompt..."
             />
           )}

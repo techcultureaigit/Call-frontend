@@ -141,7 +141,7 @@ export function VoicePreviewDialog({
             </Badge>
           </div>
 
-          <div className="rounded-xl border border-border/60 bg-muted/20 p-4">
+          <div className="rounded-[6px] border border-border/60 bg-muted/20 p-4">
             <p className="mb-3 text-xs font-medium uppercase tracking-wide text-muted-foreground">
               Dummy ringtone
             </p>
@@ -160,7 +160,7 @@ export function VoicePreviewDialog({
             <Button
               type="button"
               variant="outline"
-              className="h-10 rounded-xl"
+              className="h-10 rounded-[6px]"
               onClick={handleShare}
             >
               <Share2 className="size-4" />
@@ -169,7 +169,7 @@ export function VoicePreviewDialog({
             <Button
               type="button"
               variant="outline"
-              className="h-10 rounded-xl"
+              className="h-10 rounded-[6px]"
               onClick={onBack}
               disabled={!canGoBack}
             >
@@ -179,7 +179,7 @@ export function VoicePreviewDialog({
             <Button
               type="button"
               variant="outline"
-              className="h-10 rounded-xl"
+              className="h-10 rounded-[6px]"
               onClick={onForward}
               disabled={!canGoForward}
             >
@@ -188,7 +188,7 @@ export function VoicePreviewDialog({
             </Button>
             <Button
               type="button"
-              className="h-10 rounded-xl"
+              className="h-10 rounded-[6px]"
               onClick={handleListen}
             >
               {isPlaying ? (
@@ -203,7 +203,7 @@ export function VoicePreviewDialog({
           {onChoose && !selected && (
             <Button
               type="button"
-              className="w-full rounded-xl"
+              className="w-full rounded-[6px]"
               onClick={() => {
                 onChoose(voice);
                 void playVoiceRingtone(voice.id);

@@ -75,12 +75,12 @@ export function AgentsListView() {
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Search agents by name..."
-                className="h-11 rounded-xl border-border/50 bg-card pl-9 shadow-sm"
+                className="h-11 rounded-[6px] border-border/50 bg-card pl-9 shadow-sm"
               />
             </div>
             <Button
               asChild
-              className="h-11 shrink-0 rounded-xl px-5 shadow-sm"
+              className="h-11 shrink-0 rounded-[6px] px-5 shadow-sm"
             >
               <Link href="/agents/new">
                 <UserPlus className="size-4" />
@@ -92,12 +92,12 @@ export function AgentsListView() {
           {isLoading ? (
             <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
               {Array.from({ length: 3 }).map((_, i) => (
-                <Skeleton key={i} className="h-52 rounded-2xl" />
+                <Skeleton key={i} className="h-52 rounded-[6px]" />
               ))}
             </div>
           ) : filtered.length === 0 ? (
-            <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-border/60 bg-card/60 px-6 py-20 text-center shadow-sm backdrop-blur-sm">
-              <div className="mb-4 flex size-16 items-center justify-center rounded-2xl bg-primary/10">
+            <div className="flex flex-col items-center justify-center rounded-[6px] border border-dashed border-border/60 bg-card/60 px-6 py-20 text-center shadow-sm backdrop-blur-sm">
+              <div className="mb-4 flex size-16 items-center justify-center rounded-[6px] bg-primary/10">
                 <Bot className="size-8 text-primary" />
               </div>
               <h3 className="text-lg font-semibold">No agents found</h3>
@@ -107,7 +107,7 @@ export function AgentsListView() {
                   : "Create your first voice AI agent to get started."}
               </p>
               {!search && (
-                <Button asChild className="mt-4 rounded-xl">
+                <Button asChild className="mt-4 rounded-[6px]">
                   <Link href="/agents/new">
                     <UserPlus className="size-4" />
                     Create New Agent
