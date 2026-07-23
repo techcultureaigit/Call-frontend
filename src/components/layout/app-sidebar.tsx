@@ -56,7 +56,7 @@ export function AppSidebar({ className }: AppSidebarProps) {
           "shadow-[inset_-1px_0_0_0_color-mix(in_oklch,var(--sidebar-border)_55%,transparent)]",
           isMobile
             ? "fixed inset-y-0 left-0 z-50 h-svh"
-            : "relative z-auto h-svh",
+            : "sticky top-0 z-40 h-svh",
           className
         )}
         style={{

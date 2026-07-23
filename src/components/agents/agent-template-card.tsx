@@ -62,7 +62,7 @@ export function AgentTemplateCard({
       <div
         className={cn(
           "pointer-events-none absolute -inset-px rounded-[6px] opacity-0 transition-opacity duration-500 group-hover:opacity-100",
-          "bg-gradient-to-br from-primary/30 via-violet-500/20 to-fuchsia-500/10 blur-sm"
+          "bg-gradient-to-br from-brand/30 via-brand-blue/20 to-brand/10 blur-sm"
         )}
       />
 

@@ -155,7 +155,7 @@ function FilterToggle({
       className={cn(
         "inline-flex h-8 items-center justify-center gap-1.5 rounded-[6px] px-2.5 text-xs font-medium transition-all",
         active
-          ? "bg-primary text-primary-foreground shadow-sm"
+          ? "brand-gradient text-brand-foreground shadow-sm"
           : "text-muted-foreground hover:bg-background hover:text-foreground"
       )}
     >

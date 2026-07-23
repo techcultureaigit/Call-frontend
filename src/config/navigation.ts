@@ -60,7 +60,7 @@ export const dashboardNavigation: NavSection[] = [
     items: [
       {
         id: "agents-create",
-        title: "Create New",
+        title: "Create Survey",
         href: "/agents/new",
         icon: UserPlus,
         module: "agents",

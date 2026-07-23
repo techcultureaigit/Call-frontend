@@ -12,7 +12,7 @@ export const MOCK_AGENTS: Agent[] = [
     name: "wwwf",
     status: "active",
     language: "en",
-    modelMode: "quantum",
+    modelMode: "pipeline",
     phone: null,
     conversationCount: 0,
     config: {
@@ -32,7 +32,7 @@ export const MOCK_AGENTS: Agent[] = [
     name: "Grievance Help Desk",
     status: "active",
     language: "zh",
-    modelMode: "quantum",
+    modelMode: "pipeline",
     phone: null,
     conversationCount: 0,
     config: {
@@ -60,7 +60,7 @@ export const MOCK_AGENTS: Agent[] = [
     name: "Candidate Screening",
     status: "active",
     language: "en",
-    modelMode: "quantum",
+    modelMode: "pipeline",
     phone: null,
     conversationCount: 1,
     config: {

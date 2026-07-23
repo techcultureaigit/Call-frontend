@@ -26,7 +26,7 @@ export function SettingsSectionCard({
   helpTooltip,
   children,
   className,
-  gradient = "from-violet-500/8 via-transparent to-transparent",
+  gradient = "from-brand/8 via-transparent to-transparent",
   action,
 }: SettingsSectionCardProps) {
   return (

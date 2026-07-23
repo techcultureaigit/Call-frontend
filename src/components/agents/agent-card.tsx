@@ -47,7 +47,10 @@ export function AgentCard({ agent, index = 0, onDelete }: AgentCardProps) {
       <div className="overflow-hidden rounded-[6px] border border-border/40 bg-card shadow-card transition-all duration-300 group-hover:border-primary/20 group-hover:shadow-elevated">
         <div className="bg-linear-to-r from-brand/10 via-brand/5 to-transparent px-4 py-3.5">
           <div className="flex items-center gap-3">
-            <AgentAvatar seed={agent.uuid} />
+            <AgentAvatar
+              seed={agent.uuid}
+              avatarId={agent.config.persona.avatarId}
+            />
             <h3 className="truncate text-base font-semibold tracking-tight text-foreground">
               {agent.name}
             </h3>

@@ -101,7 +101,7 @@ export function SurveyPreview({
   return (
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="flex h-[90vh] max-w-3xl flex-col gap-0 overflow-hidden p-0 sm:rounded-[6px]">
-        <div className="relative flex flex-1 flex-col bg-gradient-to-br from-primary/5 via-background to-violet-500/5">
+        <div className="relative flex flex-1 flex-col bg-gradient-to-br from-brand/5 via-background to-brand-blue/5">
           <div className="absolute right-4 top-4 z-10">
             <Button
               variant="ghost"

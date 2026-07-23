@@ -31,8 +31,8 @@ export function AgentConfigTabs({ active, onChange }: AgentConfigTabsProps) {
   const activeIndex = AGENT_CONFIG_TABS.findIndex((t) => t.id === active);
 
   return (
-    <div className="border-b border-border/50 pb-6">
-      <ol className="flex items-center gap-1 overflow-x-auto scrollbar-thin sm:gap-0">
+    <nav aria-label="Agent configuration steps" className="w-full">
+      <ol className="flex flex-col gap-1">
         {AGENT_CONFIG_TABS.map((tab, index) => {
           const Icon = TAB_ICONS[tab.id as AgentConfigTab];
           const isActive = active === tab.id;
@@ -40,16 +40,13 @@ export function AgentConfigTabs({ active, onChange }: AgentConfigTabsProps) {
           const isLast = index === AGENT_CONFIG_TABS.length - 1;
 
           return (
-            <li
-              key={tab.id}
-              className={cn("flex items-center", !isLast && "flex-1")}
-            >
+            <li key={tab.id} className="relative flex flex-col">
               <button
                 type="button"
                 onClick={() => onChange(tab.id as AgentConfigTab)}
                 aria-current={isActive ? "step" : undefined}
                 className={cn(
-                  "group relative flex shrink-0 items-center gap-2.5 rounded-[6px] px-2.5 py-2 text-left transition-colors sm:gap-3",
+                  "group relative flex w-full items-center gap-3 rounded-[6px] px-3 py-2.5 text-left transition-colors",
                   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/45 focus-visible:ring-offset-2 focus-visible:ring-offset-card",
                   !isActive && "hover:bg-muted/60"
                 )}
@@ -61,9 +58,10 @@ export function AgentConfigTabs({ active, onChange }: AgentConfigTabsProps) {
                     transition={{ type: "spring", stiffness: 380, damping: 34 }}
                   />
                 )}
+
                 <span
                   className={cn(
-                    "relative flex size-9 shrink-0 items-center justify-center rounded-[6px] text-sm font-semibold transition-all duration-300",
+                    "relative z-10 flex size-9 shrink-0 items-center justify-center rounded-[6px] text-sm font-semibold transition-all duration-300",
                     isActive &&
                       "brand-gradient text-brand-foreground shadow-brand ring-2 ring-brand/20",
                     isDone &&
@@ -73,23 +71,17 @@ export function AgentConfigTabs({ active, onChange }: AgentConfigTabsProps) {
                       "bg-muted text-muted-foreground ring-1 ring-inset ring-border group-hover:text-foreground"
                   )}
                 >
-                  {isActive && (
-                    <motion.span
-                      layoutId="agent-step-glow"
-                      className="absolute inset-0 rounded-[6px] ring-2 ring-brand/30"
-                      transition={{ type: "spring", stiffness: 400, damping: 32 }}
-                    />
-                  )}
                   {isDone ? (
                     <Check className="size-4" />
                   ) : (
                     <Icon className="size-[18px]" />
                   )}
                 </span>
-                <span className="relative z-10 hidden min-w-0 flex-col sm:flex">
+
+                <span className="relative z-10 min-w-0 flex-1 flex-col">
                   <span
                     className={cn(
-                      "text-[10px] font-semibold uppercase tracking-[0.14em] transition-colors",
+                      "block text-[10px] font-semibold uppercase tracking-[0.14em] transition-colors",
                       isActive ? "text-brand" : "text-muted-foreground/70"
                     )}
                   >
@@ -97,7 +89,7 @@ export function AgentConfigTabs({ active, onChange }: AgentConfigTabsProps) {
                   </span>
                   <span
                     className={cn(
-                      "truncate text-sm font-semibold tracking-tight transition-colors",
+                      "block truncate text-sm font-semibold tracking-tight transition-colors",
                       isActive
                         ? "text-foreground"
                         : isDone
@@ -111,12 +103,12 @@ export function AgentConfigTabs({ active, onChange }: AgentConfigTabsProps) {
               </button>
 
               {!isLast && (
-                <span className="mx-1 hidden h-px flex-1 overflow-hidden rounded-full bg-border sm:block">
+                <span className="ml-[1.4rem] my-0.5 h-4 w-px overflow-hidden rounded-full bg-border">
                   <motion.span
-                    className="block h-full bg-brand"
+                    className="block w-full bg-brand"
                     initial={false}
-                    animate={{ width: isDone ? "100%" : "0%" }}
-                    transition={{ duration: 0.4, ease: "easeOut" }}
+                    animate={{ height: isDone ? "100%" : "0%" }}
+                    transition={{ duration: 0.35, ease: "easeOut" }}
                   />
                 </span>
               )}
@@ -124,6 +116,6 @@ export function AgentConfigTabs({ active, onChange }: AgentConfigTabsProps) {
           );
         })}
       </ol>
-    </div>
+    </nav>
   );
 }

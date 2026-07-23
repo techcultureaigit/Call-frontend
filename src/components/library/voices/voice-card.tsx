@@ -104,7 +104,7 @@ export function VoiceCard({
         className={cn(
           "flex size-11 shrink-0 items-center justify-center rounded-full border transition-colors",
           isPlaying
-            ? "border-primary/40 bg-primary text-primary-foreground"
+            ? "border-brand/40 brand-gradient text-brand-foreground"
             : "border-sky-200/80 bg-sky-100/80 text-sky-600 hover:bg-sky-200/80 dark:border-sky-800/50 dark:bg-sky-950/40 dark:text-sky-400"
         )}
         aria-label={isPlaying ? `Pause ${voice.name}` : `Play ${voice.name}`}
@@ -168,7 +168,7 @@ export function VoiceCard({
         <Button
           size="sm"
           variant="outline"
-          className="h-8 shrink-0 self-end rounded-[6px] border-primary/40 bg-primary/10 px-4 text-primary hover:bg-primary/15 hover:text-primary"
+          className="h-8 shrink-0 self-end rounded-[6px] border-brand/40 bg-brand/10 px-4 text-brand hover:bg-brand/15 hover:text-brand"
           disabled
           onClick={(e) => e.stopPropagation()}
         >

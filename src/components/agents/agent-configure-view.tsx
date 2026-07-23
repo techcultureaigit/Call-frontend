@@ -157,57 +157,66 @@ export function AgentConfigureView({
   };
 
   return (
-    <PageContainer size="full">
+    <PageContainer
+      size="full"
+      className="flex min-h-0 flex-1 flex-col overflow-hidden pt-4 pb-4"
+    >
       <motion.div
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
-        className="space-y-6"
+        className="flex min-h-0 flex-1 flex-col gap-4"
       >
-        <AgentTopNav
-          active="configure"
-          previewOpen={showPreview}
-          onTogglePreview={() => setShowPreview((v) => !v)}
-        />
+        <div className="shrink-0">
+          <AgentTopNav
+            active="configure"
+            previewOpen={showPreview}
+            onTogglePreview={() => setShowPreview((v) => !v)}
+          />
+        </div>
 
-        <div className="flex flex-col gap-6 xl:flex-row xl:items-start">
-          <motion.div
-            layout
-            transition={{ type: "spring", stiffness: 300, damping: 34 }}
-            className="min-w-0 flex-1 rounded-[6px] border border-border/60 bg-card/70 p-5 shadow-card backdrop-blur-sm sm:p-6 lg:p-7"
-          >
-            <AgentConfigTabs active={activeTab} onChange={setActiveTab} />
+        <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-hidden xl:flex-row">
+          <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-4 overflow-hidden lg:flex-row">
+            {/* Step tabs — fixed, no page scroll */}
+            <aside className="w-full shrink-0 rounded-[6px] border border-border/60 bg-card/70 p-3 shadow-card backdrop-blur-sm lg:w-[220px] lg:overflow-y-auto">
+              <AgentConfigTabs active={activeTab} onChange={setActiveTab} />
+            </aside>
 
-            <motion.div
-              key={activeTab}
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.25 }}
-              className="mt-6"
-            >
-              {renderTab()}
-            </motion.div>
+            {/* Content card — scroll only inside here */}
+            <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-[6px] border border-border/60 bg-card/70 shadow-card backdrop-blur-sm">
+              <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-5 sm:p-6 lg:p-7">
+                <motion.div
+                  key={activeTab}
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.25 }}
+                >
+                  {renderTab()}
+                </motion.div>
+              </div>
 
-            <AgentConfigFooter
-              onBack={handleBack}
-              onNext={handleNext}
-              isFirst={isFirst}
-              isLast={isLast}
-              isSaving={isSaving}
-              step={tabIndex + 1}
-              total={TAB_ORDER.length}
-            />
-          </motion.div>
+              <div className="shrink-0 border-t border-border/50 bg-card/90 px-5 py-4 sm:px-6 lg:px-7">
+                <AgentConfigFooter
+                  onBack={handleBack}
+                  onNext={handleNext}
+                  isFirst={isFirst}
+                  isLast={isLast}
+                  isSaving={isSaving}
+                  step={tabIndex + 1}
+                  total={TAB_ORDER.length}
+                />
+              </div>
+            </div>
+          </div>
 
           <AnimatePresence initial={false} mode="popLayout">
             {showPreview && (
               <motion.div
                 key="agent-preview"
-                layout
                 initial={{ opacity: 0, x: 28 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: 28 }}
                 transition={{ type: "spring", stiffness: 300, damping: 34 }}
-                className="w-full shrink-0 xl:w-[360px]"
+                className="w-full shrink-0 overflow-y-auto xl:w-[360px]"
               >
                 <AgentConfigSidebar
                   uuid={uuid}

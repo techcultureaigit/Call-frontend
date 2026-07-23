@@ -294,10 +294,10 @@ function McpActionForm({
         <p>
           If you face any issues, feel free to contact us at{" "}
           <a
-            href="mailto:hello@vozzo.ai"
+            href="mailto:support@callhub.io"
             className="font-medium text-primary underline-offset-2 hover:underline"
           >
-            hello@vozzo.ai
+            support@callhub.io
           </a>
         </p>
       </div>

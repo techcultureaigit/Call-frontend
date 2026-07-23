@@ -25,7 +25,7 @@ export function AgentConfigFooter({
   const pct = Math.round((step / total) * 100);
 
   return (
-    <div className="mt-8 flex flex-col gap-4 border-t border-border/50 pt-6 sm:flex-row sm:items-center sm:justify-between">
+    <div className="mt-0 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
       <div className="flex items-center gap-3">
         <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
           <span className="tabular-nums">

@@ -23,7 +23,10 @@ export function AppShell({ children, className }: AppShellProps) {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.3, delay: 0.05 }}
-          className={cn("min-h-0 flex-1 overflow-y-auto overflow-x-hidden", className)}
+          className={cn(
+            "flex min-h-0 flex-1 flex-col overflow-y-auto overflow-x-hidden overscroll-contain",
+            className
+          )}
         >
           {children}
         </motion.main>

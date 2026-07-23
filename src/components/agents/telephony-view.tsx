@@ -439,7 +439,7 @@ function SipTrunkForm({
           <span className="font-semibold text-foreground">
             Static IP SIP Servers Available.
           </span>{" "}
-          VozzoAI Labs offers SIP servers with static IP addresses for enterprise
+          CallHub offers SIP servers with static IP addresses for enterprise
           clients requiring IP allowlisting. Static IP infrastructure uses a /24
           block across US, EU, and India regions. Available for enterprise
           accounts.

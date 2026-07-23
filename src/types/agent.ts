@@ -9,21 +9,53 @@ export type AgentConfigTab =
 
 export type AgentTopNav = "dashboard" | "configure" | "conversations" | "deploy" | "campaign";
 
-export type AgentModelMode = "quantum";
+export type AgentModelMode = "pipeline";
 
-export interface AgentStackConfig {
+export interface AgentStackAdvanced {
+  /** STT */
+  highVadSensitivity?: boolean;
+  languageCode?: string;
+  transcribeMode?: string;
+  interruptionSensitivity?: number;
+  endpointingMs?: number;
+  smartFormatting?: boolean;
+  /** LLM */
+  temperature?: number;
+  maxTokens?: number;
+  streaming?: boolean;
+  /** TTS */
+  speakingRate?: number;
+  stability?: number;
+  pitch?: number;
+}
+
+export interface AgentStackFallback {
   provider: string;
   model: string;
   voice?: string;
 }
 
+export interface AgentStackConfig {
+  provider: string;
+  model: string;
+  voice?: string;
+  fallback?: AgentStackFallback;
+  advanced?: AgentStackAdvanced;
+}
+
 export interface AgentPersonaConfig {
   name: string;
+  avatarId: string;
   modelMode: AgentModelMode;
   language: string;
   audioCacheEnabled: boolean;
   livekitInferenceEnabled: boolean;
   maxCallDurationMinutes: number;
+  analyticsEnabled: boolean;
+  aiComprehendEnabled: boolean;
+  memoryContextEnabled: boolean;
+  fallbackMemoryEnabled: boolean;
+  maxContextItems: number;
   stt: AgentStackConfig;
   llm: AgentStackConfig;
   tts: AgentStackConfig;

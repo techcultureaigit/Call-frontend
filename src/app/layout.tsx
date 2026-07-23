@@ -33,7 +33,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${fontVariables} min-h-svh antialiased`}>
+      <body className={`${fontVariables} h-svh overflow-hidden antialiased`}>
         <AppProviders>{children}</AppProviders>
       </body>
     </html>
