@@ -6,7 +6,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { toast } from "sonner";
 import { PageContainer } from "@/components/layout";
 import { usePageMeta } from "@/hooks";
-import { DEFAULT_AGENT_CONFIG } from "@/lib/constants/agent-config";
+import { DEFAULT_AGENT_CONFIG, ENABLED_AGENT_CONFIG_TABS, isAgentConfigTabDisabled } from "@/lib/constants/agent-config";
 import { generateAgentUuid } from "@/lib/data/mock-agents";
 import { MOCK_AGENT_TEMPLATES } from "@/lib/data/mock-agent-templates";
 import { AgentTopNav } from "./agent-top-nav";
@@ -20,13 +20,9 @@ import { FunctionsTab } from "./tabs/functions-tab";
 import { PostCallTab } from "./tabs/post-call-tab";
 import type { Agent, AgentConfig, AgentConfigTab } from "@/types/agent";
 
-const TAB_ORDER: AgentConfigTab[] = [
-  "persona",
-  "prompts",
-  "wisdom",
-  "functions",
-  "post-call",
-];
+const ENABLED_TAB_ORDER = ENABLED_AGENT_CONFIG_TABS.map(
+  (tab) => tab.id as AgentConfigTab
+);
 
 interface AgentConfigureViewProps {
   agent?: Agent | null;
@@ -81,6 +77,11 @@ export function AgentConfigureView({
     toast.success(`Loaded "${template.name}" template`);
   }, [isNew, agent, templateId]);
 
+  useEffect(() => {
+    if (!isAgentConfigTabDisabled(activeTab)) return;
+    setActiveTab(ENABLED_TAB_ORDER[0] ?? "persona");
+  }, [activeTab]);
+
   const updateConfig = useCallback(
     <K extends keyof AgentConfig>(key: K, value: AgentConfig[K]) => {
       setConfig((prev) => ({ ...prev, [key]: value }));
@@ -88,17 +89,17 @@ export function AgentConfigureView({
     []
   );
 
-  const tabIndex = TAB_ORDER.indexOf(activeTab);
-  const isFirst = tabIndex === 0;
-  const isLast = tabIndex === TAB_ORDER.length - 1;
+  const tabIndex = ENABLED_TAB_ORDER.indexOf(activeTab);
+  const isFirst = tabIndex <= 0;
+  const isLast = tabIndex === ENABLED_TAB_ORDER.length - 1;
 
   const handleBack = () => {
-    if (!isFirst) setActiveTab(TAB_ORDER[tabIndex - 1]);
+    if (tabIndex > 0) setActiveTab(ENABLED_TAB_ORDER[tabIndex - 1]);
   };
 
   const handleNext = async () => {
     if (!config.persona.name.trim() && activeTab === "persona") {
-      toast.error("Please enter an agent name");
+      toast.error("Please enter a survey name");
       return;
     }
 
@@ -112,8 +113,13 @@ export function AgentConfigureView({
       return;
     }
 
-    setActiveTab(TAB_ORDER[tabIndex + 1]);
+    setActiveTab(ENABLED_TAB_ORDER[tabIndex + 1]);
     toast.success("Saved — moving to next step");
+  };
+
+  const handleTabChange = (tab: AgentConfigTab) => {
+    if (isAgentConfigTabDisabled(tab)) return;
+    setActiveTab(tab);
   };
 
   const renderTab = () => {
@@ -178,7 +184,7 @@ export function AgentConfigureView({
           <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-4 overflow-hidden lg:flex-row">
             {/* Step tabs — fixed, no page scroll */}
             <aside className="w-full shrink-0 rounded-[6px] border border-border/60 bg-card/70 p-3 shadow-card backdrop-blur-sm lg:w-[220px] lg:overflow-y-auto">
-              <AgentConfigTabs active={activeTab} onChange={setActiveTab} />
+              <AgentConfigTabs active={activeTab} onChange={handleTabChange} />
             </aside>
 
             {/* Content card — scroll only inside here */}
@@ -201,8 +207,8 @@ export function AgentConfigureView({
                   isFirst={isFirst}
                   isLast={isLast}
                   isSaving={isSaving}
-                  step={tabIndex + 1}
-                  total={TAB_ORDER.length}
+                  step={Math.max(tabIndex, 0) + 1}
+                  total={ENABLED_TAB_ORDER.length}
                 />
               </div>
             </div>

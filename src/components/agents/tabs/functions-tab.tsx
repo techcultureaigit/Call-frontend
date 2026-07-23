@@ -1,8 +1,5 @@
 "use client";
 
-import Link from "next/link";
-import { Plus } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import type { AgentFunctionsConfig } from "@/types/agent";
@@ -69,35 +66,6 @@ export function FunctionsTab({ values, onChange }: FunctionsTabProps) {
             </button>
           ))}
         </div>
-      </div>
-
-      <div>
-        <h3 className="text-sm font-semibold">Add Action</h3>
-        {values.actions.length === 0 ? (
-          <div className="mt-4 flex flex-col items-center justify-center rounded-[6px] border border-dashed border-border/60 bg-muted/20 px-6 py-12 text-center">
-            <div className="mb-4 flex size-14 items-center justify-center rounded-full bg-primary/10">
-              <Plus className="size-7 text-primary" />
-            </div>
-            <p className="text-sm font-semibold">No Actions Available</p>
-            <p className="mt-1 text-xs text-muted-foreground">
-              You haven&apos;t created any actions yet.
-            </p>
-            <Button asChild className="mt-4 rounded-[6px]">
-              <Link href="/agents/actions">Create Your First Action</Link>
-            </Button>
-          </div>
-        ) : (
-          <ul className="mt-4 space-y-2">
-            {values.actions.map((action) => (
-              <li
-                key={action.id}
-                className="rounded-[6px] border border-border/50 px-4 py-3 text-sm"
-              >
-                {action.name}
-              </li>
-            ))}
-          </ul>
-        )}
       </div>
     </div>
   );

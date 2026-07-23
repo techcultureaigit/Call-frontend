@@ -11,10 +11,29 @@ export const AGENT_TOP_NAV = [
 export const AGENT_CONFIG_TABS = [
   { id: "persona", label: "Identity" },
   { id: "prompts", label: "Instructions" },
-  { id: "wisdom", label: "Knowledge" },
   { id: "functions", label: "Tools" },
+  { id: "wisdom", label: "Knowledge" },
   { id: "post-call", label: "Wrap-up" },
 ] as const;
+
+/** Steps kept in the stepper but not navigable yet */
+export const DISABLED_AGENT_CONFIG_TABS = ["wisdom", "post-call"] as const;
+
+export type DisabledAgentConfigTab =
+  (typeof DISABLED_AGENT_CONFIG_TABS)[number];
+
+export const ENABLED_AGENT_CONFIG_TABS = AGENT_CONFIG_TABS.filter(
+  (tab) =>
+    !DISABLED_AGENT_CONFIG_TABS.includes(
+      tab.id as DisabledAgentConfigTab
+    )
+);
+
+export function isAgentConfigTabDisabled(
+  tab: (typeof AGENT_CONFIG_TABS)[number]["id"]
+): boolean {
+  return DISABLED_AGENT_CONFIG_TABS.includes(tab as DisabledAgentConfigTab);
+}
 
 export const AGENT_LANGUAGES = [
   { label: "English", value: "en" },
