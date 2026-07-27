@@ -2,17 +2,17 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { queryKeys } from "@/lib/constants/query-keys";
 import {
-  rolesModuleService,
+  rolesApi,
   type CreateRolePayload,
   type UpdateRolePayload,
-} from "@/services/roles-module.service";
+} from "@/api";
+import { queryKeys } from "@/lib/constants/query-keys";
 
 export function useRoles(search = "") {
   return useQuery({
     queryKey: queryKeys.roles.module({ search }),
-    queryFn: () => rolesModuleService.list(search),
+    queryFn: () => rolesApi.list(search),
     placeholderData: (prev) => prev,
   });
 }
@@ -20,7 +20,7 @@ export function useRoles(search = "") {
 export function useRoleDetail(id: string | null) {
   return useQuery({
     queryKey: queryKeys.roles.detail(id ?? ""),
-    queryFn: () => rolesModuleService.getById(id!),
+    queryFn: () => rolesApi.getById(id!),
     enabled: Boolean(id),
   });
 }
@@ -32,8 +32,7 @@ export function useRoleMutations() {
     queryClient.invalidateQueries({ queryKey: ["roles", "module"] });
 
   const createRole = useMutation({
-    mutationFn: (payload: CreateRolePayload) =>
-      rolesModuleService.create(payload),
+    mutationFn: (payload: CreateRolePayload) => rolesApi.create(payload),
     onSuccess: () => {
       toast.success("Role created successfully");
       invalidate();
@@ -43,7 +42,7 @@ export function useRoleMutations() {
 
   const updateRole = useMutation({
     mutationFn: ({ id, payload }: { id: string; payload: UpdateRolePayload }) =>
-      rolesModuleService.update(id, payload),
+      rolesApi.update(id, payload),
     onSuccess: () => {
       toast.success("Role updated successfully");
       invalidate();
@@ -52,12 +51,13 @@ export function useRoleMutations() {
   });
 
   const deleteRole = useMutation({
-    mutationFn: (id: string) => rolesModuleService.delete(id),
+    mutationFn: (id: string) => rolesApi.delete(id),
     onSuccess: () => {
       toast.success("Role deleted successfully");
       invalidate();
     },
-    onError: (error: Error) => toast.error(error.message || "Failed to delete role"),
+    onError: (error: Error) =>
+      toast.error(error.message || "Failed to delete role"),
   });
 
   return { createRole, updateRole, deleteRole };

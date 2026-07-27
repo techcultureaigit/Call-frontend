@@ -1,7 +1,16 @@
 import type { Timestamps, ID } from "./common";
 import type { NavModule } from "@/config/permissions";
 
-export type PermissionAction = "create" | "read" | "update" | "delete";
+export type PermissionAction =
+  | "create"
+  | "read"
+  | "update"
+  | "delete"
+  | "export"
+  | "import"
+  | "upload"
+  | "download"
+  | "publish";
 
 export type PermissionModule = NavModule;
 
@@ -10,6 +19,11 @@ export interface ModulePermissions {
   read: boolean;
   update: boolean;
   delete: boolean;
+  export: boolean;
+  import: boolean;
+  upload: boolean;
+  download: boolean;
+  publish: boolean;
 }
 
 export type RolePermissions = Record<PermissionModule, ModulePermissions>;

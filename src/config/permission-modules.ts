@@ -14,11 +14,17 @@ export interface PermissionModuleGroup {
   modules: PermissionModuleConfig[];
 }
 
+/** Global matrix columns — keep lean for a voice survey / calling CRM */
 export const PERMISSION_ACTIONS: PermissionAction[] = [
   "create",
   "read",
   "update",
   "delete",
+  "export",
+  "import",
+  "upload",
+  "download",
+  "publish",
 ];
 
 export const PERMISSION_ACTION_LABELS: Record<PermissionAction, string> = {
@@ -26,57 +32,115 @@ export const PERMISSION_ACTION_LABELS: Record<PermissionAction, string> = {
   read: "Read",
   update: "Update",
   delete: "Delete",
+  export: "Export",
+  import: "Import",
+  upload: "Upload",
+  download: "Download",
+  publish: "Publish",
 };
+
+const CRUD: PermissionAction[] = ["create", "read", "update", "delete"];
 
 export const PERMISSION_MODULE_GROUPS: PermissionModuleGroup[] = [
   {
     id: "core",
     label: "Core",
-    modules: [
-      { id: "dashboard", label: "Dashboard", actions: ["read"] },
-    ],
+    modules: [{ id: "dashboard", label: "Dashboard", actions: ["read"] }],
   },
   {
     id: "management",
-    label: "Managementss",
+    label: "Management",
     modules: [
-      { id: "users", label: "Users" },
-      { id: "roles", label: "Roles & Permissions" },
+      {
+        id: "users",
+        label: "Users",
+        actions: [...CRUD, "export"],
+      },
+      {
+        id: "roles",
+        label: "Roles & Permissions",
+        actions: CRUD,
+      },
     ],
   },
   {
     id: "engagement",
     label: "Engagement",
     modules: [
-      { id: "customers", label: "Customers" },
-      { id: "surveys", label: "Surveys" },
-      { id: "agents", label: "AI Agents" },
-      { id: "library", label: "Library" },
+      {
+        id: "customers",
+        label: "Customers",
+        // Import contacts CSV + upload contact sheets to Cloudinary
+        actions: [...CRUD, "export", "import", "upload"],
+      },
+      {
+        id: "surveys",
+        label: "Surveys",
+        // Form surveys: import questions, upload assets, publish live
+        actions: [...CRUD, "export", "import", "upload", "publish"],
+      },
+      {
+        id: "agents",
+        label: "Survey (Voice)",
+        // Voice survey config: upload questions/contacts, publish campaign
+        actions: [...CRUD, "export", "upload", "publish"],
+      },
+      {
+        id: "library",
+        label: "Library",
+        // Voices + audio buffer: upload/download media
+        actions: [...CRUD, "export", "upload", "download"],
+      },
     ],
   },
   {
     id: "operations",
     label: "Operations",
     modules: [
-      { id: "calls", label: "Calls" },
-      { id: "responses", label: "Responses" },
+      {
+        id: "calls",
+        label: "Calls",
+        // Download call recordings
+        actions: [...CRUD, "export", "download"],
+      },
+      {
+        id: "responses",
+        label: "Responses",
+        actions: [...CRUD, "export", "download"],
+      },
     ],
   },
   {
     id: "insights",
     label: "Insights",
     modules: [
-      { id: "reports", label: "Reports", actions: ["read"] },
-      { id: "billing", label: "Billing", actions: ["read", "update"] },
+      {
+        id: "reports",
+        label: "Reports",
+        actions: ["read", "export", "download"],
+      },
+      {
+        id: "billing",
+        label: "Billing",
+        actions: ["read", "update", "export", "download"],
+      },
     ],
   },
   {
     id: "system",
     label: "System",
     modules: [
-      { id: "notifications", label: "Notifications", actions: ["read", "update"] },
-      { id: "activity_logs", label: "Activity Logs", actions: ["read"] },
-      { id: "settings", label: "Settings" },
+      {
+        id: "notifications",
+        label: "Notifications",
+        actions: ["read", "update"],
+      },
+      {
+        id: "activity_logs",
+        label: "Activity Logs",
+        actions: ["read", "export", "download"],
+      },
+      { id: "settings", label: "Settings", actions: CRUD },
       { id: "help", label: "Help", actions: ["read"] },
     ],
   },
@@ -87,16 +151,25 @@ export const ALL_PERMISSION_MODULES: NavModule[] =
     group.modules.map((module) => module.id)
   );
 
+export function emptyModulePermissions(): ModulePermissions {
+  return {
+    create: false,
+    read: false,
+    update: false,
+    delete: false,
+    export: false,
+    import: false,
+    upload: false,
+    download: false,
+    publish: false,
+  };
+}
+
 export function createEmptyPermissions(): RolePermissions {
   const permissions = {} as RolePermissions;
 
   ALL_PERMISSION_MODULES.forEach((moduleId) => {
-    permissions[moduleId] = {
-      create: false,
-      read: false,
-      update: false,
-      delete: false,
-    };
+    permissions[moduleId] = emptyModulePermissions();
   });
 
   return permissions;
@@ -106,17 +179,12 @@ export function createFullPermissions(): RolePermissions {
   const permissions = createEmptyPermissions();
 
   ALL_PERMISSION_MODULES.forEach((moduleId) => {
-    const config = PERMISSION_MODULE_GROUPS.flatMap((g) => g.modules).find(
-      (m) => m.id === moduleId
-    );
-    const actions = config?.actions ?? PERMISSION_ACTIONS;
-
-    permissions[moduleId] = {
-      create: actions.includes("create"),
-      read: actions.includes("read"),
-      update: actions.includes("update"),
-      delete: actions.includes("delete"),
-    };
+    const actions = getModuleActions(moduleId);
+    const next = emptyModulePermissions();
+    actions.forEach((action) => {
+      next[action] = true;
+    });
+    permissions[moduleId] = next;
   });
 
   return permissions;
@@ -139,7 +207,7 @@ export function countEnabledPermissions(
     const actions = getModuleActions(moduleId);
     actions.forEach((action) => {
       total += 1;
-      if (permissions[moduleId][action]) enabled += 1;
+      if (permissions[moduleId]?.[action]) enabled += 1;
     });
   });
 

@@ -1,23 +1,29 @@
 import type { AgentConfig } from "@/types/agent";
 
 export const AGENT_TOP_NAV = [
-  { id: "dashboard", label: "Dashboard", href: "/agents" },
+  { id: "dashboard", label: "Dashboard", href: "/survey" },
   { id: "configure", label: "Configure", href: "#" },
-  { id: "conversations", label: "Conversations", href: "/agents/conversations" },
-  { id: "deploy", label: "Deploy", href: "/agents/deploy" },
-  { id: "campaign", label: "Survey", href: "/agents/templates" },
+  { id: "conversations", label: "Conversations", href: "/survey/conversations" },
+  { id: "deploy", label: "Deploy", href: "/survey/deploy" },
+  { id: "campaign", label: "Survey", href: "/survey/templates" },
 ] as const;
 
 export const AGENT_CONFIG_TABS = [
   { id: "persona", label: "Identity" },
   { id: "prompts", label: "Instructions" },
-  { id: "functions", label: "Tools" },
+  { id: "survey-questions", label: "Survey Questions" },
+  { id: "client-contact", label: "Contact of Client" },
   { id: "wisdom", label: "Knowledge" },
   { id: "post-call", label: "Wrap-up" },
+  { id: "functions", label: "Tools" },
 ] as const;
 
 /** Steps kept in the stepper but not navigable yet */
-export const DISABLED_AGENT_CONFIG_TABS = ["wisdom", "post-call"] as const;
+export const DISABLED_AGENT_CONFIG_TABS = [
+  "wisdom",
+  "post-call",
+  "functions",
+] as const;
 
 export type DisabledAgentConfigTab =
   (typeof DISABLED_AGENT_CONFIG_TABS)[number];
@@ -89,6 +95,20 @@ export const QUESTION_TYPES = [
   { label: "Multiple Choice", value: "multiple_choice" },
 ];
 
+export const SURVEY_QUESTION_TYPES = [
+  { label: "Normal Question", value: "text" },
+  { label: "Yes / No", value: "yes_no" },
+  { label: "Rating", value: "rating" },
+  { label: "Multiple Choice", value: "multi" },
+] as const;
+
+export function getSurveyQuestionTypeLabel(type: string): string {
+  if (type === "multiple_choice") return "Multiple Choice";
+  return (
+    SURVEY_QUESTION_TYPES.find((t) => t.value === type)?.label ?? type
+  );
+}
+
 export const DEFAULT_AGENT_CONFIG: AgentConfig = {
   persona: {
     name: "",
@@ -158,6 +178,14 @@ export const DEFAULT_AGENT_CONFIG: AgentConfig = {
       enabled: false,
     })),
     actions: [],
+  },
+  surveyQuestions: {
+    enabled: true,
+    questions: [],
+  },
+  clientContact: {
+    contactFileUrl: "",
+    contactFileName: "",
   },
   postCall: {
     callbackUrl: "",

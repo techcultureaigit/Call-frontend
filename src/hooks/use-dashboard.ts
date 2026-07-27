@@ -2,12 +2,12 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/constants/query-keys";
-import { dashboardService } from "@/services/dashboard.service";
+import { dashboardApi } from "@/api";
 
 export function useDashboard() {
   return useQuery({
     queryKey: queryKeys.dashboard.overview,
-    queryFn: dashboardService.getOverview,
+    queryFn: dashboardApi.getOverview,
     staleTime: 2 * 60 * 1000,
   });
 }

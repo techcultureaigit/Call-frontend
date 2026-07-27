@@ -4,11 +4,11 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { queryKeys } from "@/lib/constants/query-keys";
 import {
-  usersModuleService,
+  usersApi,
   type CreateUserPayload,
   type UpdateUserPayload,
   type UsersListParams,
-} from "@/services/users-module.service";
+} from "@/api";
 import type { UserStatus } from "@/types/user";
 
 export function useUsers(params: UsersListParams) {
@@ -16,7 +16,7 @@ export function useUsers(params: UsersListParams) {
     queryKey: queryKeys.users.module(
       params as Record<string, unknown>
     ),
-    queryFn: () => usersModuleService.list(params),
+    queryFn: () => usersApi.list(params),
     placeholderData: (previousData) => previousData,
   });
 }
@@ -24,7 +24,7 @@ export function useUsers(params: UsersListParams) {
 export function useUserDetail(id: string | null) {
   return useQuery({
     queryKey: queryKeys.users.detail(id ?? ""),
-    queryFn: () => usersModuleService.getById(id!),
+    queryFn: () => usersApi.getById(id!),
     enabled: Boolean(id),
   });
 }
@@ -36,8 +36,7 @@ export function useUserMutations() {
     queryClient.invalidateQueries({ queryKey: ["users", "module"] });
 
   const createUser = useMutation({
-    mutationFn: (payload: CreateUserPayload) =>
-      usersModuleService.create(payload),
+    mutationFn: (payload: CreateUserPayload) => usersApi.create(payload),
     onSuccess: () => {
       toast.success("User created successfully");
       invalidate();
@@ -47,7 +46,7 @@ export function useUserMutations() {
 
   const updateUser = useMutation({
     mutationFn: ({ id, payload }: { id: string; payload: UpdateUserPayload }) =>
-      usersModuleService.update(id, payload),
+      usersApi.update(id, payload),
     onSuccess: () => {
       toast.success("User updated successfully");
       invalidate();
@@ -56,7 +55,7 @@ export function useUserMutations() {
   });
 
   const deleteUser = useMutation({
-    mutationFn: (id: string) => usersModuleService.delete(id),
+    mutationFn: (id: string) => usersApi.delete(id),
     onSuccess: () => {
       toast.success("User deleted successfully");
       invalidate();
@@ -66,7 +65,7 @@ export function useUserMutations() {
 
   const toggleStatus = useMutation({
     mutationFn: ({ id, status }: { id: string; status: UserStatus }) =>
-      usersModuleService.toggleStatus(id, status),
+      usersApi.toggleStatus(id, status),
     onSuccess: () => invalidate(),
     onError: () => toast.error("Failed to update status"),
   });

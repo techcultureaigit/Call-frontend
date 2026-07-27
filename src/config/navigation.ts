@@ -61,14 +61,14 @@ export const dashboardNavigation: NavSection[] = [
       {
         id: "agents-create",
         title: "Create Survey",
-        href: "/agents/new",
+        href: "/survey/new",
         icon: UserPlus,
         module: "agents",
       },
       {
         id: "agents-templates",
         title: "Survey Template",
-        href: "/agents/templates",
+        href: "/survey/templates",
         icon: Briefcase,
         module: "agents",
       },
@@ -245,12 +245,12 @@ export const authNavigation = {
 export const routePaths = {
   home: "/",
   dashboard: "/dashboard",
-  agents: {
-    root: "/agents",
-    new: "/agents/new",
-    templates: "/agents/templates",
-    actions: "/agents/actions",
-    telephony: "/agents/telephony",
+  survey: {
+    root: "/survey",
+    new: "/survey/new",
+    templates: "/survey/templates",
+    actions: "/survey/actions",
+    telephony: "/survey/telephony",
   },
   library: {
     voices: "/library/voices",

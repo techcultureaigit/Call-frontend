@@ -272,7 +272,7 @@ export function VoiceExplorerView() {
             </button>{" "}
             or{" "}
             <Link
-              href="/agents/new"
+              href="/survey/new"
               className="font-medium text-primary hover:underline"
             >
               assign in agent config

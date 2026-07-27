@@ -24,9 +24,9 @@ interface QuickAction {
 
 const actions: QuickAction[] = [
   {
-    title: "Create Agent",
-    description: "New voice AI agent",
-    href: "/agents/new",
+    title: "Create Survey",
+    description: "New voice survey",
+    href: "/survey/new",
     icon: Bot,
     tile: "bg-gradient-to-br from-brand/20 to-brand-blue/10 text-brand",
     ring: "group-hover:ring-brand/30",
@@ -34,7 +34,7 @@ const actions: QuickAction[] = [
   {
     title: "Survey Template",
     description: "Agent templates",
-    href: "/agents/templates",
+    href: "/survey/templates",
     icon: ClipboardList,
     tile: "bg-gradient-to-br from-violet-500/20 to-violet-500/5 text-violet-600 dark:text-violet-400",
     ring: "group-hover:ring-violet-500/30",

@@ -3,8 +3,10 @@ import type { ID, Timestamps } from "./common";
 export type AgentConfigTab =
   | "persona"
   | "prompts"
-  | "wisdom"
   | "functions"
+  | "survey-questions"
+  | "client-contact"
+  | "wisdom"
   | "post-call";
 
 export type AgentTopNav = "dashboard" | "configure" | "conversations" | "deploy" | "campaign";
@@ -111,11 +113,36 @@ export interface AgentPostCallConfig {
   questions: PostCallQuestion[];
 }
 
+export interface AgentSurveyQuestionOption {
+  id: string;
+  label: string;
+  value: string;
+}
+
+export interface AgentSurveyQuestion {
+  id: string;
+  type: string;
+  question: string;
+  options?: AgentSurveyQuestionOption[];
+}
+
+export interface AgentSurveyQuestionsConfig {
+  enabled: boolean;
+  questions: AgentSurveyQuestion[];
+}
+
+export interface AgentClientContactConfig {
+  contactFileUrl: string;
+  contactFileName: string;
+}
+
 export interface AgentConfig {
   persona: AgentPersonaConfig;
   prompts: AgentPromptsConfig;
-  wisdom: AgentWisdomConfig;
   functions: AgentFunctionsConfig;
+  surveyQuestions: AgentSurveyQuestionsConfig;
+  clientContact: AgentClientContactConfig;
+  wisdom: AgentWisdomConfig;
   postCall: AgentPostCallConfig;
 }
 

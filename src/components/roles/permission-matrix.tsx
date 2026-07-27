@@ -90,7 +90,7 @@ export function PermissionMatrix({
   return (
     <div className={cn("overflow-hidden rounded-[6px] border border-border/60", className)}>
       <div className="overflow-x-auto">
-        <table className="w-full min-w-[560px]">
+        <table className="w-full min-w-[920px]">
           <thead>
             <tr className="border-b border-border/60 bg-muted/40">
               <th className="sticky left-0 z-10 bg-muted/40 px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
@@ -101,7 +101,7 @@ export function PermissionMatrix({
                 return (
                   <th
                     key={action}
-                    className="px-3 py-3 text-center text-[11px] font-semibold uppercase tracking-wider text-muted-foreground"
+                    className="px-2 py-3 text-center text-[11px] font-semibold uppercase tracking-wider text-muted-foreground sm:px-3"
                   >
                     <div className="flex flex-col items-center gap-2">
                       <span>{PERMISSION_ACTION_LABELS[action]}</span>
@@ -126,7 +126,7 @@ export function PermissionMatrix({
               <Fragment key={group.id}>
                 <tr className="bg-muted/20">
                   <td
-                    colSpan={5}
+                    colSpan={1 + PERMISSION_ACTIONS.length}
                     className="px-4 py-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground/70"
                   >
                     {group.label}

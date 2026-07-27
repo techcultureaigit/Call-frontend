@@ -3,15 +3,12 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { queryKeys } from "@/lib/constants/query-keys";
-import {
-  responsesModuleService,
-  type ResponsesListParams,
-} from "@/services/responses-module.service";
+import { responsesApi, type ResponsesListParams } from "@/api";
 
 export function useResponses(params: ResponsesListParams) {
   return useQuery({
     queryKey: queryKeys.responses.module(params as Record<string, unknown>),
-    queryFn: () => responsesModuleService.list(params),
+    queryFn: () => responsesApi.list(params),
     placeholderData: (prev) => prev,
   });
 }
@@ -19,14 +16,14 @@ export function useResponses(params: ResponsesListParams) {
 export function useResponseStats() {
   return useQuery({
     queryKey: queryKeys.responses.stats(),
-    queryFn: () => responsesModuleService.getStats(),
+    queryFn: () => responsesApi.getStats(),
   });
 }
 
 export function useResponseFilterOptions() {
   return useQuery({
     queryKey: queryKeys.responses.filters(),
-    queryFn: () => responsesModuleService.getFilterOptions(),
+    queryFn: () => responsesApi.getFilterOptions(),
     staleTime: 120_000,
   });
 }
@@ -34,7 +31,7 @@ export function useResponseFilterOptions() {
 export function useResponseDetail(id: string | null) {
   return useQuery({
     queryKey: queryKeys.responses.detail(id ?? ""),
-    queryFn: () => responsesModuleService.getById(id!),
+    queryFn: () => responsesApi.getById(id!),
     enabled: Boolean(id),
   });
 }
@@ -42,7 +39,7 @@ export function useResponseDetail(id: string | null) {
 export function useResponseMutations() {
   const exportResponses = useMutation({
     mutationFn: (params: Omit<ResponsesListParams, "page" | "limit">) =>
-      responsesModuleService.export(params),
+      responsesApi.export(params),
     onError: () => toast.error("Export failed"),
   });
 
