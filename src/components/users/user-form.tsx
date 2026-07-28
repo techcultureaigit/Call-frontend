@@ -8,9 +8,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
+import { useRoles } from "@/hooks";
 import {
   userFormSchema,
-  USER_ROLE_OPTIONS,
   USER_STATUS_OPTIONS,
   type UserFormValues,
 } from "@/lib/validators/user";
@@ -23,15 +23,6 @@ interface UserFormProps {
   isLoading?: boolean;
 }
 
-const defaultValues: UserFormValues = {
-  firstName: "",
-  lastName: "",
-  email: "",
-  phone: "",
-  role: "sales_rep",
-  status: "invited",
-};
-
 export function UserForm({
   user,
   onSubmit,
@@ -39,6 +30,21 @@ export function UserForm({
   isLoading,
 }: UserFormProps) {
   const isEdit = Boolean(user);
+  const { data: roles = [], isLoading: rolesLoading } = useRoles();
+
+  const roleOptions = roles.map((role) => ({
+    label: role.name,
+    value: role.id,
+  }));
+
+  const defaultValues: UserFormValues = {
+    firstName: "",
+    lastName: "",
+    email: "",
+    phone: "",
+    roleId: roles[0]?.id ?? "",
+    status: "invited",
+  };
 
   const {
     register,
@@ -59,12 +65,15 @@ export function UserForm({
             lastName: user.lastName,
             email: user.email,
             phone: user.phone ?? "",
-            role: user.role,
+            roleId: user.roleId,
             status: user.status,
           }
-        : defaultValues
+        : {
+            ...defaultValues,
+            roleId: roles[0]?.id ?? "",
+          }
     );
-  }, [user, reset]);
+  }, [user, reset, roles]);
 
   const handleFormSubmit = handleSubmit(async (values) => {
     await onSubmit(values);
@@ -108,24 +117,22 @@ export function UserForm({
             <Input id="phone" type="tel" {...register("phone")} />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="role">Role</Label>
+            <Label htmlFor="roleId">Role</Label>
             <Controller
-              name="role"
+              name="roleId"
               control={control}
               render={({ field }) => (
                 <Select
-                  id="role"
+                  id="roleId"
                   value={field.value}
                   onChange={(e) => field.onChange(e.target.value)}
-                  options={USER_ROLE_OPTIONS.map((o) => ({
-                    label: o.label,
-                    value: o.value,
-                  }))}
+                  disabled={rolesLoading || roleOptions.length === 0}
+                  options={roleOptions}
                 />
               )}
             />
-            {errors.role && (
-              <p className="text-xs text-destructive">{errors.role.message}</p>
+            {errors.roleId && (
+              <p className="text-xs text-destructive">{errors.roleId.message}</p>
             )}
           </div>
           <div className="space-y-2">

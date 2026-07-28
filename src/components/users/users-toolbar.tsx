@@ -4,14 +4,15 @@ import { Search, SlidersHorizontal, UserPlus, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
-import { USER_ROLE_OPTIONS, USER_STATUS_OPTIONS } from "@/lib/validators/user";
-import type { UserRole, UserStatus } from "@/types/user";
+import { useRoles } from "@/hooks";
+import { USER_STATUS_OPTIONS } from "@/lib/validators/user";
+import type { UserStatus } from "@/types/user";
 
 interface UsersToolbarProps {
   search: string;
   onSearchChange: (value: string) => void;
-  role: UserRole | "all";
-  onRoleChange: (value: UserRole | "all") => void;
+  role: string;
+  onRoleChange: (value: string) => void;
   status: UserStatus | "all";
   onStatusChange: (value: UserStatus | "all") => void;
   onCreateClick: () => void;
@@ -28,6 +29,7 @@ export function UsersToolbar({
   onCreateClick,
   totalCount,
 }: UsersToolbarProps) {
+  const { data: roles = [] } = useRoles();
   const hasFilters = role !== "all" || status !== "all" || search.length > 0;
 
   const clearFilters = () => {
@@ -74,14 +76,12 @@ export function UsersToolbar({
             <SlidersHorizontal className="hidden size-4 text-muted-foreground sm:block" />
             <Select
               value={role}
-              onChange={(e) =>
-                onRoleChange(e.target.value as UserRole | "all")
-              }
+              onChange={(e) => onRoleChange(e.target.value)}
               options={[
                 { label: "All Roles", value: "all" },
-                ...USER_ROLE_OPTIONS.map((o) => ({
-                  label: o.label,
-                  value: o.value,
+                ...roles.map((r) => ({
+                  label: r.name,
+                  value: r.id,
                 })),
               ]}
               className="w-full sm:w-[160px]"

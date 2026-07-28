@@ -23,9 +23,9 @@ export function AppHeader({ className }: AppHeaderProps) {
   return (
     <header
       className={cn(
-        "glass-strong sticky top-0 z-30 flex h-14 shrink-0 items-center gap-3 pl-2 pr-4",
+        "glass-strong sticky top-0 z-30 flex h-14 shrink-0 items-center gap-3 pl-0 pr-4",
         "border-b border-border/60 bg-card/90",
-        "md:gap-4 lg:px-6",
+        "md:gap-4 lg:pl-1 lg:pr-6",
         className
       )}
     >

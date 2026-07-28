@@ -2,43 +2,54 @@
 
 import { PanelLeftClose, PanelLeftOpen } from "lucide-react";
 import { useSidebarStore } from "@/stores";
-import { useIsMobile } from "@/hooks";
-import { Button } from "@/components/ui/button";
+import { useIsMobile, useIsTablet } from "@/hooks";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { cn } from "@/lib/utils";
 
-export function SidebarCollapseToggle() {
+export function SidebarCollapseToggle({
+  className,
+}: {
+  className?: string;
+}) {
   const isCollapsed = useSidebarStore((state) => state.isCollapsed);
   const toggleCollapsed = useSidebarStore((state) => state.toggleCollapsed);
   const isMobile = useIsMobile();
+  const isTablet = useIsTablet();
 
-  if (isMobile) return null;
+  if (isMobile || isTablet) return null;
+
+  const label = isCollapsed ? "Show sidebar" : "Hide sidebar";
 
   return (
     <TooltipProvider delayDuration={0}>
       <Tooltip delayDuration={0}>
         <TooltipTrigger asChild>
-          <Button
-            variant="ghost"
-            size="icon-sm"
+          <button
+            type="button"
             onClick={toggleCollapsed}
-            className="-ml-1 shrink-0 text-muted-foreground hover:text-foreground"
-            aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+            aria-label={label}
+            className={cn(
+              "inline-flex size-9 shrink-0 items-center justify-center rounded-[8px]",
+              "-ml-0.5 text-muted-foreground transition-colors",
+              "hover:bg-muted hover:text-foreground",
+              "active:scale-95",
+              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/35",
+              className
+            )}
           >
             {isCollapsed ? (
-              <PanelLeftOpen className="size-4" />
+              <PanelLeftOpen className="size-5" strokeWidth={2.1} />
             ) : (
-              <PanelLeftClose className="size-4" />
+              <PanelLeftClose className="size-5" strokeWidth={2.1} />
             )}
-          </Button>
+          </button>
         </TooltipTrigger>
-        <TooltipContent side="bottom">
-          {isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
-        </TooltipContent>
+        <TooltipContent side="bottom">{label}</TooltipContent>
       </Tooltip>
     </TooltipProvider>
   );

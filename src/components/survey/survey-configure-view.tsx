@@ -11,19 +11,27 @@ import {
   ENABLED_AGENT_CONFIG_TABS,
   isAgentConfigTabDisabled,
 } from "@/lib/constants/agent-config";
-import { saveAgent } from "@/lib/data/agents-repository";
+import { saveAgent, scheduleAgent } from "@/lib/data/agents-repository";
 import { generateAgentUuid } from "@/lib/data/mock-agents";
 import { buildSystemPromptFromTemplate } from "@/lib/data/mock-survey-templates";
+import { isSurveyReadyToSchedule } from "@/lib/utils/survey-readiness";
 import { SurveyTopNav } from "./survey-top-nav";
 import { SurveyConfigTabs } from "./survey-config-tabs";
 import { SurveyConfigSidebar } from "./survey-config-sidebar";
 import { SurveyConfigFooter } from "./survey-config-footer";
+import {
+  createEmptyScheduleForm,
+  parseScheduleForm,
+  scheduleToFormValues,
+  type ScheduleFormValues,
+} from "./survey-schedule-fields";
 import { PersonaTab } from "./tabs/persona-tab";
 import { PromptsTab } from "./tabs/prompts-tab";
 import { WisdomTab } from "./tabs/wisdom-tab";
 import { FunctionsTab } from "./tabs/functions-tab";
 import { SurveyQuestionsTab } from "./tabs/survey-questions-tab";
 import { ClientContactTab } from "./tabs/client-contact-tab";
+import { ScheduleTab } from "./tabs/schedule-tab";
 import { PostCallTab } from "./tabs/post-call-tab";
 import type { Agent, AgentConfig, AgentConfigTab } from "@/types/agent";
 import type { SurveyTemplate } from "@/types/survey-template";
@@ -83,6 +91,9 @@ export function SurveyConfigureView({
   const [config, setConfig] = useState<AgentConfig>(baseConfig);
   const [isSaving, setIsSaving] = useState(false);
   const [templateApplied, setTemplateApplied] = useState(false);
+  const [scheduleForm, setScheduleForm] = useState<ScheduleFormValues>(() =>
+    agent ? scheduleToFormValues(agent.schedule) : createEmptyScheduleForm()
+  );
 
   const { applyMeta, resetPageMeta } = usePageMeta({
     title: isNew ? "Create Survey" : "Configure Survey",
@@ -125,26 +136,64 @@ export function SurveyConfigureView({
       return;
     }
 
+    if (isLast && scheduleForm.enabled) {
+      const parsed = parseScheduleForm(scheduleForm);
+      if (!parsed.ok) {
+        toast.error(parsed.error);
+        return;
+      }
+      if (!isSurveyReadyToSchedule(config)) {
+        toast.error(
+          "Add questions and upload a contact file before scheduling"
+        );
+        return;
+      }
+    }
+
     setIsSaving(true);
-    await new Promise((r) => setTimeout(r, 500));
-    setIsSaving(false);
+    await new Promise((r) => setTimeout(r, 400));
 
     if (isLast) {
-      const saved = saveAgent({
-        id: isNew ? undefined : agent?.id,
-        uuid,
-        config,
-        status: agent?.status ?? "active",
-      });
-      toast.success(
-        isNew
-          ? `"${saved.name}" created — opening survey list`
-          : "Survey configuration saved"
-      );
-      router.push("/survey");
+      try {
+        const saved = saveAgent({
+          id: isNew ? undefined : agent?.id,
+          uuid,
+          config,
+          status: agent?.status ?? "active",
+        });
+
+        const parsed = parseScheduleForm(scheduleForm);
+        if (!parsed.ok) {
+          toast.error(parsed.error);
+          setIsSaving(false);
+          return;
+        }
+
+        if (parsed.payload) {
+          scheduleAgent(saved.id, parsed.payload);
+          toast.success(
+            isNew
+              ? `"${saved.name}" created and scheduled`
+              : `"${saved.name}" updated and scheduled`
+          );
+        } else {
+          toast.success(
+            isNew ? `"${saved.name}" created` : `"${saved.name}" updated`
+          );
+        }
+
+        router.push("/survey");
+      } catch (error) {
+        toast.error(
+          error instanceof Error ? error.message : "Failed to save survey"
+        );
+      } finally {
+        setIsSaving(false);
+      }
       return;
     }
 
+    setIsSaving(false);
     setActiveTab(ENABLED_TAB_ORDER[tabIndex + 1]);
     toast.success("Saved — moving to next step");
   };
@@ -198,6 +247,14 @@ export function SurveyConfigureView({
             onChange={(v) => updateConfig("clientContact", v)}
           />
         );
+      case "schedule":
+        return (
+          <ScheduleTab
+            values={scheduleForm}
+            onChange={setScheduleForm}
+            mode={isNew ? "create" : "edit"}
+          />
+        );
       case "post-call":
         return (
           <PostCallTab
@@ -228,7 +285,11 @@ export function SurveyConfigureView({
         <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-hidden xl:flex-row">
           <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-4 overflow-hidden lg:flex-row">
             <aside className="w-full shrink-0 rounded-[6px] border border-border/60 bg-card/70 p-3 shadow-card backdrop-blur-sm lg:w-[220px] lg:overflow-y-auto">
-              <SurveyConfigTabs active={activeTab} onChange={handleTabChange} />
+              <SurveyConfigTabs
+                active={activeTab}
+                onChange={handleTabChange}
+                showUpcoming={isNew}
+              />
             </aside>
 
             <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-[6px] border border-border/60 bg-card/70 shadow-card backdrop-blur-sm">
@@ -250,6 +311,7 @@ export function SurveyConfigureView({
                   isFirst={isFirst}
                   isLast={isLast}
                   isSaving={isSaving}
+                  scheduleEnabled={scheduleForm.enabled}
                   step={Math.max(tabIndex, 0) + 1}
                   total={ENABLED_TAB_ORDER.length}
                 />

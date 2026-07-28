@@ -5,15 +5,6 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { routePaths } from "@/config/navigation";
 import { useAuth } from "@/hooks";
 import { cn, getInitials } from "@/lib/utils";
-import type { UserRole } from "@/types/user";
-
-const roleLabels: Record<UserRole, string> = {
-  super_admin: "Super Admin",
-  admin: "Admin",
-  manager: "Manager",
-  sales_rep: "Sales Rep",
-  viewer: "Viewer",
-};
 
 interface SidebarUserCardProps {
   collapsed?: boolean;
@@ -23,11 +14,16 @@ export function SidebarUserCard({ collapsed }: SidebarUserCardProps) {
   const { user } = useAuth();
 
   const displayName = user
-    ? `${user.firstName} ${user.lastName}`
+    ? `${user.firstName ?? ""} ${user.lastName ?? ""}`.trim() ||
+      user.email ||
+      "Admin User"
     : "Admin User";
-  const roleLabel = user ? roleLabels[user.role] : "Super Admin";
+  const roleLabel =
+    (typeof user?.roleName === "string" && user.roleName) ||
+    (typeof user?.role === "string" && user.role) ||
+    "Admin";
   const initials = user
-    ? getInitials(user.firstName, user.lastName)
+    ? getInitials(user.firstName || user.email || "A", user.lastName || "U")
     : "AU";
 
   return (
@@ -35,7 +31,8 @@ export function SidebarUserCard({ collapsed }: SidebarUserCardProps) {
       href={routePaths.settings.root}
       className={cn(
         "group flex items-center gap-3 rounded-[6px] border border-white/10 bg-white/5 p-2.5 transition-colors hover:bg-white/10",
-        collapsed && "justify-center border-0 bg-transparent p-1.5 hover:bg-white/10"
+        collapsed &&
+          "justify-center border-0 bg-transparent p-1.5 hover:bg-white/10"
       )}
     >
       <Avatar className="size-9 ring-2 ring-brand/40">

@@ -55,22 +55,22 @@ export const dashboardNavigation: NavSection[] = [
     ],
   },
   {
-    id: "agents",
+    id: "surveys",
     label: "Survey Studio",
     items: [
       {
-        id: "agents-list",
+        id: "surveys-list",
         title: "My Surveys",
         href: "/survey",
         icon: ClipboardList,
-        module: "agents",
+        module: "surveys",
       },
       {
-        id: "agents-create",
+        id: "surveys-create",
         title: "Create Survey",
         href: "/survey/new",
         icon: UserPlus,
-        module: "agents",
+        module: "surveys",
       },
       {
         id: "library-voices",

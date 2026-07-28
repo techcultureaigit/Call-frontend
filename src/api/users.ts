@@ -1,5 +1,5 @@
 import type { ApiResponse, PaginatedResponse } from "@/types";
-import type { User, UserRole, UserStatus } from "@/types/user";
+import type { User, UserStatus } from "@/types/user";
 import { apiEndpoints } from "./endpoints";
 import { apiDelete, apiGet, apiPatch, apiPost } from "./http";
 
@@ -7,7 +7,8 @@ export interface UsersListParams {
   page?: number;
   limit?: number;
   search?: string;
-  role?: UserRole | "all";
+  /** role id or "all" */
+  role?: string;
   status?: UserStatus | "all";
   sortBy?: string;
   sortOrder?: "asc" | "desc";
@@ -18,7 +19,7 @@ export interface CreateUserPayload {
   lastName: string;
   email: string;
   phone?: string;
-  role: UserRole;
+  roleId: string;
   status?: UserStatus;
   timezone?: string;
 }

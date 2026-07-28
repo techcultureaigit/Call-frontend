@@ -86,20 +86,6 @@ export function RoleForm({
               <p className="text-xs text-destructive">{errors.name.message}</p>
             )}
           </div>
-
-          <div className="space-y-2 sm:col-span-2">
-            <Label htmlFor="role-description">Description</Label>
-            <Input
-              id="role-description"
-              {...register("description")}
-              placeholder="Brief description of this role's purpose"
-            />
-            {errors.description && (
-              <p className="text-xs text-destructive">
-                {errors.description.message}
-              </p>
-            )}
-          </div>
         </div>
 
         <div className="space-y-2">

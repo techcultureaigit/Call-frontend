@@ -25,14 +25,17 @@ export const AUDIT_MODULE_OPTIONS: {
   label: string;
 }[] = [
   { value: "all", label: "All modules" },
-  { value: "customers", label: "Customers" },
-  { value: "campaigns", label: "Campaigns" },
+  { value: "agents", label: "My Surveys" },
+  { value: "library", label: "Library" },
+  { value: "customers", label: "Survey Data" },
   { value: "surveys", label: "Surveys" },
   { value: "calls", label: "Calls" },
   { value: "responses", label: "Responses" },
   { value: "users", label: "Users" },
   { value: "roles", label: "Roles" },
   { value: "reports", label: "Reports" },
+  { value: "notifications", label: "Notifications" },
+  { value: "activity_logs", label: "Activity Logs" },
   { value: "settings", label: "Settings" },
   { value: "auth", label: "Auth" },
 ];
@@ -55,13 +58,16 @@ export const ACTION_BADGE_STYLES: Record<AuditAction, string> = {
 
 export const MODULE_BADGE_STYLES: Record<AuditModule, string> = {
   customers: "bg-sky-500/10 text-sky-700 dark:text-sky-400",
-  campaigns: "bg-indigo-500/10 text-indigo-700 dark:text-indigo-400",
+  agents: "bg-indigo-500/10 text-indigo-700 dark:text-indigo-400",
+  library: "bg-teal-500/10 text-teal-700 dark:text-teal-400",
   surveys: "bg-violet-500/10 text-violet-700 dark:text-violet-400",
   calls: "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400",
   responses: "bg-amber-500/10 text-amber-700 dark:text-amber-400",
   users: "bg-rose-500/10 text-rose-700 dark:text-rose-400",
   roles: "bg-orange-500/10 text-orange-700 dark:text-orange-400",
   reports: "bg-cyan-500/10 text-cyan-700 dark:text-cyan-400",
+  notifications: "bg-blue-500/10 text-blue-700 dark:text-blue-400",
+  activity_logs: "bg-slate-500/10 text-slate-700 dark:text-slate-400",
   settings: "bg-muted text-muted-foreground",
   auth: "bg-muted text-muted-foreground",
 };

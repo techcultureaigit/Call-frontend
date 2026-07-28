@@ -1,4 +1,7 @@
-export { siteConfig, type SiteConfig } from "./site";
+export {
+  siteConfig,
+  type SiteConfig,
+} from "./site";
 export { apiConfig, authConfig, type ApiConfig, type AuthConfig } from "./api";
 export { fonts, fontVariables } from "./fonts";
 export {
@@ -11,7 +14,8 @@ export {
   type RoutePaths,
 } from "./navigation";
 export {
-  ROLE_MODULE_ACCESS,
+  SIDEBAR_MODULES,
   hasModuleAccess,
+  can,
   type NavModule,
 } from "./permissions";

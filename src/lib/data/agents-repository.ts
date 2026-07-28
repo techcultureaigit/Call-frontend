@@ -1,4 +1,4 @@
-import type { Agent, AgentConfig } from "@/types/agent";
+import type { Agent, AgentConfig, AgentSchedule } from "@/types/agent";
 import { storageKeys } from "@/lib/constants/storage-keys";
 import {
   filterAgents,
@@ -6,6 +6,10 @@ import {
   generateAgentUuid,
   MOCK_AGENTS,
 } from "@/lib/data/mock-agents";
+import {
+  DEFAULT_AGENT_SCHEDULE,
+  isSurveyReadyToSchedule,
+} from "@/lib/utils/survey-readiness";
 
 const SEED_IDS = new Set(MOCK_AGENTS.map((a) => a.id));
 
@@ -124,6 +128,7 @@ export function saveAgent(input: SaveAgentInput): Agent {
     phone: null,
     conversationCount: 0,
     config: structuredClone(input.config),
+    schedule: { ...DEFAULT_AGENT_SCHEDULE },
     createdAt: now,
     updatedAt: now,
   };
@@ -170,6 +175,7 @@ export function cloneAgent(id: string): Agent | null {
     phone: source.phone ?? null,
     conversationCount: 0,
     config,
+    schedule: { ...DEFAULT_AGENT_SCHEDULE },
     createdAt: now,
     updatedAt: now,
   };
@@ -178,4 +184,47 @@ export function cloneAgent(id: string): Agent | null {
   agentsDB = [cloned, ...agentsDB];
   // Do not persist — demo only until API
   return cloned;
+}
+
+export interface ScheduleAgentInput {
+  startAt: string;
+  endAt?: string | null;
+  timezone?: string;
+  recurrence?: AgentSchedule["recurrence"];
+}
+
+/** Schedule or re-schedule a survey that has all enabled steps filled */
+export function scheduleAgent(
+  id: string,
+  input: ScheduleAgentInput
+): Agent | null {
+  hydrate();
+  const existing = agentsDB.find((a) => a.id === id);
+  if (!existing) return null;
+
+  if (!isSurveyReadyToSchedule(existing)) {
+    throw new Error(
+      "Complete all survey steps (Identity, Instructions, Questions, Contact) before scheduling"
+    );
+  }
+
+  const now = new Date().toISOString();
+  const updated: Agent = {
+    ...existing,
+    status: "active",
+    schedule: {
+      enabled: true,
+      startAt: input.startAt,
+      endAt: input.endAt ?? null,
+      timezone: input.timezone || "Asia/Kolkata",
+      recurrence: input.recurrence || "once",
+      status: "scheduled",
+      lastScheduledAt: now,
+    },
+    updatedAt: now,
+  };
+
+  agentsDB = agentsDB.map((a) => (a.id === id ? updated : a));
+  writeCreated(agentsDB);
+  return updated;
 }

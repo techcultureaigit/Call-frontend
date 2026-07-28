@@ -17,7 +17,7 @@ export type {
 
 export type { ApiResponse, RequestConfig, ApiListParams } from "./api";
 export type { AuthSession, AuthTokens, LoginCredentials, RegisterPayload } from "./auth";
-export type { User, UserRole, UserStatus } from "./user";
+export type { User, UserStatus } from "./user";
 export type { Account, AccountStatus, AccountType } from "./account";
 export type { Contact, ContactStatus } from "./contact";
 export type { Lead, LeadSource, LeadStatus } from "./lead";

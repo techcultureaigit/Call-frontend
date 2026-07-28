@@ -90,7 +90,9 @@ export function UsersTable({
         accessorKey: "role",
         header: "Role",
         enableSorting: true,
-        cell: ({ row }) => <RoleBadge role={row.original.role} />,
+        cell: ({ row }) => (
+          <RoleBadge role={row.original.roleName || row.original.role} />
+        ),
       },
       {
         accessorKey: "status",

@@ -121,9 +121,11 @@ export function RoleCard({
         </DropdownMenu>
       </div>
 
-      <p className="mt-3 line-clamp-2 text-xs leading-relaxed text-muted-foreground">
-        {role.description}
-      </p>
+      {role.description ? (
+        <p className="mt-3 line-clamp-2 text-xs leading-relaxed text-muted-foreground">
+          {role.description}
+        </p>
+      ) : null}
 
       <div className="mt-4 space-y-2">
         <div className="flex items-center justify-between text-[11px]">

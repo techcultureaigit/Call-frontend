@@ -6,6 +6,7 @@ export type AgentConfigTab =
   | "functions"
   | "survey-questions"
   | "client-contact"
+  | "schedule"
   | "wisdom"
   | "post-call";
 
@@ -134,6 +135,32 @@ export interface AgentSurveyQuestionsConfig {
 export interface AgentClientContactConfig {
   contactFileUrl: string;
   contactFileName: string;
+  /** Parsed rows cached after upload; view can also reload from contactFileUrl */
+  contacts?: Array<{
+    name: string;
+    phone: string;
+    email: string;
+    company: string;
+  }>;
+}
+
+export type AgentScheduleRecurrence = "once" | "daily" | "weekly" | "monthly";
+
+export type AgentScheduleStatus =
+  | "idle"
+  | "scheduled"
+  | "running"
+  | "completed"
+  | "cancelled";
+
+export interface AgentSchedule {
+  enabled: boolean;
+  startAt: string | null;
+  endAt: string | null;
+  timezone: string;
+  recurrence: AgentScheduleRecurrence;
+  status: AgentScheduleStatus;
+  lastScheduledAt: string | null;
 }
 
 export interface AgentConfig {
@@ -156,6 +183,7 @@ export interface Agent extends Timestamps {
   phone?: string | null;
   conversationCount: number;
   config: AgentConfig;
+  schedule?: AgentSchedule | null;
 }
 
 export interface ChatMessage {

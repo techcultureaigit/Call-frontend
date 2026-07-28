@@ -12,7 +12,7 @@ export type PermissionAction =
   | "download"
   | "publish";
 
-export type PermissionModule = NavModule;
+export type PermissionModule = NavModule | string;
 
 export interface ModulePermissions {
   create: boolean;
@@ -26,7 +26,8 @@ export interface ModulePermissions {
   publish: boolean;
 }
 
-export type RolePermissions = Record<PermissionModule, ModulePermissions>;
+/** Dynamic matrix keyed by backend module ids */
+export type RolePermissions = Record<string, ModulePermissions>;
 
 export interface Role extends Timestamps {
   id: ID;

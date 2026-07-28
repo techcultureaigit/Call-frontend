@@ -7,7 +7,6 @@ export const roleFormSchema = z.object({
     .max(50, "Role name must be under 50 characters"),
   description: z
     .string()
-    .min(10, "Description must be at least 10 characters")
     .max(200, "Description must be under 200 characters"),
   color: z.string().optional(),
 });

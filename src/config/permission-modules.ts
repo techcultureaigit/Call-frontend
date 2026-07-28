@@ -41,6 +41,10 @@ export const PERMISSION_ACTION_LABELS: Record<PermissionAction, string> = {
 
 const CRUD: PermissionAction[] = ["create", "read", "update", "delete"];
 
+/**
+ * Permission matrix groups — mirrors sidebar sections exactly:
+ * Dashboard | Survey Studio | Operations | Insights | Management | Configurations
+ */
 export const PERMISSION_MODULE_GROUPS: PermissionModuleGroup[] = [
   {
     id: "core",
@@ -48,48 +52,25 @@ export const PERMISSION_MODULE_GROUPS: PermissionModuleGroup[] = [
     modules: [{ id: "dashboard", label: "Dashboard", actions: ["read"] }],
   },
   {
-    id: "management",
-    label: "Management",
+    id: "survey_studio",
+    label: "Survey Studio",
     modules: [
-      {
-        id: "users",
-        label: "Users",
-        actions: [...CRUD, "export"],
-      },
-      {
-        id: "roles",
-        label: "Roles & Permissions",
-        actions: CRUD,
-      },
-    ],
-  },
-  {
-    id: "engagement",
-    label: "Engagement",
-    modules: [
-      {
-        id: "customers",
-        label: "Customers",
-        // Import contacts CSV + upload contact sheets to Cloudinary
-        actions: [...CRUD, "export", "import", "upload"],
-      },
       {
         id: "surveys",
-        label: "Surveys",
-        // Form surveys: import questions, upload assets, publish live
-        actions: [...CRUD, "export", "import", "upload", "publish"],
-      },
-      {
-        id: "agents",
-        label: "Survey (Voice)",
-        // Voice survey config: upload questions/contacts, publish campaign
+        label: "My Surveys",
+        // Create / edit / publish voice surveys
         actions: [...CRUD, "export", "upload", "publish"],
       },
       {
         id: "library",
         label: "Library",
-        // Voices + audio buffer: upload/download media
+        // Voices + audio buffer
         actions: [...CRUD, "export", "upload", "download"],
+      },
+      {
+        id: "customers",
+        label: "Survey Data",
+        actions: [...CRUD, "export", "import", "upload"],
       },
     ],
   },
@@ -100,13 +81,12 @@ export const PERMISSION_MODULE_GROUPS: PermissionModuleGroup[] = [
       {
         id: "calls",
         label: "Calls",
-        // Download call recordings
         actions: [...CRUD, "export", "download"],
       },
       {
         id: "responses",
         label: "Responses",
-        actions: [...CRUD, "export", "download"],
+        actions: ["read", "export", "download"],
       },
     ],
   },
@@ -119,16 +99,27 @@ export const PERMISSION_MODULE_GROUPS: PermissionModuleGroup[] = [
         label: "Reports",
         actions: ["read", "export", "download"],
       },
+    ],
+  },
+  {
+    id: "management",
+    label: "Management",
+    modules: [
       {
-        id: "billing",
-        label: "Billing",
-        actions: ["read", "update", "export", "download"],
+        id: "users",
+        label: "Users",
+        actions: [...CRUD, "export"],
+      },
+      {
+        id: "roles",
+        label: "Roles",
+        actions: CRUD,
       },
     ],
   },
   {
-    id: "system",
-    label: "System",
+    id: "configurations",
+    label: "Configurations",
     modules: [
       {
         id: "notifications",
@@ -141,7 +132,6 @@ export const PERMISSION_MODULE_GROUPS: PermissionModuleGroup[] = [
         actions: ["read", "export", "download"],
       },
       { id: "settings", label: "Settings", actions: CRUD },
-      { id: "help", label: "Help", actions: ["read"] },
     ],
   },
 ];
@@ -224,7 +214,7 @@ export function slugifyRole(name: string): string {
 }
 
 export function sanitizePermissions(
-  permissions: Partial<RolePermissions>
+  permissions: Partial<RolePermissions> | Record<string, Partial<ModulePermissions> | undefined>
 ): RolePermissions {
   const base = createEmptyPermissions();
 

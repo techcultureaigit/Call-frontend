@@ -15,13 +15,13 @@ const actors = {
     id: "user-2",
     name: "Sarah Chen",
     email: "sarah.chen@crm.io",
-    role: "Manager",
+    role: "Admin",
   },
   rep: {
     id: "user-3",
     name: "James Wilson",
     email: "james.wilson@crm.io",
-    role: "Sales Rep",
+    role: "Viewer",
   },
   system: {
     id: "system",
@@ -35,7 +35,7 @@ export const MOCK_ACTIVITY_LOGS: ActivityLog[] = [
   {
     id: "log-1",
     action: "update",
-    module: "campaigns",
+    module: "surveys",
     resourceType: "Campaign",
     resourceId: "camp-1",
     resourceName: "Enterprise NPS Survey",
@@ -96,7 +96,7 @@ export const MOCK_ACTIVITY_LOGS: ActivityLog[] = [
     performedBy: actors.admin,
     ipAddress: "192.168.1.42",
     changes: [
-      { field: "role", before: "viewer", after: "sales_rep" },
+      { field: "role", before: "viewer", after: "admin" },
       { field: "permissions", before: "read-only", after: "read + create" },
     ],
     occurredAt: ago(67),
@@ -156,7 +156,7 @@ export const MOCK_ACTIVITY_LOGS: ActivityLog[] = [
   {
     id: "log-8",
     action: "delete",
-    module: "campaigns",
+    module: "surveys",
     resourceType: "Campaign",
     resourceId: "camp-9",
     resourceName: "Legacy Q1 Outreach",
@@ -224,7 +224,7 @@ export const MOCK_ACTIVITY_LOGS: ActivityLog[] = [
   {
     id: "log-12",
     action: "resume",
-    module: "campaigns",
+    module: "surveys",
     resourceType: "Campaign",
     resourceId: "camp-2",
     resourceName: "Q2 Outbound Sales",
@@ -274,7 +274,7 @@ export const MOCK_ACTIVITY_LOGS: ActivityLog[] = [
   {
     id: "log-15",
     action: "create",
-    module: "campaigns",
+    module: "surveys",
     resourceType: "Campaign",
     resourceId: "camp-12",
     resourceName: "Healthcare CX Survey",
@@ -357,7 +357,7 @@ export const MOCK_ACTIVITY_LOGS: ActivityLog[] = [
   {
     id: "log-20",
     action: "pause",
-    module: "campaigns",
+    module: "surveys",
     resourceType: "Campaign",
     resourceId: "camp-5",
     resourceName: "Product Feedback Q3",
@@ -381,7 +381,7 @@ export const MOCK_ACTIVITY_LOGS: ActivityLog[] = [
     performedBy: actors.admin,
     changes: [
       { field: "email", before: null, after: "michael.torres@crm.io" },
-      { field: "role", before: null, after: "sales_rep" },
+      { field: "role", before: null, after: "viewer" },
     ],
     occurredAt: ago(4320),
     createdAt: ago(4320),

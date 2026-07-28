@@ -2,6 +2,7 @@
 
 import {
   Brain,
+  CalendarClock,
   Check,
   ClipboardList,
   GitBranch,
@@ -26,6 +27,7 @@ const TAB_ICONS: Record<AgentConfigTab, LucideIcon> = {
   functions: GitBranch,
   "survey-questions": ClipboardList,
   "client-contact": Users,
+  schedule: CalendarClock,
   wisdom: Brain,
   "post-call": Monitor,
 };
@@ -33,9 +35,15 @@ const TAB_ICONS: Record<AgentConfigTab, LucideIcon> = {
 interface SurveyConfigTabsProps {
   active: AgentConfigTab;
   onChange: (tab: AgentConfigTab) => void;
+  /** Show "Upcoming" badge on disabled steps (create flow only) */
+  showUpcoming?: boolean;
 }
 
-export function SurveyConfigTabs({ active, onChange }: SurveyConfigTabsProps) {
+export function SurveyConfigTabs({
+  active,
+  onChange,
+  showUpcoming = false,
+}: SurveyConfigTabsProps) {
   const enabledIds = ENABLED_AGENT_CONFIG_TABS.map((t) => t.id);
   const activeEnabledIndex = enabledIds.indexOf(
     active as (typeof enabledIds)[number]
@@ -117,7 +125,7 @@ export function SurveyConfigTabs({ active, onChange }: SurveyConfigTabsProps) {
                     )}
                   >
                     Step {index + 1}
-                    {isDisabled && (
+                    {showUpcoming && isDisabled && (
                       <span className="rounded-full bg-muted px-1.5 py-0.5 text-[9px] font-bold tracking-[0.08em] text-muted-foreground normal-case">
                         Upcoming
                       </span>

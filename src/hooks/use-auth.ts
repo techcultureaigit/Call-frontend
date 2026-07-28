@@ -2,23 +2,19 @@
 
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/constants/query-keys";
-import { authService } from "@/services";
+import { apiGet, apiPost } from "@/lib/api";
+import {
+  mapBackendUser,
+  type BackendAuthUser,
+} from "@/lib/auth/map-session";
 import { useAuthStore } from "@/stores";
 import type { ApiResponse } from "@/types/api";
-import type { AuthSession } from "@/types/auth";
+import type { User } from "@/types/user";
 
-async function fetchLocalSession(): Promise<AuthSession> {
-  const res = await fetch("/api/auth/me", {
-    headers: { Accept: "application/json" },
-    cache: "no-store",
-  });
-
-  if (!res.ok) {
-    throw new Error("Unauthorized");
-  }
-
-  const json = (await res.json()) as ApiResponse<AuthSession>;
-  return json.data;
+async function fetchBackendSession(): Promise<User> {
+  const response = await apiGet<ApiResponse<BackendAuthUser>>("/auth/me");
+  if (!response.data) throw new Error("Unauthorized");
+  return mapBackendUser(response.data);
 }
 
 export function useAuth() {
@@ -28,23 +24,26 @@ export function useAuth() {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const isHydrated = useAuthStore((state) => state.isHydrated);
   const setSession = useAuthStore((state) => state.setSession);
+  const setUser = useAuthStore((state) => state.setUser);
   const clearSession = useAuthStore((state) => state.clearSession);
 
   const sessionQuery = useQuery({
     queryKey: queryKeys.auth.session,
     queryFn: async () => {
-      const session = await fetchLocalSession();
-      setSession(session);
-      return session;
+      const nextUser = await fetchBackendSession();
+      setUser(nextUser);
+      return nextUser;
     },
-    enabled: isHydrated,
+    enabled: isHydrated && Boolean(tokens?.accessToken),
     staleTime: 5 * 60 * 1000,
     retry: false,
   });
 
   const logout = async () => {
     try {
-      await authService.logout();
+      await apiPost("/auth/logout");
+    } catch {
+      // clear local session even if API fails
     } finally {
       clearSession();
       queryClient.clear();
@@ -52,9 +51,9 @@ export function useAuth() {
   };
 
   return {
-    user: sessionQuery.data?.user ?? user,
-    tokens: sessionQuery.data?.tokens ?? tokens,
-    isAuthenticated: isAuthenticated || Boolean(sessionQuery.data),
+    user: sessionQuery.data ?? user,
+    tokens,
+    isAuthenticated: isAuthenticated || Boolean(sessionQuery.data ?? user),
     isHydrated,
     isLoading: !isHydrated || sessionQuery.isLoading,
     isError: sessionQuery.isError,

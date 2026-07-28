@@ -17,13 +17,16 @@ export type AuditAction =
 
 export type AuditModule =
   | "customers"
-  | "campaigns"
+  | "agents"
+  | "library"
   | "surveys"
   | "calls"
   | "responses"
   | "users"
   | "roles"
   | "reports"
+  | "notifications"
+  | "activity_logs"
   | "settings"
   | "auth";
 

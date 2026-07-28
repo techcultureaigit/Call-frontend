@@ -3,10 +3,14 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { Copy, Eye, Pencil, Trash2 } from "lucide-react";
+import { CalendarClock, Copy, Eye, Pencil, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { getAgentLanguageLabel } from "@/lib/constants/agent-config";
 import { formatAgentCreatedAt } from "@/lib/utils/date";
+import {
+  isSurveyReadyToSchedule,
+  isSurveyScheduled,
+} from "@/lib/utils/survey-readiness";
 import { cn } from "@/lib/utils";
 import type { Agent } from "@/types/agent";
 import { SurveyAvatar } from "./survey-avatar";
@@ -14,23 +18,25 @@ import { SurveyAvatar } from "./survey-avatar";
 interface SurveyCardProps {
   agent: Agent;
   index?: number;
-  onViewDetails?: (agent: Agent) => void;
   onClone?: (agent: Agent) => void;
   onDelete?: (agent: Agent) => void;
+  onSchedule?: (agent: Agent) => void;
 }
 
 export function SurveyCard({
   agent,
   index = 0,
-  onViewDetails,
   onClone,
   onDelete,
+  onSchedule,
 }: SurveyCardProps) {
   const voice = agent.config.persona.tts.voice?.trim() || "—";
   const language = getAgentLanguageLabel(
     agent.config.persona.language || agent.language
   );
   const maxDuration = agent.config.persona.maxCallDurationMinutes;
+  const canSchedule = isSurveyReadyToSchedule(agent);
+  const scheduled = isSurveyScheduled(agent);
 
   return (
     <motion.article
@@ -48,9 +54,16 @@ export function SurveyCard({
               avatarId={agent.config.persona.avatarId}
             />
             <div className="min-w-0 flex-1">
-              <h3 className="truncate text-base font-semibold tracking-tight text-foreground">
-                {agent.name}
-              </h3>
+              <div className="flex items-center gap-2">
+                <h3 className="truncate text-base font-semibold tracking-tight text-foreground">
+                  {agent.name}
+                </h3>
+                {scheduled ? (
+                  <span className="shrink-0 rounded-full bg-emerald-500/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-emerald-700">
+                    Scheduled
+                  </span>
+                ) : null}
+              </div>
               <p className="mt-0.5 truncate text-xs text-muted-foreground">
                 {language} · {voice}
               </p>
@@ -81,7 +94,7 @@ export function SurveyCard({
           <div className="flex shrink-0 items-center gap-1">
             <ActionButton
               label="View details"
-              onClick={() => onViewDetails?.(agent)}
+              href={`/survey/${agent.id}`}
               className="text-violet-600 hover:bg-violet-500/10 hover:text-violet-700"
             >
               <Eye className="size-3.5" />
@@ -93,6 +106,15 @@ export function SurveyCard({
             >
               <Pencil className="size-3.5" />
             </ActionButton>
+            {canSchedule ? (
+              <ActionButton
+                label={scheduled ? "Reschedule survey" : "Schedule survey"}
+                onClick={() => onSchedule?.(agent)}
+                className="text-amber-600 hover:bg-amber-500/10 hover:text-amber-700"
+              >
+                <CalendarClock className="size-3.5" />
+              </ActionButton>
+            ) : null}
             <ActionButton
               label="Copy full survey"
               onClick={() => onClone?.(agent)}

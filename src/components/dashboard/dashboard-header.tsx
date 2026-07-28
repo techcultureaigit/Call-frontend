@@ -97,9 +97,8 @@ export function DashboardHeader({
     <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
       <div className="min-w-0">
         <h2 className="font-display text-xl font-semibold tracking-tight text-foreground">
-         Survey Dashboard
+          Survey Dashboard
         </h2>
-        
       </div>
 
       <div className="flex flex-wrap items-center gap-2">

@@ -1,6 +1,6 @@
 import { MOCK_USERS } from "@/lib/data/mock-users";
 import type { PaginatedMeta, PaginatedResponse } from "@/types";
-import type { User, UserRole, UserStatus } from "@/types/user";
+import type { User, UserStatus } from "@/types/user";
 
 let usersDB: User[] = [...MOCK_USERS];
 
@@ -8,7 +8,7 @@ export interface UsersQueryParams {
   page?: number;
   limit?: number;
   search?: string;
-  role?: UserRole | "all";
+  role?: string;
   status?: UserStatus | "all";
   sortBy?: keyof User | "name";
   sortOrder?: "asc" | "desc";
@@ -43,7 +43,9 @@ export function queryUsers(params: UsersQueryParams = {}): PaginatedResponse<Use
   }
 
   if (role !== "all") {
-    filtered = filtered.filter((user) => user.role === role);
+    filtered = filtered.filter(
+      (user) => user.roleId === role || user.roleName === role || user.role === role
+    );
   }
 
   if (status !== "all") {

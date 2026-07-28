@@ -13,6 +13,7 @@ export const AGENT_CONFIG_TABS = [
   { id: "prompts", label: "Instructions" },
   { id: "survey-questions", label: "Survey Questions" },
   { id: "client-contact", label: "Contact of Client" },
+  { id: "schedule", label: "Schedule" },
   { id: "wisdom", label: "Knowledge" },
   { id: "post-call", label: "Wrap-up" },
   { id: "functions", label: "Tools" },
@@ -186,6 +187,7 @@ export const DEFAULT_AGENT_CONFIG: AgentConfig = {
   clientContact: {
     contactFileUrl: "",
     contactFileName: "",
+    contacts: [],
   },
   postCall: {
     callbackUrl: "",

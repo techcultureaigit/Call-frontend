@@ -15,4 +15,5 @@ export { ThemeToggle } from "./theme-toggle";
 export { SidebarLogo } from "./sidebar-logo";
 export { SidebarUserCard } from "./sidebar-user-card";
 export { SidebarSectionLabel } from "./sidebar-section-label";
+export { SidebarCollapseToggle } from "./sidebar-collapse-toggle";
 export { LAYOUT } from "./constants";

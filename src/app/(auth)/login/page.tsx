@@ -4,37 +4,60 @@ import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
 import { Loader2 } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { siteConfig } from "@/config/site";
 import { routePaths } from "@/config/navigation";
-import { DEV_AUTH_SESSION } from "@/lib/auth/dev-session";
+import { ApiClientError, apiPost } from "@/lib/api";
+import { mapLoginToSession, type BackendLoginData } from "@/lib/auth/map-session";
 import { useAuthStore } from "@/stores";
+import type { ApiResponse } from "@/types/api";
 
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const setSession = useAuthStore((state) => state.setSession);
-  const [email, setEmail] = useState("admin@crm.local");
-  const [password, setPassword] = useState("");
+  const [email, setEmail] = useState("admin@crm.com");
+  const [password, setPassword] = useState("Admin@123");
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const redirect = searchParams.get("redirect") ?? routePaths.dashboard;
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     setIsLoading(true);
+    setError(null);
 
-    await new Promise((resolve) => setTimeout(resolve, 400));
+    try {
+      const response = await apiPost<ApiResponse<BackendLoginData>>(
+        "/auth/login",
+        { email, password }
+      );
 
-    setSession({
-      ...DEV_AUTH_SESSION,
-      user: { ...DEV_AUTH_SESSION.user, email },
-    });
+      const payload = response.data;
+      if (!payload?.accessToken || !payload?.user) {
+        throw new Error("Invalid login response");
+      }
 
-    router.push(redirect);
-    router.refresh();
+      setSession(mapLoginToSession(payload));
+      toast.success("Signed in successfully");
+      router.push(redirect);
+      router.refresh();
+    } catch (err) {
+      const message =
+        err instanceof ApiClientError
+          ? err.message
+          : err instanceof Error
+            ? err.message
+            : "Login failed";
+      setError(message);
+      toast.error(message);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -89,6 +112,12 @@ function LoginForm() {
             autoComplete="current-password"
           />
         </div>
+
+        {error && (
+          <p className="text-sm text-destructive" role="alert">
+            {error}
+          </p>
+        )}
 
         <Button type="submit" className="w-full" disabled={isLoading}>
           {isLoading ? (

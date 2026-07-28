@@ -10,12 +10,12 @@ import { UsersToolbar } from "./users-toolbar";
 import { UsersTable } from "./users-table";
 import { UsersPagination } from "./users-pagination";
 import { DeleteUserDialog } from "./delete-user-dialog";
-import type { User, UserRole, UserStatus } from "@/types/user";
+import type { User, UserStatus } from "@/types/user";
 
 export function UsersView() {
   const router = useRouter();
   const [search, setSearch] = useState("");
-  const [role, setRole] = useState<UserRole | "all">("all");
+  const [role, setRole] = useState<string>("all");
   const [status, setStatus] = useState<UserStatus | "all">("all");
   const [page, setPage] = useState(1);
   const [sorting, setSorting] = useState<SortingState>([

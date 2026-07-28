@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { v2 as cloudinary } from "cloudinary";
+import { saveMockContactFile } from "@/lib/server/mock-contact-files";
 
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -29,10 +30,13 @@ export async function POST(request: Request) {
     const folder = process.env.CLOUDINARY_FOLDER || "survey-contacts";
 
     if (!configured) {
+      const text = await file.text();
+      const id = saveMockContactFile(file.name, text);
+      const origin = new URL(request.url).origin;
       return NextResponse.json({
         success: true,
         data: {
-          url: `https://res.cloudinary.com/demo/raw/upload/${folder}/${Date.now()}-${encodeURIComponent(file.name)}`,
+          url: `${origin}/api/survey/contacts/file/${id}`,
           fileName: file.name,
           mock: true,
         },

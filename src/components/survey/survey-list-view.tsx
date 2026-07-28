@@ -6,6 +6,7 @@ import { motion } from "framer-motion";
 import { Bot, HelpCircle, Search, UserPlus } from "lucide-react";
 import { toast } from "sonner";
 import { PageContainer } from "@/components/layout";
+import { SidebarCollapseToggle } from "@/components/layout/sidebar-collapse-toggle";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -14,18 +15,25 @@ import {
   cloneAgent,
   deleteAgent,
   listAgents,
+  scheduleAgent,
 } from "@/lib/data/agents-repository";
 import { filterAgents } from "@/lib/data/mock-agents";
 import type { Agent } from "@/types/agent";
+import { DeleteSurveyDialog } from "./delete-survey-dialog";
+import {
+  ScheduleSurveyDialog,
+  type ScheduleSurveyPayload,
+} from "./schedule-survey-dialog";
 import { SurveyCard } from "./survey-card";
-import { SurveyDetailDrawer } from "./survey-detail-drawer";
 
 export function SurveyListView() {
   const [search, setSearch] = useState("");
   const [agents, setAgents] = useState<Agent[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [selected, setSelected] = useState<Agent | null>(null);
-  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [pendingDelete, setPendingDelete] = useState<Agent | null>(null);
+  const [scheduleOpen, setScheduleOpen] = useState(false);
+  const [pendingSchedule, setPendingSchedule] = useState<Agent | null>(null);
 
   const debouncedSearch = useDebounce(search, 300);
 
@@ -52,11 +60,6 @@ export function SurveyListView() {
     [agents, debouncedSearch]
   );
 
-  const handleViewDetails = (agent: Agent) => {
-    setSelected(agent);
-    setDrawerOpen(true);
-  };
-
   const handleClone = (agent: Agent) => {
     const cloned = cloneAgent(agent.id);
     if (!cloned) {
@@ -67,14 +70,43 @@ export function SurveyListView() {
     toast.success(`Copied as "${cloned.name}"`);
   };
 
-  const handleDelete = (agent: Agent) => {
+  const openDelete = (agent: Agent) => {
+    setPendingDelete(agent);
+    setDeleteOpen(true);
+  };
+
+  const openSchedule = (agent: Agent) => {
+    setPendingSchedule(agent);
+    setScheduleOpen(true);
+  };
+
+  const confirmDelete = () => {
+    if (!pendingDelete) return;
+    const agent = pendingDelete;
     deleteAgent(agent.id);
     setAgents((prev) => prev.filter((a) => a.id !== agent.id));
-    if (selected?.id === agent.id) {
-      setDrawerOpen(false);
-      setSelected(null);
-    }
+    setDeleteOpen(false);
+    setPendingDelete(null);
     toast.success(`"${agent.name}" deleted`);
+  };
+
+  const confirmSchedule = async (payload: ScheduleSurveyPayload) => {
+    if (!pendingSchedule) return;
+    try {
+      const updated = scheduleAgent(pendingSchedule.id, payload);
+      if (!updated) {
+        toast.error("Failed to schedule survey");
+        return;
+      }
+      setAgents(listAgents());
+      setScheduleOpen(false);
+      setPendingSchedule(null);
+      toast.success(`"${updated.name}" scheduled`);
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Failed to schedule survey"
+      );
+    }
   };
 
   return (
@@ -87,14 +119,17 @@ export function SurveyListView() {
           className="space-y-6"
         >
           <div className="flex items-start justify-between gap-4">
-            <div>
-              <h1 className="font-display text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
-                My Surveys
-              </h1>
-              <p className="mt-1.5 max-w-xl text-sm text-muted-foreground">
-                Listing shows Identity fields from Create Survey. View Details
-                opens all steps (1–7).
-              </p>
+            <div className="flex min-w-0 items-start gap-3">
+              <SidebarCollapseToggle className="mt-1" />
+              <div>
+                <h1 className="font-display text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
+                  My Surveys
+                </h1>
+                <p className="mt-1.5 max-w-xl text-sm text-muted-foreground">
+                  Schedule any survey with all steps filled. Reschedule anytime
+                  from the calendar action on the card.
+                </p>
+              </div>
             </div>
             <button
               type="button"
@@ -159,9 +194,9 @@ export function SurveyListView() {
                   key={agent.id}
                   agent={agent}
                   index={i}
-                  onViewDetails={handleViewDetails}
                   onClone={handleClone}
-                  onDelete={handleDelete}
+                  onDelete={openDelete}
+                  onSchedule={openSchedule}
                 />
               ))}
             </div>
@@ -169,11 +204,24 @@ export function SurveyListView() {
         </motion.div>
       </PageContainer>
 
-      <SurveyDetailDrawer
-        agent={selected}
-        open={drawerOpen}
-        onOpenChange={setDrawerOpen}
-        onClone={handleClone}
+      <DeleteSurveyDialog
+        open={deleteOpen}
+        onOpenChange={(open) => {
+          setDeleteOpen(open);
+          if (!open) setPendingDelete(null);
+        }}
+        agent={pendingDelete}
+        onConfirm={confirmDelete}
+      />
+
+      <ScheduleSurveyDialog
+        open={scheduleOpen}
+        onOpenChange={(open) => {
+          setScheduleOpen(open);
+          if (!open) setPendingSchedule(null);
+        }}
+        agent={pendingSchedule}
+        onConfirm={confirmSchedule}
       />
     </div>
   );

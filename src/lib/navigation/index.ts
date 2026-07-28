@@ -1,35 +1,19 @@
 import type { NavItemConfig, NavSection } from "@/config/navigation";
-import { hasModuleAccess } from "@/config/permissions";
-import type { UserRole } from "@/types/user";
+import type { RolePermissions } from "@/types/role";
 
-function filterNavItems(
-  items: NavItemConfig[],
-  role: UserRole | undefined
-): NavItemConfig[] {
-  return items
-    .filter((item) => hasModuleAccess(role, item.module))
-    .map((item) => {
-      if (!item.children?.length) return item;
-
-      const children = filterNavItems(item.children, role);
-      if (children.length === 0) return null;
-
-      return { ...item, children };
-    })
-    .filter((item): item is NavItemConfig => item !== null);
-}
-
-export function filterNavigationByRole(
+/**
+ * Role-based filtering is disabled on the frontend for now.
+ * Returns full navigation; wire to API permissions later.
+ */
+export function filterNavigationByPermissions(
   navigation: NavSection[],
-  role: UserRole | undefined
+  _permissions?: RolePermissions | null
 ): NavSection[] {
-  return navigation
-    .map((section) => ({
-      ...section,
-      items: filterNavItems(section.items, role),
-    }))
-    .filter((section) => section.items.length > 0);
+  return navigation;
 }
+
+/** @deprecated use filterNavigationByPermissions */
+export const filterNavigationByRole = filterNavigationByPermissions;
 
 export function isRouteActive(
   pathname: string,

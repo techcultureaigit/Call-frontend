@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowLeft, ArrowRight, Check, Loader2 } from "lucide-react";
+import { ArrowLeft, ArrowRight, CalendarClock, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface SurveyConfigFooterProps {
@@ -11,6 +11,8 @@ interface SurveyConfigFooterProps {
   isSaving?: boolean;
   step?: number;
   total?: number;
+  /** When true on last step, CTA shows Save & Schedule */
+  scheduleEnabled?: boolean;
 }
 
 export function SurveyConfigFooter({
@@ -21,6 +23,7 @@ export function SurveyConfigFooter({
   isSaving,
   step = 1,
   total = 5,
+  scheduleEnabled = false,
 }: SurveyConfigFooterProps) {
   const pct = Math.round((step / total) * 100);
 
@@ -45,13 +48,13 @@ export function SurveyConfigFooter({
           <ArrowLeft className="size-4" />
           Back
         </Button>
-        <Button onClick={onNext} disabled={isSaving} className="min-w-[140px]">
+        <Button onClick={onNext} disabled={isSaving} className="min-w-[160px]">
           {isSaving ? (
             <Loader2 className="size-4 animate-spin" />
           ) : isLast ? (
             <>
-              <Check className="size-4" />
-              Save agent
+              <CalendarClock className="size-4" />
+              {scheduleEnabled ? "Save & Schedule" : "Save survey"}
             </>
           ) : (
             <>

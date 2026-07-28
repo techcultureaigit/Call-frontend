@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { Plus, Trash2, Upload } from "lucide-react";
+import { Download, Plus, Trash2, Upload } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -13,6 +13,7 @@ import {
   getSurveyQuestionTypeLabel,
   SURVEY_QUESTION_TYPES,
 } from "@/lib/constants/agent-config";
+import { downloadSurveyQuestionsSample } from "@/lib/constants/survey-upload-samples";
 import { parseCSV } from "@/lib/utils/csv";
 import { cn } from "@/lib/utils";
 import type {
@@ -220,7 +221,7 @@ export function SurveyQuestionsTab({
           </div>
         )}
 
-        <div className="flex flex-wrap gap-2 pt-1">
+        <div className="flex flex-wrap items-center gap-2 pt-1">
           <Button type="button" onClick={addQuestion} className="h-10 px-4">
             <Plus className="size-4" />
             Add question
@@ -244,7 +245,24 @@ export function SurveyQuestionsTab({
             <Upload className="size-4" />
             Upload CSV
           </Button>
+          <Button
+            type="button"
+            variant="ghost"
+            onClick={downloadSurveyQuestionsSample}
+            className="h-10 px-3 text-muted-foreground hover:text-foreground"
+          >
+            <Download className="size-4" />
+            Sample CSV
+          </Button>
         </div>
+        <p className="text-[11px] text-muted-foreground">
+          CSV columns:{" "}
+          <span className="font-medium text-foreground/80">
+            question, type, options
+          </span>
+          . Types: text, yes_no, rating, multi. For multi, separate choices with{" "}
+          <span className="font-medium text-foreground/80">|</span>.
+        </p>
       </div>
 
       {values.questions.length === 0 ? (

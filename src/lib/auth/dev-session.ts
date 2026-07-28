@@ -1,12 +1,17 @@
 import type { AuthSession } from "@/types/auth";
+import { createEmptyPermissions } from "@/config/permission-modules";
 
+/** Local fallback only when backend is unreachable during UI work */
 export const DEV_AUTH_SESSION: AuthSession = {
   user: {
     id: "usr_dev_001",
-    email: "admin@crm.local",
+    email: "admin@crm.com",
     firstName: "Admin",
     lastName: "User",
-    role: "admin",
+    roleId: "role_dev_admin",
+    roleName: "Admin",
+    role: "Admin",
+    permissions: createEmptyPermissions(),
     status: "active",
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
