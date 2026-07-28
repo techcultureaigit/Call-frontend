@@ -47,7 +47,7 @@ function defaultStartLocal(): string {
 
 export function createEmptyScheduleForm(): ScheduleFormValues {
   return {
-    enabled: false,
+    enabled: true,
     startAt: defaultStartLocal(),
     endAt: "",
     timezone: "Asia/Kolkata",
@@ -59,9 +59,11 @@ export function scheduleToFormValues(
   schedule?: AgentSchedule | null
 ): ScheduleFormValues {
   const s = schedule ?? DEFAULT_AGENT_SCHEDULE;
-  const hasSchedule = Boolean(s.enabled && s.startAt);
+  const hasStart = Boolean(s.startAt);
+
   return {
-    enabled: hasSchedule,
+    // New / never scheduled → ON by default so date fields show
+    enabled: hasStart ? Boolean(s.enabled) : true,
     startAt: toLocalInputValue(s.startAt) || defaultStartLocal(),
     endAt: toLocalInputValue(s.endAt),
     timezone: s.timezone || "Asia/Kolkata",
