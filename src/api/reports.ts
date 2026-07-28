@@ -1,3 +1,4 @@
+import type { ApiResponse } from "@/types/api";
 import type { ReportsData } from "@/types/reports";
 import { apiEndpoints } from "./endpoints";
 import { apiGet } from "./http";
@@ -8,20 +9,13 @@ export interface ReportsParams {
   campaignId?: string;
 }
 
+/** Raw HTTP only — services unwrap `data` */
 export const reportsApi = {
-  getData: async (params: ReportsParams = {}) => {
-    const json = await apiGet<{ success: boolean; data: ReportsData }>(
-      apiEndpoints.reports,
-      params
-    );
-    return json.data;
-  },
+  getData: (params: ReportsParams = {}) =>
+    apiGet<ApiResponse<ReportsData>>(apiEndpoints.reports, params),
 
-  getCampaigns: async () => {
-    const json = await apiGet<{
-      success: boolean;
-      data: { id: string; name: string }[];
-    }>(apiEndpoints.reports, { campaigns: true });
-    return json.data;
-  },
+  getCampaigns: () =>
+    apiGet<ApiResponse<{ id: string; name: string }[]>>(apiEndpoints.reports, {
+      campaigns: true,
+    }),
 };

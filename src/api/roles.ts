@@ -12,35 +12,21 @@ export interface CreateRolePayload {
 
 export type UpdateRolePayload = Partial<CreateRolePayload>;
 
+/** Raw HTTP only — services unwrap `data` */
 export const rolesApi = {
-  list: async (search = "") => {
-    const json = await apiGet<ApiResponse<RoleListItem[]>>(
-      apiEndpoints.roles.list,
-      { search: search || undefined }
-    );
-    return json.data;
-  },
+  list: (search = "") =>
+    apiGet<ApiResponse<RoleListItem[]>>(apiEndpoints.roles.list, {
+      search: search || undefined,
+    }),
 
-  getById: async (id: string) => {
-    const json = await apiGet<ApiResponse<Role>>(apiEndpoints.roles.detail(id));
-    return json.data;
-  },
+  getById: (id: string) =>
+    apiGet<ApiResponse<Role>>(apiEndpoints.roles.detail(id)),
 
-  create: async (payload: CreateRolePayload) => {
-    const json = await apiPost<ApiResponse<Role>>(
-      apiEndpoints.roles.list,
-      payload
-    );
-    return json.data;
-  },
+  create: (payload: CreateRolePayload) =>
+    apiPost<ApiResponse<Role>>(apiEndpoints.roles.list, payload),
 
-  update: async (id: string, payload: UpdateRolePayload) => {
-    const json = await apiPatch<ApiResponse<Role>>(
-      apiEndpoints.roles.detail(id),
-      payload
-    );
-    return json.data;
-  },
+  update: (id: string, payload: UpdateRolePayload) =>
+    apiPatch<ApiResponse<Role>>(apiEndpoints.roles.detail(id), payload),
 
   delete: (id: string) =>
     apiDelete<ApiResponse<null>>(apiEndpoints.roles.detail(id)),

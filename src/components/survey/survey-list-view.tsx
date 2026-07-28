@@ -10,14 +10,22 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useDebounce, usePageMeta } from "@/hooks";
-import { filterAgents, MOCK_AGENTS } from "@/lib/data/mock-agents";
+import {
+  cloneAgent,
+  deleteAgent,
+  listAgents,
+} from "@/lib/data/agents-repository";
+import { filterAgents } from "@/lib/data/mock-agents";
 import type { Agent } from "@/types/agent";
 import { SurveyCard } from "./survey-card";
+import { SurveyDetailDrawer } from "./survey-detail-drawer";
 
 export function SurveyListView() {
   const [search, setSearch] = useState("");
-  const [agents, setAgents] = useState<Agent[]>(MOCK_AGENTS);
+  const [agents, setAgents] = useState<Agent[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [selected, setSelected] = useState<Agent | null>(null);
+  const [drawerOpen, setDrawerOpen] = useState(false);
 
   const debouncedSearch = useDebounce(search, 300);
 
@@ -32,7 +40,10 @@ export function SurveyListView() {
   }, [applyMeta, resetPageMeta]);
 
   useEffect(() => {
-    const t = setTimeout(() => setIsLoading(false), 300);
+    const t = setTimeout(() => {
+      setAgents(listAgents());
+      setIsLoading(false);
+    }, 300);
     return () => clearTimeout(t);
   }, []);
 
@@ -41,8 +52,28 @@ export function SurveyListView() {
     [agents, debouncedSearch]
   );
 
+  const handleViewDetails = (agent: Agent) => {
+    setSelected(agent);
+    setDrawerOpen(true);
+  };
+
+  const handleClone = (agent: Agent) => {
+    const cloned = cloneAgent(agent.id);
+    if (!cloned) {
+      toast.error("Failed to copy survey");
+      return;
+    }
+    setAgents(listAgents());
+    toast.success(`Copied as "${cloned.name}"`);
+  };
+
   const handleDelete = (agent: Agent) => {
+    deleteAgent(agent.id);
     setAgents((prev) => prev.filter((a) => a.id !== agent.id));
+    if (selected?.id === agent.id) {
+      setDrawerOpen(false);
+      setSelected(null);
+    }
     toast.success(`"${agent.name}" deleted`);
   };
 
@@ -56,9 +87,15 @@ export function SurveyListView() {
           className="space-y-6"
         >
           <div className="flex items-start justify-between gap-4">
-            <h1 className="font-display text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
-              My Surveys
-            </h1>
+            <div>
+              <h1 className="font-display text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
+                My Surveys
+              </h1>
+              <p className="mt-1.5 max-w-xl text-sm text-muted-foreground">
+                Listing shows Identity fields from Create Survey. View Details
+                opens all steps (1–7).
+              </p>
+            </div>
             <button
               type="button"
               className="inline-flex size-9 shrink-0 items-center justify-center rounded-full border border-border/50 bg-card/80 text-muted-foreground shadow-sm transition-colors hover:bg-card"
@@ -91,7 +128,7 @@ export function SurveyListView() {
 
           {isLoading ? (
             <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
-              {Array.from({ length: 3 }).map((_, i) => (
+              {Array.from({ length: 2 }).map((_, i) => (
                 <Skeleton key={i} className="h-52 rounded-[6px]" />
               ))}
             </div>
@@ -122,6 +159,8 @@ export function SurveyListView() {
                   key={agent.id}
                   agent={agent}
                   index={i}
+                  onViewDetails={handleViewDetails}
+                  onClone={handleClone}
                   onDelete={handleDelete}
                 />
               ))}
@@ -129,6 +168,13 @@ export function SurveyListView() {
           )}
         </motion.div>
       </PageContainer>
+
+      <SurveyDetailDrawer
+        agent={selected}
+        open={drawerOpen}
+        onOpenChange={setDrawerOpen}
+        onClone={handleClone}
+      />
     </div>
   );
 }

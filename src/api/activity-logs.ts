@@ -1,4 +1,5 @@
 import type { PaginatedResponse } from "@/types";
+import type { ApiResponse } from "@/types/api";
 import type { ActivityLog } from "@/types/activity-log";
 import { apiEndpoints } from "./endpoints";
 import { apiGet } from "./http";
@@ -14,6 +15,20 @@ export interface ActivityLogsListParams {
   sortOrder?: "asc" | "desc";
 }
 
+export interface ActivityLogStats {
+  total: number;
+  today: number;
+  creates: number;
+  updates: number;
+  deletes: number;
+  withChanges: number;
+}
+
+export interface ActivityLogFilterOptions {
+  actors: { id: string; name: string }[];
+}
+
+/** Raw HTTP only — services unwrap `data` */
 export const activityLogsApi = {
   list: (params: ActivityLogsListParams = {}) =>
     apiGet<PaginatedResponse<ActivityLog>>(
@@ -21,34 +36,17 @@ export const activityLogsApi = {
       params
     ),
 
-  getStats: async () => {
-    const json = await apiGet<{
-      success: boolean;
-      data: {
-        total: number;
-        today: number;
-        creates: number;
-        updates: number;
-        deletes: number;
-        withChanges: number;
-      };
-    }>(apiEndpoints.activityLogs.list, { stats: true });
-    return json.data;
-  },
+  getStats: () =>
+    apiGet<ApiResponse<ActivityLogStats>>(apiEndpoints.activityLogs.list, {
+      stats: true,
+    }),
 
-  getFilterOptions: async () => {
-    const json = await apiGet<{
-      success: boolean;
-      data: { actors: { id: string; name: string }[] };
-    }>(apiEndpoints.activityLogs.list, { filters: true });
-    return json.data;
-  },
+  getFilterOptions: () =>
+    apiGet<ApiResponse<ActivityLogFilterOptions>>(
+      apiEndpoints.activityLogs.list,
+      { filters: true }
+    ),
 
-  getById: async (id: string) => {
-    const json = await apiGet<{
-      success: boolean;
-      data: ActivityLog;
-    }>(apiEndpoints.activityLogs.detail(id));
-    return json.data;
-  },
+  getById: (id: string) =>
+    apiGet<ApiResponse<ActivityLog>>(apiEndpoints.activityLogs.detail(id)),
 };

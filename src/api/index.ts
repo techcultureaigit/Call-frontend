@@ -7,6 +7,7 @@ export {
   apiPost,
   apiRequest,
   apiUpload,
+  unwrapData,
 } from "./http";
 
 export { rolesApi } from "./roles";
@@ -23,6 +24,8 @@ export { customersApi } from "./customers";
 export type { CustomersListParams } from "./customers";
 
 export { surveysApi } from "./surveys";
+export { surveyTemplatesApi } from "./survey-templates";
+export type { SurveyTemplatesListParams } from "./survey-templates";
 export { callsApi } from "./calls";
 export type { CallsListParams } from "./calls";
 

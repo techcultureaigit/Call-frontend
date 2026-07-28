@@ -32,9 +32,9 @@ const actions: QuickAction[] = [
     ring: "group-hover:ring-brand/30",
   },
   {
-    title: "Survey Template",
-    description: "Agent templates",
-    href: "/survey/templates",
+    title: "My Surveys",
+    description: "Created surveys list",
+    href: "/survey",
     icon: ClipboardList,
     tile: "bg-gradient-to-br from-violet-500/20 to-violet-500/5 text-violet-600 dark:text-violet-400",
     ring: "group-hover:ring-violet-500/30",

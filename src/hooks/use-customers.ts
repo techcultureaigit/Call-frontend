@@ -3,13 +3,16 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { queryKeys } from "@/lib/constants/query-keys";
-import { customersApi, type CustomersListParams } from "@/api";
+import {
+  customersModuleService,
+  type CustomersListParams,
+} from "@/services/customers-module.service";
 import type { CustomerImportRow, CustomerStatus } from "@/types/customer";
 
 export function useCustomers(params: CustomersListParams) {
   return useQuery({
     queryKey: queryKeys.customers.module(params as Record<string, unknown>),
-    queryFn: () => customersApi.list(params),
+    queryFn: () => customersModuleService.list(params),
     placeholderData: (prev) => prev,
   });
 }
@@ -21,9 +24,9 @@ export function useCustomerMutations() {
     queryClient.invalidateQueries({ queryKey: ["customers", "module"] });
 
   const bulkDelete = useMutation({
-    mutationFn: (ids: string[]) => customersApi.bulkDelete(ids),
+    mutationFn: (ids: string[]) => customersModuleService.bulkDelete(ids),
     onSuccess: (res) => {
-      toast.success(`Deleted ${res.data.count} customers`);
+      toast.success(`Deleted ${res.count} customers`);
       invalidate();
     },
     onError: () => toast.error("Bulk delete failed"),
@@ -36,9 +39,9 @@ export function useCustomerMutations() {
     }: {
       ids: string[];
       status: CustomerStatus;
-    }) => customersApi.bulkUpdateStatus(ids, status),
+    }) => customersModuleService.bulkUpdateStatus(ids, status),
     onSuccess: (res) => {
-      toast.success(`Updated ${res.data.count} customers`);
+      toast.success(`Updated ${res.count} customers`);
       invalidate();
     },
     onError: () => toast.error("Bulk update failed"),
@@ -46,10 +49,10 @@ export function useCustomerMutations() {
 
   const importCustomers = useMutation({
     mutationFn: (rows: CustomerImportRow[]) =>
-      customersApi.importRows(rows),
+      customersModuleService.importRows(rows),
     onSuccess: (res) => {
       toast.success(
-        `Imported ${res.data.imported} customers (${res.data.skipped} skipped)`
+        `Imported ${res.imported} customers (${res.skipped} skipped)`
       );
       invalidate();
     },
@@ -58,7 +61,7 @@ export function useCustomerMutations() {
 
   const exportCustomers = useMutation({
     mutationFn: (params: Omit<CustomersListParams, "page" | "limit">) =>
-      customersApi.export(params),
+      customersModuleService.export(params),
   });
 
   return {

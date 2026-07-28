@@ -3,13 +3,13 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { queryKeys } from "@/lib/constants/query-keys";
-import { surveysApi } from "@/api";
+import { surveysModuleService } from "@/services/surveys-module.service";
 import type { CreateSurveyPayload, SaveSurveyPayload } from "@/types/survey";
 
 export function useSurveys(activeOnly = true, search = "") {
   return useQuery({
     queryKey: queryKeys.surveys.list({ active: activeOnly, search }),
-    queryFn: () => surveysApi.list(activeOnly, search),
+    queryFn: () => surveysModuleService.list(activeOnly, search),
     staleTime: 60_000,
   });
 }
@@ -17,7 +17,7 @@ export function useSurveys(activeOnly = true, search = "") {
 export function useSurveyDetail(id: string | null) {
   return useQuery({
     queryKey: queryKeys.surveys.detail(id ?? ""),
-    queryFn: () => surveysApi.getById(id!),
+    queryFn: () => surveysModuleService.getById(id!),
     enabled: Boolean(id),
   });
 }
@@ -34,7 +34,7 @@ export function useSurveyMutations() {
 
   const createSurvey = useMutation({
     mutationFn: (payload: CreateSurveyPayload) =>
-      surveysApi.create(payload),
+      surveysModuleService.create(payload),
     onSuccess: () => {
       toast.success("Survey created");
       invalidate();
@@ -44,7 +44,7 @@ export function useSurveyMutations() {
 
   const saveSurvey = useMutation({
     mutationFn: ({ id, payload }: { id: string; payload: SaveSurveyPayload }) =>
-      surveysApi.save(id, payload),
+      surveysModuleService.save(id, payload),
     onSuccess: (_, { id }) => {
       toast.success("Survey saved");
       invalidate(id);
@@ -59,16 +59,18 @@ export function useSurveyMutations() {
     }: {
       id: string;
       published: boolean;
-    }) => surveysApi.togglePublish(id, published),
+    }) => surveysModuleService.togglePublish(id, published),
     onSuccess: (data, { id }) => {
-      toast.success(data.status === "active" ? "Survey published" : "Survey unpublished");
+      toast.success(
+        data.status === "active" ? "Survey published" : "Survey unpublished"
+      );
       invalidate(id);
     },
     onError: () => toast.error("Failed to update publish status"),
   });
 
   const deleteSurvey = useMutation({
-    mutationFn: (id: string) => surveysApi.delete(id),
+    mutationFn: (id: string) => surveysModuleService.delete(id),
     onSuccess: () => {
       toast.success("Survey deleted");
       invalidate();

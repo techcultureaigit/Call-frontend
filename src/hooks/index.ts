@@ -16,6 +16,10 @@ export { useUsers, useUserMutations, useUserDetail } from "./use-users";
 export { useRoles, useRoleMutations, useRoleDetail } from "./use-roles";
 export { useCustomers, useCustomerMutations } from "./use-customers";
 export { useSurveys, useSurveyDetail, useSurveyMutations } from "./use-surveys";
+export {
+  useSurveyTemplates,
+  useSurveyTemplateDetail,
+} from "./use-survey-templates";
 export { useCalls, useCallStats, useCallDetail, useCallMutations } from "./use-calls";
 export { useResponses, useResponseStats, useResponseFilterOptions, useResponseDetail, useResponseMutations } from "./use-responses";
 export { useReports, useReportCampaigns } from "./use-reports";

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { HelpCircle, Search, Volume2 } from "lucide-react";
 import Link from "next/link";
@@ -9,12 +9,8 @@ import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
-import { useDebounce, usePageMeta } from "@/hooks";
-import {
-  SURVEY_TEMPLATE_INDUSTRIES,
-  MOCK_SURVEY_TEMPLATES,
-  filterSurveyTemplates,
-} from "@/lib/data/mock-survey-templates";
+import { useDebounce, usePageMeta, useSurveyTemplates } from "@/hooks";
+import { SURVEY_TEMPLATE_INDUSTRIES } from "@/lib/data/mock-survey-templates";
 import { SurveyTemplateCard } from "./survey-template-card";
 import { SurveyTemplateDetailDrawer } from "./survey-template-detail-drawer";
 import type { SurveyTemplate } from "@/types/survey-template";
@@ -22,11 +18,15 @@ import type { SurveyTemplate } from "@/types/survey-template";
 export function SurveyTemplatesView() {
   const [search, setSearch] = useState("");
   const [industry, setIndustry] = useState("all");
-  const [isLoading, setIsLoading] = useState(true);
   const [selected, setSelected] = useState<SurveyTemplate | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
 
   const debouncedSearch = useDebounce(search, 300);
+
+  const { data: templates = [], isLoading } = useSurveyTemplates({
+    search: debouncedSearch,
+    industry,
+  });
 
   const { applyMeta, resetPageMeta } = usePageMeta({
     title: "Survey Template",
@@ -40,21 +40,6 @@ export function SurveyTemplatesView() {
     applyMeta();
     return () => resetPageMeta();
   }, [applyMeta, resetPageMeta]);
-
-  useEffect(() => {
-    const t = setTimeout(() => setIsLoading(false), 350);
-    return () => clearTimeout(t);
-  }, []);
-
-  const templates = useMemo(
-    () =>
-      filterSurveyTemplates(
-        MOCK_SURVEY_TEMPLATES,
-        debouncedSearch,
-        industry
-      ),
-    [debouncedSearch, industry]
-  );
 
   const handleViewDetails = (template: SurveyTemplate) => {
     setSelected(template);
@@ -110,7 +95,7 @@ export function SurveyTemplatesView() {
 
         {isLoading ? (
           <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
-            {Array.from({ length: 9 }).map((_, i) => (
+            {Array.from({ length: 2 }).map((_, i) => (
               <Skeleton key={i} className="h-64 rounded-[6px]" />
             ))}
           </div>
@@ -150,7 +135,10 @@ export function SurveyTemplatesView() {
         <p className="text-center text-xs text-muted-foreground">
           {templates.length} template{templates.length !== 1 ? "s" : ""}{" "}
           available ·{" "}
-          <Link href="/survey/new" className="font-medium text-primary hover:underline">
+          <Link
+            href="/survey/new"
+            className="font-medium text-primary hover:underline"
+          >
             Start from scratch
           </Link>
         </p>

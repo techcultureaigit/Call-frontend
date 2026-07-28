@@ -1,4 +1,5 @@
 import type { PaginatedResponse } from "@/types";
+import type { ApiResponse } from "@/types/api";
 import type { Notification } from "@/types/notification";
 import { apiEndpoints } from "./endpoints";
 import { apiDelete, apiGet, apiPatch } from "./http";
@@ -13,6 +14,17 @@ export interface NotificationsListParams {
   sortOrder?: "asc" | "desc";
 }
 
+export interface NotificationStats {
+  total: number;
+  unread: number;
+  read: number;
+  info: number;
+  success: number;
+  warning: number;
+  error: number;
+}
+
+/** Raw HTTP only — services unwrap `data` */
 export const notificationsApi = {
   list: (params: NotificationsListParams = {}) =>
     apiGet<PaginatedResponse<Notification>>(
@@ -20,54 +32,32 @@ export const notificationsApi = {
       params
     ),
 
-  getFeed: async (limit = 8, live = true) => {
-    const json = await apiGet<{
-      success: boolean;
-      data: Notification[];
-    }>(apiEndpoints.notifications.list, { feed: true, limit, live });
-    return json.data;
-  },
+  getFeed: (limit = 8, live = true) =>
+    apiGet<ApiResponse<Notification[]>>(apiEndpoints.notifications.list, {
+      feed: true,
+      limit,
+      live,
+    }),
 
-  getStats: async () => {
-    const json = await apiGet<{
-      success: boolean;
-      data: {
-        total: number;
-        unread: number;
-        read: number;
-        info: number;
-        success: number;
-        warning: number;
-        error: number;
-      };
-    }>(apiEndpoints.notifications.list, { stats: true });
-    return json.data;
-  },
+  getStats: () =>
+    apiGet<ApiResponse<NotificationStats>>(apiEndpoints.notifications.list, {
+      stats: true,
+    }),
 
-  getById: async (id: string) => {
-    const json = await apiGet<{
-      success: boolean;
-      data: Notification;
-    }>(apiEndpoints.notifications.detail(id));
-    return json.data;
-  },
+  getById: (id: string) =>
+    apiGet<ApiResponse<Notification>>(apiEndpoints.notifications.detail(id)),
 
-  markAsRead: async (id: string) => {
-    const json = await apiPatch<{
-      success: boolean;
-      data: Notification;
-    }>(apiEndpoints.notifications.list, { action: "mark_read", id });
-    return json.data;
-  },
+  markAsRead: (id: string) =>
+    apiPatch<ApiResponse<Notification>>(apiEndpoints.notifications.list, {
+      action: "mark_read",
+      id,
+    }),
 
-  markAllAsRead: async () => {
-    const json = await apiPatch<{
-      success: boolean;
-      data: { count: number };
-    }>(apiEndpoints.notifications.list, { action: "mark_all_read" });
-    return json.data;
-  },
+  markAllAsRead: () =>
+    apiPatch<ApiResponse<{ count: number }>>(apiEndpoints.notifications.list, {
+      action: "mark_all_read",
+    }),
 
   delete: (id: string) =>
-    apiDelete<{ success: boolean }>(apiEndpoints.notifications.detail(id)),
+    apiDelete<ApiResponse<null>>(apiEndpoints.notifications.detail(id)),
 };

@@ -77,6 +77,12 @@ export const queryKeys = {
       ["surveys", "list", params] as const,
     detail: (id: string) => ["surveys", "detail", id] as const,
   },
+  surveyTemplates: {
+    all: ["surveyTemplates"] as const,
+    list: (params?: Record<string, unknown>) =>
+      ["surveyTemplates", "list", params] as const,
+    detail: (id: string) => ["surveyTemplates", "detail", id] as const,
+  },
   calls: {
     all: ["calls"] as const,
     module: (params?: Record<string, unknown>) =>

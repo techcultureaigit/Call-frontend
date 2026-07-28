@@ -3,11 +3,8 @@ import type { DashboardData } from "@/types/dashboard";
 import { apiEndpoints } from "./endpoints";
 import { apiGet } from "./http";
 
+/** Raw HTTP only — services unwrap `data` */
 export const dashboardApi = {
-  getOverview: async () => {
-    const json = await apiGet<ApiResponse<DashboardData>>(
-      apiEndpoints.dashboard
-    );
-    return json.data;
-  },
+  getOverview: () =>
+    apiGet<ApiResponse<DashboardData>>(apiEndpoints.dashboard),
 };

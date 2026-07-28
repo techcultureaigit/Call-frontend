@@ -6,6 +6,7 @@ export const storageKeys = {
   sidebarCollapsed: "crm_sidebar_collapsed",
   theme: "crm_theme",
   tablePreferences: "crm_table_preferences",
+  surveyAgents: "crm_survey_agents",
 } as const;
 
 export type StorageKey = (typeof storageKeys)[keyof typeof storageKeys];

@@ -5,42 +5,23 @@ function at(iso: string): string {
   return new Date(iso).toISOString();
 }
 
+/** Essential sample surveys — mirrors details captured when creating a survey. */
 export const MOCK_AGENTS: Agent[] = [
   {
     id: "agent_001",
-    uuid: "9358c6ce-4a2b-4f1d-9e87-2c1a8b3d4e5f",
-    name: "wwwf",
+    uuid: "a7f3e912-8c45-4d2a-b6f1-9e0d3c7a1b42",
+    name: "Grievance Help Desk",
     status: "active",
     language: "en",
     modelMode: "pipeline",
     phone: null,
-    conversationCount: 0,
-    config: {
-      ...DEFAULT_AGENT_CONFIG,
-      persona: {
-        ...DEFAULT_AGENT_CONFIG.persona,
-        name: "wwwf",
-        tts: { provider: "google", model: "Google", voice: "Aakash" },
-      },
-    },
-    createdAt: at("2024-07-14T15:34:23"),
-    updatedAt: at("2024-07-14T15:34:23"),
-  },
-  {
-    id: "agent_002",
-    uuid: "a7f3e912-8c45-4d2a-b6f1-9e0d3c7a1b42",
-    name: "Grievance Help Desk",
-    status: "active",
-    language: "zh",
-    modelMode: "pipeline",
-    phone: null,
-    conversationCount: 0,
+    conversationCount: 3,
     config: {
       ...DEFAULT_AGENT_CONFIG,
       persona: {
         ...DEFAULT_AGENT_CONFIG.persona,
         name: "Grievance Help Desk",
-        language: "zh",
+        language: "en",
         tts: { provider: "google", model: "Google", voice: "Saras" },
       },
       prompts: {
@@ -48,14 +29,38 @@ export const MOCK_AGENTS: Agent[] = [
         greeting:
           "Hello! I'm here to help you register and track your grievance. How may I assist you today?",
         systemPrompt:
-          "You are a warm, empathetic grievance help desk agent for government services.",
+          "You are a warm, empathetic grievance help desk agent for government services.\n\nTone: Calm and reassuring\nUse case: Citizen grievance intake and ticket status",
+      },
+      wisdom: {
+        ...DEFAULT_AGENT_CONFIG.wisdom,
+        topics: ["Citizen grievance intake and ticket status", "Government Industry"],
+      },
+      surveyQuestions: {
+        enabled: true,
+        questions: [
+          {
+            id: "sq_001",
+            type: "text",
+            question: "Please describe your grievance briefly.",
+          },
+          {
+            id: "sq_002",
+            type: "multiple_choice",
+            question: "Which department does this concern?",
+            options: [
+              { id: "o1", label: "Public Works", value: "public_works" },
+              { id: "o2", label: "Utilities", value: "utilities" },
+              { id: "o3", label: "Other", value: "other" },
+            ],
+          },
+        ],
       },
     },
     createdAt: at("2024-07-12T11:20:08"),
     updatedAt: at("2024-07-13T09:15:44"),
   },
   {
-    id: "agent_003",
+    id: "agent_002",
     uuid: "bf8ee71a-191d-4263-9ff9-18c0fce7159d",
     name: "Candidate Screening",
     status: "active",
@@ -68,6 +73,7 @@ export const MOCK_AGENTS: Agent[] = [
       persona: {
         ...DEFAULT_AGENT_CONFIG.persona,
         name: "Candidate Screening",
+        language: "en",
         tts: { provider: "google", model: "Google", voice: "Aakash" },
       },
       prompts: {
@@ -75,17 +81,32 @@ export const MOCK_AGENTS: Agent[] = [
         greeting:
           "Hi! Thank you for your interest. I'd like to ask you a few screening questions.",
         systemPrompt:
-          "You are a professional HR screening agent conducting initial candidate evaluations.",
+          "You are a professional HR screening agent conducting initial candidate evaluations.\n\nTone: Professional and clear\nUse case: Pre-screening interviews for open roles",
+      },
+      wisdom: {
+        ...DEFAULT_AGENT_CONFIG.wisdom,
+        topics: ["Pre-screening interviews for open roles", "HR & Recruitment"],
+      },
+      surveyQuestions: {
+        enabled: true,
+        questions: [
+          {
+            id: "sq_101",
+            type: "yes_no",
+            question: "Are you available to start within 30 days?",
+          },
+          {
+            id: "sq_102",
+            type: "rating",
+            question: "How many years of relevant experience do you have?",
+          },
+        ],
       },
     },
     createdAt: at("2024-07-10T08:45:17"),
     updatedAt: at("2024-07-14T14:02:31"),
   },
 ];
-
-export function getAgentById(id: string): Agent | undefined {
-  return MOCK_AGENTS.find((a) => a.id === id);
-}
 
 export function filterAgents(agents: Agent[], search: string): Agent[] {
   const q = search.trim().toLowerCase();
@@ -100,4 +121,8 @@ export function filterAgents(agents: Agent[], search: string): Agent[] {
 
 export function generateAgentUuid(): string {
   return crypto.randomUUID?.() ?? `agent-${Date.now()}`;
+}
+
+export function generateAgentId(): string {
+  return `agent_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 7)}`;
 }

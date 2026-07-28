@@ -5,14 +5,15 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
 import { toast } from "sonner";
 import { PageContainer } from "@/components/layout";
-import { usePageMeta } from "@/hooks";
+import { usePageMeta, useSurveyTemplateDetail } from "@/hooks";
 import {
   DEFAULT_AGENT_CONFIG,
   ENABLED_AGENT_CONFIG_TABS,
   isAgentConfigTabDisabled,
 } from "@/lib/constants/agent-config";
+import { saveAgent } from "@/lib/data/agents-repository";
 import { generateAgentUuid } from "@/lib/data/mock-agents";
-import { MOCK_SURVEY_TEMPLATES } from "@/lib/data/mock-survey-templates";
+import { buildSystemPromptFromTemplate } from "@/lib/data/mock-survey-templates";
 import { SurveyTopNav } from "./survey-top-nav";
 import { SurveyConfigTabs } from "./survey-config-tabs";
 import { SurveyConfigSidebar } from "./survey-config-sidebar";
@@ -25,32 +26,23 @@ import { SurveyQuestionsTab } from "./tabs/survey-questions-tab";
 import { ClientContactTab } from "./tabs/client-contact-tab";
 import { PostCallTab } from "./tabs/post-call-tab";
 import type { Agent, AgentConfig, AgentConfigTab } from "@/types/agent";
+import type { SurveyTemplate } from "@/types/survey-template";
 
 const ENABLED_TAB_ORDER = ENABLED_AGENT_CONFIG_TABS.map(
   (tab) => tab.id as AgentConfigTab
 );
 
-function buildInitialConfig(
-  agent: Agent | null | undefined,
-  templateId: string | null,
-  isNew: boolean
+function applyTemplateToConfig(
+  base: AgentConfig,
+  template: SurveyTemplate
 ): AgentConfig {
-  const base = agent?.config
-    ? structuredClone(agent.config)
-    : structuredClone(DEFAULT_AGENT_CONFIG);
-
-  if (!isNew || agent || !templateId) return base;
-
-  const template = MOCK_SURVEY_TEMPLATES.find((t) => t.id === templateId);
-  if (!template) return base;
-
   return {
     ...base,
     persona: { ...base.persona, name: template.name },
     prompts: {
       ...base.prompts,
-      systemPrompt: `${template.description}\n\nTone: ${template.tone}\nUse case: ${template.useCase}`,
-      greeting: `Hello! I'm your ${template.name} assistant. How can I help you today?`,
+      systemPrompt: buildSystemPromptFromTemplate(template),
+      greeting: template.greeting,
     },
     wisdom: {
       ...base.wisdom,
@@ -71,23 +63,26 @@ export function SurveyConfigureView({
   const router = useRouter();
   const searchParams = useSearchParams();
   const templateId = searchParams.get("template");
+  const shouldLoadTemplate = Boolean(isNew && !agent && templateId);
 
-  const initialConfig = useMemo(
-    () => buildInitialConfig(agent, templateId, isNew),
-    [agent, templateId, isNew]
+  const { data: template } = useSurveyTemplateDetail(
+    shouldLoadTemplate ? templateId : null
   );
+
+  const baseConfig = useMemo(() => {
+    return agent?.config
+      ? structuredClone(agent.config)
+      : structuredClone(DEFAULT_AGENT_CONFIG);
+  }, [agent]);
 
   const [activeTab, setActiveTab] = useState<AgentConfigTab>(
     ENABLED_TAB_ORDER[0] ?? "persona"
   );
   const [showPreview, setShowPreview] = useState(false);
   const [uuid] = useState(agent?.uuid ?? generateAgentUuid());
-  const [config, setConfig] = useState<AgentConfig>(initialConfig);
+  const [config, setConfig] = useState<AgentConfig>(baseConfig);
   const [isSaving, setIsSaving] = useState(false);
-  const [templateNotice] = useState(() => {
-    if (!isNew || agent || !templateId) return null;
-    return MOCK_SURVEY_TEMPLATES.find((t) => t.id === templateId)?.name ?? null;
-  });
+  const [templateApplied, setTemplateApplied] = useState(false);
 
   const { applyMeta, resetPageMeta } = usePageMeta({
     title: isNew ? "Create Survey" : "Configure Survey",
@@ -103,9 +98,11 @@ export function SurveyConfigureView({
   }, [applyMeta, resetPageMeta, isNew, agent?.name]);
 
   useEffect(() => {
-    if (!templateNotice) return;
-    toast.success(`Loaded "${templateNotice}" template`);
-  }, [templateNotice]);
+    if (!template || templateApplied) return;
+    setConfig(applyTemplateToConfig(baseConfig, template));
+    setTemplateApplied(true);
+    toast.success(`Loaded "${template.name}" template`);
+  }, [template, templateApplied, baseConfig]);
 
   const updateConfig = useCallback(
     <K extends keyof AgentConfig>(key: K, value: AgentConfig[K]) => {
@@ -133,7 +130,17 @@ export function SurveyConfigureView({
     setIsSaving(false);
 
     if (isLast) {
-      toast.success("Survey configuration saved");
+      const saved = saveAgent({
+        id: isNew ? undefined : agent?.id,
+        uuid,
+        config,
+        status: agent?.status ?? "active",
+      });
+      toast.success(
+        isNew
+          ? `"${saved.name}" created — opening survey list`
+          : "Survey configuration saved"
+      );
       router.push("/survey");
       return;
     }

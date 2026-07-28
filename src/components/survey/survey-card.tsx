@@ -1,10 +1,9 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { motion } from "framer-motion";
 import Link from "next/link";
-import { Copy, Pencil, Trash2 } from "lucide-react";
-import { toast } from "sonner";
+import { motion } from "framer-motion";
+import { Copy, Eye, Pencil, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { getAgentLanguageLabel } from "@/lib/constants/agent-config";
 import { formatAgentCreatedAt } from "@/lib/utils/date";
@@ -15,26 +14,23 @@ import { SurveyAvatar } from "./survey-avatar";
 interface SurveyCardProps {
   agent: Agent;
   index?: number;
+  onViewDetails?: (agent: Agent) => void;
+  onClone?: (agent: Agent) => void;
   onDelete?: (agent: Agent) => void;
 }
 
-export function SurveyCard({ agent, index = 0, onDelete }: SurveyCardProps) {
-  const voice = agent.config.persona.tts.voice ?? "—";
-  const phone = agent.phone?.trim() ? agent.phone : "---";
-  const language = getAgentLanguageLabel(agent.language);
-
-  const handleCopy = async () => {
-    try {
-      await navigator.clipboard.writeText(agent.uuid);
-      toast.success("UUID copied to clipboard");
-    } catch {
-      toast.error("Failed to copy UUID");
-    }
-  };
-
-  const handleDelete = () => {
-    onDelete?.(agent);
-  };
+export function SurveyCard({
+  agent,
+  index = 0,
+  onViewDetails,
+  onClone,
+  onDelete,
+}: SurveyCardProps) {
+  const voice = agent.config.persona.tts.voice?.trim() || "—";
+  const language = getAgentLanguageLabel(
+    agent.config.persona.language || agent.language
+  );
+  const maxDuration = agent.config.persona.maxCallDurationMinutes;
 
   return (
     <motion.article
@@ -51,16 +47,21 @@ export function SurveyCard({ agent, index = 0, onDelete }: SurveyCardProps) {
               seed={agent.uuid}
               avatarId={agent.config.persona.avatarId}
             />
-            <h3 className="truncate text-base font-semibold tracking-tight text-foreground">
-              {agent.name}
-            </h3>
+            <div className="min-w-0 flex-1">
+              <h3 className="truncate text-base font-semibold tracking-tight text-foreground">
+                {agent.name}
+              </h3>
+              <p className="mt-0.5 truncate text-xs text-muted-foreground">
+                {language} · {voice}
+              </p>
+            </div>
           </div>
         </div>
 
         <div className="grid grid-cols-4 gap-2 px-4 py-4">
           <MetaField label="Voice" value={voice} />
-          <MetaField label="Phone" value={phone} muted={phone === "---"} />
           <MetaField label="Language" value={language} />
+          <MetaField label="Max duration" value={`${maxDuration} min`} />
           <MetaField
             label="Conversations"
             value={String(agent.conversationCount)}
@@ -77,13 +78,13 @@ export function SurveyCard({ agent, index = 0, onDelete }: SurveyCardProps) {
             </p>
           </div>
 
-          <div className="flex shrink-0 items-center gap-1.5">
+          <div className="flex shrink-0 items-center gap-1">
             <ActionButton
-              label="Copy UUID"
-              onClick={handleCopy}
-              className="text-blue-600 hover:bg-blue-500/10 hover:text-blue-700"
+              label="View details"
+              onClick={() => onViewDetails?.(agent)}
+              className="text-violet-600 hover:bg-violet-500/10 hover:text-violet-700"
             >
-              <Copy className="size-3.5" />
+              <Eye className="size-3.5" />
             </ActionButton>
             <ActionButton
               label="Edit survey"
@@ -93,8 +94,15 @@ export function SurveyCard({ agent, index = 0, onDelete }: SurveyCardProps) {
               <Pencil className="size-3.5" />
             </ActionButton>
             <ActionButton
+              label="Copy full survey"
+              onClick={() => onClone?.(agent)}
+              className="text-blue-600 hover:bg-blue-500/10 hover:text-blue-700"
+            >
+              <Copy className="size-3.5" />
+            </ActionButton>
+            <ActionButton
               label="Delete survey"
-              onClick={handleDelete}
+              onClick={() => onDelete?.(agent)}
               className="text-red-600 hover:bg-red-500/10 hover:text-red-700"
             >
               <Trash2 className="size-3.5" />

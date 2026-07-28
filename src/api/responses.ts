@@ -1,4 +1,5 @@
 import type { PaginatedResponse } from "@/types";
+import type { ApiResponse } from "@/types/api";
 import type { SurveyResponse } from "@/types/response";
 import { apiEndpoints } from "./endpoints";
 import { apiGet } from "./http";
@@ -15,6 +16,20 @@ export interface ResponsesListParams {
   sortOrder?: "asc" | "desc";
 }
 
+export interface ResponseStats {
+  total: number;
+  pending: number;
+  flagged: number;
+  completed: number;
+  positive: number;
+}
+
+export interface ResponseFilterOptions {
+  campaigns: { id: string; name: string }[];
+  surveys: { id: string; name: string }[];
+}
+
+/** Raw HTTP only — services unwrap `data` */
 export const responsesApi = {
   list: (params: ResponsesListParams = {}) =>
     apiGet<PaginatedResponse<SurveyResponse>>(
@@ -22,44 +37,22 @@ export const responsesApi = {
       params
     ),
 
-  export: async (params: Omit<ResponsesListParams, "page" | "limit">) => {
-    const json = await apiGet<{
-      success: boolean;
-      data: SurveyResponse[];
-    }>(apiEndpoints.responses.list, { ...params, export: "true" });
-    return json.data;
-  },
+  export: (params: Omit<ResponsesListParams, "page" | "limit">) =>
+    apiGet<ApiResponse<SurveyResponse[]>>(apiEndpoints.responses.list, {
+      ...params,
+      export: "true",
+    }),
 
-  getStats: async () => {
-    const json = await apiGet<{
-      success: boolean;
-      data: {
-        total: number;
-        pending: number;
-        flagged: number;
-        completed: number;
-        positive: number;
-      };
-    }>(apiEndpoints.responses.list, { stats: true });
-    return json.data;
-  },
+  getStats: () =>
+    apiGet<ApiResponse<ResponseStats>>(apiEndpoints.responses.list, {
+      stats: true,
+    }),
 
-  getFilterOptions: async () => {
-    const json = await apiGet<{
-      success: boolean;
-      data: {
-        campaigns: { id: string; name: string }[];
-        surveys: { id: string; name: string }[];
-      };
-    }>(apiEndpoints.responses.list, { filters: true });
-    return json.data;
-  },
+  getFilterOptions: () =>
+    apiGet<ApiResponse<ResponseFilterOptions>>(apiEndpoints.responses.list, {
+      filters: true,
+    }),
 
-  getById: async (id: string) => {
-    const json = await apiGet<{
-      success: boolean;
-      data: SurveyResponse;
-    }>(apiEndpoints.responses.detail(id));
-    return json.data;
-  },
+  getById: (id: string) =>
+    apiGet<ApiResponse<SurveyResponse>>(apiEndpoints.responses.detail(id)),
 };

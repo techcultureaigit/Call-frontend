@@ -25,36 +25,20 @@ export interface CreateUserPayload {
 
 export type UpdateUserPayload = Partial<CreateUserPayload>;
 
+/** Raw HTTP only — services unwrap `data` */
 export const usersApi = {
   list: (params: UsersListParams = {}) =>
     apiGet<PaginatedResponse<User>>(apiEndpoints.users.list, params),
 
-  getById: async (id: string) => {
-    const json = await apiGet<ApiResponse<User>>(
-      apiEndpoints.users.detail(id)
-    );
-    return json.data;
-  },
+  getById: (id: string) =>
+    apiGet<ApiResponse<User>>(apiEndpoints.users.detail(id)),
 
-  create: async (payload: CreateUserPayload) => {
-    const json = await apiPost<ApiResponse<User>>(
-      apiEndpoints.users.list,
-      payload
-    );
-    return json.data;
-  },
+  create: (payload: CreateUserPayload) =>
+    apiPost<ApiResponse<User>>(apiEndpoints.users.list, payload),
 
-  update: async (id: string, payload: UpdateUserPayload) => {
-    const json = await apiPatch<ApiResponse<User>>(
-      apiEndpoints.users.detail(id),
-      payload
-    );
-    return json.data;
-  },
+  update: (id: string, payload: UpdateUserPayload) =>
+    apiPatch<ApiResponse<User>>(apiEndpoints.users.detail(id), payload),
 
   delete: (id: string) =>
     apiDelete<ApiResponse<null>>(apiEndpoints.users.detail(id)),
-
-  toggleStatus: (id: string, status: UserStatus) =>
-    usersApi.update(id, { status }),
 };

@@ -2,12 +2,15 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/constants/query-keys";
-import { reportsApi, type ReportsParams } from "@/api";
+import {
+  reportsModuleService,
+  type ReportsParams,
+} from "@/services/reports-module.service";
 
 export function useReports(params: ReportsParams) {
   return useQuery({
     queryKey: queryKeys.reports.data(params as Record<string, unknown>),
-    queryFn: () => reportsApi.getData(params),
+    queryFn: () => reportsModuleService.getData(params),
     placeholderData: (prev) => prev,
   });
 }
@@ -15,7 +18,7 @@ export function useReports(params: ReportsParams) {
 export function useReportCampaigns() {
   return useQuery({
     queryKey: [...queryKeys.reports.all, "filters"] as const,
-    queryFn: () => reportsApi.getCampaigns(),
+    queryFn: () => reportsModuleService.getCampaigns(),
     staleTime: 120_000,
   });
 }

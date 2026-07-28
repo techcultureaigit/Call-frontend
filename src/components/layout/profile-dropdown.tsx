@@ -84,7 +84,7 @@ export function ProfileDropdown() {
 
         <DropdownMenuGroup>
           <DropdownMenuItem asChild>
-            <Link href={routePaths.users}>
+            <Link href={routePaths.settings.root}>
               <User className="size-4" />
               Profile
             </Link>

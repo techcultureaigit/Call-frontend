@@ -3,16 +3,16 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import {
-  rolesApi,
+  rolesModuleService,
   type CreateRolePayload,
   type UpdateRolePayload,
-} from "@/api";
+} from "@/services/roles-module.service";
 import { queryKeys } from "@/lib/constants/query-keys";
 
 export function useRoles(search = "") {
   return useQuery({
     queryKey: queryKeys.roles.module({ search }),
-    queryFn: () => rolesApi.list(search),
+    queryFn: () => rolesModuleService.list(search),
     placeholderData: (prev) => prev,
   });
 }
@@ -20,7 +20,7 @@ export function useRoles(search = "") {
 export function useRoleDetail(id: string | null) {
   return useQuery({
     queryKey: queryKeys.roles.detail(id ?? ""),
-    queryFn: () => rolesApi.getById(id!),
+    queryFn: () => rolesModuleService.getById(id!),
     enabled: Boolean(id),
   });
 }
@@ -32,7 +32,8 @@ export function useRoleMutations() {
     queryClient.invalidateQueries({ queryKey: ["roles", "module"] });
 
   const createRole = useMutation({
-    mutationFn: (payload: CreateRolePayload) => rolesApi.create(payload),
+    mutationFn: (payload: CreateRolePayload) =>
+      rolesModuleService.create(payload),
     onSuccess: () => {
       toast.success("Role created successfully");
       invalidate();
@@ -42,7 +43,7 @@ export function useRoleMutations() {
 
   const updateRole = useMutation({
     mutationFn: ({ id, payload }: { id: string; payload: UpdateRolePayload }) =>
-      rolesApi.update(id, payload),
+      rolesModuleService.update(id, payload),
     onSuccess: () => {
       toast.success("Role updated successfully");
       invalidate();
@@ -51,7 +52,7 @@ export function useRoleMutations() {
   });
 
   const deleteRole = useMutation({
-    mutationFn: (id: string) => rolesApi.delete(id),
+    mutationFn: (id: string) => rolesModuleService.delete(id),
     onSuccess: () => {
       toast.success("Role deleted successfully");
       invalidate();

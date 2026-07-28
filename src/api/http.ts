@@ -1,4 +1,5 @@
 import { createQueryString } from "@/lib/utils";
+import type { ApiResponse } from "@/types/api";
 
 type QueryValue = string | number | boolean | undefined | null;
 type QueryParams = Record<string, QueryValue>;
@@ -42,13 +43,8 @@ export async function apiRequest<T>(
   return parseJson<T>(response);
 }
 
-export function apiGet<T>(
-  path: string,
-  params?: object
-): Promise<T> {
-  const query = params
-    ? createQueryString(params as QueryParams)
-    : "";
+export function apiGet<T>(path: string, params?: object): Promise<T> {
+  const query = params ? createQueryString(params as QueryParams) : "";
   return apiRequest<T>(`${path}${query}`);
 }
 
@@ -77,4 +73,12 @@ export function apiUpload<T>(path: string, formData: FormData): Promise<T> {
     method: "POST",
     body: formData,
   });
+}
+
+/** Map `{ success, data }` API envelopes → `data` */
+export async function unwrapData<T>(
+  promise: Promise<ApiResponse<T>>
+): Promise<T> {
+  const json = await promise;
+  return json.data;
 }

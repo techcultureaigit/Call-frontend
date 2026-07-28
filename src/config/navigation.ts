@@ -2,7 +2,7 @@ import type { LucideIcon } from "lucide-react";
 import {
   BarChart3,
   Bell,
-  Briefcase,
+  ClipboardList,
   History,
   Inbox,
   LayoutDashboard,
@@ -59,17 +59,17 @@ export const dashboardNavigation: NavSection[] = [
     label: "Survey Studio",
     items: [
       {
+        id: "agents-list",
+        title: "My Surveys",
+        href: "/survey",
+        icon: ClipboardList,
+        module: "agents",
+      },
+      {
         id: "agents-create",
         title: "Create Survey",
         href: "/survey/new",
         icon: UserPlus,
-        module: "agents",
-      },
-      {
-        id: "agents-templates",
-        title: "Survey Template",
-        href: "/survey/templates",
-        icon: Briefcase,
         module: "agents",
       },
       {
@@ -248,7 +248,6 @@ export const routePaths = {
   survey: {
     root: "/survey",
     new: "/survey/new",
-    templates: "/survey/templates",
     actions: "/survey/actions",
     telephony: "/survey/telephony",
   },

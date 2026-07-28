@@ -3,14 +3,17 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { queryKeys } from "@/lib/constants/query-keys";
-import { notificationsApi, type NotificationsListParams } from "@/api";
+import {
+  notificationsModuleService,
+  type NotificationsListParams,
+} from "@/services/notifications-module.service";
 
 export function useNotifications(params: NotificationsListParams) {
   return useQuery({
     queryKey: queryKeys.notifications.module(
       params as Record<string, unknown>
     ),
-    queryFn: () => notificationsApi.list(params),
+    queryFn: () => notificationsModuleService.list(params),
     placeholderData: (prev) => prev,
   });
 }
@@ -18,7 +21,7 @@ export function useNotifications(params: NotificationsListParams) {
 export function useNotificationFeed() {
   return useQuery({
     queryKey: queryKeys.notifications.feed(),
-    queryFn: () => notificationsApi.getFeed(8, true),
+    queryFn: () => notificationsModuleService.getFeed(8, true),
     refetchInterval: 10_000,
     refetchIntervalInBackground: true,
   });
@@ -27,7 +30,7 @@ export function useNotificationFeed() {
 export function useNotificationStats() {
   return useQuery({
     queryKey: queryKeys.notifications.stats(),
-    queryFn: () => notificationsApi.getStats(),
+    queryFn: () => notificationsModuleService.getStats(),
     refetchInterval: 15_000,
   });
 }
@@ -39,13 +42,13 @@ export function useNotificationMutations() {
     queryClient.invalidateQueries({ queryKey: ["notifications"] });
 
   const markAsRead = useMutation({
-    mutationFn: (id: string) => notificationsApi.markAsRead(id),
+    mutationFn: (id: string) => notificationsModuleService.markAsRead(id),
     onSuccess: () => invalidate(),
     onError: () => toast.error("Failed to mark as read"),
   });
 
   const markAllAsRead = useMutation({
-    mutationFn: () => notificationsApi.markAllAsRead(),
+    mutationFn: () => notificationsModuleService.markAllAsRead(),
     onSuccess: (data) => {
       toast.success(
         data.count > 0
@@ -58,7 +61,7 @@ export function useNotificationMutations() {
   });
 
   const removeNotification = useMutation({
-    mutationFn: (id: string) => notificationsApi.delete(id),
+    mutationFn: (id: string) => notificationsModuleService.delete(id),
     onSuccess: () => {
       toast.success("Notification removed");
       invalidate();

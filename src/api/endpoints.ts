@@ -17,6 +17,10 @@ export const apiEndpoints = {
     list: "/api/surveys",
     detail: (id: string) => `/api/surveys/${id}`,
   },
+  surveyTemplates: {
+    list: "/api/survey/templates",
+    detail: (id: string) => `/api/survey/templates/${id}`,
+  },
   calls: {
     list: "/api/calls",
     detail: (id: string) => `/api/calls/${id}`,

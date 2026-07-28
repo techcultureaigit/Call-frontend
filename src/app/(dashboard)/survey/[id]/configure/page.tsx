@@ -1,6 +1,4 @@
-import { notFound } from "next/navigation";
-import { SurveyConfigureView } from "@/components/survey";
-import { getAgentById } from "@/lib/data/mock-agents";
+import { SurveyConfigureLoader } from "@/components/survey";
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -8,7 +6,5 @@ interface PageProps {
 
 export default async function SurveyConfigurePage({ params }: PageProps) {
   const { id } = await params;
-  const agent = getAgentById(id);
-  if (!agent) notFound();
-  return <SurveyConfigureView agent={agent} />;
+  return <SurveyConfigureLoader id={id} />;
 }

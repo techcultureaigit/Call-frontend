@@ -3,12 +3,15 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { queryKeys } from "@/lib/constants/query-keys";
-import { callsApi, type CallsListParams } from "@/api";
+import {
+  callsModuleService,
+  type CallsListParams,
+} from "@/services/calls-module.service";
 
 export function useCalls(params: CallsListParams) {
   return useQuery({
     queryKey: queryKeys.calls.module(params as Record<string, unknown>),
-    queryFn: () => callsApi.list(params),
+    queryFn: () => callsModuleService.list(params),
     placeholderData: (prev) => prev,
     refetchInterval: params.liveOnly ? 5000 : false,
   });
@@ -17,7 +20,7 @@ export function useCalls(params: CallsListParams) {
 export function useCallStats() {
   return useQuery({
     queryKey: queryKeys.calls.stats(),
-    queryFn: () => callsApi.getStats(),
+    queryFn: () => callsModuleService.getStats(),
     refetchInterval: 10000,
   });
 }
@@ -25,7 +28,7 @@ export function useCallStats() {
 export function useCallDetail(id: string | null) {
   return useQuery({
     queryKey: queryKeys.calls.detail(id ?? ""),
-    queryFn: () => callsApi.getById(id!),
+    queryFn: () => callsModuleService.getById(id!),
     enabled: Boolean(id),
   });
 }
@@ -37,7 +40,7 @@ export function useCallMutations() {
     queryClient.invalidateQueries({ queryKey: ["calls"] });
 
   const retryCall = useMutation({
-    mutationFn: (id: string) => callsApi.retry(id),
+    mutationFn: (id: string) => callsModuleService.retry(id),
     onSuccess: () => {
       toast.success("Call queued for retry");
       invalidate();
