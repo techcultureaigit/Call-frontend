@@ -43,3 +43,18 @@ export function isSurveyScheduled(agent: Agent): boolean {
   const schedule = getSurveySchedule(agent);
   return Boolean(schedule.enabled && schedule.status === "scheduled");
 }
+
+/** UI label for list / configure / detail (not raw DB status). */
+export type SurveyDisplayStatus = "scheduled" | "complete" | "draft";
+
+export function getSurveyDisplayStatus(
+  agent: Agent,
+  options?: { overallComplete?: boolean }
+): SurveyDisplayStatus {
+  if (isSurveyScheduled(agent)) return "scheduled";
+  const complete =
+    options?.overallComplete ??
+    agent.progress?.overallComplete ??
+    isSurveyReadyToSchedule(agent);
+  return complete ? "complete" : "draft";
+}

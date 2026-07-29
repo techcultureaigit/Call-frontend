@@ -5,19 +5,22 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import { CalendarClock, Copy, Eye, Pencil, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { getAgentLanguageLabel } from "@/lib/constants/agent-config";
 import { formatAgentCreatedAt } from "@/lib/utils/date";
 import {
+  getSurveyDisplayStatus,
   isSurveyReadyToSchedule,
-  isSurveyScheduled,
 } from "@/lib/utils/survey-readiness";
 import { cn } from "@/lib/utils";
 import type { Agent } from "@/types/agent";
-import { SurveyAvatar } from "./survey-avatar";
+import { SurveyStatusBadge } from "./survey-status-badge";
 
 interface SurveyCardProps {
   agent: Agent;
   index?: number;
+  selected?: boolean;
+  onSelectChange?: (agentId: string, selected: boolean) => void;
   onClone?: (agent: Agent) => void;
   onDelete?: (agent: Agent) => void;
   onSchedule?: (agent: Agent) => void;
@@ -26,6 +29,8 @@ interface SurveyCardProps {
 export function SurveyCard({
   agent,
   index = 0,
+  selected = false,
+  onSelectChange,
   onClone,
   onDelete,
   onSchedule,
@@ -36,7 +41,8 @@ export function SurveyCard({
   );
   const maxDuration = agent.config.persona.maxCallDurationMinutes;
   const canSchedule = isSurveyReadyToSchedule(agent);
-  const scheduled = isSurveyScheduled(agent);
+  const displayStatus = getSurveyDisplayStatus(agent);
+  const scheduled = displayStatus === "scheduled";
 
   return (
     <motion.article
@@ -46,23 +52,26 @@ export function SurveyCard({
       whileHover={{ y: -3 }}
       className="group"
     >
-      <div className="overflow-hidden rounded-[6px] border border-border/40 bg-card shadow-card transition-all duration-300 group-hover:border-primary/20 group-hover:shadow-elevated">
+      <div
+        className={cn(
+          "overflow-hidden rounded-[6px] border bg-card shadow-card transition-all duration-300 group-hover:border-primary/20 group-hover:shadow-elevated",
+          selected ? "border-primary/40 ring-2 ring-primary/15" : "border-border/40"
+        )}
+      >
         <div className="bg-linear-to-r from-brand/10 via-brand/5 to-transparent px-4 py-3.5">
           <div className="flex items-center gap-3">
-            <SurveyAvatar
-              seed={agent.uuid}
-              avatarId={agent.config.persona.avatarId}
+            <Checkbox
+              checked={selected}
+              onChange={(e) => onSelectChange?.(agent.id, e.target.checked)}
+              aria-label={`Select ${agent.name}`}
+              className="size-4 shrink-0"
             />
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2">
                 <h3 className="truncate text-base font-semibold tracking-tight text-foreground">
                   {agent.name}
                 </h3>
-                {scheduled ? (
-                  <span className="shrink-0 rounded-full bg-emerald-500/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-emerald-700">
-                    Scheduled
-                  </span>
-                ) : null}
+                <SurveyStatusBadge status={displayStatus} />
               </div>
               <p className="mt-0.5 truncate text-xs text-muted-foreground">
                 {language} · {voice}

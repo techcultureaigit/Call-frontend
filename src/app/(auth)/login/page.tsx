@@ -10,10 +10,8 @@ import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { siteConfig } from "@/config/site";
 import { routePaths } from "@/config/navigation";
-import { ApiClientError, apiPost } from "@/lib/api";
 import { mapLoginToSession, type BackendLoginData } from "@/lib/auth/map-session";
 import { useAuthStore } from "@/stores";
-import type { ApiResponse } from "@/types/api";
 
 function LoginForm() {
   const router = useRouter();
@@ -32,27 +30,31 @@ function LoginForm() {
     setError(null);
 
     try {
-      const response = await apiPost<ApiResponse<BackendLoginData>>(
-        "/auth/login",
-        { email, password }
-      );
+      // Static login bypass — no backend call needed
+      const staticPayload: BackendLoginData = {
+        accessToken: "static-dev-token",
+        refreshToken: "static-dev-refresh",
+        user: {
+          _id: "000000000000000000000001",
+          name: "Admin User",
+          email,
+          isActive: true,
+          role: {
+            _id: "000000000000000000000001",
+            name: "Admin",
+            slug: "admin",
+            permissions: {},
+          },
+        },
+      };
 
-      const payload = response.data;
-      if (!payload?.accessToken || !payload?.user) {
-        throw new Error("Invalid login response");
-      }
-
-      setSession(mapLoginToSession(payload));
+      setSession(mapLoginToSession(staticPayload));
       toast.success("Signed in successfully");
       router.push(redirect);
       router.refresh();
     } catch (err) {
       const message =
-        err instanceof ApiClientError
-          ? err.message
-          : err instanceof Error
-            ? err.message
-            : "Login failed";
+        err instanceof Error ? err.message : "Login failed";
       setError(message);
       toast.error(message);
     } finally {

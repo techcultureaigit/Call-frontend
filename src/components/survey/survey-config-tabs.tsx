@@ -16,7 +16,6 @@ import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import {
   AGENT_CONFIG_TABS,
-  ENABLED_AGENT_CONFIG_TABS,
   isAgentConfigTabDisabled,
 } from "@/lib/constants/agent-config";
 import type { AgentConfigTab } from "@/types/agent";
@@ -37,18 +36,15 @@ interface SurveyConfigTabsProps {
   onChange: (tab: AgentConfigTab) => void;
   /** Show "Upcoming" badge on disabled steps (create flow only) */
   showUpcoming?: boolean;
+  completedTabs?: Partial<Record<AgentConfigTab, boolean>>;
 }
 
 export function SurveyConfigTabs({
   active,
   onChange,
   showUpcoming = false,
+  completedTabs = {},
 }: SurveyConfigTabsProps) {
-  const enabledIds = ENABLED_AGENT_CONFIG_TABS.map((t) => t.id);
-  const activeEnabledIndex = enabledIds.indexOf(
-    active as (typeof enabledIds)[number]
-  );
-
   return (
     <nav aria-label="Survey configuration steps" className="w-full">
       <ol className="flex flex-col gap-1">
@@ -56,14 +52,7 @@ export function SurveyConfigTabs({
           const Icon = TAB_ICONS[tab.id as AgentConfigTab];
           const isDisabled = isAgentConfigTabDisabled(tab.id);
           const isActive = active === tab.id;
-          const enabledIndex = enabledIds.indexOf(
-            tab.id as (typeof enabledIds)[number]
-          );
-          const isDone =
-            !isDisabled &&
-            enabledIndex !== -1 &&
-            activeEnabledIndex !== -1 &&
-            enabledIndex < activeEnabledIndex;
+          const isDone = Boolean(completedTabs[tab.id as AgentConfigTab]);
           const isLast = index === AGENT_CONFIG_TABS.length - 1;
 
           return (

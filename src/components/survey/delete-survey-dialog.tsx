@@ -14,36 +14,73 @@ import type { Agent } from "@/types/agent";
 interface DeleteSurveyDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  agent: Agent | null;
+  /** Single survey delete */
+  agent?: Agent | null;
+  /** Bulk delete count (used when agent is not set) */
+  count?: number;
   onConfirm: () => void;
+  isDeleting?: boolean;
 }
 
 export function DeleteSurveyDialog({
   open,
   onOpenChange,
-  agent,
+  agent = null,
+  count = 0,
   onConfirm,
+  isDeleting,
 }: DeleteSurveyDialogProps) {
-  if (!agent) return null;
+  const isBulk = !agent && count > 0;
+  if (!agent && !isBulk) return null;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Delete survey</DialogTitle>
+          <DialogTitle>
+            {isBulk ? `Delete ${count} surveys` : "Delete survey"}
+          </DialogTitle>
           <DialogDescription>
-            Are you sure you want to delete{" "}
-            <span className="font-medium text-foreground">{agent.name}</span>?
-            This action cannot be undone.
+            {isBulk ? (
+              <>
+                Are you sure you want to delete{" "}
+                <span className="font-medium text-foreground">
+                  {count} selected survey{count === 1 ? "" : "s"}
+                </span>
+                ? This action cannot be undone.
+              </>
+            ) : (
+              <>
+                Are you sure you want to delete{" "}
+                <span className="font-medium text-foreground">
+                  {agent!.name}
+                </span>
+                ? This action cannot be undone.
+              </>
+            )}
           </DialogDescription>
         </DialogHeader>
 
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => onOpenChange(false)}
+            disabled={isDeleting}
+          >
             Cancel
           </Button>
-          <Button variant="destructive" onClick={onConfirm}>
-            Delete survey
+          <Button
+            type="button"
+            variant="destructive"
+            onClick={onConfirm}
+            disabled={isDeleting}
+          >
+            {isDeleting
+              ? "Deleting…"
+              : isBulk
+                ? "Delete surveys"
+                : "Delete survey"}
           </Button>
         </DialogFooter>
       </DialogContent>

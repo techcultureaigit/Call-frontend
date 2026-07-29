@@ -1,10 +1,16 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { Download, Plus, Trash2, Upload } from "lucide-react";
+import {
+  Download,
+  ExternalLink,
+  Plus,
+  Trash2,
+  Upload,
+  X,
+} from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
@@ -14,7 +20,8 @@ import {
   SURVEY_QUESTION_TYPES,
 } from "@/lib/constants/agent-config";
 import { downloadSurveyQuestionsSample } from "@/lib/constants/survey-upload-samples";
-import { parseCSV } from "@/lib/utils/csv";
+import { getContactFileOpenUrl } from "@/lib/utils/contact-file-url";
+import { surveysModuleService } from "@/services/surveys-module.service";
 import { cn } from "@/lib/utils";
 import type {
   AgentSurveyQuestion,
@@ -23,6 +30,7 @@ import type {
 } from "@/types/agent";
 
 interface SurveyQuestionsTabProps {
+  surveyId?: string;
   values: AgentSurveyQuestionsConfig;
   onChange: (values: AgentSurveyQuestionsConfig) => void;
 }
@@ -44,32 +52,33 @@ function parseOptionsPipe(raw: string): AgentSurveyQuestionOption[] {
     .map(makeOption);
 }
 
-const fieldClass =
-  "h-11 border-border/70 bg-background/80 shadow-none focus-visible:border-brand focus-visible:ring-brand/15";
-
 const TYPE_OPTIONS = SURVEY_QUESTION_TYPES.map((t) => ({
   label: t.label,
   value: t.value,
 }));
 
 export function SurveyQuestionsTab({
+  surveyId,
   values,
   onChange,
 }: SurveyQuestionsTabProps) {
   const fileRef = useRef<HTMLInputElement>(null);
+  const [uploading, setUploading] = useState(false);
   const [questionType, setQuestionType] = useState("text");
   const [questionText, setQuestionText] = useState("");
   const [optionsPipe, setOptionsPipe] = useState("");
-  const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
   const isMulti = questionType === "multi";
-  const allSelected =
-    values.questions.length > 0 &&
-    selectedIds.length === values.questions.length;
+  const fileUrl = getContactFileOpenUrl(values.questionsFileUrl || "");
 
-  const setQuestions = (questions: AgentSurveyQuestion[]) => {
-    onChange({ ...values, questions });
-    setSelectedIds((prev) => prev.filter((id) => questions.some((q) => q.id === id)));
+  const updateQuestions = (questions: AgentSurveyQuestion[]) => {
+    onChange({
+      ...values,
+      // Manual edits clear uploaded file metadata
+      questionsFileUrl: "",
+      questionsFileName: "",
+      questions,
+    });
   };
 
   const addQuestion = () => {
@@ -83,7 +92,7 @@ export function SurveyQuestionsTab({
       return;
     }
 
-    setQuestions([
+    updateQuestions([
       ...values.questions,
       {
         id: `sq-${Date.now()}`,
@@ -96,55 +105,51 @@ export function SurveyQuestionsTab({
     setOptionsPipe("");
   };
 
-  const handleUploadQuestions = async (file: File) => {
+  const handleUpload = async (file: File) => {
+    const lower = file.name.toLowerCase();
+    if (!/\.(csv|xlsx|xls)$/.test(lower)) {
+      toast.error("Only Excel (.xlsx / .xls) or CSV files are allowed");
+      return;
+    }
+
+    if (!surveyId) {
+      toast.error("Save previous steps first to upload questions");
+      return;
+    }
+
+    setUploading(true);
     try {
-      const rows = parseCSV(await file.text());
-      const imported: AgentSurveyQuestion[] = [];
-
-      for (const row of rows) {
-        const question =
-          row.question?.trim() || row.questions?.trim() || row.text?.trim();
-        if (!question) continue;
-
-        const typeRaw = (row.type || row.question_type || "text").toLowerCase();
-        const type =
-          SURVEY_QUESTION_TYPES.find((t) => t.value === typeRaw)?.value ??
-          (typeRaw === "multiple_choice" ? "multi" : "text");
-        const options = parseOptionsPipe(
-          row.options || row.choices || row.option || ""
-        );
-
-        imported.push({
-          id: `sq-upload-${Date.now()}-${imported.length}`,
-          type,
-          question,
-          ...(type === "multi" && options.length > 0 ? { options } : {}),
-        });
-      }
-
-      if (imported.length === 0) {
-        toast.error("No valid questions in file");
-        return;
-      }
-      setQuestions(imported);
-      setSelectedIds([]);
-      toast.success(`${imported.length} questions uploaded (replaced previous)`);
-    } catch {
-      toast.error("Failed to read file");
+      const uploaded = await surveysModuleService.uploadQuestionsFile(
+        surveyId,
+        file
+      );
+      const sq = uploaded.config.surveyQuestions;
+      onChange({
+        enabled: sq.enabled,
+        questionsFileUrl: sq.questionsFileUrl || "",
+        questionsFileName: sq.questionsFileName || file.name,
+        questions: sq.questions,
+      });
+      toast.success(
+        `Uploaded ${sq.questions.length} question(s) — Cloudinary URL saved`
+      );
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Failed to upload questions"
+      );
     } finally {
+      setUploading(false);
       if (fileRef.current) fileRef.current.value = "";
     }
   };
 
-  const deleteSelected = () => {
-    const remove = new Set(selectedIds);
-    setQuestions(values.questions.filter((q) => !remove.has(q.id)));
-    toast.success(
-      selectedIds.length === 1
-        ? "1 question deleted"
-        : `${selectedIds.length} questions deleted`
-    );
-    setSelectedIds([]);
+  const clearUpload = () => {
+    onChange({
+      ...values,
+      questionsFileUrl: "",
+      questionsFileName: "",
+      questions: [],
+    });
   };
 
   return (
@@ -155,7 +160,7 @@ export function SurveyQuestionsTab({
             Survey Questions
           </h3>
           <p className="mt-1 text-xs text-muted-foreground">
-            Create questions the agent asks during the survey call.
+            Upload CSV/Excel for Cloudinary URL, or add questions manually.
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -173,7 +178,90 @@ export function SurveyQuestionsTab({
           !values.enabled && "pointer-events-none opacity-55"
         )}
       >
-        <div className="grid gap-3 sm:grid-cols-[180px_1fr]">
+        <input
+          ref={fileRef}
+          type="file"
+          accept=".csv,.xlsx,.xls"
+          className="hidden"
+          onChange={(e) => {
+            const file = e.target.files?.[0];
+            if (file) void handleUpload(file);
+          }}
+        />
+
+        <button
+          type="button"
+          disabled={uploading}
+          onClick={() => fileRef.current?.click()}
+          className="flex w-full flex-col items-center justify-center gap-2 rounded-[8px] border border-dashed border-border/70 bg-card px-4 py-8 text-center transition-colors hover:bg-muted/30 disabled:opacity-60"
+        >
+          <Upload className="size-6 text-muted-foreground" />
+          <span className="text-sm font-medium">
+            {uploading ? "Uploading…" : "Upload Excel or CSV"}
+          </span>
+          <span className="max-w-sm text-[11px] text-muted-foreground">
+            Columns: question, type, options — sample CSV available below.
+          </span>
+        </button>
+
+        <div className="flex justify-center">
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            onClick={downloadSurveyQuestionsSample}
+            className="h-8 text-muted-foreground hover:text-foreground"
+          >
+            <Download className="size-3.5" />
+            Download sample CSV
+          </Button>
+        </div>
+
+        {values.questionsFileUrl || values.questionsFileName ? (
+          <div className="flex items-start gap-3 rounded-[8px] border border-border/60 bg-card px-3 py-3">
+            <div className="min-w-0 flex-1 space-y-1">
+              <p className="truncate text-sm font-semibold text-foreground">
+                {values.questionsFileName || "Uploaded file"}
+              </p>
+              {fileUrl ? (
+                <a
+                  href={fileUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex max-w-full items-center gap-1 text-[11px] text-brand hover:underline"
+                >
+                  <ExternalLink className="size-3 shrink-0" />
+                  <span className="truncate">{fileUrl}</span>
+                </a>
+              ) : null}
+              <p className="text-[11px] text-muted-foreground">
+                {values.questions.length} question(s) loaded
+              </p>
+            </div>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon-sm"
+              onClick={clearUpload}
+              aria-label="Remove uploaded questions file"
+              className="text-muted-foreground hover:text-destructive"
+            >
+              <X className="size-3.5" />
+            </Button>
+          </div>
+        ) : null}
+      </div>
+
+      <div
+        className={cn(
+          "space-y-3 rounded-[8px] border border-border/60 bg-muted/20 p-4",
+          !values.enabled && "pointer-events-none opacity-55"
+        )}
+      >
+        <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+          Add manually
+        </p>
+        <div className="grid gap-3 sm:grid-cols-[160px_1fr]">
           <div className="space-y-1.5">
             <Label className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
               Type
@@ -185,7 +273,6 @@ export function SurveyQuestionsTab({
                 if (e.target.value !== "multi") setOptionsPipe("");
               }}
               options={TYPE_OPTIONS}
-              className={fieldClass}
             />
           </div>
           <div className="space-y-1.5">
@@ -196,7 +283,6 @@ export function SurveyQuestionsTab({
               value={questionText}
               onChange={(e) => setQuestionText(e.target.value)}
               placeholder="e.g. How satisfied are you with our service?"
-              className={fieldClass}
               onKeyDown={(e) => {
                 if (e.key === "Enter" && !isMulti) {
                   e.preventDefault();
@@ -207,7 +293,7 @@ export function SurveyQuestionsTab({
           </div>
         </div>
 
-        {isMulti && (
+        {isMulti ? (
           <div className="space-y-1.5">
             <Label className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
               Choices
@@ -216,160 +302,72 @@ export function SurveyQuestionsTab({
               value={optionsPipe}
               onChange={(e) => setOptionsPipe(e.target.value)}
               placeholder="Option A | Option B | Option C"
-              className={fieldClass}
             />
           </div>
-        )}
+        ) : null}
 
-        <div className="flex flex-wrap items-center gap-2 pt-1">
-          <Button type="button" onClick={addQuestion} className="h-10 px-4">
-            <Plus className="size-4" />
-            Add question
-          </Button>
-          <input
-            ref={fileRef}
-            type="file"
-            accept=".csv"
-            className="hidden"
-            onChange={(e) => {
-              const file = e.target.files?.[0];
-              if (file) void handleUploadQuestions(file);
-            }}
-          />
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => fileRef.current?.click()}
-            className="h-10 px-4"
-          >
-            <Upload className="size-4" />
-            Upload CSV
-          </Button>
-          <Button
-            type="button"
-            variant="ghost"
-            onClick={downloadSurveyQuestionsSample}
-            className="h-10 px-3 text-muted-foreground hover:text-foreground"
-          >
-            <Download className="size-4" />
-            Sample CSV
-          </Button>
-        </div>
+        <Button type="button" onClick={addQuestion} className="h-10 px-4">
+          <Plus className="size-4" />
+          Add question
+        </Button>
         <p className="text-[11px] text-muted-foreground">
-          CSV columns:{" "}
-          <span className="font-medium text-foreground/80">
-            question, type, options
-          </span>
-          . Types: text, yes_no, rating, multi. For multi, separate choices with{" "}
-          <span className="font-medium text-foreground/80">|</span>.
+          Manual questions are saved without a Cloudinary file URL.
         </p>
       </div>
 
       {values.questions.length === 0 ? (
         <p className="text-xs text-muted-foreground">
-          No questions yet. Add one or upload a CSV.
+          No questions yet. Upload a CSV or add one manually.
         </p>
       ) : (
-        <div className="space-y-2">
-          <div className="flex flex-wrap items-center gap-3">
-            <label className="flex cursor-pointer items-center gap-2 text-xs text-muted-foreground">
-              <Checkbox
-                checked={allSelected}
-                indeterminate={selectedIds.length > 0 && !allSelected}
-                onChange={() =>
-                  setSelectedIds(
-                    allSelected ? [] : values.questions.map((q) => q.id)
-                  )
-                }
-              />
-              Select all
-            </label>
-            {selectedIds.length > 0 && (
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={deleteSelected}
-                className="h-8 text-destructive hover:bg-destructive/10 hover:text-destructive"
-              >
-                <Trash2 className="size-3.5" />
-                Delete selected ({selectedIds.length})
-              </Button>
-            )}
-            <span className="ml-auto text-xs text-muted-foreground">
-              {values.questions.length} question
-              {values.questions.length === 1 ? "" : "s"}
-            </span>
-          </div>
-
-          <ul className="space-y-2">
-            {values.questions.map((q, index) => {
-              const checked = selectedIds.includes(q.id);
-              return (
-                <li
-                  key={q.id}
-                  className={cn(
-                    "rounded-[8px] border bg-card px-3.5 py-3",
-                    checked
-                      ? "border-primary/40 bg-primary/5"
-                      : "border-border/50"
-                  )}
-                >
-                  <div className="flex items-start gap-3">
-                    <Checkbox
-                      checked={checked}
-                      onChange={() =>
-                        setSelectedIds((prev) =>
-                          checked
-                            ? prev.filter((id) => id !== q.id)
-                            : [...prev, q.id]
-                        )
-                      }
-                      className="mt-1"
-                    />
-                    <span className="mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-full bg-muted text-[11px] font-semibold text-muted-foreground">
-                      {index + 1}
-                    </span>
-                    <div className="min-w-0 flex-1">
-                      <span className="inline-block rounded-[4px] bg-muted px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
-                        {getSurveyQuestionTypeLabel(q.type)}
-                      </span>
-                      <p className="mt-1.5 text-sm font-medium leading-snug">
-                        {q.question}
-                      </p>
-                      {q.options && q.options.length > 0 && (
-                        <div className="mt-2 flex flex-wrap gap-1.5">
-                          {q.options.map((opt) => (
-                            <span
-                              key={opt.id}
-                              className="rounded-full border border-border/60 bg-muted/40 px-2 py-0.5 text-[11px] text-muted-foreground"
-                            >
-                              {opt.label}
-                            </span>
-                          ))}
-                        </div>
-                      )}
+        <ul className="space-y-2">
+          {values.questions.map((q, index) => (
+            <li
+              key={q.id}
+              className="rounded-[8px] border border-border/50 bg-card px-3.5 py-3"
+            >
+              <div className="flex items-start gap-3">
+                <span className="mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-full bg-muted text-[11px] font-semibold text-muted-foreground">
+                  {index + 1}
+                </span>
+                <div className="min-w-0 flex-1">
+                  <span className="inline-block rounded-[4px] bg-muted px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                    {getSurveyQuestionTypeLabel(q.type)}
+                  </span>
+                  <p className="mt-1.5 text-sm font-medium leading-snug">
+                    {q.question}
+                  </p>
+                  {q.options && q.options.length > 0 ? (
+                    <div className="mt-2 flex flex-wrap gap-1.5">
+                      {q.options.map((opt) => (
+                        <span
+                          key={opt.id}
+                          className="rounded-full border border-border/60 bg-muted/40 px-2 py-0.5 text-[11px] text-muted-foreground"
+                        >
+                          {opt.label}
+                        </span>
+                      ))}
                     </div>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon-sm"
-                      onClick={() =>
-                        setQuestions(
-                          values.questions.filter((item) => item.id !== q.id)
-                        )
-                      }
-                      aria-label="Remove question"
-                      className="shrink-0 text-muted-foreground hover:text-destructive"
-                    >
-                      <Trash2 className="size-3.5" />
-                    </Button>
-                  </div>
-                </li>
-              );
-            })}
-          </ul>
-        </div>
+                  ) : null}
+                </div>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon-sm"
+                  onClick={() =>
+                    updateQuestions(
+                      values.questions.filter((item) => item.id !== q.id)
+                    )
+                  }
+                  aria-label="Remove question"
+                  className="shrink-0 text-muted-foreground hover:text-destructive"
+                >
+                  <Trash2 className="size-3.5" />
+                </Button>
+              </div>
+            </li>
+          ))}
+        </ul>
       )}
     </div>
   );

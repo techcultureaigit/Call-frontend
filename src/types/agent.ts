@@ -129,6 +129,9 @@ export interface AgentSurveyQuestion {
 
 export interface AgentSurveyQuestionsConfig {
   enabled: boolean;
+  /** Only set when questions were uploaded via CSV/Excel */
+  questionsFileUrl?: string;
+  questionsFileName?: string;
   questions: AgentSurveyQuestion[];
 }
 
@@ -163,6 +166,23 @@ export interface AgentSchedule {
   lastScheduledAt: string | null;
 }
 
+export interface AgentStepProgress {
+  complete: boolean;
+  optional?: boolean;
+  missing: string[];
+}
+
+export interface AgentProgress {
+  identity: AgentStepProgress;
+  prompts: AgentStepProgress;
+  "survey-questions": AgentStepProgress;
+  "client-contact": AgentStepProgress;
+  schedule: AgentStepProgress;
+  overallComplete: boolean;
+  completedRequiredSteps: number;
+  totalRequiredSteps: number;
+}
+
 export interface AgentConfig {
   persona: AgentPersonaConfig;
   prompts: AgentPromptsConfig;
@@ -184,6 +204,7 @@ export interface Agent extends Timestamps {
   conversationCount: number;
   config: AgentConfig;
   schedule?: AgentSchedule | null;
+  progress?: AgentProgress;
 }
 
 export interface ChatMessage {

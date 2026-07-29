@@ -3,19 +3,24 @@
 import { useRef, useState } from "react";
 import { Download, ExternalLink, Upload, X } from "lucide-react";
 import { toast } from "sonner";
-import { uploadApi } from "@/api";
 import { Button } from "@/components/ui/button";
 import { ClientContactsPreview } from "@/components/survey/client-contacts-preview";
 import { downloadClientContactsSample } from "@/lib/constants/survey-upload-samples";
-import { parseClientContactsFromFile } from "@/lib/utils/client-contacts";
+import { getContactFileOpenUrl } from "@/lib/utils/contact-file-url";
+import { surveysModuleService } from "@/services/surveys-module.service";
 import type { AgentClientContactConfig } from "@/types/agent";
 
 interface ClientContactTabProps {
+  surveyId?: string;
   values: AgentClientContactConfig;
   onChange: (values: AgentClientContactConfig) => void;
 }
 
-export function ClientContactTab({ values, onChange }: ClientContactTabProps) {
+export function ClientContactTab({
+  surveyId,
+  values,
+  onChange,
+}: ClientContactTabProps) {
   const fileRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
 
@@ -28,29 +33,26 @@ export function ClientContactTab({ values, onChange }: ClientContactTabProps) {
 
     setUploading(true);
     try {
-      const contacts = await parseClientContactsFromFile(file);
-      if (contacts.length === 0) {
-        toast.error(
-          "No valid rows found. Use columns: name, phone, email, company"
-        );
-        return;
+      if (!surveyId) {
+        throw new Error("Save previous steps first to upload contacts");
       }
 
-      const json = await uploadApi.cloudinary(file);
-
-      if (!json.success || !json.data?.url) {
-        throw new Error(json.message || "Upload failed");
-      }
+      const uploadedSurvey = await surveysModuleService.uploadContactFile(
+        surveyId,
+        file
+      );
 
       onChange({
-        contactFileUrl: json.data.url,
-        contactFileName: json.data.fileName || file.name,
-        contacts,
+        contactFileUrl:
+          uploadedSurvey.config.clientContact.contactFileUrl || values.contactFileUrl,
+        contactFileName:
+          uploadedSurvey.config.clientContact.contactFileName || file.name,
+        contacts: uploadedSurvey.config.clientContact.contacts ?? [],
       });
       toast.success(
-        json.data.mock
-          ? `Saved ${contacts.length} contact(s) — file URL ready for fetch`
-          : `Uploaded ${contacts.length} contact(s) — Cloudinary URL saved`
+        `Uploaded ${
+          uploadedSurvey.config.clientContact.contacts?.length ?? 0
+        } contact(s) — Cloudinary URL saved`
       );
     } catch (error) {
       toast.error(
@@ -130,13 +132,15 @@ export function ClientContactTab({ values, onChange }: ClientContactTabProps) {
               </p>
               {values.contactFileUrl ? (
                 <a
-                  href={values.contactFileUrl}
+                  href={getContactFileOpenUrl(values.contactFileUrl)}
                   target="_blank"
                   rel="noreferrer"
                   className="inline-flex max-w-full items-center gap-1 text-[11px] text-brand hover:underline"
                 >
                   <ExternalLink className="size-3 shrink-0" />
-                  <span className="truncate">{values.contactFileUrl}</span>
+                  <span className="truncate">
+                    {getContactFileOpenUrl(values.contactFileUrl)}
+                  </span>
                 </a>
               ) : null}
               <p className="text-[11px] text-muted-foreground">
@@ -165,7 +169,6 @@ export function ClientContactTab({ values, onChange }: ClientContactTabProps) {
           contacts={values.contacts}
           fileName={values.contactFileName}
           compact
-          preferUrlFetch
         />
       ) : null}
     </div>

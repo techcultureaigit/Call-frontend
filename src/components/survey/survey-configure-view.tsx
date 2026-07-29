@@ -11,10 +11,15 @@ import {
   ENABLED_AGENT_CONFIG_TABS,
   isAgentConfigTabDisabled,
 } from "@/lib/constants/agent-config";
-import { saveAgent, scheduleAgent } from "@/lib/data/agents-repository";
+import { surveysModuleService } from "@/services/surveys-module.service";
 import { generateAgentUuid } from "@/lib/data/mock-agents";
 import { buildSystemPromptFromTemplate } from "@/lib/data/mock-survey-templates";
-import { isSurveyReadyToSchedule } from "@/lib/utils/survey-readiness";
+import { computeSurveyProgress } from "@/lib/utils/survey-progress";
+import {
+  isSurveyReadyToSchedule,
+  isSurveyScheduled,
+  type SurveyDisplayStatus,
+} from "@/lib/utils/survey-readiness";
 import { SurveyTopNav } from "./survey-top-nav";
 import { SurveyConfigTabs } from "./survey-config-tabs";
 import { SurveyConfigSidebar } from "./survey-config-sidebar";
@@ -39,6 +44,45 @@ import type { SurveyTemplate } from "@/types/survey-template";
 const ENABLED_TAB_ORDER = ENABLED_AGENT_CONFIG_TABS.map(
   (tab) => tab.id as AgentConfigTab
 );
+
+type StepRequirementKey =
+  | "identity"
+  | "prompts"
+  | "survey-questions"
+  | "client-contact"
+  | "schedule";
+
+const TAB_REQUIRED_KEYS: Record<AgentConfigTab, StepRequirementKey[]> = {
+  persona: ["identity"],
+  prompts: ["identity", "prompts"],
+  "survey-questions": ["identity", "prompts", "survey-questions"],
+  "client-contact": [
+    "identity",
+    "prompts",
+    "survey-questions",
+    "client-contact",
+  ],
+  schedule: ["identity", "prompts", "survey-questions", "client-contact"],
+  wisdom: ["identity", "prompts", "survey-questions", "client-contact"],
+  "post-call": ["identity", "prompts", "survey-questions", "client-contact"],
+  functions: ["identity", "prompts", "survey-questions", "client-contact"],
+};
+
+const STEP_LABELS: Record<StepRequirementKey, string> = {
+  identity: "Identity",
+  prompts: "Instructions",
+  "survey-questions": "Survey Questions",
+  "client-contact": "Contact of Client",
+  schedule: "Schedule",
+};
+
+const TAB_TO_PROGRESS_KEY: Partial<Record<AgentConfigTab, StepRequirementKey>> = {
+  persona: "identity",
+  prompts: "prompts",
+  "survey-questions": "survey-questions",
+  "client-contact": "client-contact",
+  schedule: "schedule",
+};
 
 function applyTemplateToConfig(
   base: AgentConfig,
@@ -88,6 +132,7 @@ export function SurveyConfigureView({
   );
   const [showPreview, setShowPreview] = useState(false);
   const [uuid] = useState(agent?.uuid ?? generateAgentUuid());
+  const [surveyId, setSurveyId] = useState(agent?.id);
   const [config, setConfig] = useState<AgentConfig>(baseConfig);
   const [isSaving, setIsSaving] = useState(false);
   const [templateApplied, setTemplateApplied] = useState(false);
@@ -122,6 +167,27 @@ export function SurveyConfigureView({
     []
   );
 
+  const computedProgress = useMemo(
+    () =>
+      computeSurveyProgress(config, {
+        enabled: scheduleForm.enabled,
+        startAt: scheduleForm.startAt || null,
+        endAt: scheduleForm.endAt || null,
+        timezone: scheduleForm.timezone || "Asia/Kolkata",
+        recurrence: scheduleForm.recurrence,
+        status: "idle",
+        lastScheduledAt: null,
+      }),
+    [config, scheduleForm]
+  );
+
+  const displayStatus = useMemo((): SurveyDisplayStatus => {
+    if (agent && isSurveyScheduled(agent) && scheduleForm.enabled) {
+      return "scheduled";
+    }
+    return computedProgress.overallComplete ? "complete" : "draft";
+  }, [agent, scheduleForm.enabled, computedProgress.overallComplete]);
+
   const tabIndex = ENABLED_TAB_ORDER.indexOf(activeTab);
   const isFirst = tabIndex <= 0;
   const isLast = tabIndex === ENABLED_TAB_ORDER.length - 1;
@@ -151,55 +217,77 @@ export function SurveyConfigureView({
     }
 
     setIsSaving(true);
-    await new Promise((r) => setTimeout(r, 400));
+    try {
+      const requiredKeys = TAB_REQUIRED_KEYS[activeTab] ?? [];
+      const blockedKey = requiredKeys.find((key) => !computedProgress[key].complete);
+      if (blockedKey) {
+        toast.error(
+          `Complete required fields in ${STEP_LABELS[blockedKey]} before continuing`
+        );
+        return;
+      }
 
-    if (isLast) {
-      try {
-        const saved = saveAgent({
-          id: isNew ? undefined : agent?.id,
+      const parsed = parseScheduleForm(scheduleForm);
+      if (!parsed.ok) {
+        toast.error(parsed.error);
+        return;
+      }
+
+      const schedulePayload = isLast ? parsed.payload : null;
+
+      const saved = await surveysModuleService.save(
+        {
+          id: surveyId,
           uuid,
           config,
-          status: agent?.status ?? "active",
-        });
+          status: schedulePayload?.enabled ? "active" : "draft",
+          step: Math.max(tabIndex, 0) + 1,
+        },
+        schedulePayload
+      );
 
-        const parsed = parseScheduleForm(scheduleForm);
-        if (!parsed.ok) {
-          toast.error(parsed.error);
-          setIsSaving(false);
-          return;
-        }
-
-        if (parsed.payload) {
-          scheduleAgent(saved.id, parsed.payload);
-          toast.success(
-            isNew
-              ? `"${saved.name}" created and scheduled`
-              : `"${saved.name}" updated and scheduled`
-          );
-        } else {
-          toast.success(
-            isNew ? `"${saved.name}" created` : `"${saved.name}" updated`
-          );
-        }
-
-        router.push("/survey");
-      } catch (error) {
-        toast.error(
-          error instanceof Error ? error.message : "Failed to save survey"
-        );
-      } finally {
-        setIsSaving(false);
+      if (!surveyId) {
+        setSurveyId(saved.id);
       }
-      return;
-    }
 
-    setIsSaving(false);
-    setActiveTab(ENABLED_TAB_ORDER[tabIndex + 1]);
-    toast.success("Saved — moving to next step");
+      if (isLast) {
+        toast.success(
+          schedulePayload?.enabled
+            ? `"${saved.name}" updated and scheduled`
+            : computedProgress.overallComplete
+              ? `"${saved.name}" saved as complete draft`
+              : `"${saved.name}" saved as draft`
+        );
+        router.push("/survey");
+        return;
+      }
+
+      setActiveTab(ENABLED_TAB_ORDER[tabIndex + 1]);
+      toast.success(
+        computedProgress.overallComplete
+          ? "Saved — draft is complete"
+          : "Saved as draft — moving to next step"
+      );
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Failed to save survey"
+      );
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleTabChange = (tab: AgentConfigTab) => {
     if (isAgentConfigTabDisabled(tab)) return;
+    const targetIndex = ENABLED_TAB_ORDER.indexOf(tab);
+    const canOpen = ENABLED_TAB_ORDER.slice(0, targetIndex).every((stepTab) => {
+      const requirementKey = TAB_TO_PROGRESS_KEY[stepTab];
+      return requirementKey ? computedProgress[requirementKey].complete : true;
+    });
+    if (!canOpen) {
+      toast.error("Complete previous required steps first");
+      return;
+    }
     setActiveTab(tab);
   };
 
@@ -236,6 +324,7 @@ export function SurveyConfigureView({
       case "survey-questions":
         return (
           <SurveyQuestionsTab
+            surveyId={surveyId}
             values={config.surveyQuestions}
             onChange={(v) => updateConfig("surveyQuestions", v)}
           />
@@ -243,6 +332,7 @@ export function SurveyConfigureView({
       case "client-contact":
         return (
           <ClientContactTab
+            surveyId={surveyId}
             values={config.clientContact}
             onChange={(v) => updateConfig("clientContact", v)}
           />
@@ -279,6 +369,7 @@ export function SurveyConfigureView({
           <SurveyTopNav
             previewOpen={showPreview}
             onTogglePreview={() => setShowPreview((v) => !v)}
+            status={displayStatus}
           />
         </div>
 
@@ -289,6 +380,15 @@ export function SurveyConfigureView({
                 active={activeTab}
                 onChange={handleTabChange}
                 showUpcoming={isNew}
+                completedTabs={{
+                  persona: computedProgress.identity.complete,
+                  prompts: computedProgress.prompts.complete,
+                  "survey-questions":
+                    computedProgress["survey-questions"].complete,
+                  "client-contact":
+                    computedProgress["client-contact"].complete,
+                  schedule: computedProgress.schedule.complete,
+                }}
               />
             </aside>
 

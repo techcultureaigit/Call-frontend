@@ -8,15 +8,19 @@ import {
   PanelRightOpen,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import type { SurveyDisplayStatus } from "@/lib/utils/survey-readiness";
+import { SurveyStatusBadge } from "./survey-status-badge";
 
 interface SurveyTopNavProps {
   previewOpen?: boolean;
   onTogglePreview?: () => void;
+  status?: SurveyDisplayStatus;
 }
 
 export function SurveyTopNav({
   previewOpen = false,
   onTogglePreview,
+  status = "draft",
 }: SurveyTopNavProps) {
   return (
     <div className="flex items-center justify-between gap-3">
@@ -54,10 +58,7 @@ export function SurveyTopNav({
           </button>
         )}
 
-        <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-2.5 py-1 text-[11px] font-semibold text-emerald-600 dark:text-emerald-400">
-          <span className="size-1.5 animate-pulse rounded-full bg-emerald-500" />
-          Draft
-        </span>
+        <SurveyStatusBadge status={status} size="md" withDot />
         <button
           type="button"
           className="inline-flex size-9 items-center justify-center rounded-[6px] text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"

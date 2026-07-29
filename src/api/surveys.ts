@@ -1,39 +1,60 @@
 import type { ApiResponse } from "@/types/api";
-import type {
-  CreateSurveyPayload,
-  SaveSurveyPayload,
-  Survey,
-  SurveyDetail,
-} from "@/types/survey";
 import { apiEndpoints } from "./endpoints";
-import { apiDelete, apiGet, apiPatch, apiPost } from "./http";
+import { apiDelete, apiGet, apiPost, apiUpload } from "./http";
 
-/** Raw HTTP only — services unwrap `data` */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type BackendSurvey = Record<string, any>;
+
+export interface SurveysListParams {
+  page?: number;
+  limit?: number;
+  search?: string;
+  status?: string;
+}
+
+interface PaginatedResponse {
+  success: boolean;
+  data: BackendSurvey[];
+  pagination?: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+  };
+}
+
 export const surveysApi = {
-  list: (activeOnly = false, search = "") =>
-    apiGet<ApiResponse<Survey[]>>(apiEndpoints.surveys.list, {
-      active: activeOnly ? "true" : undefined,
-      search: search || undefined,
-    }),
+  list: (params?: SurveysListParams) =>
+    apiGet<PaginatedResponse>(apiEndpoints.surveys.list, params),
 
   getById: (id: string) =>
-    apiGet<ApiResponse<SurveyDetail>>(apiEndpoints.surveys.detail(id)),
+    apiGet<ApiResponse<BackendSurvey>>(apiEndpoints.surveys.detail(id)),
 
-  create: (payload: CreateSurveyPayload) =>
-    apiPost<ApiResponse<SurveyDetail>>(apiEndpoints.surveys.list, payload),
-
-  save: (id: string, payload: SaveSurveyPayload) =>
-    apiPatch<ApiResponse<SurveyDetail>>(
-      apiEndpoints.surveys.detail(id),
-      payload
-    ),
-
-  togglePublish: (id: string, published: boolean) =>
-    apiPatch<ApiResponse<SurveyDetail>>(apiEndpoints.surveys.detail(id), {
-      action: "publish",
-      published,
-    }),
+  /** POST /surveys — create (no id) or update (with id in body) */
+  save: (payload: Record<string, unknown>) =>
+    apiPost<ApiResponse<BackendSurvey>>(apiEndpoints.surveys.list, payload),
 
   delete: (id: string) =>
     apiDelete<ApiResponse<null>>(apiEndpoints.surveys.detail(id)),
+
+  duplicate: (id: string) =>
+    apiPost<ApiResponse<BackendSurvey>>(apiEndpoints.surveys.duplicate(id)),
+
+  schedule: (id: string, payload: Record<string, unknown>) =>
+    apiPost<ApiResponse<BackendSurvey>>(apiEndpoints.surveys.schedule(id), payload),
+
+  unschedule: (id: string) =>
+    apiPost<ApiResponse<BackendSurvey>>(apiEndpoints.surveys.unschedule(id)),
+
+  uploadContactFile: (id: string, file: File) => {
+    const fd = new FormData();
+    fd.append("file", file);
+    return apiUpload<ApiResponse<BackendSurvey>>(apiEndpoints.surveys.contactFile(id), fd);
+  },
+
+  uploadQuestionsFile: (id: string, file: File) => {
+    const fd = new FormData();
+    fd.append("file", file);
+    return apiUpload<ApiResponse<BackendSurvey>>(apiEndpoints.surveys.questionsFile(id), fd);
+  },
 };

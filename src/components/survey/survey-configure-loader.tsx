@@ -6,7 +6,7 @@ import { Bot } from "lucide-react";
 import { PageContainer } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { getAgentById } from "@/lib/data/agents-repository";
+import { surveysModuleService } from "@/services/surveys-module.service";
 import type { Agent } from "@/types/agent";
 import { SurveyConfigureView } from "./survey-configure-view";
 
@@ -19,7 +19,14 @@ export function SurveyConfigureLoader({ id }: SurveyConfigureLoaderProps) {
   const [agent, setAgent] = useState<Agent | null | undefined>(undefined);
 
   useEffect(() => {
-    setAgent(getAgentById(id) ?? null);
+    let cancelled = false;
+    surveysModuleService
+      .getById(id)
+      .then((a) => !cancelled && setAgent(a))
+      .catch(() => !cancelled && setAgent(null));
+    return () => {
+      cancelled = true;
+    };
   }, [id]);
 
   if (agent === undefined) {

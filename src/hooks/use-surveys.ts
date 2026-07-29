@@ -9,7 +9,15 @@ import type { CreateSurveyPayload, SaveSurveyPayload } from "@/types/survey";
 export function useSurveys(activeOnly = true, search = "") {
   return useQuery({
     queryKey: queryKeys.surveys.list({ active: activeOnly, search }),
-    queryFn: () => surveysModuleService.list(activeOnly, search),
+    queryFn: async () => {
+      const result = await surveysModuleService.list({
+        page: 1,
+        limit: 100,
+        search: search || undefined,
+        status: activeOnly ? "active" : undefined,
+      });
+      return result.data;
+    },
     staleTime: 60_000,
   });
 }

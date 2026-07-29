@@ -12,7 +12,7 @@ export function ToastProvider({ children }: ToastProviderProps) {
     <>
       {children}
       <Toaster
-        position="bottom-right"
+        position="top-right"
         toastOptions={{
           classNames: {
             toast:

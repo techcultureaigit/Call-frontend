@@ -2,19 +2,14 @@
 
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/constants/query-keys";
-import { apiGet, apiPost } from "@/lib/api";
-import {
-  mapBackendUser,
-  type BackendAuthUser,
-} from "@/lib/auth/map-session";
+import { apiPost } from "@/lib/api";
 import { useAuthStore } from "@/stores";
 import type { ApiResponse } from "@/types/api";
 import type { User } from "@/types/user";
 
-async function fetchBackendSession(): Promise<User> {
-  const response = await apiGet<ApiResponse<BackendAuthUser>>("/auth/me");
-  if (!response.data) throw new Error("Unauthorized");
-  return mapBackendUser(response.data);
+async function fetchBackendSession(): Promise<User | null> {
+  // Static login bypass — skip backend /auth/me call
+  return null;
 }
 
 export function useAuth() {
@@ -31,10 +26,10 @@ export function useAuth() {
     queryKey: queryKeys.auth.session,
     queryFn: async () => {
       const nextUser = await fetchBackendSession();
-      setUser(nextUser);
-      return nextUser;
+      if (nextUser) setUser(nextUser);
+      return nextUser ?? user;
     },
-    enabled: isHydrated && Boolean(tokens?.accessToken),
+    enabled: false,
     staleTime: 5 * 60 * 1000,
     retry: false,
   });

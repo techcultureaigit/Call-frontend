@@ -19,7 +19,6 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { PageContainer } from "@/components/layout";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { usePageMeta } from "@/hooks";
 import {
@@ -27,15 +26,18 @@ import {
   getAgentLanguageLabel,
   isAgentConfigTabDisabled,
 } from "@/lib/constants/agent-config";
-import { cloneAgent, scheduleAgent } from "@/lib/data/agents-repository";
+import { surveysModuleService } from "@/services/surveys-module.service";
 import { formatAgentCreatedAt } from "@/lib/utils/date";
+import { getContactFileOpenUrl } from "@/lib/utils/contact-file-url";
 import {
+  getSurveyDisplayStatus,
   getSurveySchedule,
   isSurveyReadyToSchedule,
   isSurveyScheduled,
 } from "@/lib/utils/survey-readiness";
 import type { Agent } from "@/types/agent";
 import { SurveyAvatar } from "./survey-avatar";
+import { SurveyStatusBadge } from "./survey-status-badge";
 import { ClientContactsPreview } from "./client-contacts-preview";
 import {
   ScheduleSurveyDialog,
@@ -94,6 +96,7 @@ export function SurveyDetailView({ agent }: { agent: Agent }) {
   const [currentAgent, setCurrentAgent] = useState(agent);
   const canSchedule = isSurveyReadyToSchedule(currentAgent);
   const scheduled = isSurveyScheduled(currentAgent);
+  const displayStatus = getSurveyDisplayStatus(currentAgent);
 
   const { applyMeta, resetPageMeta } = usePageMeta({
     title: currentAgent.name,
@@ -120,6 +123,8 @@ export function SurveyDetailView({ agent }: { agent: Agent }) {
   const systemPrompt = currentAgent.config.prompts.systemPrompt?.trim() || "—";
   const greetsFirst = currentAgent.config.prompts.greetsFirst;
   const questions = currentAgent.config.surveyQuestions.questions ?? [];
+  const questionsFileUrl = currentAgent.config.surveyQuestions.questionsFileUrl ?? "";
+  const questionsFileName = currentAgent.config.surveyQuestions.questionsFileName ?? "";
   const contact = currentAgent.config.clientContact;
   const stt = persona.stt;
   const llm = persona.llm;
@@ -142,29 +147,41 @@ export function SurveyDetailView({ agent }: { agent: Agent }) {
     }
   };
 
-  const handleClone = () => {
-    const cloned = cloneAgent(currentAgent.id);
-    if (!cloned) {
+  const handleClone = async () => {
+    try {
+      const cloned = await surveysModuleService.duplicate(currentAgent.id);
+      toast.success(`Copied as "${cloned.name}"`);
+      router.push("/survey");
+    } catch {
       toast.error("Failed to copy survey");
-      return;
     }
-    toast.success(`Copied as "${cloned.name}"`);
-    router.push("/survey");
   };
 
   const confirmSchedule = async (payload: ScheduleSurveyPayload) => {
     try {
-      const updated = scheduleAgent(currentAgent.id, payload);
-      if (!updated) {
-        toast.error("Failed to schedule survey");
-        return;
-      }
+      const updated = await surveysModuleService.schedule(
+        currentAgent.id,
+        payload
+      );
       setCurrentAgent(updated);
       setScheduleOpen(false);
       toast.success(`"${updated.name}" scheduled`);
     } catch (error) {
       toast.error(
         error instanceof Error ? error.message : "Failed to schedule survey"
+      );
+    }
+  };
+
+  const confirmUnschedule = async () => {
+    try {
+      const updated = await surveysModuleService.unschedule(currentAgent.id);
+      setCurrentAgent(updated);
+      setScheduleOpen(false);
+      toast.success(`"${updated.name}" unscheduled`);
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Failed to unschedule survey"
       );
     }
   };
@@ -196,14 +213,7 @@ export function SurveyDetailView({ agent }: { agent: Agent }) {
                   {currentAgent.name}
                 </h1>
                 <div className="mt-1.5 flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
-                  <Badge variant="secondary" className="rounded-full capitalize">
-                    {currentAgent.status}
-                  </Badge>
-                  {scheduled ? (
-                    <Badge className="rounded-full bg-emerald-500/10 text-emerald-700 hover:bg-emerald-500/10">
-                      Scheduled
-                    </Badge>
-                  ) : null}
+                  <SurveyStatusBadge status={displayStatus} />
                   <span>
                     {currentAgent.conversationCount} conversation
                     {currentAgent.conversationCount === 1 ? "" : "s"}
@@ -354,16 +364,44 @@ export function SurveyDetailView({ agent }: { agent: Agent }) {
             </StepSection>
 
             <StepSection step={3} title={stepMeta[2].title}>
-              <div className="rounded-[6px] border border-border/50 bg-muted/20 p-4">
+              <div className="space-y-3 rounded-[6px] border border-border/50 bg-muted/20 p-4">
                 <DetailField label="Enabled">
                   {onOff(currentAgent.config.surveyQuestions.enabled)}
                 </DetailField>
+
+                {questionsFileName || questionsFileUrl ? (
+                  <>
+                    <DetailField label="Questions file">
+                      <span className="inline-flex items-center gap-1.5">
+                        <FileUp className="size-3.5 text-primary" />
+                        {questionsFileName || "Uploaded file"}
+                      </span>
+                    </DetailField>
+                    {questionsFileUrl ? (
+                      <DetailField label="File URL">
+                        <a
+                          href={getContactFileOpenUrl(questionsFileUrl)}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="break-all text-brand hover:underline"
+                        >
+                          {getContactFileOpenUrl(questionsFileUrl)}
+                        </a>
+                      </DetailField>
+                    ) : null}
+                  </>
+                ) : (
+                  <p className="text-sm text-muted-foreground">
+                    No questions file uploaded (manual questions only).
+                  </p>
+                )}
+
                 {questions.length === 0 ? (
-                  <p className="mt-3 text-sm text-muted-foreground">
+                  <p className="text-sm text-muted-foreground">
                     No questions added.
                   </p>
                 ) : (
-                  <ul className="mt-3 space-y-1.5">
+                  <ul className="space-y-1.5">
                     {questions.map((q, i) => (
                       <li key={q.id} className="text-sm">
                         <span className="font-medium text-muted-foreground">
@@ -393,12 +431,12 @@ export function SurveyDetailView({ agent }: { agent: Agent }) {
                     {contact.contactFileUrl ? (
                       <DetailField label="File URL">
                         <a
-                          href={contact.contactFileUrl}
+                          href={getContactFileOpenUrl(contact.contactFileUrl)}
                           target="_blank"
                           rel="noreferrer"
                           className="break-all text-brand hover:underline"
                         >
-                          {contact.contactFileUrl}
+                          {getContactFileOpenUrl(contact.contactFileUrl)}
                         </a>
                       </DetailField>
                     ) : null}
@@ -444,6 +482,7 @@ export function SurveyDetailView({ agent }: { agent: Agent }) {
         onOpenChange={setScheduleOpen}
         agent={currentAgent}
         onConfirm={confirmSchedule}
+        onUnschedule={confirmUnschedule}
       />
     </div>
   );

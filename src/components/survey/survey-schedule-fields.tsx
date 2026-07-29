@@ -47,8 +47,8 @@ function defaultStartLocal(): string {
 
 export function createEmptyScheduleForm(): ScheduleFormValues {
   return {
-    enabled: true,
-    startAt: defaultStartLocal(),
+    enabled: false,
+    startAt: "",
     endAt: "",
     timezone: "Asia/Kolkata",
     recurrence: "once",
@@ -62,9 +62,8 @@ export function scheduleToFormValues(
   const hasStart = Boolean(s.startAt);
 
   return {
-    // New / never scheduled → ON by default so date fields show
-    enabled: hasStart ? Boolean(s.enabled) : true,
-    startAt: toLocalInputValue(s.startAt) || defaultStartLocal(),
+    enabled: hasStart ? Boolean(s.enabled) : false,
+    startAt: toLocalInputValue(s.startAt),
     endAt: toLocalInputValue(s.endAt),
     timezone: s.timezone || "Asia/Kolkata",
     recurrence: s.recurrence || "once",
@@ -75,10 +74,11 @@ export function scheduleToFormValues(
 export function parseScheduleForm(
   values: ScheduleFormValues
 ):
-  | { ok: true; payload: { startAt: string; endAt: string | null; timezone: string; recurrence: AgentScheduleRecurrence } }
+  | { ok: true; payload: { enabled: false } }
+  | { ok: true; payload: { enabled: true; startAt: string; endAt: string | null; timezone: string; recurrence: AgentScheduleRecurrence } }
   | { ok: false; error: string }
-  | { ok: true; payload: null } {
-  if (!values.enabled) return { ok: true, payload: null };
+{
+  if (!values.enabled) return { ok: true, payload: { enabled: false } };
 
   if (!values.startAt) {
     return { ok: false, error: "Start date & time is required to schedule" };
@@ -104,6 +104,7 @@ export function parseScheduleForm(
   return {
     ok: true,
     payload: {
+      enabled: true,
       startAt: startDate.toISOString(),
       endAt: endIso,
       timezone: values.timezone || "Asia/Kolkata",

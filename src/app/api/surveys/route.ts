@@ -1,24 +1,28 @@
 import { NextResponse } from "next/server";
-import {
-  createSurvey,
-  listActiveSurveys,
-  listSurveys,
-} from "@/lib/data/surveys-repository";
+import { apiConfig } from "@/config/api";
+
+const BACKEND = `${apiConfig.baseUrl}/surveys`;
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
-  const activeOnly = searchParams.get("active") === "true";
-  const search = searchParams.get("search") ?? "";
+  const qs = searchParams.toString();
+  const url = qs ? `${BACKEND}?${qs}` : BACKEND;
 
-  await new Promise((r) => setTimeout(r, 180));
-
-  const data = activeOnly ? listActiveSurveys() : listSurveys(search);
-
-  return NextResponse.json({ success: true, data });
+  const res = await fetch(url, {
+    headers: apiConfig.headers,
+    cache: "no-store",
+  });
+  const json = await res.json();
+  return NextResponse.json(json, { status: res.status });
 }
 
 export async function POST(request: Request) {
   const body = await request.json();
-  const survey = createSurvey(body);
-  return NextResponse.json({ success: true, data: survey }, { status: 201 });
+  const res = await fetch(BACKEND, {
+    method: "POST",
+    headers: apiConfig.headers,
+    body: JSON.stringify(body),
+  });
+  const json = await res.json();
+  return NextResponse.json(json, { status: res.status });
 }

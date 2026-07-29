@@ -61,6 +61,7 @@ interface ScheduleSurveyDialogProps {
   onOpenChange: (open: boolean) => void;
   agent: Agent | null;
   onConfirm: (payload: ScheduleSurveyPayload) => void | Promise<void>;
+  onUnschedule?: () => void | Promise<void>;
   /** Show Skip when opened right after create wizard */
   allowSkip?: boolean;
   onSkip?: () => void;
@@ -71,6 +72,7 @@ export function ScheduleSurveyDialog({
   onOpenChange,
   agent,
   onConfirm,
+  onUnschedule,
   allowSkip = false,
   onSkip,
 }: ScheduleSurveyDialogProps) {
@@ -226,6 +228,17 @@ export function ScheduleSurveyDialog({
               Cancel
             </Button>
           )}
+          {isReschedule ? (
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => void onUnschedule?.()}
+              disabled={isSaving}
+              className="text-destructive hover:text-destructive"
+            >
+              Unschedule
+            </Button>
+          ) : null}
           <Button
             type="button"
             onClick={() => void handleConfirm()}
