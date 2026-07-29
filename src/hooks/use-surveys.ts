@@ -31,10 +31,22 @@ export function agentQuestionsToBuilder(
 ): SurveyQuestion[] {
   return questions.map((q, index) => ({
     id: q.id,
-    type: agentTypeToBuilderType(q.type),
-    title: q.question,
+    type: agentTypeToBuilderType(typeof q.type === "string" ? q.type : "text"),
+    title:
+      (typeof q.question === "string" && q.question) ||
+      Object.entries(q)
+        .filter(
+          ([k, v]) =>
+            !["id", "_id", "type", "options", "__v"].includes(k) &&
+            typeof v === "string" &&
+            v.trim()
+        )
+        .map(([, v]) => String(v))[0] ||
+      "Untitled",
     required: false,
-    options: q.options?.map((o) => o.label),
+    options: Array.isArray(q.options)
+      ? q.options.map((o) => o.label)
+      : undefined,
     order: index,
   }));
 }

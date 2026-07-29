@@ -52,6 +52,26 @@ function parseOptionsPipe(raw: string): AgentSurveyQuestionOption[] {
     .map(makeOption);
 }
 
+const SKIP_DISPLAY_KEYS = new Set(["id", "_id", "type", "options", "question", "__v"]);
+
+function getQuestionDisplayText(q: AgentSurveyQuestion): string {
+  if (typeof q.question === "string" && q.question.trim()) return q.question.trim();
+  for (const [key, value] of Object.entries(q)) {
+    if (SKIP_DISPLAY_KEYS.has(key)) continue;
+    if (typeof value === "string" && value.trim()) return value.trim();
+  }
+  return "Untitled row";
+}
+
+function getDynamicFieldEntries(q: AgentSurveyQuestion): Array<[string, string]> {
+  return Object.entries(q)
+    .filter(([key, value]) => {
+      if (SKIP_DISPLAY_KEYS.has(key)) return false;
+      return typeof value === "string" && value.trim().length > 0;
+    })
+    .map(([key, value]) => [key, String(value)]);
+}
+
 const TYPE_OPTIONS = SURVEY_QUESTION_TYPES.map((t) => ({
   label: t.label,
   value: t.value,
@@ -74,7 +94,6 @@ export function SurveyQuestionsTab({
   const updateQuestions = (questions: AgentSurveyQuestion[]) => {
     onChange({
       ...values,
-      // Manual edits clear uploaded file metadata
       questionsFileUrl: "",
       questionsFileName: "",
       questions,
@@ -131,7 +150,7 @@ export function SurveyQuestionsTab({
         questions: sq.questions,
       });
       toast.success(
-        `Uploaded ${sq.questions.length} question(s) — Cloudinary URL saved`
+        `Uploaded ${sq.questions.length} row(s) — all columns saved`
       );
     } catch (error) {
       toast.error(
@@ -160,7 +179,8 @@ export function SurveyQuestionsTab({
             Survey Questions
           </h3>
           <p className="mt-1 text-xs text-muted-foreground">
-            Upload CSV/Excel for Cloudinary URL, or add questions manually.
+            Upload any CSV/Excel — every column is saved as-is. Or add questions
+            manually.
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -200,7 +220,7 @@ export function SurveyQuestionsTab({
             {uploading ? "Uploading…" : "Upload Excel or CSV"}
           </span>
           <span className="max-w-sm text-[11px] text-muted-foreground">
-            Columns: question, type, options — sample CSV available below.
+            Any columns accepted — no fixed field names required.
           </span>
         </button>
 
@@ -235,7 +255,7 @@ export function SurveyQuestionsTab({
                 </a>
               ) : null}
               <p className="text-[11px] text-muted-foreground">
-                {values.questions.length} question(s) loaded
+                {values.questions.length} row(s) loaded
               </p>
             </div>
             <Button
@@ -321,52 +341,79 @@ export function SurveyQuestionsTab({
         </p>
       ) : (
         <ul className="space-y-2">
-          {values.questions.map((q, index) => (
-            <li
-              key={q.id}
-              className="rounded-[8px] border border-border/50 bg-card px-3.5 py-3"
-            >
-              <div className="flex items-start gap-3">
-                <span className="mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-full bg-muted text-[11px] font-semibold text-muted-foreground">
-                  {index + 1}
-                </span>
-                <div className="min-w-0 flex-1">
-                  <span className="inline-block rounded-[4px] bg-muted px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
-                    {getSurveyQuestionTypeLabel(q.type)}
+          {values.questions.map((q, index) => {
+            const dynamicFields = getDynamicFieldEntries(q);
+            const typeLabel =
+              typeof q.type === "string" && q.type
+                ? getSurveyQuestionTypeLabel(q.type) || q.type
+                : null;
+            const options = Array.isArray(q.options) ? q.options : [];
+
+            return (
+              <li
+                key={q.id}
+                className="rounded-[8px] border border-border/50 bg-card px-3.5 py-3"
+              >
+                <div className="flex items-start gap-3">
+                  <span className="mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-full bg-muted text-[11px] font-semibold text-muted-foreground">
+                    {index + 1}
                   </span>
-                  <p className="mt-1.5 text-sm font-medium leading-snug">
-                    {q.question}
-                  </p>
-                  {q.options && q.options.length > 0 ? (
-                    <div className="mt-2 flex flex-wrap gap-1.5">
-                      {q.options.map((opt) => (
-                        <span
-                          key={opt.id}
-                          className="rounded-full border border-border/60 bg-muted/40 px-2 py-0.5 text-[11px] text-muted-foreground"
-                        >
-                          {opt.label}
-                        </span>
-                      ))}
-                    </div>
-                  ) : null}
+                  <div className="min-w-0 flex-1">
+                    {typeLabel ? (
+                      <span className="inline-block rounded-[4px] bg-muted px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                        {typeLabel}
+                      </span>
+                    ) : null}
+                    <p className="mt-1.5 text-sm font-medium leading-snug">
+                      {getQuestionDisplayText(q)}
+                    </p>
+                    {dynamicFields.length > 0 ? (
+                      <div className="mt-2 space-y-1">
+                        {dynamicFields.map(([key, value]) => (
+                          <p
+                            key={key}
+                            className="truncate text-[11px] text-muted-foreground"
+                            title={`${key}: ${value}`}
+                          >
+                            <span className="font-medium text-foreground/70">
+                              {key}:
+                            </span>{" "}
+                            {value}
+                          </p>
+                        ))}
+                      </div>
+                    ) : null}
+                    {options.length > 0 ? (
+                      <div className="mt-2 flex flex-wrap gap-1.5">
+                        {options.map((opt) => (
+                          <span
+                            key={opt.id}
+                            className="rounded-full border border-border/60 bg-muted/40 px-2 py-0.5 text-[11px] text-muted-foreground"
+                          >
+                            {opt.label}
+                          </span>
+                        ))}
+                      </div>
+                    ) : null}
+                  </div>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon-sm"
+                    onClick={() =>
+                      updateQuestions(
+                        values.questions.filter((item) => item.id !== q.id)
+                      )
+                    }
+                    aria-label="Remove question"
+                    className="shrink-0 text-muted-foreground hover:text-destructive"
+                  >
+                    <Trash2 className="size-3.5" />
+                  </Button>
                 </div>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon-sm"
-                  onClick={() =>
-                    updateQuestions(
-                      values.questions.filter((item) => item.id !== q.id)
-                    )
-                  }
-                  aria-label="Remove question"
-                  className="shrink-0 text-muted-foreground hover:text-destructive"
-                >
-                  <Trash2 className="size-3.5" />
-                </Button>
-              </div>
-            </li>
-          ))}
+              </li>
+            );
+          })}
         </ul>
       )}
     </div>

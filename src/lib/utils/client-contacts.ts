@@ -1,49 +1,21 @@
 import { parseCSV } from "@/lib/utils/csv";
 
-export interface ClientContactRow {
-  name: string;
-  phone: string;
-  email: string;
-  company: string;
-}
+/** Any columns from the uploaded contact spreadsheet */
+export type ClientContactRow = Record<string, string>;
 
-const COLUMN_ALIASES: Record<keyof ClientContactRow, string[]> = {
-  name: ["name", "full_name", "fullname", "contact_name", "client_name"],
-  phone: ["phone", "mobile", "phone_number", "mobile_number", "contact"],
-  email: ["email", "email_address", "mail"],
-  company: ["company", "organization", "org", "business"],
-};
-
-function pickField(
-  row: Record<string, string>,
-  keys: string[]
-): string {
-  for (const key of keys) {
-    const value = row[key];
-    if (value != null && String(value).trim()) return String(value).trim();
-  }
-  return "";
-}
-
-/** Normalize a parsed CSV/object row into name/phone/email/company */
+/** Normalize a parsed CSV/object row — keep every non-empty header as-is */
 export function mapRowToClientContact(
   row: Record<string, string>
 ): ClientContactRow | null {
-  const normalized: Record<string, string> = {};
+  const fields: ClientContactRow = {};
   for (const [key, value] of Object.entries(row)) {
-    normalized[key.toLowerCase().replace(/\s+/g, "_")] = String(value ?? "").trim();
+    const header = key.replace(/^\uFEFF/, "").trim();
+    if (!header) continue;
+    fields[header] = String(value ?? "").trim();
   }
 
-  const contact: ClientContactRow = {
-    name: pickField(normalized, COLUMN_ALIASES.name),
-    phone: pickField(normalized, COLUMN_ALIASES.phone),
-    email: pickField(normalized, COLUMN_ALIASES.email),
-    company: pickField(normalized, COLUMN_ALIASES.company),
-  };
-
-  // Keep row if at least name or phone or email is present
-  if (!contact.name && !contact.phone && !contact.email) return null;
-  return contact;
+  if (Object.values(fields).every((value) => !value)) return null;
+  return fields;
 }
 
 export function parseClientContactsFromText(text: string): ClientContactRow[] {
@@ -58,21 +30,17 @@ export async function parseClientContactsFromFile(
   const lower = file.name.toLowerCase();
   const buffer = await file.arrayBuffer();
 
-  // Prefer text CSV path; Excel binary without a library falls back to text decode
   if (lower.endsWith(".csv") || file.type.includes("csv") || file.type.includes("text")) {
     const text = new TextDecoder().decode(buffer);
     return parseClientContactsFromText(text);
   }
 
-  // Try decoding as text (some .xls exports are CSV misnamed)
   const text = new TextDecoder("utf-8", { fatal: false }).decode(buffer);
-  if (text.includes(",") && /name/i.test(text.split(/\r?\n/)[0] ?? "")) {
+  if (text.includes(",")) {
     return parseClientContactsFromText(text);
   }
 
-  throw new Error(
-    "Could not read contacts. Please upload a CSV with columns: name, phone, email, company"
-  );
+  throw new Error("Could not read contacts. Please upload a CSV or Excel file.");
 }
 
 /**
@@ -125,4 +93,15 @@ export async function fetchClientContactsFromUrl(
   }
 
   return parseClientContactsFromText(json.data.text);
+}
+
+/** Collect column headers across dynamic contact rows */
+export function getContactColumnKeys(rows: ClientContactRow[]): string[] {
+  const keys = new Set<string>();
+  for (const row of rows) {
+    for (const key of Object.keys(row)) {
+      if (key) keys.add(key);
+    }
+  }
+  return Array.from(keys);
 }

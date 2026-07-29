@@ -120,11 +120,13 @@ export interface AgentSurveyQuestionOption {
   value: string;
 }
 
+/** Manual or uploaded — uploaded rows keep any spreadsheet columns */
 export interface AgentSurveyQuestion {
   id: string;
-  type: string;
-  question: string;
+  type?: string;
+  question?: string;
   options?: AgentSurveyQuestionOption[];
+  [key: string]: unknown;
 }
 
 export interface AgentSurveyQuestionsConfig {
@@ -135,16 +137,14 @@ export interface AgentSurveyQuestionsConfig {
   questions: AgentSurveyQuestion[];
 }
 
+/** Contact rows keep whatever columns were in the uploaded file */
+export type AgentClientContactRow = Record<string, string>;
+
 export interface AgentClientContactConfig {
   contactFileUrl: string;
   contactFileName: string;
   /** Parsed rows cached after upload; view can also reload from contactFileUrl */
-  contacts?: Array<{
-    name: string;
-    phone: string;
-    email: string;
-    company: string;
-  }>;
+  contacts?: AgentClientContactRow[];
 }
 
 export type AgentScheduleRecurrence = "once" | "daily" | "weekly" | "monthly";

@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Loader2, Users } from "lucide-react";
 import {
   fetchClientContactsFromUrl,
+  getContactColumnKeys,
   type ClientContactRow,
 } from "@/lib/utils/client-contacts";
 import { cn } from "@/lib/utils";
@@ -38,6 +39,7 @@ export function ClientContactsPreview({
   const [fromUrl, setFromUrl] = useState(false);
 
   const displayName = fileName?.trim() || "Uploaded file";
+  const columns = useMemo(() => getContactColumnKeys(rows), [rows]);
 
   const loadFromUrl = async (url: string) => {
     setLoading(true);
@@ -47,9 +49,7 @@ export function ClientContactsPreview({
       setRows(parsed);
       setFromUrl(true);
       if (parsed.length === 0) {
-        setError(
-          "No contact rows found in file (expected name, phone, email, company)"
-        );
+        setError("No contact rows found in file");
       }
     } catch {
       setFromUrl(false);
@@ -105,7 +105,7 @@ export function ClientContactsPreview({
           {loading
             ? `Fetching from file URL…`
             : rows.length > 0
-              ? `${rows.length} row(s) · ${displayName}${fromUrl ? " · from URL" : ""}`
+              ? `${rows.length} row(s) · ${columns.length} column(s) · ${displayName}${fromUrl ? " · from URL" : ""}`
               : displayName}
         </p>
       </div>
@@ -121,22 +121,23 @@ export function ClientContactsPreview({
           <Loader2 className="size-4 animate-spin" />
           Fetching contacts from file URL…
         </div>
-      ) : rows.length > 0 ? (
+      ) : rows.length > 0 && columns.length > 0 ? (
         <div className="overflow-x-auto rounded-[6px] border border-border/50">
           <table className="w-full min-w-[480px] text-left text-sm">
             <thead>
               <tr className="border-b border-border/50 bg-muted/40 text-[11px] uppercase tracking-wide text-muted-foreground">
                 <th className="px-3 py-2 font-semibold">#</th>
-                <th className="px-3 py-2 font-semibold">Name</th>
-                <th className="px-3 py-2 font-semibold">Phone</th>
-                <th className="px-3 py-2 font-semibold">Email</th>
-                <th className="px-3 py-2 font-semibold">Company</th>
+                {columns.map((col) => (
+                  <th key={col} className="px-3 py-2 font-semibold">
+                    {col}
+                  </th>
+                ))}
               </tr>
             </thead>
             <tbody>
               {rows.map((row, index) => (
                 <tr
-                  key={`${row.email}-${row.phone}-${index}`}
+                  key={`contact-${index}`}
                   className="border-b border-border/40 last:border-0"
                 >
                   <td
@@ -147,29 +148,18 @@ export function ClientContactsPreview({
                   >
                     {index + 1}
                   </td>
-                  <td className={cn("px-3 font-medium", compact ? "py-1.5" : "py-2.5")}>
-                    {row.name || "—"}
-                  </td>
-                  <td
-                    className={cn(
-                      "px-3 font-mono text-xs tabular-nums",
-                      compact ? "py-1.5" : "py-2.5"
-                    )}
-                  >
-                    {row.phone || "—"}
-                  </td>
-                  <td
-                    className={cn(
-                      "max-w-[200px] truncate px-3 text-muted-foreground",
-                      compact ? "py-1.5" : "py-2.5"
-                    )}
-                    title={row.email}
-                  >
-                    {row.email || "—"}
-                  </td>
-                  <td className={cn("px-3", compact ? "py-1.5" : "py-2.5")}>
-                    {row.company || "—"}
-                  </td>
+                  {columns.map((col) => (
+                    <td
+                      key={col}
+                      className={cn(
+                        "max-w-[220px] truncate px-3",
+                        compact ? "py-1.5" : "py-2.5"
+                      )}
+                      title={row[col] || undefined}
+                    >
+                      {row[col] || "—"}
+                    </td>
+                  ))}
                 </tr>
               ))}
             </tbody>

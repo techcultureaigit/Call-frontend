@@ -6,22 +6,34 @@ type QueryParams = Record<string, QueryValue>;
 
 export class ApiError extends Error {
   status: number;
+  errors: unknown;
 
-  constructor(message: string, status: number) {
+  constructor(message: string, status: number, errors: unknown = null) {
     super(message);
     this.name = "ApiError";
     this.status = status;
+    this.errors = errors;
   }
 }
 
-async function parseError(response: Response): Promise<string> {
-  const error = await response.json().catch(() => ({}));
-  return (error as { message?: string }).message ?? "Request failed";
+async function parseErrorBody(response: Response): Promise<{
+  message: string;
+  errors: unknown;
+}> {
+  const error = (await response.json().catch(() => ({}))) as {
+    message?: string;
+    errors?: unknown;
+  };
+  return {
+    message: error.message ?? "Request failed",
+    errors: error.errors ?? null,
+  };
 }
 
 async function parseJson<T>(response: Response): Promise<T> {
   if (!response.ok) {
-    throw new ApiError(await parseError(response), response.status);
+    const { message, errors } = await parseErrorBody(response);
+    throw new ApiError(message, response.status, errors);
   }
   return response.json() as Promise<T>;
 }

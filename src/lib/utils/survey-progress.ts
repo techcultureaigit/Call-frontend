@@ -26,9 +26,14 @@ export function computeSurveyProgress(
   }
 
   const questionMissing: string[] = [];
-  const questions = config.surveyQuestions.questions.filter((q) =>
-    q.question.trim()
-  );
+  const questions = config.surveyQuestions.questions.filter((q) => {
+    if (typeof q.question === "string" && q.question.trim()) return true;
+    return Object.entries(q).some(([key, value]) => {
+      if (["id", "_id", "type", "options", "__v"].includes(key)) return false;
+      if (Array.isArray(value)) return value.length > 0;
+      return typeof value === "string" && value.trim().length > 0;
+    });
+  });
   if (config.surveyQuestions.enabled !== false && questions.length === 0) {
     questionMissing.push("questions");
   }
@@ -37,6 +42,7 @@ export function computeSurveyProgress(
     questions.some(
       (q) =>
         q.type === "multi" &&
+        Array.isArray(q.options) &&
         (q.options?.filter((opt) => opt.label.trim() && opt.value.trim()).length ??
           0) < 2
     )

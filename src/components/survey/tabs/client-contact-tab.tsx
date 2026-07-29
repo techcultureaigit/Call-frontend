@@ -44,7 +44,8 @@ export function ClientContactTab({
 
       onChange({
         contactFileUrl:
-          uploadedSurvey.config.clientContact.contactFileUrl || values.contactFileUrl,
+          uploadedSurvey.config.clientContact.contactFileUrl ||
+          values.contactFileUrl,
         contactFileName:
           uploadedSurvey.config.clientContact.contactFileName || file.name,
         contacts: uploadedSurvey.config.clientContact.contacts ?? [],
@@ -52,7 +53,7 @@ export function ClientContactTab({
       toast.success(
         `Uploaded ${
           uploadedSurvey.config.clientContact.contacts?.length ?? 0
-        } contact(s) — Cloudinary URL saved`
+        } row(s) — all columns saved`
       );
     } catch (error) {
       toast.error(
@@ -79,7 +80,7 @@ export function ClientContactTab({
           Contact of Client
         </h3>
         <p className="mt-1 text-xs text-muted-foreground">
-          Upload Excel or CSV — file URL is saved and rows are fetched below.
+          Upload any Excel or CSV — every column from the file is saved as-is.
         </p>
       </div>
 
@@ -106,8 +107,7 @@ export function ClientContactTab({
             {uploading ? "Uploading…" : "Upload Excel or CSV"}
           </span>
           <span className="max-w-sm text-[11px] text-muted-foreground">
-            Columns: name, phone, email, company — download the sample to see
-            the format.
+            Any columns accepted — no fixed field names required.
           </span>
         </button>
 
@@ -145,7 +145,7 @@ export function ClientContactTab({
               ) : null}
               <p className="text-[11px] text-muted-foreground">
                 {values.contacts?.length
-                  ? `${values.contacts.length} contact(s) loaded`
+                  ? `${values.contacts.length} row(s) loaded`
                   : "File uploaded"}
               </p>
             </div>

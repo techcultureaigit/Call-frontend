@@ -402,17 +402,32 @@ export function SurveyDetailView({ agent }: { agent: Agent }) {
                   </p>
                 ) : (
                   <ul className="space-y-1.5">
-                    {questions.map((q, i) => (
-                      <li key={q.id} className="text-sm">
-                        <span className="font-medium text-muted-foreground">
-                          {i + 1}.
-                        </span>{" "}
-                        {q.question}
-                        <span className="ml-1 text-xs text-muted-foreground">
-                          ({q.type})
-                        </span>
-                      </li>
-                    ))}
+                    {questions.map((q, i) => {
+                      const text =
+                        (typeof q.question === "string" && q.question.trim()) ||
+                        Object.entries(q)
+                          .filter(
+                            ([k, v]) =>
+                              !["id", "_id", "type", "options", "__v"].includes(k) &&
+                              typeof v === "string" &&
+                              v.trim()
+                          )
+                          .map(([, v]) => String(v))[0] ||
+                        "Untitled row";
+                      return (
+                        <li key={q.id} className="text-sm">
+                          <span className="font-medium text-muted-foreground">
+                            {i + 1}.
+                          </span>{" "}
+                          {text}
+                          {q.type ? (
+                            <span className="ml-1 text-xs text-muted-foreground">
+                              ({String(q.type)})
+                            </span>
+                          ) : null}
+                        </li>
+                      );
+                    })}
                   </ul>
                 )}
               </div>

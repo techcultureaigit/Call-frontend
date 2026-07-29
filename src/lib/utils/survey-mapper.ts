@@ -88,18 +88,18 @@ export function backendSurveyToAgent(s: BackendSurvey): Agent {
       questionsFileUrl: sq.questionsFileUrl ?? "",
       questionsFileName: sq.questionsFileName ?? "",
       questions: (sq.questions ?? []).map(
-        (q: { id: string; type: string; question: string; options?: { id: string; label: string; value: string }[] }) => ({
-          id: q.id,
-          type: q.type,
-          question: q.question,
-          options: q.options,
-        })
+        // Preserve every column from uploaded / manual rows
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (q: any) => ({ ...q })
       ),
     },
     clientContact: {
       contactFileUrl: cc.contactFileUrl ?? "",
       contactFileName: cc.contactFileName ?? "",
-      contacts: cc.contacts,
+      contacts: (cc.contacts ?? []).map(
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (row: any) => ({ ...row })
+      ),
     },
     functions: DEFAULT_AGENT_CONFIG.functions,
     wisdom: DEFAULT_AGENT_CONFIG.wisdom,
@@ -195,17 +195,12 @@ export function agentToBackendPayload(
       enabled: c.surveyQuestions.enabled,
       questionsFileUrl: c.surveyQuestions.questionsFileUrl ?? "",
       questionsFileName: c.surveyQuestions.questionsFileName ?? "",
-      questions: c.surveyQuestions.questions.map((q) => ({
-        id: q.id,
-        type: q.type,
-        question: q.question,
-        options: q.options,
-      })),
+      questions: c.surveyQuestions.questions.map((q) => ({ ...q })),
     },
     clientContact: {
       contactFileUrl: c.clientContact.contactFileUrl,
       contactFileName: c.clientContact.contactFileName,
-      contacts: c.clientContact.contacts ?? [],
+      contacts: (c.clientContact.contacts ?? []).map((row) => ({ ...row })),
     },
   };
 
