@@ -65,8 +65,8 @@ export function SurveyPicker({ onSelect, onCreate, isCreating }: SurveyPickerPro
                     <div className="min-w-0 flex-1">
                       <p className="truncate font-medium">{survey.name}</p>
                       <p className="text-xs text-muted-foreground">
-                        {survey.questionCount} questions · ~
-                        {survey.estimatedDurationMinutes} min
+                        {survey.config.surveyQuestions.questions.length} questions
+                        · ~{survey.config.persona.maxCallDurationMinutes} min
                       </p>
                     </div>
                     <span

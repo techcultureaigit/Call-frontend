@@ -21,6 +21,9 @@ import { useCallback, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Loader2 } from "lucide-react";
 import { usePageMeta, useSurveyDetail, useSurveyMutations } from "@/hooks";
+import {
+  agentQuestionsToBuilder,
+} from "@/hooks/use-surveys";
 import { createDefaultQuestion } from "@/lib/constants/surveys";
 import type { QuestionType, SurveyQuestion } from "@/types/survey";
 import { SurveyBuilderHeader } from "./survey-builder-header";
@@ -62,10 +65,13 @@ export function SurveyBuilderView() {
 
   useEffect(() => {
     if (survey) {
+      const mapped = agentQuestionsToBuilder(
+        survey.config.surveyQuestions.questions
+      );
       setName(survey.name);
-      setDescription(survey.description ?? "");
-      setQuestions(survey.questions);
-      setSelectedId(survey.questions[0]?.id ?? null);
+      setDescription("");
+      setQuestions(mapped);
+      setSelectedId(mapped[0]?.id ?? null);
       setDirty(false);
     }
   }, [survey?.id, survey?.updatedAt]);
@@ -128,7 +134,12 @@ export function SurveyBuilderView() {
     if (!surveyId) return;
     await saveSurvey.mutateAsync({
       id: surveyId,
-      payload: { name, description, questions, status: survey?.status },
+      payload: {
+        name,
+        description,
+        questions,
+        status: survey?.status === "paused" ? "draft" : survey?.status,
+      },
     });
     setDirty(false);
   };
