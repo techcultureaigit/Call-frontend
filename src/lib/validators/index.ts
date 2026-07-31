@@ -15,6 +15,5 @@ export {
 } from "./user";
 export {
   roleFormSchema,
-  ROLE_COLOR_OPTIONS,
   type RoleFormValues,
 } from "./role";

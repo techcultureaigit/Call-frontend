@@ -122,7 +122,7 @@ export function DashboardView() {
         <Section delay={0.04}>
           <div className="flex flex-col gap-4">
             <KpiModule
-              title="Survey Studio"
+              title="Survey"
               description="Survey status, creation, and captured data"
               icon={ClipboardList}
               kpis={studioKpis}

@@ -7,11 +7,8 @@ export interface BackendRolePayload {
   _id?: string;
   id?: string;
   name?: string;
-  slug?: string;
   description?: string;
-  color?: string;
   permissions?: RolePermissions;
-  isSystem?: boolean;
   isDeleted?: boolean;
   createdAt?: string;
   updatedAt?: string;

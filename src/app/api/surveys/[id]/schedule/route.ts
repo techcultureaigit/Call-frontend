@@ -1,7 +1,5 @@
 import { NextResponse } from "next/server";
-import { apiConfig } from "@/config/api";
-
-const BACKEND = `${apiConfig.baseUrl}/surveys`;
+import { backendAuthHeaders, surveysBackendUrl } from "../../_proxy";
 
 export async function POST(
   request: Request,
@@ -9,9 +7,12 @@ export async function POST(
 ) {
   const { id } = await params;
   const body = await request.json();
-  const res = await fetch(`${BACKEND}/${id}/schedule`, {
+  const res = await fetch(surveysBackendUrl(`/${id}/schedule`), {
     method: "POST",
-    headers: apiConfig.headers,
+    headers: {
+      ...backendAuthHeaders(request),
+      "Content-Type": "application/json",
+    },
     body: JSON.stringify(body),
   });
   const json = await res.json();

@@ -11,6 +11,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import type { RoleListItem } from "@/types/role";
+import { isProtectedRole, isSuperAdminRole } from "@/types/role";
 
 interface DeleteRoleDialogProps {
   open: boolean;
@@ -29,20 +30,39 @@ export function DeleteRoleDialog({
 }: DeleteRoleDialogProps) {
   if (!role) return null;
 
+  const blocked = isProtectedRole(role.name);
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Delete role</DialogTitle>
           <DialogDescription>
-            Are you sure you want to delete the{" "}
-            <span className="font-medium text-foreground">{role.name}</span> role?
-            {role.userCount > 0 ? (
-              <span className="mt-2 block text-destructive">
-                This role has {role.userCount} assigned users and cannot be deleted.
-              </span>
+            {isSuperAdminRole(role.name) ? (
+              <>
+                <span className="font-medium text-foreground">{role.name}</span>{" "}
+                cannot be deleted.
+              </>
+            ) : blocked ? (
+              <>
+                System role{" "}
+                <span className="font-medium text-foreground">{role.name}</span>{" "}
+                cannot be deleted.
+              </>
             ) : (
-              " Users assigned to this role will lose their permissions."
+              <>
+                Are you sure you want to delete the{" "}
+                <span className="font-medium text-foreground">{role.name}</span>{" "}
+                role?
+                {role.userCount > 0 ? (
+                  <span className="mt-2 block text-destructive">
+                    This role has {role.userCount} assigned users and cannot be
+                    deleted.
+                  </span>
+                ) : (
+                  " Users assigned to this role will lose their permissions."
+                )}
+              </>
             )}
           </DialogDescription>
         </DialogHeader>
@@ -58,7 +78,7 @@ export function DeleteRoleDialog({
           <Button
             variant="destructive"
             onClick={onConfirm}
-            disabled={isLoading || role.userCount > 0 || role.isSystem}
+            disabled={isLoading || role.userCount > 0 || blocked}
           >
             {isLoading && <Loader2 className="size-4 animate-spin" />}
             Delete role

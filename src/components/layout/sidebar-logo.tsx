@@ -39,7 +39,7 @@ export function SidebarLogo() {
             {siteConfig.name}
           </span>
           <span className="text-[10px] font-medium uppercase tracking-[0.18em] text-sidebar-foreground/70">
-            CRM Admin
+            {siteConfig.tagline}
           </span>
         </motion.div>
       )}

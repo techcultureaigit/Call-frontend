@@ -21,6 +21,7 @@ import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { usePermissions } from "@/hooks";
 import type { SurveyTemplate } from "@/types/survey-template";
 
 const ICON_MAP: Record<string, LucideIcon> = {
@@ -50,6 +51,7 @@ export function SurveyTemplateCard({
   onViewDetails,
 }: SurveyTemplateCardProps) {
   const Icon = ICON_MAP[template.icon] ?? Volume2;
+  const { canCreateSurvey } = usePermissions();
 
   return (
     <motion.article
@@ -112,15 +114,13 @@ export function SurveyTemplateCard({
             >
               View Details
             </Button>
-            <Button
-              size="sm"
-              className="flex-1 rounded-[6px]"
-              asChild
-            >
-              <Link href={`/survey/new?template=${template.id}`}>
-                + Create Survey
-              </Link>
-            </Button>
+            {canCreateSurvey && (
+              <Button size="sm" className="flex-1 rounded-[6px]" asChild>
+                <Link href={`/survey/new?template=${template.id}`}>
+                  + Create Survey
+                </Link>
+              </Button>
+            )}
           </div>
         </div>
       </div>

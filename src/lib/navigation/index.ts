@@ -1,15 +1,43 @@
+import { hasModuleAccess } from "@/config/permissions";
 import type { NavItemConfig, NavSection } from "@/config/navigation";
 import type { RolePermissions } from "@/types/role";
 
 /**
- * Role-based filtering is disabled on the frontend for now.
- * Returns full navigation; wire to API permissions later.
+ * Filter sidebar navigation by the user's role permission matrix.
+ * Parent items stay if they have `read` or any visible children remain.
  */
 export function filterNavigationByPermissions(
   navigation: NavSection[],
-  _permissions?: RolePermissions | null
+  permissions?: RolePermissions | null
 ): NavSection[] {
-  return navigation;
+  if (!permissions) return navigation;
+
+  return navigation
+    .map((section) => ({
+      ...section,
+      items: section.items
+        .map((item) => filterNavItem(item, permissions))
+        .filter((item): item is NavItemConfig => item !== null),
+    }))
+    .filter((section) => section.items.length > 0);
+}
+
+function filterNavItem(
+  item: NavItemConfig,
+  permissions: RolePermissions
+): NavItemConfig | null {
+  if (item.children?.length) {
+    const children = item.children
+      .map((child) => filterNavItem(child, permissions))
+      .filter((child): child is NavItemConfig => child !== null);
+
+    const parentAllowed = hasModuleAccess(permissions, item.module);
+    if (!parentAllowed && children.length === 0) return null;
+
+    return { ...item, children };
+  }
+
+  return hasModuleAccess(permissions, item.module) ? item : null;
 }
 
 /** @deprecated use filterNavigationByPermissions */

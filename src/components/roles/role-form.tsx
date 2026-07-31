@@ -7,13 +7,14 @@ import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { createEmptyPermissions } from "@/config/permission-modules";
+import { createEmptyPermissions, sanitizePermissions } from "@/config/permission-modules";
 import {
   roleFormSchema,
   type RoleFormValues,
 } from "@/lib/validators/role";
 import { PermissionMatrix } from "./permission-matrix";
 import type { Role, RolePermissions } from "@/types/role";
+import { isProtectedRole } from "@/types/role";
 
 interface RoleFormProps {
   role?: Role | null;
@@ -37,6 +38,7 @@ export function RoleForm({
   isLoading,
 }: RoleFormProps) {
   const isEdit = Boolean(role);
+  const nameLocked = role ? isProtectedRole(role.name) : false;
   const [permissions, setPermissions] = useState<RolePermissions>(
     createEmptyPermissions()
   );
@@ -60,8 +62,14 @@ export function RoleForm({
           }
         : defaultValues
     );
-    setPermissions(role?.permissions ?? createEmptyPermissions());
-  }, [role, reset]);
+    setPermissions(
+      role?.permissions
+        ? sanitizePermissions(role.permissions)
+        : createEmptyPermissions()
+    );
+    // Only re-hydrate when switching roles — not on every parent re-render
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional: role.id
+  }, [role?.id, reset]);
 
   const handleFormSubmit = handleSubmit(async (values) => {
     await onSubmit(values, permissions);
@@ -80,17 +88,26 @@ export function RoleForm({
               id="role-name"
               {...register("name")}
               placeholder="e.g. Campaign Manager"
-              disabled={role?.isSystem}
+              disabled={nameLocked}
             />
             {errors.name && (
               <p className="text-xs text-destructive">{errors.name.message}</p>
+            )}
+            {nameLocked && (
+              <p className="text-xs text-muted-foreground">
+                System role name is fixed. You can still add or change
+                permissions below.
+              </p>
             )}
           </div>
         </div>
 
         <div className="space-y-2">
           <Label>Permissions</Label>
-          <PermissionMatrix permissions={permissions} onChange={setPermissions} />
+          <PermissionMatrix
+            permissions={permissions}
+            onChange={setPermissions}
+          />
         </div>
       </div>
 

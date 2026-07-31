@@ -18,7 +18,6 @@ export async function POST(request: Request) {
   const role = createRole({
     name: body.name,
     description: body.description,
-    color: body.color,
     permissions: body.permissions,
   });
 

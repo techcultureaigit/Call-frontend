@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
 import { toast } from "sonner";
 import { PageContainer } from "@/components/layout";
-import { usePageMeta, useSurveyTemplateDetail } from "@/hooks";
+import { usePageMeta, usePermissions, useSurveyTemplateDetail } from "@/hooks";
 import {
   DEFAULT_AGENT_CONFIG,
   ENABLED_AGENT_CONFIG_TABS,
@@ -114,6 +114,7 @@ export function SurveyConfigureView({
 }: SurveyConfigureViewProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { canCreateSurvey, canUpdateSurvey } = usePermissions();
   const templateId = searchParams.get("template");
   const shouldLoadTemplate = Boolean(isNew && !agent && templateId);
 
@@ -152,6 +153,22 @@ export function SurveyConfigureView({
     applyMeta();
     return () => resetPageMeta();
   }, [applyMeta, resetPageMeta, isNew, agent?.name]);
+
+  // Block create flow when role lacks surveys:create
+  useEffect(() => {
+    if (isNew && !canCreateSurvey) {
+      toast.error("You do not have permission to create surveys");
+      router.replace("/survey");
+    }
+  }, [isNew, canCreateSurvey, router]);
+
+  // Block edit flow when role lacks surveys:update
+  useEffect(() => {
+    if (!isNew && agent && !canUpdateSurvey) {
+      toast.error("You do not have permission to edit surveys");
+      router.replace(`/survey/${agent.id}`);
+    }
+  }, [isNew, agent, canUpdateSurvey, router]);
 
   useEffect(() => {
     if (!template || templateApplied) return;
@@ -218,6 +235,16 @@ export function SurveyConfigureView({
 
     setIsSaving(true);
     try {
+      const needsCreate = !surveyId;
+      if (needsCreate && !canCreateSurvey) {
+        toast.error("You do not have permission to create surveys");
+        return;
+      }
+      if (!needsCreate && !canUpdateSurvey) {
+        toast.error("You do not have permission to update surveys");
+        return;
+      }
+
       const requiredKeys = TAB_REQUIRED_KEYS[activeTab] ?? [];
       const blockedKey = requiredKeys.find((key) => !computedProgress[key].complete);
       if (blockedKey) {

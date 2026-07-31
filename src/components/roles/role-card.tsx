@@ -18,7 +18,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
-import type { RoleListItem } from "@/types/role";
+import { isProtectedRole, isSuperAdminRole, type RoleListItem } from "@/types/role";
 
 interface RoleCardProps {
   role: RoleListItem;
@@ -41,6 +41,8 @@ export function RoleCard({
     role.totalPermissions > 0
       ? (role.permissionCount / role.totalPermissions) * 100
       : 0;
+  const protectedRole = isProtectedRole(role.name);
+  const superAdmin = isSuperAdminRole(role.name);
 
   return (
     <motion.div
@@ -60,32 +62,36 @@ export function RoleCard({
         "group relative w-full cursor-pointer rounded-[6px] border bg-card p-5 text-left shadow-card transition-all duration-200",
         "hover:shadow-elevated hover:border-border",
         isSelected
-          ? "border-primary/40 ring-2 ring-primary/20 shadow-elevated"
+          ? "border-brand/35 ring-2 ring-brand/15 shadow-elevated"
           : "border-border/60"
       )}
     >
-      <div className="absolute inset-x-0 top-0 h-1 rounded-t-xl bg-primary/40" />
+      <div className="absolute inset-x-0 top-0 h-1 rounded-t-[6px] bg-brand" />
 
       <div className="flex items-start justify-between gap-2">
         <div className="flex items-center gap-2.5">
-          <div className="flex size-9 items-center justify-center rounded-lg bg-primary/10">
-            <Shield className="size-4 text-primary" />
+          <div
+            className={cn(
+              "flex size-9 items-center justify-center rounded-[6px]",
+              isSelected
+                ? "bg-brand text-brand-foreground"
+                : "bg-brand/10 text-brand"
+            )}
+          >
+            <Shield className="size-4" />
           </div>
           <div>
             <div className="flex items-center gap-2">
               <h3 className="text-sm font-semibold tracking-tight">
                 {role.name}
               </h3>
-              {role.isSystem && (
+              {protectedRole && (
                 <span className="inline-flex items-center gap-0.5 rounded-md bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
                   <Lock className="size-2.5" />
-                  System
+                  {superAdmin ? "Super Admin" : "System"}
                 </span>
               )}
             </div>
-            <p className="mt-0.5 font-mono text-[10px] text-muted-foreground">
-              {role.slug}
-            </p>
           </div>
         </div>
 
@@ -105,7 +111,7 @@ export function RoleCard({
               <Pencil className="size-4" />
               Edit role
             </DropdownMenuItem>
-            {!role.isSystem && (
+            {!protectedRole && (
               <>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
@@ -139,7 +145,7 @@ export function RoleCard({
         </div>
         <div className="h-1.5 overflow-hidden rounded-full bg-muted">
           <div
-            className="h-full rounded-full bg-primary transition-all duration-300"
+            className="h-full rounded-full bg-brand transition-all duration-300"
             style={{ width: `${progress}%` }}
           />
         </div>

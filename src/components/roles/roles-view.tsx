@@ -7,12 +7,14 @@ import { Loader2, Save, Shield } from "lucide-react";
 import { PageContainer } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import { DashboardCard } from "@/components/dashboard/dashboard-card";
+import { sanitizePermissions } from "@/config/permission-modules";
 import { useDebounce, usePageMeta, useRoles, useRoleMutations } from "@/hooks";
 import { RolesToolbar } from "./roles-toolbar";
 import { RoleCardsGrid } from "./role-cards-grid";
 import { PermissionMatrix } from "./permission-matrix";
 import { DeleteRoleDialog } from "./delete-role-dialog";
 import type { RoleListItem, RolePermissions } from "@/types/role";
+import { isProtectedRole } from "@/types/role";
 
 export function RolesView() {
   const router = useRouter();
@@ -55,7 +57,7 @@ export function RolesView() {
 
   useEffect(() => {
     if (activeRole) {
-      setDraftPermissions(structuredClone(activeRole.permissions));
+      setDraftPermissions(sanitizePermissions(activeRole.permissions));
       setPermissionsDirty(false);
     }
   }, [activeRole?.id]);
@@ -79,6 +81,7 @@ export function RolesView() {
 
   const handleDelete = useCallback(async () => {
     if (!selectedRole) return;
+    if (isProtectedRole(selectedRole.name)) return;
     await deleteRole.mutateAsync(selectedRole.id);
     setDeleteOpen(false);
     if (selectedId === selectedRole.id) {
@@ -88,9 +91,11 @@ export function RolesView() {
   }, [selectedRole, selectedId, deleteRole]);
 
   const openCreate = () => router.push("/roles/new");
-  const openEdit = (role: RoleListItem) => router.push(`/roles/${role.id}/edit`);
+  const openEdit = (role: RoleListItem) =>
+    router.push(`/roles/${role.id}/edit`);
 
   const openDelete = (role: RoleListItem) => {
+    if (isProtectedRole(role.name)) return;
     setSelectedRole(role);
     setDeleteOpen(true);
   };
@@ -123,19 +128,19 @@ export function RolesView() {
           <DashboardCard
             title="Permission Matrix"
             description={`Configure CRUD access for ${activeRole.name}`}
+            icon={Shield}
             action={
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 {permissionsDirty && (
-                  <span className="text-[10px] font-medium text-amber-600 dark:text-amber-400">
+                  <span className="rounded-md bg-amber-500/10 px-2 py-1 text-[10px] font-semibold text-amber-700 dark:text-amber-400">
                     Unsaved changes
                   </span>
                 )}
                 <Button
                   size="sm"
+                  className="rounded-[6px]"
                   onClick={handleSavePermissions}
-                  disabled={
-                    !permissionsDirty || updateRole.isPending
-                  }
+                  disabled={!permissionsDirty || updateRole.isPending}
                 >
                   {updateRole.isPending ? (
                     <Loader2 className="size-4 animate-spin" />
@@ -147,6 +152,7 @@ export function RolesView() {
                 <Button
                   size="sm"
                   variant="outline"
+                  className="rounded-[6px]"
                   onClick={() => openEdit(activeRole)}
                 >
                   Edit role
@@ -155,18 +161,20 @@ export function RolesView() {
             }
             contentClassName="p-0 pb-0"
             noPadding
+            className="overflow-hidden"
           >
             <PermissionMatrix
               permissions={draftPermissions}
               onChange={handlePermissionsChange}
-              disabled={activeRole.isSystem}
             />
-            {activeRole.isSystem && (
-              <p className="border-t border-border/60 px-5 py-3 text-xs text-muted-foreground">
-                <Shield className="mr-1 inline size-3.5" />
-                System role permissions are read-only. Duplicate this role to
-                create a customizable copy.
-              </p>
+            {isProtectedRole(activeRole.name) && (
+              <div className="flex items-start gap-2 border-t border-border/50 bg-muted/20 px-5 py-3">
+                <Shield className="mt-0.5 size-3.5 shrink-0 text-muted-foreground" />
+                <p className="text-xs leading-relaxed text-muted-foreground">
+                  {activeRole.name} is a system role — permissions can be
+                  updated, but it cannot be renamed or deleted.
+                </p>
+              </div>
             )}
           </DashboardCard>
         )}

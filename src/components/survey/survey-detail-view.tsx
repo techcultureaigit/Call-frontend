@@ -20,7 +20,7 @@ import {
 import { toast } from "sonner";
 import { PageContainer } from "@/components/layout";
 import { Button } from "@/components/ui/button";
-import { usePageMeta } from "@/hooks";
+import { usePageMeta, usePermissions } from "@/hooks";
 import {
   AGENT_CONFIG_TABS,
   getAgentLanguageLabel,
@@ -94,7 +94,12 @@ export function SurveyDetailView({ agent }: { agent: Agent }) {
   const router = useRouter();
   const [scheduleOpen, setScheduleOpen] = useState(false);
   const [currentAgent, setCurrentAgent] = useState(agent);
-  const canSchedule = isSurveyReadyToSchedule(currentAgent);
+  const {
+    canCreateSurvey,
+    canUpdateSurvey,
+  } = usePermissions();
+  const canSchedule =
+    canUpdateSurvey && isSurveyReadyToSchedule(currentAgent);
   const scheduled = isSurveyScheduled(currentAgent);
   const displayStatus = getSurveyDisplayStatus(currentAgent);
 
@@ -237,21 +242,25 @@ export function SurveyDetailView({ agent }: { agent: Agent }) {
                   {scheduled ? "Reschedule" : "Schedule survey"}
                 </Button>
               ) : null}
-              <Button
-                type="button"
-                variant="outline"
-                className="rounded-[6px]"
-                onClick={handleClone}
-              >
-                <Copy className="size-4" />
-                Copy full survey
-              </Button>
-              <Button asChild className="rounded-[6px]">
-                <Link href={`/survey/${currentAgent.id}/configure`}>
-                  <Pencil className="size-4" />
-                  Edit survey
-                </Link>
-              </Button>
+              {canCreateSurvey && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="rounded-[6px]"
+                  onClick={handleClone}
+                >
+                  <Copy className="size-4" />
+                  Copy full survey
+                </Button>
+              )}
+              {canUpdateSurvey && (
+                <Button asChild className="rounded-[6px]">
+                  <Link href={`/survey/${currentAgent.id}/configure`}>
+                    <Pencil className="size-4" />
+                    Edit survey
+                  </Link>
+                </Button>
+              )}
             </div>
           </div>
 

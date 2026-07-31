@@ -1,15 +1,13 @@
 import { NextResponse } from "next/server";
-import { apiConfig } from "@/config/api";
-
-const BACKEND = `${apiConfig.baseUrl}/surveys`;
+import { backendAuthHeaders, surveysBackendUrl } from "../_proxy";
 
 export async function GET(
-  _request: Request,
+  request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
-  const res = await fetch(`${BACKEND}/${id}`, {
-    headers: apiConfig.headers,
+  const res = await fetch(surveysBackendUrl(`/${id}`), {
+    headers: backendAuthHeaders(request),
     cache: "no-store",
   });
   const json = await res.json();
@@ -17,13 +15,13 @@ export async function GET(
 }
 
 export async function DELETE(
-  _request: Request,
+  request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
-  const res = await fetch(`${BACKEND}/${id}`, {
+  const res = await fetch(surveysBackendUrl(`/${id}`), {
     method: "DELETE",
-    headers: apiConfig.headers,
+    headers: backendAuthHeaders(request),
   });
   const json = await res.json();
   return NextResponse.json(json, { status: res.status });

@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader } from "@/components/ui/sheet";
 import Link from "next/link";
 import { buildSystemPromptFromTemplate } from "@/lib/data/mock-survey-templates";
+import { usePermissions } from "@/hooks";
 import type { SurveyTemplate } from "@/types/survey-template";
 
 function DetailField({
@@ -35,6 +36,7 @@ export function SurveyTemplateDetailDrawer({
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
+  const { canCreateSurvey } = usePermissions();
   if (!template) return null;
 
   const systemPrompt = buildSystemPromptFromTemplate(template);
@@ -124,11 +126,13 @@ export function SurveyTemplateDetailDrawer({
           </div>
         </div>
 
-        <Button asChild className="w-full rounded-[6px]">
-          <Link href={`/survey/new?template=${template.id}`}>
-            + Create Survey from Template
-          </Link>
-        </Button>
+        {canCreateSurvey && (
+          <Button asChild className="w-full rounded-[6px]">
+            <Link href={`/survey/new?template=${template.id}`}>
+              + Create Survey from Template
+            </Link>
+          </Button>
+        )}
       </SheetContent>
     </Sheet>
   );

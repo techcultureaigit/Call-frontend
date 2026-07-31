@@ -1,13 +1,21 @@
 import type { PermissionAction, RolePermissions } from "@/types/role";
 
-/** Modules that appear in the sidebar — must match backend MODULES */
+/** Modules that appear in the sidebar / permission matrix — must match backend MODULES */
 export type NavModule =
   | "dashboard"
+  | "survey"
   | "surveys"
-  | "library"
-  | "customers"
+  | "voices"
+  | "audio_buffer"
+  | "survey_data"
   | "calls"
+  | "calls_live"
+  | "calls_history"
+  | "calls_recordings"
   | "responses"
+  | "responses_all"
+  | "responses_pending"
+  | "responses_flagged"
   | "reports"
   | "users"
   | "roles"
@@ -17,11 +25,19 @@ export type NavModule =
 
 export const SIDEBAR_MODULES: readonly NavModule[] = [
   "dashboard",
+  "survey",
   "surveys",
-  "library",
-  "customers",
+  "voices",
+  "audio_buffer",
+  "survey_data",
   "calls",
+  "calls_live",
+  "calls_history",
+  "calls_recordings",
   "responses",
+  "responses_all",
+  "responses_pending",
+  "responses_flagged",
   "reports",
   "users",
   "roles",
@@ -30,21 +46,20 @@ export const SIDEBAR_MODULES: readonly NavModule[] = [
   "settings",
 ] as const;
 
-/**
- * Permission helpers — currently open (no frontend RBAC).
- * Wire these to API role.permissions later.
- */
+/** Check a specific module action against the session permission matrix */
 export function can(
-  _permissions: RolePermissions | null | undefined,
-  _module: string,
-  _action: PermissionAction = "read"
+  permissions: RolePermissions | null | undefined,
+  module: string,
+  action: PermissionAction = "read"
 ): boolean {
-  return true;
+  if (!permissions) return false;
+  return Boolean(permissions[module]?.[action]);
 }
 
+/** Sidebar / route access — requires at least `read` on the module */
 export function hasModuleAccess(
-  _permissions: RolePermissions | null | undefined,
-  _module: NavModule
+  permissions: RolePermissions | null | undefined,
+  module: NavModule
 ): boolean {
-  return true;
+  return can(permissions, module, "read");
 }

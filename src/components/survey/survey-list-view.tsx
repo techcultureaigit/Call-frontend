@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useDebounce, usePageMeta } from "@/hooks";
+import { useDebounce, usePageMeta, usePermissions } from "@/hooks";
 import { surveysModuleService } from "@/services/surveys-module.service";
 import type { PaginatedMeta } from "@/types";
 import type { Agent } from "@/types/agent";
@@ -38,6 +38,7 @@ export function SurveyListView() {
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const [agents, setAgents] = useState<Agent[]>([]);
+  const { canCreateSurvey } = usePermissions();
   const [meta, setMeta] = useState<PaginatedMeta>(EMPTY_META);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -277,15 +278,26 @@ export function SurveyListView() {
                 className="h-11 rounded-[6px] border-border/50 bg-card pl-9 shadow-sm"
               />
             </div>
-            <Button
-              asChild
-              className="h-11 shrink-0 rounded-[6px] px-5 shadow-sm"
-            >
-              <Link href="/survey/new">
+            {canCreateSurvey ? (
+              <Button
+                asChild
+                className="h-11 shrink-0 rounded-[6px] px-5 shadow-sm"
+              >
+                <Link href="/survey/new">
+                  <UserPlus className="size-4" />
+                  Create New Survey
+                </Link>
+              </Button>
+            ) : (
+              <Button
+                className="h-11 shrink-0 rounded-[6px] px-5 shadow-sm"
+                disabled
+                title="You do not have permission to create surveys"
+              >
                 <UserPlus className="size-4" />
                 Create New Survey
-              </Link>
-            </Button>
+              </Button>
+            )}
           </div>
 
           {isLoading ? (
@@ -305,13 +317,18 @@ export function SurveyListView() {
                   ? "Try a different search term."
                   : "Create your first voice survey to get started."}
               </p>
-              {!search && (
+              {!search && canCreateSurvey && (
                 <Button asChild className="mt-4 rounded-[6px]">
                   <Link href="/survey/new">
                     <UserPlus className="size-4" />
                     Create New Survey
                   </Link>
                 </Button>
+              )}
+              {!search && !canCreateSurvey && (
+                <p className="mt-4 text-xs text-muted-foreground">
+                  You have view-only access. Ask an admin for create permission.
+                </p>
               )}
             </div>
           ) : (

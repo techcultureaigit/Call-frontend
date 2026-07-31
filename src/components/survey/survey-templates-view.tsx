@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
-import { useDebounce, usePageMeta, useSurveyTemplates } from "@/hooks";
+import { useDebounce, usePageMeta, usePermissions, useSurveyTemplates } from "@/hooks";
 import { SURVEY_TEMPLATE_INDUSTRIES } from "@/lib/data/mock-survey-templates";
 import { SurveyTemplateCard } from "./survey-template-card";
 import { SurveyTemplateDetailDrawer } from "./survey-template-detail-drawer";
@@ -20,6 +20,7 @@ export function SurveyTemplatesView() {
   const [industry, setIndustry] = useState("all");
   const [selected, setSelected] = useState<SurveyTemplate | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const { canCreateSurvey } = usePermissions();
 
   const debouncedSearch = useDebounce(search, 300);
 
@@ -134,13 +135,19 @@ export function SurveyTemplatesView() {
 
         <p className="text-center text-xs text-muted-foreground">
           {templates.length} template{templates.length !== 1 ? "s" : ""}{" "}
-          available ·{" "}
-          <Link
-            href="/survey/new"
-            className="font-medium text-primary hover:underline"
-          >
-            Start from scratch
-          </Link>
+          available
+          {canCreateSurvey ? (
+            <>
+              {" "}
+              ·{" "}
+              <Link
+                href="/survey/new"
+                className="font-medium text-primary hover:underline"
+              >
+                Start from scratch
+              </Link>
+            </>
+          ) : null}
         </p>
       </motion.div>
 

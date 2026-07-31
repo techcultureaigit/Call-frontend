@@ -1,6 +1,9 @@
 export const siteConfig = {
-  name: process.env.NEXT_PUBLIC_APP_NAME ?? "Voice Agent Survey",
-  description: "Enterprise CRM administration platform",
+  /** Product brand — voice survey + calling CRM admin */
+  name: "Voice Survey",
+  tagline: "Voice Survey CRM ADMIN",
+  description:
+    "VoxCRM — voice survey and calling CRM administration platform",
   url: process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000",
   ogImage: "/og.png",
   links: {

@@ -26,8 +26,8 @@ export const AUDIT_MODULE_OPTIONS: {
 }[] = [
   { value: "all", label: "All modules" },
   { value: "agents", label: "My Surveys" },
-  { value: "library", label: "Library" },
-  { value: "customers", label: "Survey Data" },
+  { value: "voices", label: "Voices" },
+  { value: "survey_data", label: "Survey Data" },
   { value: "surveys", label: "Surveys" },
   { value: "calls", label: "Calls" },
   { value: "responses", label: "Responses" },

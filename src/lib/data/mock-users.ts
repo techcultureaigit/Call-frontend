@@ -5,14 +5,37 @@ import type { RolePermissions } from "@/types/role";
 function viewerPerms(): RolePermissions {
   const p = createEmptyPermissions();
   p.dashboard = { ...p.dashboard, read: true };
+  p.survey = { ...p.survey, read: true };
   p.surveys = { ...p.surveys, read: true, export: true };
   p.library = { ...p.library, read: true, download: true };
+  p.audio_buffer = { ...p.audio_buffer, read: true, download: true };
   p.customers = { ...p.customers, read: true, export: true };
   p.calls = { ...p.calls, read: true, export: true, download: true };
+  p.calls_live = { ...p.calls_live, read: true, export: true, download: true };
+  p.calls_history = {
+    ...p.calls_history,
+    read: true,
+    export: true,
+    download: true,
+  };
+  p.calls_recordings = { ...p.calls_recordings, read: true, download: true };
   p.responses = { ...p.responses, read: true, export: true, download: true };
+  p.responses_all = {
+    ...p.responses_all,
+    read: true,
+    export: true,
+    download: true,
+  };
+  p.responses_pending = { ...p.responses_pending, read: true, export: true };
+  p.responses_flagged = { ...p.responses_flagged, read: true, export: true };
   p.reports = { ...p.reports, read: true, export: true, download: true };
   p.notifications = { ...p.notifications, read: true };
-  p.activity_logs = { ...p.activity_logs, read: true, export: true, download: true };
+  p.activity_logs = {
+    ...p.activity_logs,
+    read: true,
+    export: true,
+    download: true,
+  };
   return p;
 }
 

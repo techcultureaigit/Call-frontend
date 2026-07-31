@@ -1,10 +1,9 @@
 import {
   countEnabledPermissions,
   sanitizePermissions,
-  slugifyRole,
 } from "@/config/permission-modules";
 import { MOCK_ROLES, generateRoleId } from "@/lib/data/mock-roles";
-import type { Role, RoleListItem, RolePermissions } from "@/types/role";
+import { isImmutableRole, isProtectedRole, type Role, type RoleListItem, type RolePermissions } from "@/types/role";
 
 let rolesDB: Role[] = [...MOCK_ROLES];
 
@@ -26,8 +25,7 @@ export function queryRoles(params: RolesQueryParams = {}): RoleListItem[] {
     filtered = filtered.filter(
       (role) =>
         role.name.toLowerCase().includes(q) ||
-        role.description.toLowerCase().includes(q) ||
-        role.slug.toLowerCase().includes(q)
+        role.description.toLowerCase().includes(q)
     );
   }
 
@@ -41,7 +39,6 @@ export function getRoleById(id: string): Role | undefined {
 export interface CreateRolePayload {
   name: string;
   description: string;
-  color?: string;
   permissions: RolePermissions;
 }
 
@@ -50,10 +47,7 @@ export function createRole(payload: CreateRolePayload): Role {
   const role: Role = {
     id: generateRoleId(),
     name: payload.name,
-    slug: slugifyRole(payload.name),
     description: payload.description,
-    color: payload.color ?? "#4f46e5",
-    isSystem: false,
     userCount: 0,
     permissions: sanitizePermissions(payload.permissions),
     createdAt: now,
@@ -71,12 +65,15 @@ export function updateRole(
   if (index === -1) return null;
 
   const existing = rolesDB[index];
+  // System roles: name stays fixed; permissions can update
+  const nextName = isProtectedRole(existing.name)
+    ? existing.name
+    : (payload.name ?? existing.name);
+
   const updated: Role = {
     ...existing,
-    name: payload.name ?? existing.name,
-    slug: payload.name ? slugifyRole(payload.name) : existing.slug,
+    name: nextName,
     description: payload.description ?? existing.description,
-    color: payload.color ?? existing.color,
     permissions: payload.permissions
       ? sanitizePermissions(payload.permissions)
       : existing.permissions,
@@ -90,7 +87,14 @@ export function updateRole(
 export function deleteRole(id: string): { success: boolean; message?: string } {
   const role = rolesDB.find((r) => r.id === id);
   if (!role) return { success: false, message: "Role not found" };
-  if (role.isSystem) return { success: false, message: "System roles cannot be deleted" };
+  if (isProtectedRole(role.name)) {
+    return {
+      success: false,
+      message: isImmutableRole(role)
+        ? "Super Admin cannot be deleted"
+        : "System roles cannot be deleted",
+    };
+  }
   if (role.userCount > 0) {
     return { success: false, message: "Cannot delete role with assigned users" };
   }

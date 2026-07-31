@@ -6,6 +6,8 @@ export interface PermissionModuleConfig {
   label: string;
   description?: string;
   actions?: PermissionAction[];
+  /** Nested submodules — each has its own create/read/update/… row */
+  children?: PermissionModuleConfig[];
 }
 
 export interface PermissionModuleGroup {
@@ -39,11 +41,17 @@ export const PERMISSION_ACTION_LABELS: Record<PermissionAction, string> = {
   publish: "Publish",
 };
 
+/** Full CRUD — My Surveys, Voices, Audio Buffer, Users, Roles, Settings */
 const CRUD: PermissionAction[] = ["create", "read", "update", "delete"];
 
+/** Full action set for overall parent modules (Survey / Calls / Responses) */
+const MODULE_FULL: PermissionAction[] = [...PERMISSION_ACTIONS];
+
 /**
- * Permission matrix groups — mirrors sidebar sections exactly:
- * Dashboard | Survey Studio | Operations | Insights | Management | Configurations
+ * Permission matrix — category → parent → subcategory (mirrors sidebar + Roles UI).
+ *
+ * SURVEY → Survey → My Surveys (CRUD), Voices (CRUD+dl), Audio Buffer (CRUD), Survey Data
+ * OPERATIONS → Calls → Live/History/Recordings | Responses → All/Pending/Flagged
  */
 export const PERMISSION_MODULE_GROUPS: PermissionModuleGroup[] = [
   {
@@ -52,25 +60,40 @@ export const PERMISSION_MODULE_GROUPS: PermissionModuleGroup[] = [
     modules: [{ id: "dashboard", label: "Dashboard", actions: ["read"] }],
   },
   {
-    id: "survey_studio",
-    label: "Survey Studio",
+    id: "survey",
+    label: "Survey",
     modules: [
       {
-        id: "surveys",
-        label: "My Surveys",
-        // Create / edit / publish voice surveys
-        actions: [...CRUD, "export", "upload", "publish"],
-      },
-      {
-        id: "library",
-        label: "Library",
-        // Voices + audio buffer
-        actions: [...CRUD, "export", "upload", "download"],
-      },
-      {
-        id: "customers",
-        label: "Survey Data",
-        actions: [...CRUD, "export", "import", "upload"],
+        id: "survey",
+        label: "Survey",
+        description: "Overall Survey module permissions",
+        actions: MODULE_FULL,
+        children: [
+          {
+            id: "surveys",
+            label: "My Surveys",
+            description: "Create, read, update, delete surveys",
+            actions: [...CRUD],
+          },
+          {
+            id: "voices",
+            label: "Voices",
+            description: "Create, read, update, delete voices",
+            actions: [...CRUD, "download"],
+          },
+          {
+            id: "audio_buffer",
+            label: "Audio Buffer",
+            description: "Create, read, update, delete cached audio",
+            actions: [...CRUD],
+          },
+          {
+            id: "survey_data",
+            label: "Survey Data",
+            description: "Create, read, update, delete contacts",
+            actions: [...CRUD, "export", "import", "download"],
+          },
+        ],
       },
     ],
   },
@@ -81,12 +104,48 @@ export const PERMISSION_MODULE_GROUPS: PermissionModuleGroup[] = [
       {
         id: "calls",
         label: "Calls",
-        actions: [...CRUD, "export", "download"],
+        description: "Overall Calls module permissions",
+        actions: MODULE_FULL,
+        children: [
+          {
+            id: "calls_live",
+            label: "Live Calls",
+            actions: [...CRUD, "download"],
+          },
+          {
+            id: "calls_history",
+            label: "History",
+            actions: [...CRUD, "download"],
+          },
+          {
+            id: "calls_recordings",
+            label: "Recordings",
+            actions: [...CRUD, "download"],
+          },
+        ],
       },
       {
         id: "responses",
         label: "Responses",
-        actions: ["read", "export", "download"],
+        description: "Overall Responses module permissions",
+        actions: MODULE_FULL,
+        children: [
+          {
+            id: "responses_all",
+            label: "All Responses",
+            actions: ["read", "update", "delete", "download"],
+          },
+          {
+            id: "responses_pending",
+            label: "Pending",
+            actions: ["read", "update", "delete"],
+          },
+          {
+            id: "responses_flagged",
+            label: "Flagged",
+            actions: ["read", "update", "delete"],
+          },
+        ],
       },
     ],
   },
@@ -97,7 +156,7 @@ export const PERMISSION_MODULE_GROUPS: PermissionModuleGroup[] = [
       {
         id: "reports",
         label: "Reports",
-        actions: ["read", "export", "download"],
+        actions: ["read", "download"],
       },
     ],
   },
@@ -113,7 +172,7 @@ export const PERMISSION_MODULE_GROUPS: PermissionModuleGroup[] = [
       {
         id: "roles",
         label: "Roles",
-        actions: CRUD,
+        actions: [...CRUD],
       },
     ],
   },
@@ -131,15 +190,34 @@ export const PERMISSION_MODULE_GROUPS: PermissionModuleGroup[] = [
         label: "Activity Logs",
         actions: ["read", "export", "download"],
       },
-      { id: "settings", label: "Settings", actions: CRUD },
+      {
+        id: "settings",
+        label: "Settings",
+        actions: [...CRUD],
+      },
     ],
   },
 ];
 
-export const ALL_PERMISSION_MODULES: NavModule[] =
-  PERMISSION_MODULE_GROUPS.flatMap((group) =>
-    group.modules.map((module) => module.id)
-  );
+/** Depth-first flatten of modules + nested children */
+export function flattenPermissionModules(
+  modules: PermissionModuleConfig[]
+): PermissionModuleConfig[] {
+  return modules.flatMap((module) => [
+    module,
+    ...(module.children ? flattenPermissionModules(module.children) : []),
+  ]);
+}
+
+export function walkPermissionModules(
+  groups: PermissionModuleGroup[] = PERMISSION_MODULE_GROUPS
+): PermissionModuleConfig[] {
+  return groups.flatMap((group) => flattenPermissionModules(group.modules));
+}
+
+export const ALL_PERMISSION_MODULES: NavModule[] = walkPermissionModules().map(
+  (module) => module.id
+);
 
 export function emptyModulePermissions(): ModulePermissions {
   return {
@@ -180,10 +258,8 @@ export function createFullPermissions(): RolePermissions {
   return permissions;
 }
 
-export function getModuleActions(moduleId: NavModule): PermissionAction[] {
-  const config = PERMISSION_MODULE_GROUPS.flatMap((g) => g.modules).find(
-    (m) => m.id === moduleId
-  );
+export function getModuleActions(moduleId: NavModule | string): PermissionAction[] {
+  const config = walkPermissionModules().find((m) => m.id === moduleId);
   return config?.actions ?? PERMISSION_ACTIONS;
 }
 
@@ -217,10 +293,19 @@ export function sanitizePermissions(
   permissions: Partial<RolePermissions> | Record<string, Partial<ModulePermissions> | undefined>
 ): RolePermissions {
   const base = createEmptyPermissions();
+  const aliases: Record<string, string> = {
+    library: "voices",
+    customers: "survey_data",
+  };
 
   ALL_PERMISSION_MODULES.forEach((moduleId) => {
+    const legacyKey = Object.entries(aliases).find(
+      ([, neu]) => neu === moduleId
+    )?.[0];
+    const source =
+      permissions[moduleId] ||
+      (legacyKey ? permissions[legacyKey] : undefined);
     const allowedActions = getModuleActions(moduleId);
-    const source = permissions[moduleId];
 
     if (source) {
       allowedActions.forEach((action) => {

@@ -9,6 +9,7 @@ export {
 export { useLocalStorage } from "./use-local-storage";
 export { usePageMeta } from "./use-page-meta";
 export { useAuth } from "./use-auth";
+export { usePermissions } from "./use-permissions";
 export { useKeyboardShortcut } from "./use-keyboard-shortcut";
 export { useNavigation } from "./use-navigation";
 export { useDashboard } from "./use-dashboard";

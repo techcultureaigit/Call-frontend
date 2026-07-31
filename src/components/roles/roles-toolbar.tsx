@@ -33,7 +33,7 @@ export function RolesToolbar({
             )}
           </p>
         </div>
-        <Button onClick={onCreateClick} className="shrink-0">
+        <Button onClick={onCreateClick} className="shrink-0 rounded-[6px] shadow-brand">
           <ShieldPlus className="size-4" />
           Create Role
         </Button>
@@ -45,7 +45,7 @@ export function RolesToolbar({
           placeholder="Search roles..."
           value={search}
           onChange={(e) => onSearchChange(e.target.value)}
-          className="h-9 border-border/60 bg-muted/30 pl-9"
+          className="h-9 rounded-[6px] border-border/60 bg-card pl-9 shadow-subtle"
         />
       </div>
     </div>

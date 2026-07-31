@@ -1,7 +1,5 @@
 import { NextResponse } from "next/server";
-import { apiConfig } from "@/config/api";
-
-const BACKEND = `${apiConfig.baseUrl}/surveys`;
+import { backendAuthHeaders, surveysBackendUrl } from "../../_proxy";
 
 export async function POST(
   request: Request,
@@ -10,8 +8,9 @@ export async function POST(
   const { id } = await params;
   const formData = await request.formData();
 
-  const res = await fetch(`${BACKEND}/${id}/questions-file`, {
+  const res = await fetch(surveysBackendUrl(`/${id}/questions-file`), {
     method: "POST",
+    headers: backendAuthHeaders(request),
     body: formData,
   });
   const json = await res.json();

@@ -16,13 +16,14 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { createEmptyPermissions } from "@/config/permission-modules";
+import { createEmptyPermissions, sanitizePermissions } from "@/config/permission-modules";
 import {
   roleFormSchema,
   type RoleFormValues,
 } from "@/lib/validators/role";
 import { PermissionMatrix } from "./permission-matrix";
 import type { Role, RolePermissions } from "@/types/role";
+import { isProtectedRole } from "@/types/role";
 
 interface RoleFormModalProps {
   open: boolean;
@@ -48,6 +49,7 @@ export function RoleFormModal({
   isLoading,
 }: RoleFormModalProps) {
   const isEdit = Boolean(role);
+  const nameLocked = role ? isProtectedRole(role.name) : false;
   const [permissions, setPermissions] = useState<RolePermissions>(
     createEmptyPermissions()
   );
@@ -72,9 +74,14 @@ export function RoleFormModal({
             }
           : defaultValues
       );
-      setPermissions(role?.permissions ?? createEmptyPermissions());
+      setPermissions(
+        role?.permissions
+          ? sanitizePermissions(role.permissions)
+          : createEmptyPermissions()
+      );
     }
-  }, [open, role, reset]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- hydrate on open / role switch only
+  }, [open, role?.id, reset]);
 
   const handleFormSubmit = handleSubmit(async (values) => {
     await onSubmit(values, permissions);
@@ -103,7 +110,7 @@ export function RoleFormModal({
                     id="role-name"
                     {...register("name")}
                     placeholder="e.g. Campaign Manager"
-                    disabled={role?.isSystem}
+                    disabled={nameLocked}
                   />
                   {errors.name && (
                     <p className="text-xs text-destructive">{errors.name.message}</p>

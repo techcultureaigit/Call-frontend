@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ChevronRight } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
@@ -11,7 +10,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { isNavItemActive, isRouteActive } from "@/lib/navigation";
+import { isNavItemActive } from "@/lib/navigation";
 import { useSidebarStore, selectIsGroupExpanded } from "@/stores";
 import { cn } from "@/lib/utils";
 import { NavSubItem } from "./nav-sub-item";
@@ -25,27 +24,35 @@ interface NavGroupProps {
   onNavigate?: () => void;
 }
 
+/**
+ * Nested module group — same pattern as Calls / Responses:
+ * parent row toggles open; children are the real pages.
+ */
 export function NavGroup({
   item,
   collapsed,
-  activeGroupIds: _activeGroupIds,
+  activeGroupIds,
   index,
   onNavigate,
 }: NavGroupProps) {
   const pathname = usePathname();
   const expandedGroups = useSidebarStore((state) => state.expandedGroups);
-  const toggleGroup = useSidebarStore((state) => state.toggleGroup);
+  const setGroupExpanded = useSidebarStore((state) => state.setGroupExpanded);
   const [isHovered, setIsHovered] = useState(false);
 
-  const isExpanded = selectIsGroupExpanded(expandedGroups, item.id);
+  const isExpanded = selectIsGroupExpanded(
+    expandedGroups,
+    item.id,
+    activeGroupIds
+  );
   const isActive = isNavItemActive(pathname, item);
   const children = item.children ?? [];
   const siblingHrefs = children.map((child) => child.href);
-  const isSelfActive = isRouteActive(pathname, item.href, siblingHrefs);
   const Icon = item.icon;
 
-  // Category row: light tint (never pure white)
-  const categoryHighlight = isSelfActive || isExpanded || isActive;
+  const handleToggle = () => setGroupExpanded(item.id, !isExpanded);
+
+  const categoryHighlight = isExpanded || isActive;
 
   if (collapsed) {
     return (
@@ -79,7 +86,7 @@ export function NavGroup({
         >
           <button
             type="button"
-            onClick={() => toggleGroup(item.id)}
+            onClick={handleToggle}
             className={cn(
               "flex min-w-0 flex-1 items-center gap-3 rounded-[6px] px-3 py-2.5 text-left text-[13px] font-medium tracking-[-0.01em]",
               "transition-colors duration-[280ms] text-sidebar-foreground"
@@ -110,7 +117,7 @@ export function NavGroup({
             <TooltipTrigger asChild>
               <button
                 type="button"
-                onClick={() => toggleGroup(item.id)}
+                onClick={handleToggle}
                 className={cn(
                   "relative z-10 mr-1.5 inline-flex size-7 shrink-0 items-center justify-center rounded-md",
                   "text-sidebar-foreground transition-all duration-[280ms]",

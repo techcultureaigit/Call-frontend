@@ -3,15 +3,20 @@
 import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
-import { Loader2 } from "lucide-react";
+import { Eye, EyeOff, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { siteConfig } from "@/config/site";
 import { routePaths } from "@/config/navigation";
-import { mapLoginToSession, type BackendLoginData } from "@/lib/auth/map-session";
+import { apiPost, ApiClientError } from "@/lib/api";
+import {
+  mapLoginToSession,
+  type BackendLoginData,
+} from "@/lib/auth/map-session";
 import { useAuthStore } from "@/stores";
+import type { ApiResponse } from "@/types/api";
 
 function LoginForm() {
   const router = useRouter();
@@ -19,6 +24,7 @@ function LoginForm() {
   const setSession = useAuthStore((state) => state.setSession);
   const [email, setEmail] = useState("admin@crm.com");
   const [password, setPassword] = useState("Admin@123");
+  const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -30,31 +36,26 @@ function LoginForm() {
     setError(null);
 
     try {
-      // Static login bypass — no backend call needed
-      const staticPayload: BackendLoginData = {
-        accessToken: "static-dev-token",
-        refreshToken: "static-dev-refresh",
-        user: {
-          _id: "000000000000000000000001",
-          name: "Admin User",
-          email,
-          isActive: true,
-          role: {
-            _id: "000000000000000000000001",
-            name: "Admin",
-            slug: "admin",
-            permissions: {},
-          },
-        },
-      };
+      const res = await apiPost<ApiResponse<BackendLoginData>>(
+        "/auth/login",
+        { email, password }
+      );
 
-      setSession(mapLoginToSession(staticPayload));
+      if (!res.data?.accessToken || !res.data?.user) {
+        throw new Error(res.message || "Login failed");
+      }
+
+      setSession(mapLoginToSession(res.data));
       toast.success("Signed in successfully");
       router.push(redirect);
       router.refresh();
     } catch (err) {
       const message =
-        err instanceof Error ? err.message : "Login failed";
+        err instanceof ApiClientError
+          ? err.message
+          : err instanceof Error
+            ? err.message
+            : "Login failed";
       setError(message);
       toast.error(message);
     } finally {
@@ -104,15 +105,31 @@ function LoginForm() {
           <label htmlFor="password" className="text-sm font-medium">
             Password
           </label>
-          <Input
-            id="password"
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            placeholder="••••••••"
-            required
-            autoComplete="current-password"
-          />
+          <div className="relative">
+            <Input
+              id="password"
+              type={showPassword ? "text" : "password"}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="••••••••"
+              required
+              autoComplete="current-password"
+              className="pr-10"
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword((prev) => !prev)}
+              className="absolute inset-y-0 right-0 flex items-center px-3 text-muted-foreground transition-colors hover:text-foreground"
+              aria-label={showPassword ? "Hide password" : "Show password"}
+              tabIndex={-1}
+            >
+              {showPassword ? (
+                <EyeOff className="size-4" />
+              ) : (
+                <Eye className="size-4" />
+              )}
+            </button>
+          </div>
         </div>
 
         {error && (

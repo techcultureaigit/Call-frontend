@@ -3,13 +3,20 @@
 import { useMemo } from "react";
 import { usePathname } from "next/navigation";
 import { dashboardNavigation } from "@/config/navigation";
-import { getActiveNavGroupIds } from "@/lib/navigation";
+import {
+  filterNavigationByPermissions,
+  getActiveNavGroupIds,
+} from "@/lib/navigation";
+import { useAuthStore } from "@/stores";
 
 export function useNavigation() {
   const pathname = usePathname();
+  const permissions = useAuthStore((state) => state.user?.permissions);
 
-  // Role-based nav filtering disabled — enable later via API permissions
-  const navigation = dashboardNavigation;
+  const navigation = useMemo(
+    () => filterNavigationByPermissions(dashboardNavigation, permissions),
+    [permissions]
+  );
 
   const activeGroupIds = useMemo(
     () => getActiveNavGroupIds(pathname, navigation),

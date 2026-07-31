@@ -16,9 +16,9 @@ export type AuditAction =
   | "bulk_delete";
 
 export type AuditModule =
-  | "customers"
+  | "survey_data"
   | "agents"
-  | "library"
+  | "voices"
   | "surveys"
   | "calls"
   | "responses"

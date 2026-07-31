@@ -5,7 +5,6 @@ import { apiDelete, apiGet, apiPost, apiPut } from "@/lib/api";
 export interface CreateRolePayload {
   name: string;
   description?: string;
-  color?: string;
   permissions: RolePermissions;
 }
 

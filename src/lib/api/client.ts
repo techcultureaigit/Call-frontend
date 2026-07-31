@@ -97,7 +97,18 @@ function createAxiosInstance(options: ApiClientOptions = {}): AxiosInstance {
 
       if (error.response?.status === 401) {
         clearStoredTokens();
-        options.onUnauthorized?.() ?? redirectToLogin();
+        const requestUrl = originalRequest?.url ?? "";
+        const isAuthEndpoint =
+          requestUrl.includes("/auth/login") ||
+          requestUrl.includes("/auth/register") ||
+          requestUrl.includes("/auth/refresh");
+        const onLoginPage =
+          typeof window !== "undefined" &&
+          window.location.pathname.startsWith(authConfig.loginPath);
+
+        if (!isAuthEndpoint && !onLoginPage) {
+          options.onUnauthorized?.() ?? redirectToLogin();
+        }
       }
 
       const errorBody: ApiErrorBody = error.response?.data ?? {

@@ -2,14 +2,26 @@
 
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/constants/query-keys";
-import { apiPost } from "@/lib/api";
+import { apiGet, apiPost, ApiClientError } from "@/lib/api";
+import {
+  mapBackendUser,
+  type BackendAuthUser,
+} from "@/lib/auth/map-session";
 import { useAuthStore } from "@/stores";
 import type { ApiResponse } from "@/types/api";
 import type { User } from "@/types/user";
 
 async function fetchBackendSession(): Promise<User | null> {
-  // Static login bypass — skip backend /auth/me call
-  return null;
+  try {
+    const res = await apiGet<ApiResponse<BackendAuthUser>>("/auth/me");
+    if (!res.data) return null;
+    return mapBackendUser(res.data);
+  } catch (error) {
+    if (error instanceof ApiClientError && error.statusCode === 401) {
+      return null;
+    }
+    throw error;
+  }
 }
 
 export function useAuth() {
@@ -27,9 +39,10 @@ export function useAuth() {
     queryFn: async () => {
       const nextUser = await fetchBackendSession();
       if (nextUser) setUser(nextUser);
+      else if (tokens?.accessToken) clearSession();
       return nextUser ?? user;
     },
-    enabled: false,
+    enabled: isHydrated && Boolean(tokens?.accessToken),
     staleTime: 5 * 60 * 1000,
     retry: false,
   });

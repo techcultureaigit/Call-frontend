@@ -1,4 +1,5 @@
 import { createQueryString } from "@/lib/utils";
+import { storageKeys } from "@/lib/constants/storage-keys";
 import type { ApiResponse } from "@/types/api";
 
 type QueryValue = string | number | boolean | undefined | null;
@@ -14,6 +15,11 @@ export class ApiError extends Error {
     this.status = status;
     this.errors = errors;
   }
+}
+
+function getClientAccessToken(): string | null {
+  if (typeof window === "undefined") return null;
+  return localStorage.getItem(storageKeys.authToken);
 }
 
 async function parseErrorBody(response: Response): Promise<{
@@ -38,13 +44,18 @@ async function parseJson<T>(response: Response): Promise<T> {
   return response.json() as Promise<T>;
 }
 
-/** Shared fetch for Next.js `/api/*` BFF routes */
+/** Shared fetch for Next.js `/api/*` BFF routes — attaches Bearer token when present */
 export async function apiRequest<T>(
   path: string,
   init: RequestInit = {}
 ): Promise<T> {
   const headers = new Headers(init.headers);
   if (!headers.has("Accept")) headers.set("Accept", "application/json");
+
+  const token = getClientAccessToken();
+  if (token && !headers.has("Authorization")) {
+    headers.set("Authorization", `Bearer ${token}`);
+  }
 
   const response = await fetch(path, {
     ...init,

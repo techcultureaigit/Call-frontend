@@ -13,6 +13,7 @@ import {
   isSurveyReadyToSchedule,
 } from "@/lib/utils/survey-readiness";
 import { cn } from "@/lib/utils";
+import { usePermissions } from "@/hooks";
 import type { Agent } from "@/types/agent";
 import { SurveyStatusBadge } from "./survey-status-badge";
 
@@ -35,12 +36,18 @@ export function SurveyCard({
   onDelete,
   onSchedule,
 }: SurveyCardProps) {
+  const {
+    canCreateSurvey,
+    canUpdateSurvey,
+    canDeleteSurvey,
+  } = usePermissions();
   const voice = agent.config.persona.tts.voice?.trim() || "—";
   const language = getAgentLanguageLabel(
     agent.config.persona.language || agent.language
   );
   const maxDuration = agent.config.persona.maxCallDurationMinutes;
-  const canSchedule = isSurveyReadyToSchedule(agent);
+  const canSchedule =
+    canUpdateSurvey && isSurveyReadyToSchedule(agent);
   const displayStatus = getSurveyDisplayStatus(agent);
   const scheduled = displayStatus === "scheduled";
 
@@ -108,13 +115,15 @@ export function SurveyCard({
             >
               <Eye className="size-3.5" />
             </ActionButton>
-            <ActionButton
-              label="Edit survey"
-              href={`/survey/${agent.id}/configure`}
-              className="text-emerald-600 hover:bg-emerald-500/10 hover:text-emerald-700"
-            >
-              <Pencil className="size-3.5" />
-            </ActionButton>
+            {canUpdateSurvey && (
+              <ActionButton
+                label="Edit survey"
+                href={`/survey/${agent.id}/configure`}
+                className="text-emerald-600 hover:bg-emerald-500/10 hover:text-emerald-700"
+              >
+                <Pencil className="size-3.5" />
+              </ActionButton>
+            )}
             {canSchedule ? (
               <ActionButton
                 label={scheduled ? "Reschedule survey" : "Schedule survey"}
@@ -124,20 +133,24 @@ export function SurveyCard({
                 <CalendarClock className="size-3.5" />
               </ActionButton>
             ) : null}
-            <ActionButton
-              label="Copy full survey"
-              onClick={() => onClone?.(agent)}
-              className="text-blue-600 hover:bg-blue-500/10 hover:text-blue-700"
-            >
-              <Copy className="size-3.5" />
-            </ActionButton>
-            <ActionButton
-              label="Delete survey"
-              onClick={() => onDelete?.(agent)}
-              className="text-red-600 hover:bg-red-500/10 hover:text-red-700"
-            >
-              <Trash2 className="size-3.5" />
-            </ActionButton>
+            {canCreateSurvey && (
+              <ActionButton
+                label="Copy full survey"
+                onClick={() => onClone?.(agent)}
+                className="text-blue-600 hover:bg-blue-500/10 hover:text-blue-700"
+              >
+                <Copy className="size-3.5" />
+              </ActionButton>
+            )}
+            {canDeleteSurvey && (
+              <ActionButton
+                label="Delete survey"
+                onClick={() => onDelete?.(agent)}
+                className="text-red-600 hover:bg-red-500/10 hover:text-red-700"
+              >
+                <Trash2 className="size-3.5" />
+              </ActionButton>
+            )}
           </div>
         </div>
       </div>

@@ -71,8 +71,12 @@ export const useSidebarStore = create<SidebarStore>()(
 export function selectIsGroupExpanded(
   expandedGroups: Record<string, boolean>,
   groupId: string,
-  _activeGroupIds?: string[]
+  activeGroupIds: string[] = []
 ): boolean {
-  // Only open when user explicitly expanded — closed by default
-  return expandedGroups[groupId] === true;
+  // User explicitly collapsed while on an active route
+  if (expandedGroups[groupId] === false) return false;
+  // User explicitly expanded
+  if (expandedGroups[groupId] === true) return true;
+  // Auto-open when a child/parent route in this group is active
+  return activeGroupIds.includes(groupId);
 }
