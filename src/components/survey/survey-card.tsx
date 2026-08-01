@@ -102,9 +102,6 @@ export function SurveyCard({
             <p className="truncate">
               Created: {formatAgentCreatedAt(agent.createdAt)}
             </p>
-            <p className="truncate font-mono text-[10px]">
-              UUID: {agent.uuid}
-            </p>
           </div>
 
           <div className="flex shrink-0 items-center gap-1">

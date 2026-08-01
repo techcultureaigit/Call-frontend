@@ -50,7 +50,11 @@ export function NavGroup({
   const siblingHrefs = children.map((child) => child.href);
   const Icon = item.icon;
 
-  const handleToggle = () => setGroupExpanded(item.id, !isExpanded);
+  const handleToggle = () => {
+    // On an active route the group stays open — only toggle when inactive
+    if (isActive) return;
+    setGroupExpanded(item.id, !isExpanded);
+  };
 
   const categoryHighlight = isExpanded || isActive;
 
@@ -77,11 +81,13 @@ export function NavGroup({
         <div
           className={cn(
             "relative flex items-center rounded-[6px] transition-[background-color,box-shadow] duration-[280ms] ease-out",
-            categoryHighlight
-              ? "bg-[#f3f0f0]/14 text-sidebar-foreground"
-              : isHovered
-                ? "bg-sidebar-elevated"
-                : "bg-transparent"
+            isActive
+              ? "bg-white/15 text-sidebar-foreground ring-1 ring-inset ring-white/20"
+              : categoryHighlight
+                ? "bg-[#f3f0f0]/14 text-sidebar-foreground"
+                : isHovered
+                  ? "bg-sidebar-elevated"
+                  : "bg-transparent"
           )}
         >
           <button

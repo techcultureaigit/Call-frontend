@@ -1,6 +1,6 @@
 "use client";
 
-import { Fragment } from "react";
+import { Fragment, useState } from "react";
 import {
   PERMISSION_ACTIONS,
   PERMISSION_ACTION_LABELS,
@@ -57,6 +57,9 @@ export function PermissionMatrix({
   disabled = false,
   className,
 }: PermissionMatrixProps) {
+  /** Row currently being edited — stays highlighted until another module is focused */
+  const [activeModuleId, setActiveModuleId] = useState<string | null>(null);
+
   /** Next checked value for tri-state: indeterminate/unchecked → all on; all on → off */
   const nextTriState = (all: boolean, indeterminate: boolean) =>
     indeterminate || !all;
@@ -67,6 +70,7 @@ export function PermissionMatrix({
     action: PermissionAction,
     checked: boolean
   ) => {
+    setActiveModuleId(module.id);
     const next = clonePermissions(permissions);
     const apply = (mod: PermissionModuleConfig) => {
       if (getModuleActions(mod.id).includes(action)) {
@@ -79,22 +83,25 @@ export function PermissionMatrix({
     onChange(next);
   };
 
-  /** Toggle every action on this module + all descendants */
+  /** Toggle every action on this module + all descendants (skips indicators) */
   const toggleModuleRow = (
     module: PermissionModuleConfig,
     checked: boolean
   ) => {
+    setActiveModuleId(module.id);
     const next = clonePermissions(permissions);
     const apply = (mod: PermissionModuleConfig) => {
       const actions = getModuleActions(mod.id);
-      const row = {
-        ...emptyModulePermissions(),
-        ...ensureRow(next, mod.id),
-      };
-      actions.forEach((action) => {
-        row[action] = checked;
-      });
-      next[mod.id as keyof RolePermissions] = row;
+      if (actions.length > 0) {
+        const row = {
+          ...emptyModulePermissions(),
+          ...ensureRow(next, mod.id),
+        };
+        actions.forEach((action) => {
+          row[action] = checked;
+        });
+        next[mod.id as keyof RolePermissions] = row;
+      }
       mod.children?.forEach(apply);
     };
     apply(module);
@@ -102,6 +109,7 @@ export function PermissionMatrix({
   };
 
   const toggleActionColumn = (action: PermissionAction, checked: boolean) => {
+    setActiveModuleId(null);
     const next = clonePermissions(permissions);
     walkPermissionModules().forEach((module) => {
       if (getModuleActions(module.id).includes(action)) {
@@ -161,6 +169,17 @@ export function PermissionMatrix({
     };
   };
 
+  const moduleSupportsAction = (
+    mod: PermissionModuleConfig,
+    action: PermissionAction
+  ): boolean => {
+    if (getModuleActions(mod.id).includes(action)) return true;
+    return (
+      mod.children?.some((child) => moduleSupportsAction(child, action)) ??
+      false
+    );
+  };
+
   const renderModuleRow = (
     module: PermissionModuleConfig,
     depth: number
@@ -169,27 +188,39 @@ export function PermissionMatrix({
     const moduleActions = getModuleActions(module.id);
     const hasChildren = Boolean(module.children?.length);
     const isChild = depth > 0;
+    const isIndicator = hasChildren && moduleActions.length === 0;
+    const isEditing = activeModuleId === module.id;
 
     return (
       <Fragment key={module.id}>
         <tr
+          onMouseDown={() => !disabled && setActiveModuleId(module.id)}
+          onFocusCapture={() => !disabled && setActiveModuleId(module.id)}
           className={cn(
             "group/row border-b border-border/40 transition-colors",
-            !disabled && "hover:bg-brand-soft/50",
-            !isChild && hasChildren && "bg-muted/20"
+            !disabled && !isEditing && "hover:bg-brand-soft/50",
+            isEditing
+              ? "bg-brand/10 ring-1 ring-inset ring-brand/40"
+              : !isChild && hasChildren
+                ? "bg-muted/20"
+                : undefined
           )}
         >
           <td
             className={cn(
-              "sticky left-0 z-10 px-4 py-2.5",
-              !isChild && hasChildren ? "bg-muted/20" : "bg-card",
-              !disabled && "group-hover/row:bg-brand-soft/50"
+              "sticky left-0 z-10 border-l-4 px-4 py-2.5",
+              isEditing
+                ? "border-l-brand bg-brand/10"
+                : "border-l-transparent",
+              !isEditing && (!isChild && hasChildren ? "bg-muted/20" : "bg-card"),
+              !disabled && !isEditing && "group-hover/row:bg-brand-soft/50"
             )}
           >
             <div
               className={cn(
                 "flex items-center gap-2.5",
-                isChild && "ml-4 border-l-2 border-brand/25 pl-3"
+                isChild && "ml-4 border-l-2 border-brand/25 pl-3",
+                isEditing && isChild && "border-brand/50"
               )}
             >
               {!disabled && (
@@ -213,7 +244,8 @@ export function PermissionMatrix({
                       "truncate text-[13px] leading-tight",
                       !isChild
                         ? "font-semibold text-foreground"
-                        : "font-medium text-foreground/85"
+                        : "font-medium text-foreground/85",
+                      isEditing && "text-brand"
                     )}
                   >
                     {module.label}
@@ -221,6 +253,11 @@ export function PermissionMatrix({
                   {hasChildren && !isChild && (
                     <span className="shrink-0 rounded-[6px] bg-brand/10 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-brand">
                       {module.children!.length} sub
+                    </span>
+                  )}
+                  {isEditing && (
+                    <span className="shrink-0 rounded-[6px] bg-brand px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-white">
+                      Editing
                     </span>
                   )}
                 </div>
@@ -234,13 +271,16 @@ export function PermissionMatrix({
           </td>
 
           {PERMISSION_ACTIONS.map((action) => {
-            const isAvailable = moduleActions.includes(action);
-            const actionState = hasChildren
-              ? getModuleActionState(module, action)
-              : {
-                  all: Boolean(permissions[module.id]?.[action]),
-                  indeterminate: false,
-                };
+            const isAvailable =
+              moduleActions.includes(action) ||
+              (isIndicator && moduleSupportsAction(module, action));
+            const actionState =
+              hasChildren || isIndicator
+                ? getModuleActionState(module, action)
+                : {
+                    all: Boolean(permissions[module.id]?.[action]),
+                    indeterminate: false,
+                  };
 
             return (
               <td key={action} className="px-1.5 py-2.5 text-center sm:px-2">

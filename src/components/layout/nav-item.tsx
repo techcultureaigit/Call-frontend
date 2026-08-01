@@ -53,9 +53,7 @@ export function NavItem({
     collapsed && !nested && "justify-center px-2.5 py-2.5",
     disabled && "pointer-events-none opacity-40",
     isActive
-      ? nested
-        ? "bg-white text-neutral-900 shadow-[0_6px_16px_-8px_rgb(0_0_0/0.4)]"
-        : "text-neutral-900 shadow-[0_8px_24px_-10px_rgb(0_0_0/0.45)]"
+      ? "bg-white text-neutral-900 shadow-[0_8px_24px_-10px_rgb(0_0_0/0.45)]"
       : isCta
         ? "border border-dashed border-sidebar-primary/30 text-sidebar-primary hover:border-sidebar-primary/50 hover:bg-sidebar-primary/5"
         : "text-sidebar-foreground hover:-translate-y-px hover:bg-sidebar-elevated hover:opacity-100 hover:shadow-[0_6px_18px_-12px_rgb(0_0_0/0.6)]"

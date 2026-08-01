@@ -1,10 +1,14 @@
 import type { PermissionAction, RolePermissions } from "@/types/role";
+import {
+  isIndicatorModule,
+  walkPermissionModules,
+} from "@/config/permission-modules";
 
-/** Modules that appear in the sidebar / permission matrix — must match backend MODULES */
+/** Modules that appear in the sidebar / permission matrix — must match backend */
 export type NavModule =
   | "dashboard"
   | "survey"
-  | "surveys"
+  | "my_surveys"
   | "voices"
   | "audio_buffer"
   | "survey_data"
@@ -26,7 +30,7 @@ export type NavModule =
 export const SIDEBAR_MODULES: readonly NavModule[] = [
   "dashboard",
   "survey",
-  "surveys",
+  "my_surveys",
   "voices",
   "audio_buffer",
   "survey_data",
@@ -56,10 +60,23 @@ export function can(
   return Boolean(permissions[module]?.[action]);
 }
 
-/** Sidebar / route access — requires at least `read` on the module */
+/**
+ * Sidebar / route access.
+ * Indicators (survey/calls/responses): any child with `read` counts as access.
+ * Leaf modules: require `read` on that key.
+ */
 export function hasModuleAccess(
   permissions: RolePermissions | null | undefined,
   module: NavModule
 ): boolean {
-  return can(permissions, module, "read");
+  if (!permissions) return false;
+  if (can(permissions, module, "read")) return true;
+
+  if (!isIndicatorModule(module)) return false;
+
+  const config = walkPermissionModules().find((m) => m.id === module);
+  return (
+    config?.children?.some((child) => can(permissions, child.id, "read")) ??
+    false
+  );
 }

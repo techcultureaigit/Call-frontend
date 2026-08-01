@@ -2,9 +2,9 @@
  * Maps between the backend Survey model and the frontend Agent type.
  *
  * Backend shape (Mongoose):
- *   _id, uuid, name, status, conversationCount,
+ *   _id, name, status, conversationCount,
  *   persona { language, maxCallDurationMinutes, audioCacheEnabled, livekitInferenceEnabled, stt, llm, tts },
- *   prompts { greeting, greetsFirst, systemPrompt },
+ *   prompts { greeting, greetsFirst, systemPrompt, farewell },
  *   surveyQuestions { enabled, questions[] },
  *   clientContact { contactFileUrl, contactFileName, contacts[] },
  *   schedule { enabled, startAt, endAt, timezone, recurrence, status, lastScheduledAt },
@@ -13,7 +13,7 @@
  * Frontend shape: Agent (types/agent.ts)
  */
 
-import { DEFAULT_AGENT_CONFIG } from "@/lib/constants/agent-config";
+import { DEFAULT_AGENT_CONFIG, DEFAULT_FAREWELL } from "@/lib/constants/agent-config";
 import type {
   Agent,
   AgentConfig,
@@ -40,6 +40,7 @@ const DEFAULT_PROGRESS: AgentProgress = {
   identity: { complete: false, missing: ["name"] },
   prompts: { complete: false, missing: ["greeting_or_systemPrompt"] },
   "survey-questions": { complete: false, missing: ["questions"] },
+  farewell: { complete: false, optional: true, missing: ["farewell"] },
   "client-contact": { complete: false, missing: ["contact_file"] },
   schedule: { complete: false, optional: true, missing: [] },
   overallComplete: false,
@@ -82,6 +83,7 @@ export function backendSurveyToAgent(s: BackendSurvey): Agent {
       greeting: prompts.greeting ?? "",
       greetsFirst: prompts.greetsFirst ?? true,
       systemPrompt: prompts.systemPrompt ?? "",
+      farewell: prompts.farewell?.trim() ? prompts.farewell : DEFAULT_FAREWELL,
     },
     surveyQuestions: {
       enabled: sq.enabled ?? true,
@@ -121,6 +123,7 @@ export function backendSurveyToAgent(s: BackendSurvey): Agent {
     prompts: progress.prompts ?? DEFAULT_PROGRESS.prompts,
     "survey-questions":
       progress.surveyQuestions ?? DEFAULT_PROGRESS["survey-questions"],
+    farewell: progress.farewell ?? DEFAULT_PROGRESS.farewell,
     "client-contact":
       progress.clientContact ?? DEFAULT_PROGRESS["client-contact"],
     schedule: progress.schedule ?? DEFAULT_PROGRESS.schedule,
@@ -131,7 +134,6 @@ export function backendSurveyToAgent(s: BackendSurvey): Agent {
 
   return {
     id,
-    uuid: s.uuid ?? "",
     name: s.name ?? "",
     status: s.status ?? "draft",
     language: persona.language ?? "en",
@@ -153,7 +155,6 @@ export function backendSurveyToAgent(s: BackendSurvey): Agent {
 export function agentToBackendPayload(
   agent: {
     id?: string;
-    uuid: string;
     config: AgentConfig;
     status?: string;
     step?: number;
@@ -171,7 +172,6 @@ export function agentToBackendPayload(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const payload: Record<string, any> = {
     name: c.persona.name.trim() || "Untitled Survey",
-    uuid: agent.uuid,
     status: agent.status ?? "draft",
     persona: {
       language: c.persona.language,
@@ -190,6 +190,7 @@ export function agentToBackendPayload(
       greeting: c.prompts.greeting,
       greetsFirst: c.prompts.greetsFirst,
       systemPrompt: c.prompts.systemPrompt,
+      farewell: c.prompts.farewell ?? "",
     },
     surveyQuestions: {
       enabled: c.surveyQuestions.enabled,

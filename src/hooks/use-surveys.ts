@@ -4,7 +4,6 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { DEFAULT_AGENT_CONFIG } from "@/lib/constants/agent-config";
 import { queryKeys } from "@/lib/constants/query-keys";
-import { generateAgentUuid } from "@/lib/data/mock-agents";
 import { surveysModuleService } from "@/services/surveys-module.service";
 import type { Agent, AgentSurveyQuestion } from "@/types/agent";
 import type { QuestionType, SurveyQuestion } from "@/types/survey";
@@ -117,7 +116,6 @@ export function useSurveyMutations() {
         },
       };
       return surveysModuleService.save({
-        uuid: generateAgentUuid(),
         config,
         status: "draft",
       });
@@ -154,7 +152,6 @@ export function useSurveyMutations() {
       };
       return surveysModuleService.save({
         id,
-        uuid: existing.uuid,
         config,
         status: payload.status ?? existing.status,
       });
@@ -177,7 +174,6 @@ export function useSurveyMutations() {
       const existing = await surveysModuleService.getById(id);
       return surveysModuleService.save({
         id,
-        uuid: existing.uuid,
         config: existing.config,
         status: published ? "active" : "draft",
       });

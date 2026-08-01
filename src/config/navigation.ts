@@ -69,7 +69,7 @@ export const dashboardNavigation: NavSection[] = [
             title: "My Surveys",
             href: "/survey",
             icon: ClipboardList,
-            module: "surveys",
+            module: "my_surveys",
             description: "List, create, edit, and delete surveys.",
           },
           {

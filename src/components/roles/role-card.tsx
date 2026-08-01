@@ -59,14 +59,19 @@ export function RoleCard({
         }
       }}
       className={cn(
-        "group relative w-full cursor-pointer rounded-[6px] border bg-card p-5 text-left shadow-card transition-all duration-200",
-        "hover:shadow-elevated hover:border-border",
+        "group relative w-full cursor-pointer rounded-[6px] border p-5 text-left shadow-card transition-all duration-200",
+        "hover:shadow-elevated",
         isSelected
-          ? "border-brand/35 ring-2 ring-brand/15 shadow-elevated"
-          : "border-border/60"
+          ? "border-brand bg-brand-soft shadow-elevated ring-2 ring-brand/30"
+          : "border-border/60 bg-card hover:border-border"
       )}
     >
-      <div className="absolute inset-x-0 top-0 h-1 rounded-t-[6px] bg-brand" />
+      <div
+        className={cn(
+          "absolute inset-x-0 top-0 h-1 rounded-t-[6px]",
+          isSelected ? "bg-brand" : "bg-brand/40"
+        )}
+      />
 
       <div className="flex items-start justify-between gap-2">
         <div className="flex items-center gap-2.5">
@@ -81,10 +86,20 @@ export function RoleCard({
             <Shield className="size-4" />
           </div>
           <div>
-            <div className="flex items-center gap-2">
-              <h3 className="text-sm font-semibold tracking-tight">
+            <div className="flex flex-wrap items-center gap-2">
+              <h3
+                className={cn(
+                  "text-sm font-semibold tracking-tight",
+                  isSelected && "text-brand"
+                )}
+              >
                 {role.name}
               </h3>
+              {isSelected && (
+                <span className="inline-flex items-center rounded-md bg-brand px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-white">
+                  Editing
+                </span>
+              )}
               {protectedRole && (
                 <span className="inline-flex items-center gap-0.5 rounded-md bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
                   <Lock className="size-2.5" />

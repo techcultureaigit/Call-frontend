@@ -48,20 +48,22 @@ export function isRouteActive(
   href: string,
   siblingHrefs: string[] = []
 ): boolean {
-  const currentPath = pathname.split("?")[0].split("#")[0];
-  const targetPath = href.split("?")[0].split("#")[0];
+  const currentPath = pathname.split("?")[0].split("#")[0].replace(/\/$/, "") || "/";
+  const targetPath = href.split("?")[0].split("#")[0].replace(/\/$/, "") || "/";
 
   if (currentPath === targetPath) return true;
   if (targetPath === "/dashboard") return false;
 
+  // Keep parent nav active on nested pages (e.g. /roles/[id]/edit, /roles/new)
   const isNested = currentPath.startsWith(`${targetPath}/`);
   if (!isNested) return false;
 
   const hasMoreSpecificSibling = siblingHrefs.some((sibling) => {
-    const siblingPath = sibling.split("?")[0].split("#")[0];
+    const siblingPath =
+      sibling.split("?")[0].split("#")[0].replace(/\/$/, "") || "/";
     return (
       siblingPath !== targetPath &&
-      siblingPath.startsWith(targetPath) &&
+      siblingPath.startsWith(`${targetPath}/`) &&
       (currentPath === siblingPath ||
         currentPath.startsWith(`${siblingPath}/`))
     );
@@ -74,10 +76,14 @@ export function isNavItemActive(
   pathname: string,
   item: NavItemConfig
 ): boolean {
-  if (isRouteActive(pathname, item.href)) return true;
+  const siblingHrefs = item.children?.map((child) => child.href) ?? [];
+
+  if (isRouteActive(pathname, item.href, siblingHrefs)) return true;
 
   return (
-    item.children?.some((child) => isNavItemActive(pathname, child)) ?? false
+    item.children?.some((child) =>
+      isRouteActive(pathname, child.href, siblingHrefs)
+    ) ?? false
   );
 }
 

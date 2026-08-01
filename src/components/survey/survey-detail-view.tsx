@@ -126,6 +126,7 @@ export function SurveyDetailView({ agent }: { agent: Agent }) {
   const language = getAgentLanguageLabel(persona.language || currentAgent.language);
   const greeting = currentAgent.config.prompts.greeting?.trim() || "—";
   const systemPrompt = currentAgent.config.prompts.systemPrompt?.trim() || "—";
+  const farewell = currentAgent.config.prompts.farewell?.trim() || "—";
   const greetsFirst = currentAgent.config.prompts.greetsFirst;
   const questions = currentAgent.config.surveyQuestions.questions ?? [];
   const questionsFileUrl = currentAgent.config.surveyQuestions.questionsFileUrl ?? "";
@@ -142,15 +143,6 @@ export function SurveyDetailView({ agent }: { agent: Agent }) {
     id: tab.id,
     title: tab.label,
   }));
-
-  const handleCopyUuid = async () => {
-    try {
-      await navigator.clipboard.writeText(currentAgent.uuid);
-      toast.success("UUID copied to clipboard");
-    } catch {
-      toast.error("Failed to copy UUID");
-    }
-  };
 
   const handleClone = async () => {
     try {
@@ -212,7 +204,7 @@ export function SurveyDetailView({ agent }: { agent: Agent }) {
               >
                 <ArrowLeft className="size-4" />
               </Button>
-              <SurveyAvatar seed={currentAgent.uuid} avatarId={persona.avatarId} />
+              <SurveyAvatar seed={currentAgent.id} avatarId={persona.avatarId} />
               <div className="min-w-0">
                 <h1 className="font-display text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
                   {currentAgent.name}
@@ -289,23 +281,6 @@ export function SurveyDetailView({ agent }: { agent: Agent }) {
                   </DetailField>
                   <DetailField label="Realtime audio">
                     {onOff(persona.livekitInferenceEnabled)}
-                  </DetailField>
-                  <DetailField label="UUID">
-                    <div className="flex items-center gap-2">
-                      <code className="truncate font-mono text-xs">
-                        {currentAgent.uuid}
-                      </code>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        className="size-7 shrink-0"
-                        onClick={handleCopyUuid}
-                        aria-label="Copy UUID"
-                      >
-                        <Copy className="size-3.5" />
-                      </Button>
-                    </div>
                   </DetailField>
                   <DetailField label="Updated">
                     <span className="inline-flex items-center gap-1.5">
@@ -444,6 +419,14 @@ export function SurveyDetailView({ agent }: { agent: Agent }) {
 
             <StepSection step={4} title={stepMeta[3].title}>
               <div className="space-y-3 rounded-[6px] border border-border/50 bg-muted/20 p-4">
+                <DetailField label="Agent farewell">
+                  <span className="text-muted-foreground">{farewell}</span>
+                </DetailField>
+              </div>
+            </StepSection>
+
+            <StepSection step={5} title={stepMeta[4].title}>
+              <div className="space-y-3 rounded-[6px] border border-border/50 bg-muted/20 p-4">
                 {contact.contactFileName || contact.contactFileUrl ? (
                   <>
                     <DetailField label="Contact file">
@@ -479,7 +462,7 @@ export function SurveyDetailView({ agent }: { agent: Agent }) {
               </div>
             </StepSection>
 
-            <StepSection step={5} title={stepMeta[4].title}>
+            <StepSection step={6} title={stepMeta[5].title}>
               <div className="grid gap-3 rounded-[6px] border border-border/50 bg-muted/20 p-4 sm:grid-cols-2">
                 <DetailField label="Status">
                   {scheduled ? "Scheduled" : "Not scheduled"}

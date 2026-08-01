@@ -3,7 +3,6 @@ import { storageKeys } from "@/lib/constants/storage-keys";
 import {
   filterAgents,
   generateAgentId,
-  generateAgentUuid,
   MOCK_AGENTS,
 } from "@/lib/data/mock-agents";
 import {
@@ -88,7 +87,6 @@ export function getAgentById(id: string): Agent | undefined {
 
 export interface SaveAgentInput {
   id?: string;
-  uuid: string;
   config: AgentConfig;
   status?: Agent["status"];
 }
@@ -105,7 +103,6 @@ export function saveAgent(input: SaveAgentInput): Agent {
     const updated: Agent = {
       ...existing,
       name,
-      uuid: input.uuid,
       status: input.status ?? existing.status,
       language: input.config.persona.language,
       modelMode: input.config.persona.modelMode,
@@ -120,7 +117,6 @@ export function saveAgent(input: SaveAgentInput): Agent {
 
   const created: Agent = {
     id: generateAgentId(),
-    uuid: input.uuid,
     name,
     status: input.status ?? "active",
     language: input.config.persona.language,
@@ -167,7 +163,6 @@ export function cloneAgent(id: string): Agent | null {
 
   const cloned: Agent = {
     id: generateAgentId(),
-    uuid: generateAgentUuid(),
     name: copyName,
     status: source.status,
     language: source.language,

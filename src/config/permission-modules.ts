@@ -44,14 +44,9 @@ export const PERMISSION_ACTION_LABELS: Record<PermissionAction, string> = {
 /** Full CRUD — My Surveys, Voices, Audio Buffer, Users, Roles, Settings */
 const CRUD: PermissionAction[] = ["create", "read", "update", "delete"];
 
-/** Full action set for overall parent modules (Survey / Calls / Responses) */
-const MODULE_FULL: PermissionAction[] = [...PERMISSION_ACTIONS];
-
 /**
- * Permission matrix — category → parent → subcategory (mirrors sidebar + Roles UI).
- *
- * SURVEY → Survey → My Surveys (CRUD), Voices (CRUD+dl), Audio Buffer (CRUD), Survey Data
- * OPERATIONS → Calls → Live/History/Recordings | Responses → All/Pending/Flagged
+ * Permission matrix UI — indicator (no CRUD) → leaf modules (CRUD).
+ * Storage is FLAT leaf keys only. survey/calls/responses are labels for cascade UI.
  */
 export const PERMISSION_MODULE_GROUPS: PermissionModuleGroup[] = [
   {
@@ -66,11 +61,11 @@ export const PERMISSION_MODULE_GROUPS: PermissionModuleGroup[] = [
       {
         id: "survey",
         label: "Survey",
-        description: "Overall Survey module permissions",
-        actions: MODULE_FULL,
+        description: "Indicator — set CRUD on submodules below",
+        actions: [],
         children: [
           {
-            id: "surveys",
+            id: "my_surveys",
             label: "My Surveys",
             description: "Create, read, update, delete surveys",
             actions: [...CRUD],
@@ -104,8 +99,8 @@ export const PERMISSION_MODULE_GROUPS: PermissionModuleGroup[] = [
       {
         id: "calls",
         label: "Calls",
-        description: "Overall Calls module permissions",
-        actions: MODULE_FULL,
+        description: "Indicator — set CRUD on Live / History / Recordings",
+        actions: [],
         children: [
           {
             id: "calls_live",
@@ -127,8 +122,8 @@ export const PERMISSION_MODULE_GROUPS: PermissionModuleGroup[] = [
       {
         id: "responses",
         label: "Responses",
-        description: "Overall Responses module permissions",
-        actions: MODULE_FULL,
+        description: "Indicator — set permissions on All / Pending / Flagged",
+        actions: [],
         children: [
           {
             id: "responses_all",
@@ -215,9 +210,15 @@ export function walkPermissionModules(
   return groups.flatMap((group) => flattenPermissionModules(group.modules));
 }
 
-export const ALL_PERMISSION_MODULES: NavModule[] = walkPermissionModules().map(
-  (module) => module.id
-);
+/** Leaf modules that store CRUD in Role.permissions (excludes indicators) */
+export const ALL_PERMISSION_MODULES: NavModule[] = walkPermissionModules()
+  .filter((module) => (module.actions?.length ?? 0) > 0)
+  .map((module) => module.id);
+
+export function isIndicatorModule(moduleId: string): boolean {
+  const config = walkPermissionModules().find((m) => m.id === moduleId);
+  return Boolean(config?.children?.length) && !(config?.actions?.length);
+}
 
 export function emptyModulePermissions(): ModulePermissions {
   return {
@@ -260,7 +261,8 @@ export function createFullPermissions(): RolePermissions {
 
 export function getModuleActions(moduleId: NavModule | string): PermissionAction[] {
   const config = walkPermissionModules().find((m) => m.id === moduleId);
-  return config?.actions ?? PERMISSION_ACTIONS;
+  if (!config) return PERMISSION_ACTIONS;
+  return config.actions ?? [];
 }
 
 export function countEnabledPermissions(
@@ -289,32 +291,86 @@ export function slugifyRole(name: string): string {
     .replace(/^-+|-+$/g, "");
 }
 
-export function sanitizePermissions(
-  permissions: Partial<RolePermissions> | Record<string, Partial<ModulePermissions> | undefined>
+const MODULE_ALIASES: Record<string, string> = {
+  library: "voices",
+  customers: "survey_data",
+  surveys: "my_surveys",
+};
+
+function getParentId(moduleId: string): string | null {
+  for (const mod of walkPermissionModules()) {
+    if (mod.children?.some((c) => c.id === moduleId)) return mod.id;
+  }
+  return null;
+}
+
+function pickActions(
+  source: Partial<ModulePermissions> | Record<string, unknown> | undefined,
+  moduleId: string
+): ModulePermissions {
+  const next = emptyModulePermissions();
+  if (!source) return next;
+  getModuleActions(moduleId).forEach((action) => {
+    next[action] = Boolean(source[action]);
+  });
+  return next;
+}
+
+/**
+ * Any shape → flat RolePermissions (supports legacy nested docs).
+ * DB/API store flat leaf keys only (my_surveys, voices, calls_live, …).
+ */
+export function flattenPermissions(
+  incoming:
+    | Partial<RolePermissions>
+    | Record<string, unknown>
+    | null
+    | undefined
 ): RolePermissions {
   const base = createEmptyPermissions();
-  const aliases: Record<string, string> = {
-    library: "voices",
-    customers: "survey_data",
-  };
+  if (!incoming || typeof incoming !== "object") return base;
+
+  const raw = incoming as Record<string, unknown>;
 
   ALL_PERMISSION_MODULES.forEach((moduleId) => {
-    const legacyKey = Object.entries(aliases).find(
+    const parentId = getParentId(moduleId);
+    const alias = Object.entries(MODULE_ALIASES).find(
       ([, neu]) => neu === moduleId
     )?.[0];
-    const source =
-      permissions[moduleId] ||
-      (legacyKey ? permissions[legacyKey] : undefined);
-    const allowedActions = getModuleActions(moduleId);
 
-    if (source) {
-      allowedActions.forEach((action) => {
-        base[moduleId][action] = Boolean(source[action]);
-      });
+    let source: Record<string, unknown> | undefined;
+
+    // Legacy nested: survey.my_surveys
+    if (parentId && raw[parentId] && typeof raw[parentId] === "object") {
+      const parent = raw[parentId] as Record<string, unknown>;
+      if (parent[moduleId] && typeof parent[moduleId] === "object") {
+        source = parent[moduleId] as Record<string, unknown>;
+      } else if (alias && parent[alias] && typeof parent[alias] === "object") {
+        source = parent[alias] as Record<string, unknown>;
+      }
     }
+
+    if (!source && raw[moduleId] && typeof raw[moduleId] === "object") {
+      source = raw[moduleId] as Record<string, unknown>;
+    }
+    if (!source && alias && raw[alias] && typeof raw[alias] === "object") {
+      source = raw[alias] as Record<string, unknown>;
+    }
+
+    base[moduleId] = pickActions(source, moduleId);
   });
 
   return base;
+}
+
+/** Always flat for matrix / session / save */
+export function sanitizePermissions(
+  permissions:
+    | Partial<RolePermissions>
+    | Record<string, Partial<ModulePermissions> | undefined>
+    | Record<string, unknown>
+): RolePermissions {
+  return flattenPermissions(permissions);
 }
 
 export type { ModulePermissions };

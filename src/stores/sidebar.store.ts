@@ -73,10 +73,7 @@ export function selectIsGroupExpanded(
   groupId: string,
   activeGroupIds: string[] = []
 ): boolean {
-  // User explicitly collapsed while on an active route
-  if (expandedGroups[groupId] === false) return false;
-  // User explicitly expanded
-  if (expandedGroups[groupId] === true) return true;
-  // Auto-open when a child/parent route in this group is active
-  return activeGroupIds.includes(groupId);
+  // Current route lives in this group — always expand so the active page is visible
+  if (activeGroupIds.includes(groupId)) return true;
+  return expandedGroups[groupId] === true;
 }

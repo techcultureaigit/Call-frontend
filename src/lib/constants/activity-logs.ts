@@ -28,7 +28,7 @@ export const AUDIT_MODULE_OPTIONS: {
   { value: "agents", label: "My Surveys" },
   { value: "voices", label: "Voices" },
   { value: "survey_data", label: "Survey Data" },
-  { value: "surveys", label: "Surveys" },
+  { value: "my_surveys", label: "My Surveys" },
   { value: "calls", label: "Calls" },
   { value: "responses", label: "Responses" },
   { value: "users", label: "Users" },

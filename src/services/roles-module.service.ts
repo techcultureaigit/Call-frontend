@@ -3,6 +3,7 @@ import {
   ALL_PERMISSION_MODULES,
   PERMISSION_ACTIONS,
   PERMISSION_MODULE_GROUPS,
+  sanitizePermissions,
 } from "@/config/permission-modules";
 import { ApiClientError } from "@/lib/api";
 import type { Role, RoleListItem, RolePermissions } from "@/types/role";
@@ -23,12 +24,20 @@ function unwrapError(error: unknown, fallback: string): Error {
   return new Error(fallback);
 }
 
+/** Normalize legacy nested → flat for UI */
+function normalizeRole<T extends Role>(role: T): T {
+  return {
+    ...role,
+    permissions: sanitizePermissions(role.permissions),
+  };
+}
+
 /** Roles service — Express `/api/v1/roles` via axios `rolesApi` */
 export const rolesModuleService = {
   list: async (search = ""): Promise<RoleListItem[]> => {
     try {
       const res = await rolesApi.list(search);
-      return res.data ?? [];
+      return (res.data ?? []).map((role) => normalizeRole(role));
     } catch (error) {
       throw unwrapError(error, "Failed to load roles");
     }
@@ -38,7 +47,7 @@ export const rolesModuleService = {
     try {
       const res = await rolesApi.getById(id);
       if (!res.data) throw new Error("Role not found");
-      return res.data;
+      return normalizeRole(res.data);
     } catch (error) {
       throw unwrapError(error, "Failed to load role");
     }
@@ -72,10 +81,10 @@ export const rolesModuleService = {
       const res = await rolesApi.create({
         name: payload.name,
         description: payload.description ?? "",
-        permissions: payload.permissions,
+        permissions: sanitizePermissions(payload.permissions),
       });
       if (!res.data) throw new Error("Failed to create role");
-      return res.data;
+      return normalizeRole(res.data);
     } catch (error) {
       throw unwrapError(error, "Failed to create role");
     }
@@ -83,9 +92,13 @@ export const rolesModuleService = {
 
   update: async (id: string, payload: UpdateRolePayload): Promise<Role> => {
     try {
-      const res = await rolesApi.update(id, payload);
+      const body: UpdateRolePayload = { ...payload };
+      if (payload.permissions) {
+        body.permissions = sanitizePermissions(payload.permissions);
+      }
+      const res = await rolesApi.update(id, body);
       if (!res.data) throw new Error("Role not found");
-      return res.data;
+      return normalizeRole(res.data);
     } catch (error) {
       throw unwrapError(error, "Failed to update role");
     }

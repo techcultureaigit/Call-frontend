@@ -1,5 +1,8 @@
 import type { AgentConfig } from "@/types/agent";
 
+export const DEFAULT_FAREWELL =
+  "Thank you very much for your valuable time. We sincerely appreciate your participation in this survey. Have a wonderful day!";
+
 export const AGENT_TOP_NAV = [
   { id: "dashboard", label: "Dashboard", href: "/survey" },
   { id: "configure", label: "Configure", href: "#" },
@@ -12,6 +15,7 @@ export const AGENT_CONFIG_TABS = [
   { id: "persona", label: "Identity" },
   { id: "prompts", label: "Instructions" },
   { id: "survey-questions", label: "Survey Questions" },
+  { id: "farewell", label: "Farewell" },
   { id: "client-contact", label: "Contact of Client" },
   { id: "schedule", label: "Schedule" },
   { id: "wisdom", label: "Knowledge" },
@@ -165,6 +169,7 @@ export const DEFAULT_AGENT_CONFIG: AgentConfig = {
     greetsFirst: true,
     systemPrompt:
       "You are a professional voice AI agent for enterprise customer outreach. Conduct surveys naturally, handle objections gracefully, and maintain a warm professional tone throughout the conversation.",
+    farewell: DEFAULT_FAREWELL,
   },
   wisdom: {
     websiteUrls: [],

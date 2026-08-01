@@ -98,7 +98,7 @@ export function NavFlyout({
         "group relative flex items-center justify-center rounded-[6px] px-2.5 py-2.5",
         "transition-[background-color,box-shadow] duration-[280ms] ease-out",
         isActive
-          ? "text-neutral-900 shadow-[0_8px_20px_-8px_rgb(0_0_0/0.45)]"
+          ? "bg-white text-neutral-900 shadow-[0_8px_20px_-8px_rgb(0_0_0/0.45)]"
           : "text-sidebar-foreground hover:bg-sidebar-elevated",
         isOpen && !isActive && "bg-sidebar-elevated"
       )}

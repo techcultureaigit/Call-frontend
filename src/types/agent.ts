@@ -5,6 +5,7 @@ export type AgentConfigTab =
   | "prompts"
   | "functions"
   | "survey-questions"
+  | "farewell"
   | "client-contact"
   | "schedule"
   | "wisdom"
@@ -69,6 +70,7 @@ export interface AgentPromptsConfig {
   greeting: string;
   greetsFirst: boolean;
   systemPrompt: string;
+  farewell: string;
 }
 
 export interface AgentWisdomConfig {
@@ -176,6 +178,7 @@ export interface AgentProgress {
   identity: AgentStepProgress;
   prompts: AgentStepProgress;
   "survey-questions": AgentStepProgress;
+  farewell: AgentStepProgress;
   "client-contact": AgentStepProgress;
   schedule: AgentStepProgress;
   overallComplete: boolean;
@@ -195,7 +198,6 @@ export interface AgentConfig {
 
 export interface Agent extends Timestamps {
   id: ID;
-  uuid: string;
   name: string;
   status: "draft" | "active" | "paused";
   language: string;

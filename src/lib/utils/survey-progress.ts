@@ -71,11 +71,21 @@ export function computeSurveyProgress(
     }
   }
 
+  const farewellMissing: string[] = [];
+  if (!config.prompts.farewell?.trim()) {
+    farewellMissing.push("farewell");
+  }
+
   const identity = { complete: identityMissing.length === 0, missing: identityMissing };
   const prompts = { complete: promptsMissing.length === 0, missing: promptsMissing };
   const surveyQuestions = {
     complete: questionMissing.length === 0,
     missing: questionMissing,
+  };
+  const farewell = {
+    complete: farewellMissing.length === 0,
+    optional: true,
+    missing: farewellMissing,
   };
   const clientContact = {
     complete: contactMissing.length === 0,
@@ -98,6 +108,7 @@ export function computeSurveyProgress(
     identity,
     prompts,
     "survey-questions": surveyQuestions,
+    farewell,
     "client-contact": clientContact,
     schedule: scheduleStep,
     overallComplete: completedRequiredSteps === 4,

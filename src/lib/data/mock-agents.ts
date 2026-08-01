@@ -9,7 +9,6 @@ function at(iso: string): string {
 export const MOCK_AGENTS: Agent[] = [
   {
     id: "agent_001",
-    uuid: "a7f3e912-8c45-4d2a-b6f1-9e0d3c7a1b42",
     name: "Grievance Help Desk",
     status: "active",
     language: "en",
@@ -88,7 +87,6 @@ export const MOCK_AGENTS: Agent[] = [
   },
   {
     id: "agent_002",
-    uuid: "bf8ee71a-191d-4263-9ff9-18c0fce7159d",
     name: "Candidate Screening",
     status: "active",
     language: "en",
@@ -168,13 +166,9 @@ export function filterAgents(agents: Agent[], search: string): Agent[] {
   return agents.filter(
     (a) =>
       a.name.toLowerCase().includes(q) ||
-      a.uuid.toLowerCase().includes(q) ||
+      a.id.toLowerCase().includes(q) ||
       a.config.persona.tts.voice?.toLowerCase().includes(q)
   );
-}
-
-export function generateAgentUuid(): string {
-  return crypto.randomUUID?.() ?? `agent-${Date.now()}`;
 }
 
 export function generateAgentId(): string {

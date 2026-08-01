@@ -8,7 +8,6 @@ import type { Agent, AgentConfig, AgentSchedule } from "@/types/agent";
 
 export interface SaveSurveyInput {
   id?: string;
-  uuid: string;
   config: AgentConfig;
   status?: Agent["status"];
   step?: number;

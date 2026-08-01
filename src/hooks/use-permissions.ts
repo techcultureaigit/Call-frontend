@@ -24,9 +24,9 @@ export function usePermissions() {
     permissions,
     can: canDo,
     canAccess,
-    canCreateSurvey: canDo("surveys", "create"),
-    canUpdateSurvey: canDo("surveys", "update"),
-    canDeleteSurvey: canDo("surveys", "delete"),
-    canReadSurvey: canDo("surveys", "read"),
+    canCreateSurvey: canDo("my_surveys", "create"),
+    canUpdateSurvey: canDo("my_surveys", "update"),
+    canDeleteSurvey: canDo("my_surveys", "delete"),
+    canReadSurvey: canDo("my_surveys", "read"),
   };
 }

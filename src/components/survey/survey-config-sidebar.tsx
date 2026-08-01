@@ -5,8 +5,6 @@ import { toast } from "sonner";
 import { motion } from "framer-motion";
 import {
   Bot,
-  Check,
-  Copy,
   Maximize2,
   MessageSquare,
   Mic,
@@ -20,26 +18,14 @@ import { cn } from "@/lib/utils";
 import type { ChatMessage } from "@/types/agent";
 
 interface SurveyConfigSidebarProps {
-  uuid: string;
   agentName: string;
 }
 
-export function SurveyConfigSidebar({
-  uuid,
-  agentName,
-}: SurveyConfigSidebarProps) {
+export function SurveyConfigSidebar({ agentName }: SurveyConfigSidebarProps) {
   const [mode, setMode] = useState<"voice" | "chat">("voice");
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
   const [isActive, setIsActive] = useState(false);
-  const [copied, setCopied] = useState(false);
-
-  const copyUuid = () => {
-    navigator.clipboard.writeText(uuid);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 1500);
-    toast.success("UUID copied");
-  };
 
   const handleStart = () => {
     setIsActive(true);
@@ -82,37 +68,6 @@ export function SurveyConfigSidebar({
 
   return (
     <aside className="space-y-4 lg:sticky lg:top-4">
-      {/* UUID card */}
-      <div className="rounded-[6px] border border-border/70 bg-card p-4 shadow-card">
-        <div className="flex items-center justify-between">
-          <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
-            Agent UUID
-          </p>
-          <span className="size-2 rounded-full bg-brand/40 ring-4 ring-brand/10" />
-        </div>
-        <div className="mt-2.5 flex gap-2">
-          <code
-            suppressHydrationWarning
-            className="flex h-10 min-w-0 flex-1 items-center truncate rounded-lg border border-border/70 bg-muted/40 px-3 font-mono text-xs text-muted-foreground"
-          >
-            {uuid}
-          </code>
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={copyUuid}
-            className="size-10 shrink-0"
-            aria-label="Copy UUID"
-          >
-            {copied ? (
-              <Check className="size-3.5 text-brand" />
-            ) : (
-              <Copy className="size-3.5" />
-            )}
-          </Button>
-        </div>
-      </div>
-
       {/* Voice & Chat preview */}
       <div className="flex flex-col overflow-hidden rounded-[6px] border border-border/70 bg-card shadow-card">
         <div className="flex items-center justify-between border-b border-border/50 bg-muted/30 px-4 py-3">

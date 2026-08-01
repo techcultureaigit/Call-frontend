@@ -12,7 +12,6 @@ import {
   isAgentConfigTabDisabled,
 } from "@/lib/constants/agent-config";
 import { surveysModuleService } from "@/services/surveys-module.service";
-import { generateAgentUuid } from "@/lib/data/mock-agents";
 import { buildSystemPromptFromTemplate } from "@/lib/data/mock-survey-templates";
 import { computeSurveyProgress } from "@/lib/utils/survey-progress";
 import {
@@ -35,6 +34,7 @@ import { PromptsTab } from "./tabs/prompts-tab";
 import { WisdomTab } from "./tabs/wisdom-tab";
 import { FunctionsTab } from "./tabs/functions-tab";
 import { SurveyQuestionsTab } from "./tabs/survey-questions-tab";
+import { FarewellTab } from "./tabs/farewell-tab";
 import { ClientContactTab } from "./tabs/client-contact-tab";
 import { ScheduleTab } from "./tabs/schedule-tab";
 import { PostCallTab } from "./tabs/post-call-tab";
@@ -49,6 +49,7 @@ type StepRequirementKey =
   | "identity"
   | "prompts"
   | "survey-questions"
+  | "farewell"
   | "client-contact"
   | "schedule";
 
@@ -56,6 +57,7 @@ const TAB_REQUIRED_KEYS: Record<AgentConfigTab, StepRequirementKey[]> = {
   persona: ["identity"],
   prompts: ["identity", "prompts"],
   "survey-questions": ["identity", "prompts", "survey-questions"],
+  farewell: ["identity", "prompts", "survey-questions"],
   "client-contact": [
     "identity",
     "prompts",
@@ -72,6 +74,7 @@ const STEP_LABELS: Record<StepRequirementKey, string> = {
   identity: "Identity",
   prompts: "Instructions",
   "survey-questions": "Survey Questions",
+  farewell: "Farewell",
   "client-contact": "Contact of Client",
   schedule: "Schedule",
 };
@@ -80,6 +83,7 @@ const TAB_TO_PROGRESS_KEY: Partial<Record<AgentConfigTab, StepRequirementKey>> =
   persona: "identity",
   prompts: "prompts",
   "survey-questions": "survey-questions",
+  farewell: "farewell",
   "client-contact": "client-contact",
   schedule: "schedule",
 };
@@ -132,7 +136,6 @@ export function SurveyConfigureView({
     ENABLED_TAB_ORDER[0] ?? "persona"
   );
   const [showPreview, setShowPreview] = useState(false);
-  const [uuid] = useState(agent?.uuid ?? generateAgentUuid());
   const [surveyId, setSurveyId] = useState(agent?.id);
   const [config, setConfig] = useState<AgentConfig>(baseConfig);
   const [isSaving, setIsSaving] = useState(false);
@@ -265,7 +268,6 @@ export function SurveyConfigureView({
       const saved = await surveysModuleService.save(
         {
           id: surveyId,
-          uuid,
           config,
           status: schedulePayload?.enabled ? "active" : "draft",
           step: Math.max(tabIndex, 0) + 1,
@@ -309,7 +311,9 @@ export function SurveyConfigureView({
     const targetIndex = ENABLED_TAB_ORDER.indexOf(tab);
     const canOpen = ENABLED_TAB_ORDER.slice(0, targetIndex).every((stepTab) => {
       const requirementKey = TAB_TO_PROGRESS_KEY[stepTab];
-      return requirementKey ? computedProgress[requirementKey].complete : true;
+      if (!requirementKey) return true;
+      const step = computedProgress[requirementKey];
+      return step.optional || step.complete;
     });
     if (!canOpen) {
       toast.error("Complete previous required steps first");
@@ -354,6 +358,15 @@ export function SurveyConfigureView({
             surveyId={surveyId}
             values={config.surveyQuestions}
             onChange={(v) => updateConfig("surveyQuestions", v)}
+          />
+        );
+      case "farewell":
+        return (
+          <FarewellTab
+            value={config.prompts.farewell ?? ""}
+            onChange={(farewell) =>
+              updateConfig("prompts", { ...config.prompts, farewell })
+            }
           />
         );
       case "client-contact":
@@ -412,6 +425,7 @@ export function SurveyConfigureView({
                   prompts: computedProgress.prompts.complete,
                   "survey-questions":
                     computedProgress["survey-questions"].complete,
+                  farewell: computedProgress.farewell.complete,
                   "client-contact":
                     computedProgress["client-contact"].complete,
                   schedule: computedProgress.schedule.complete,
@@ -457,7 +471,6 @@ export function SurveyConfigureView({
                 className="w-full shrink-0 overflow-y-auto xl:w-[360px]"
               >
                 <SurveyConfigSidebar
-                  uuid={uuid}
                   agentName={config.persona.name}
                 />
               </motion.div>
