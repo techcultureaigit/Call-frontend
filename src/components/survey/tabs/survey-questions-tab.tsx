@@ -21,7 +21,7 @@ import {
 } from "@/lib/constants/agent-config";
 import { downloadSurveyQuestionsSample } from "@/lib/constants/survey-upload-samples";
 import { getContactFileOpenUrl } from "@/lib/utils/contact-file-url";
-import { surveysModuleService } from "@/services/surveys-module.service";
+import { uploadQuestionsFile } from "../survey-api";
 import { cn } from "@/lib/utils";
 import type {
   AgentSurveyQuestion,
@@ -138,10 +138,7 @@ export function SurveyQuestionsTab({
 
     setUploading(true);
     try {
-      const uploaded = await surveysModuleService.uploadQuestionsFile(
-        surveyId,
-        file
-      );
+      const uploaded = await uploadQuestionsFile(surveyId, file);
       const sq = uploaded.config.surveyQuestions;
       onChange({
         enabled: sq.enabled,

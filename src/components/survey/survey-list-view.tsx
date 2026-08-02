@@ -12,7 +12,6 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useDebounce, usePageMeta, usePermissions } from "@/hooks";
-import { surveysModuleService } from "@/services/surveys-module.service";
 import type { PaginatedMeta } from "@/types";
 import type { Agent } from "@/types/agent";
 import { DeleteSurveyDialog } from "./delete-survey-dialog";
@@ -20,6 +19,15 @@ import {
   ScheduleSurveyDialog,
   type ScheduleSurveyPayload,
 } from "./schedule-survey-dialog";
+// All survey HTTP lives in ./survey-api (axios.get / axios.post)
+import {
+  bulkDeleteSurveys,
+  deleteSurvey,
+  duplicateSurvey,
+  listSurveys,
+  scheduleSurvey,
+  unscheduleSurvey,
+} from "./survey-api";
 import { SurveyCard } from "./survey-card";
 import { SurveysPagination } from "./surveys-pagination";
 
@@ -63,7 +71,7 @@ export function SurveyListView() {
   const loadSurveys = useCallback(async (nextPage: number, nextSearch: string) => {
     setIsLoading(true);
     try {
-      const result = await surveysModuleService.list({
+      const result = await listSurveys({
         page: nextPage,
         limit: PAGE_SIZE,
         search: nextSearch.trim() || undefined,
@@ -116,7 +124,7 @@ export function SurveyListView() {
 
   const handleClone = async (agent: Agent) => {
     try {
-      const cloned = await surveysModuleService.duplicate(agent.id);
+      const cloned = await duplicateSurvey(agent.id);
       toast.success(`Copied as "${cloned.name}"`);
       setSelectedIds(new Set());
       await loadSurveys(1, debouncedSearch);
@@ -146,7 +154,7 @@ export function SurveyListView() {
       const agent = pendingDelete;
       setIsDeleting(true);
       try {
-        await surveysModuleService.delete(agent.id);
+        await deleteSurvey(agent.id);
         setDeleteOpen(false);
         setPendingDelete(null);
         setSelectedIds((prev) => {
@@ -173,7 +181,7 @@ export function SurveyListView() {
 
     setIsDeleting(true);
     try {
-      const { deleted, failed } = await surveysModuleService.bulkDelete(ids);
+      const { deleted, failed } = await bulkDeleteSurveys(ids);
       setDeleteOpen(false);
       setSelectedIds(new Set());
 
@@ -203,10 +211,7 @@ export function SurveyListView() {
   const confirmSchedule = async (payload: ScheduleSurveyPayload) => {
     if (!pendingSchedule) return;
     try {
-      const updated = await surveysModuleService.schedule(
-        pendingSchedule.id,
-        payload
-      );
+      const updated = await scheduleSurvey(pendingSchedule.id, payload);
       setAgents((prev) =>
         prev.map((a) => (a.id === updated.id ? updated : a))
       );
@@ -223,7 +228,7 @@ export function SurveyListView() {
   const confirmUnschedule = async () => {
     if (!pendingSchedule) return;
     try {
-      const updated = await surveysModuleService.unschedule(pendingSchedule.id);
+      const updated = await unscheduleSurvey(pendingSchedule.id);
       setAgents((prev) =>
         prev.map((a) => (a.id === updated.id ? updated : a))
       );

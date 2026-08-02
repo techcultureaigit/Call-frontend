@@ -11,7 +11,7 @@ import {
   ENABLED_AGENT_CONFIG_TABS,
   isAgentConfigTabDisabled,
 } from "@/lib/constants/agent-config";
-import { surveysModuleService } from "@/services/surveys-module.service";
+import { saveSurvey } from "./survey-api";
 import { buildSystemPromptFromTemplate } from "@/lib/data/mock-survey-templates";
 import { computeSurveyProgress } from "@/lib/utils/survey-progress";
 import {
@@ -265,7 +265,7 @@ export function SurveyConfigureView({
 
       const schedulePayload = isLast ? parsed.payload : null;
 
-      const saved = await surveysModuleService.save(
+      const saved = await saveSurvey(
         {
           id: surveyId,
           config,

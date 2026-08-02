@@ -23,7 +23,6 @@ export type {
 export { customersApi } from "./customers";
 export type { CustomersListParams } from "./customers";
 
-export { surveysApi } from "./surveys";
 export { surveyTemplatesApi } from "./survey-templates";
 export type { SurveyTemplatesListParams } from "./survey-templates";
 export { callsApi } from "./calls";

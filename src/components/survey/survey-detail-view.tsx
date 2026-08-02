@@ -26,9 +26,13 @@ import {
   getAgentLanguageLabel,
   isAgentConfigTabDisabled,
 } from "@/lib/constants/agent-config";
-import { surveysModuleService } from "@/services/surveys-module.service";
 import { formatAgentCreatedAt } from "@/lib/utils/date";
 import { getContactFileOpenUrl } from "@/lib/utils/contact-file-url";
+import {
+  duplicateSurvey,
+  scheduleSurvey,
+  unscheduleSurvey,
+} from "./survey-api";
 import {
   getSurveyDisplayStatus,
   getSurveySchedule,
@@ -146,7 +150,7 @@ export function SurveyDetailView({ agent }: { agent: Agent }) {
 
   const handleClone = async () => {
     try {
-      const cloned = await surveysModuleService.duplicate(currentAgent.id);
+      const cloned = await duplicateSurvey(currentAgent.id);
       toast.success(`Copied as "${cloned.name}"`);
       router.push("/survey");
     } catch {
@@ -156,10 +160,7 @@ export function SurveyDetailView({ agent }: { agent: Agent }) {
 
   const confirmSchedule = async (payload: ScheduleSurveyPayload) => {
     try {
-      const updated = await surveysModuleService.schedule(
-        currentAgent.id,
-        payload
-      );
+      const updated = await scheduleSurvey(currentAgent.id, payload);
       setCurrentAgent(updated);
       setScheduleOpen(false);
       toast.success(`"${updated.name}" scheduled`);
@@ -172,7 +173,7 @@ export function SurveyDetailView({ agent }: { agent: Agent }) {
 
   const confirmUnschedule = async () => {
     try {
-      const updated = await surveysModuleService.unschedule(currentAgent.id);
+      const updated = await unscheduleSurvey(currentAgent.id);
       setCurrentAgent(updated);
       setScheduleOpen(false);
       toast.success(`"${updated.name}" unscheduled`);

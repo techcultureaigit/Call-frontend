@@ -1,10 +1,11 @@
 "use client";
 
 import { ClipboardList, Loader2, Plus, Sparkles } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useSurveys } from "@/hooks/use-surveys";
+import { listSurveys } from "@/components/survey/survey-api";
 import { cn } from "@/lib/utils";
 
 interface SurveyPickerProps {
@@ -14,7 +15,14 @@ interface SurveyPickerProps {
 }
 
 export function SurveyPicker({ onSelect, onCreate, isCreating }: SurveyPickerProps) {
-  const { data: surveys = [], isLoading } = useSurveys(false);
+  const { data: surveys = [], isLoading } = useQuery({
+    queryKey: ["surveys", "picker"],
+    queryFn: async () => {
+      const result = await listSurveys({ page: 1, limit: 100 });
+      return result.data;
+    },
+    staleTime: 60_000,
+  });
 
   return (
     <div className="flex min-h-[calc(100vh-8rem)] flex-col items-center justify-center px-4 py-12">

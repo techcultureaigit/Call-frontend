@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { ClientContactsPreview } from "@/components/survey/client-contacts-preview";
 import { downloadClientContactsSample } from "@/lib/constants/survey-upload-samples";
 import { getContactFileOpenUrl } from "@/lib/utils/contact-file-url";
-import { surveysModuleService } from "@/services/surveys-module.service";
+import { uploadContactFile } from "../survey-api";
 import type { AgentClientContactConfig } from "@/types/agent";
 
 interface ClientContactTabProps {
@@ -37,10 +37,7 @@ export function ClientContactTab({
         throw new Error("Save previous steps first to upload contacts");
       }
 
-      const uploadedSurvey = await surveysModuleService.uploadContactFile(
-        surveyId,
-        file
-      );
+      const uploadedSurvey = await uploadContactFile(surveyId, file);
 
       onChange({
         contactFileUrl:

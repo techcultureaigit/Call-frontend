@@ -19,12 +19,18 @@ import {
 } from "@dnd-kit/sortable";
 import { useCallback, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
-import { usePageMeta, useSurveyDetail, useSurveyMutations } from "@/hooks";
+import { toast } from "sonner";
 import {
-  agentQuestionsToBuilder,
-} from "@/hooks/use-surveys";
+  createDraftSurvey,
+  getSurvey,
+  saveBuilderSurvey,
+  setSurveyPublished,
+} from "@/components/survey/survey-api";
+import { usePageMeta } from "@/hooks";
 import { createDefaultQuestion } from "@/lib/constants/surveys";
+import type { Agent } from "@/types/agent";
 import type { QuestionType, SurveyQuestion } from "@/types/survey";
 import { SurveyBuilderHeader } from "./survey-builder-header";
 import { QuestionPalette } from "./question-palette";
@@ -33,14 +39,66 @@ import { QuestionSettingsPanel } from "./question-settings-panel";
 import { SurveyPreview } from "./survey-preview";
 import { SurveyPicker } from "./survey-picker";
 import { PaletteDragOverlay } from "./palette-drag-overlay";
+import { agentQuestionsToBuilder } from "./survey-question-map";
 
 export function SurveyBuilderView() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const surveyId = searchParams.get("id");
+  const queryClient = useQueryClient();
 
-  const { data: survey, isLoading } = useSurveyDetail(surveyId);
-  const { saveSurvey, togglePublish, createSurvey } = useSurveyMutations();
+  const { data: survey, isLoading } = useQuery({
+    queryKey: ["surveys", "detail", surveyId],
+    queryFn: () => getSurvey(surveyId!),
+    enabled: Boolean(surveyId),
+  });
+
+  const invalidate = (id?: string) => {
+    queryClient.invalidateQueries({ queryKey: ["surveys"] });
+    if (id) {
+      queryClient.invalidateQueries({ queryKey: ["surveys", "detail", id] });
+    }
+  };
+
+  const createSurvey = useMutation({
+    mutationFn: () => createDraftSurvey("Untitled Survey"),
+    onSuccess: () => {
+      toast.success("Survey created");
+      invalidate();
+    },
+    onError: () => toast.error("Failed to create survey"),
+  });
+
+  const saveSurveyMutation = useMutation({
+    mutationFn: (payload: {
+      id: string;
+      name: string;
+      questions: SurveyQuestion[];
+      status?: Agent["status"];
+    }) =>
+      saveBuilderSurvey(payload.id, {
+        name: payload.name,
+        questions: payload.questions,
+        status: payload.status,
+      }),
+    onSuccess: (_, { id }) => {
+      toast.success("Survey saved");
+      invalidate(id);
+    },
+    onError: () => toast.error("Failed to save survey"),
+  });
+
+  const togglePublish = useMutation({
+    mutationFn: ({ id, published }: { id: string; published: boolean }) =>
+      setSurveyPublished(id, published),
+    onSuccess: (data, { id }) => {
+      toast.success(
+        data.status === "active" ? "Survey published" : "Survey unpublished"
+      );
+      invalidate(id);
+    },
+    onError: () => toast.error("Failed to update publish status"),
+  });
 
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
@@ -125,21 +183,20 @@ export function SurveyBuilderView() {
       const oldIndex = questions.findIndex((q) => q.id === active.id);
       const newIndex = questions.findIndex((q) => q.id === over.id);
       if (oldIndex !== -1 && newIndex !== -1) {
-        updateQuestions((prev) => arrayMove(prev, oldIndex, newIndex).map((q, i) => ({ ...q, order: i })));
+        updateQuestions((prev) =>
+          arrayMove(prev, oldIndex, newIndex).map((q, i) => ({ ...q, order: i }))
+        );
       }
     }
   };
 
   const handleSave = async () => {
     if (!surveyId) return;
-    await saveSurvey.mutateAsync({
+    await saveSurveyMutation.mutateAsync({
       id: surveyId,
-      payload: {
-        name,
-        description,
-        questions,
-        status: survey?.status === "paused" ? "draft" : survey?.status,
-      },
+      name,
+      questions,
+      status: survey?.status === "paused" ? "draft" : survey?.status,
     });
     setDirty(false);
   };
@@ -155,10 +212,7 @@ export function SurveyBuilderView() {
   };
 
   const handleCreateSurvey = async () => {
-    const created = await createSurvey.mutateAsync({
-      name: "Untitled Survey",
-      description: "",
-    });
+    const created = await createSurvey.mutateAsync();
     router.push(`/surveys/builder?id=${created.id}`);
   };
 
@@ -192,12 +246,15 @@ export function SurveyBuilderView() {
       <div className="flex min-h-[calc(100vh-4rem)] flex-col bg-background">
         <SurveyBuilderHeader
           name={name}
-          onNameChange={(v) => { setName(v); markDirty(); }}
+          onNameChange={(v) => {
+            setName(v);
+            markDirty();
+          }}
           published={survey?.status === "active"}
           onPublishToggle={handlePublishToggle}
           onPreview={() => setPreviewOpen(true)}
           onSave={handleSave}
-          isSaving={saveSurvey.isPending}
+          isSaving={saveSurveyMutation.isPending}
           isPublishing={togglePublish.isPending}
           dirty={dirty}
           questionCount={questions.length}
@@ -222,7 +279,9 @@ export function SurveyBuilderView() {
               }}
               onDelete={(id) => {
                 updateQuestions((prev) => {
-                  const next = prev.filter((q) => q.id !== id).map((q, i) => ({ ...q, order: i }));
+                  const next = prev
+                    .filter((q) => q.id !== id)
+                    .map((q, i) => ({ ...q, order: i }));
                   if (selectedId === id) setSelectedId(next[0]?.id ?? null);
                   return next;
                 });
@@ -236,7 +295,9 @@ export function SurveyBuilderView() {
                   title: `${source.title} (copy)`,
                   order: questions.length,
                 };
-                updateQuestions((prev) => [...prev, copy].map((q, i) => ({ ...q, order: i })));
+                updateQuestions((prev) =>
+                  [...prev, copy].map((q, i) => ({ ...q, order: i }))
+                );
                 setSelectedId(copy.id);
               }}
             />
