@@ -1,7 +1,8 @@
 "use client";
 
-import type { ReactNode } from "react";
+import { useEffect, type ReactNode } from "react";
 import { motion } from "framer-motion";
+import { useSidebarStore } from "@/stores";
 import { cn } from "@/lib/utils";
 import { AppHeader } from "./app-header";
 import { AppSidebar } from "./app-sidebar";
@@ -12,6 +13,10 @@ interface AppShellProps {
 }
 
 export function AppShell({ children, className }: AppShellProps) {
+  useEffect(() => {
+    void useSidebarStore.persist.rehydrate();
+  }, []);
+
   return (
     <div className="flex h-svh w-full overflow-hidden bg-background">
       <AppSidebar />
@@ -20,7 +25,7 @@ export function AppShell({ children, className }: AppShellProps) {
         <AppHeader />
 
         <motion.main
-          initial={{ opacity: 0 }}
+          initial={false}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.3, delay: 0.05 }}
           className={cn(

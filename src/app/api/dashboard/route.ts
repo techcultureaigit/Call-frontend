@@ -239,8 +239,6 @@ const dashboardData: DashboardData = {
 };
 
 export async function GET() {
-  await new Promise((resolve) => setTimeout(resolve, 600));
-
   const recentNotifications = getRecentNotifications(4).map((n) => ({
     id: n.id,
     title: n.title,

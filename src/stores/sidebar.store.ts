@@ -60,9 +60,9 @@ export const useSidebarStore = create<SidebarStore>()(
     }),
     {
       name: storageKeys.sidebarCollapsed,
+      skipHydration: true,
       partialize: (state) => ({
         isCollapsed: state.isCollapsed,
-        // Don't persist open dropdowns — always start collapsed
       }),
     }
   )

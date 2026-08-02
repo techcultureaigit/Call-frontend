@@ -1,5 +1,5 @@
 import { createQueryString } from "@/lib/utils";
-import { storageKeys } from "@/lib/constants/storage-keys";
+import { getAccessTokenFromCookie } from "@/lib/auth/session";
 import type { ApiResponse } from "@/types/api";
 
 type QueryValue = string | number | boolean | undefined | null;
@@ -18,8 +18,7 @@ export class ApiError extends Error {
 }
 
 function getClientAccessToken(): string | null {
-  if (typeof window === "undefined") return null;
-  return localStorage.getItem(storageKeys.authToken);
+  return getAccessTokenFromCookie();
 }
 
 async function parseErrorBody(response: Response): Promise<{

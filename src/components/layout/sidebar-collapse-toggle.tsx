@@ -2,7 +2,7 @@
 
 import { PanelLeftClose, PanelLeftOpen } from "lucide-react";
 import { useSidebarStore } from "@/stores";
-import { useIsMobile, useIsTablet } from "@/hooks";
+import { useMounted } from "@/hooks";
 import {
   Tooltip,
   TooltipContent,
@@ -18,12 +18,11 @@ export function SidebarCollapseToggle({
 }) {
   const isCollapsed = useSidebarStore((state) => state.isCollapsed);
   const toggleCollapsed = useSidebarStore((state) => state.toggleCollapsed);
-  const isMobile = useIsMobile();
-  const isTablet = useIsTablet();
+  const mounted = useMounted();
 
-  if (isMobile || isTablet) return null;
-
-  const label = isCollapsed ? "Show sidebar" : "Hide sidebar";
+  // Stable until mount so SSR HTML matches client hydration
+  const collapsed = mounted ? isCollapsed : false;
+  const label = collapsed ? "Show sidebar" : "Hide sidebar";
 
   return (
     <TooltipProvider delayDuration={0}>
@@ -34,7 +33,8 @@ export function SidebarCollapseToggle({
             onClick={toggleCollapsed}
             aria-label={label}
             className={cn(
-              "inline-flex size-9 shrink-0 items-center justify-center rounded-[8px]",
+              // CSS hide below lg — avoids JS media-query hydration mismatch
+              "hidden size-9 shrink-0 items-center justify-center rounded-[8px] lg:inline-flex",
               "-ml-0.5 text-muted-foreground transition-colors",
               "hover:bg-muted hover:text-foreground",
               "active:scale-95",
@@ -42,7 +42,7 @@ export function SidebarCollapseToggle({
               className
             )}
           >
-            {isCollapsed ? (
+            {collapsed ? (
               <PanelLeftOpen className="size-5" strokeWidth={2.1} />
             ) : (
               <PanelLeftClose className="size-5" strokeWidth={2.1} />

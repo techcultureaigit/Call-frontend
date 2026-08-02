@@ -5,7 +5,11 @@ import axios, {
   type InternalAxiosRequestConfig,
 } from "axios";
 import { apiConfig, authConfig } from "@/config/api";
-import { storageKeys } from "@/lib/constants/storage-keys";
+import {
+  clearAuthCookies,
+  clearLegacyAuthLocalStorage,
+  getAccessTokenFromCookie,
+} from "@/lib/auth/session";
 import type { ApiErrorBody } from "@/types";
 
 export class ApiClientError extends Error {
@@ -33,14 +37,12 @@ interface ApiClientOptions {
 }
 
 function getStoredToken(): string | null {
-  if (typeof window === "undefined") return null;
-  return localStorage.getItem(storageKeys.authToken);
+  return getAccessTokenFromCookie();
 }
 
 function clearStoredTokens(): void {
-  if (typeof window === "undefined") return;
-  localStorage.removeItem(storageKeys.authToken);
-  localStorage.removeItem(storageKeys.refreshToken);
+  clearAuthCookies();
+  clearLegacyAuthLocalStorage();
 }
 
 function redirectToLogin(): void {

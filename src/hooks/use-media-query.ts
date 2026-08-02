@@ -1,16 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useSyncExternalStore } from "react";
 
-type MediaQueryCallback = (event: MediaQueryListEvent) => void;
-
-function subscribe(
-  query: string,
-  callback: MediaQueryCallback
-): () => void {
+function subscribe(query: string, onStoreChange: () => void): () => void {
   const mediaQuery = window.matchMedia(query);
-  const handler = (event: MediaQueryListEvent) => callback(event);
-
+  const handler = () => onStoreChange();
   mediaQuery.addEventListener("change", handler);
   return () => mediaQuery.removeEventListener("change", handler);
 }
@@ -19,21 +13,21 @@ function getSnapshot(query: string): boolean {
   return window.matchMedia(query).matches;
 }
 
+/** Always false during SSR + hydration so server/client markup match. */
 function getServerSnapshot(): boolean {
   return false;
 }
 
+/**
+ * Media query hook that is hydration-safe.
+ * First paint matches the server (false); real viewport applies after hydrate.
+ */
 export function useMediaQuery(query: string): boolean {
-  const [matches, setMatches] = useState(() =>
-    typeof window !== "undefined" ? getSnapshot(query) : false
+  return useSyncExternalStore(
+    (onStoreChange) => subscribe(query, onStoreChange),
+    () => getSnapshot(query),
+    getServerSnapshot
   );
-
-  useEffect(() => {
-    setMatches(getSnapshot(query));
-    return subscribe(query, (event) => setMatches(event.matches));
-  }, [query]);
-
-  return matches;
 }
 
 export function useIsMobile(breakpoint = 768): boolean {

@@ -31,7 +31,7 @@ export function AppHeader({ className }: AppHeaderProps) {
     >
       <motion.div
         custom={0}
-        initial="hidden"
+        initial={false}
         animate="visible"
         variants={headerItemVariants}
         className="flex shrink-0 items-center gap-1"
@@ -52,7 +52,7 @@ export function AppHeader({ className }: AppHeaderProps) {
 
       <motion.div
         custom={1}
-        initial="hidden"
+        initial={false}
         animate="visible"
         variants={headerItemVariants}
         className="flex min-w-0 flex-1 items-center justify-center md:flex-none md:justify-start lg:flex-1 lg:justify-center"
@@ -62,7 +62,7 @@ export function AppHeader({ className }: AppHeaderProps) {
 
       <motion.div
         custom={2}
-        initial="hidden"
+        initial={false}
         animate="visible"
         variants={headerItemVariants}
         className="flex shrink-0 items-center gap-1.5"

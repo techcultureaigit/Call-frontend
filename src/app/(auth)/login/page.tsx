@@ -48,7 +48,6 @@ function LoginForm() {
       setSession(mapLoginToSession(res.data));
       toast.success("Signed in successfully");
       router.push(redirect);
-      router.refresh();
     } catch (err) {
       const message =
         err instanceof ApiClientError

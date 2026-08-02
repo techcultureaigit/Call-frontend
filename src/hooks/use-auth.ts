@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/constants/query-keys";
 import { apiGet, apiPost, ApiClientError } from "@/lib/api";
@@ -33,16 +34,24 @@ export function useAuth() {
   const setSession = useAuthStore((state) => state.setSession);
   const setUser = useAuthStore((state) => state.setUser);
   const clearSession = useAuthStore((state) => state.clearSession);
+  const hydrateFromCookies = useAuthStore((state) => state.hydrateFromCookies);
+
+  useEffect(() => {
+    if (!isHydrated) hydrateFromCookies();
+  }, [hydrateFromCookies, isHydrated]);
+
+  const hasToken = Boolean(tokens?.accessToken);
 
   const sessionQuery = useQuery({
     queryKey: queryKeys.auth.session,
     queryFn: async () => {
       const nextUser = await fetchBackendSession();
       if (nextUser) setUser(nextUser);
-      else if (tokens?.accessToken) clearSession();
+      else if (hasToken) clearSession();
       return nextUser ?? user;
     },
-    enabled: isHydrated && Boolean(tokens?.accessToken),
+    // Skip blocking refetch when login already populated user in memory
+    enabled: isHydrated && hasToken && !user,
     staleTime: 5 * 60 * 1000,
     retry: false,
   });
@@ -63,7 +72,7 @@ export function useAuth() {
     tokens,
     isAuthenticated: isAuthenticated || Boolean(sessionQuery.data ?? user),
     isHydrated,
-    isLoading: !isHydrated || sessionQuery.isLoading,
+    isLoading: !isHydrated || (sessionQuery.isLoading && !user),
     isError: sessionQuery.isError,
     setSession,
     clearSession,

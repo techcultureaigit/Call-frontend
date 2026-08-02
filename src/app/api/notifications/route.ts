@@ -14,8 +14,6 @@ export async function GET(request: Request) {
   const feed = searchParams.get("feed") === "true";
   const live = searchParams.get("live") === "true";
 
-  await new Promise((r) => setTimeout(r, 200));
-
   if (stats) {
     return NextResponse.json({ success: true, data: getNotificationStats() });
   }
@@ -45,8 +43,6 @@ export async function GET(request: Request) {
 
 export async function PATCH(request: Request) {
   const body = await request.json();
-
-  await new Promise((r) => setTimeout(r, 150));
 
   if (body.action === "mark_all_read") {
     const count = markAllNotificationsRead();
