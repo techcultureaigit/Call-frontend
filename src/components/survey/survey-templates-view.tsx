@@ -20,7 +20,7 @@ export function SurveyTemplatesView() {
   const [industry, setIndustry] = useState("all");
   const [selected, setSelected] = useState<SurveyTemplate | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const { canCreateSurvey } = usePermissions();
+  const { isReady, canCreateSurvey } = usePermissions();
 
   const debouncedSearch = useDebounce(search, 300);
 
@@ -136,7 +136,7 @@ export function SurveyTemplatesView() {
         <p className="text-center text-xs text-muted-foreground">
           {templates.length} template{templates.length !== 1 ? "s" : ""}{" "}
           available
-          {canCreateSurvey ? (
+          {isReady && canCreateSurvey ? (
             <>
               {" "}
               ·{" "}

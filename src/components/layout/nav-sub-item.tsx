@@ -23,11 +23,7 @@ export function NavSubItem({
   const isActive = isRouteActive(pathname, href, siblingHrefs);
 
   return (
-    <motion.li
-      initial={{ opacity: 0, x: -6 }}
-      animate={{ opacity: 1, x: 0 }}
-      transition={{ duration: 0.18 }}
-    >
+    <li>
       <Link
         href={href}
         onClick={onNavigate}
@@ -41,7 +37,6 @@ export function NavSubItem({
         )}
         aria-current={isActive ? "page" : undefined}
       >
-        {/* Guide rail */}
         <span className="absolute inset-y-1 left-[1.15rem] w-px bg-sidebar-border/50" />
         {isActive && (
           <motion.span
@@ -55,6 +50,6 @@ export function NavSubItem({
         )}
         <span className={cn("truncate", isActive && "font-semibold")}>{title}</span>
       </Link>
-    </motion.li>
+    </li>
   );
 }

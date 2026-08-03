@@ -4,6 +4,7 @@ import { useRef, useState } from "react";
 import { Download, ExternalLink, Upload, X } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { AppLoaderSpinner } from "@/components/ui/app-loader";
 import { ClientContactsPreview } from "@/components/survey/client-contacts-preview";
 import { downloadClientContactsSample } from "@/lib/constants/survey-upload-samples";
 import { getContactFileOpenUrl } from "@/lib/utils/contact-file-url";
@@ -103,7 +104,8 @@ export function ClientContactTab({
           className="flex w-full flex-col items-center justify-center gap-2 rounded-[8px] border border-dashed border-border/70 bg-card px-4 py-10 text-center transition-colors hover:bg-muted/30 disabled:opacity-60"
         >
           <Upload className="size-6 text-muted-foreground" />
-          <span className="text-sm font-medium">
+          <span className="inline-flex items-center gap-2 text-sm font-medium">
+            {uploading ? <AppLoaderSpinner size="sm" /> : null}
             {uploading ? "Uploading…" : "Upload Excel or CSV"}
           </span>
           <span className="max-w-sm text-[11px] text-muted-foreground">

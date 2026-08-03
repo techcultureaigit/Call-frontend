@@ -370,3 +370,42 @@
     background-color: var(--muted-foreground);
   }
 }
+
+@keyframes global-api-loader {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(400%);
+  }
+}
+
+@keyframes survey-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes survey-orbit {
+  to {
+    transform: rotate(-360deg);
+  }
+}
+
+@keyframes survey-dots {
+  0% {
+    width: 0;
+  }
+  100% {
+    width: 1.1em;
+  }
+}
+
+@keyframes survey-shimmer {
+  0% {
+    transform: translateX(-120%);
+  }
+  100% {
+    transform: translateX(320%);
+  }
+}

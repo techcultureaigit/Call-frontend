@@ -8,7 +8,6 @@ import { motion } from "framer-motion";
 import {
   ArrowLeft,
   CalendarClock,
-  ClipboardList,
   Clock,
   Copy,
   FileUp,
@@ -96,6 +95,7 @@ export function SurveyDetailView({ agent }: { agent: Agent }) {
   const [scheduleOpen, setScheduleOpen] = useState(false);
   const [currentAgent, setCurrentAgent] = useState(agent);
   const {
+    isReady,
     canCreateSurvey,
     canUpdateSurvey,
   } = usePermissions();
@@ -213,14 +213,6 @@ export function SurveyDetailView({ agent }: { agent: Agent }) {
             </div>
 
             <div className="flex shrink-0 flex-wrap gap-2 sm:justify-end">
-              {locked ? (
-                <Button asChild className="rounded-[6px]">
-                  <Link href={`/survey/${currentAgent.id}/results`}>
-                    <ClipboardList className="size-4" />
-                    Survey results
-                  </Link>
-                </Button>
-              ) : null}
               {canSchedule ? (
                 <Button
                   type="button"
@@ -232,7 +224,7 @@ export function SurveyDetailView({ agent }: { agent: Agent }) {
                   Schedule survey
                 </Button>
               ) : null}
-              {canCreateSurvey && (
+              {isReady && canCreateSurvey && (
                 <Button
                   type="button"
                   variant="outline"

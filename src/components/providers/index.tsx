@@ -13,6 +13,7 @@ export function AppProviders({ children }: AppProvidersProps) {
   return (
     <ThemeProvider>
       <QueryProvider>
+        {/* Page-level AppLoader only — no top-right global chip */}
         <ToastProvider>{children}</ToastProvider>
       </QueryProvider>
     </ThemeProvider>

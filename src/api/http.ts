@@ -1,5 +1,9 @@
 import { createQueryString } from "@/lib/utils";
 import { getAccessTokenFromCookie } from "@/lib/auth/session";
+import {
+  shouldSkipGlobalLoader,
+  useApiLoadingStore,
+} from "@/stores/api-loading.store";
 import type { ApiResponse } from "@/types/api";
 
 type QueryValue = string | number | boolean | undefined | null;
@@ -56,13 +60,19 @@ export async function apiRequest<T>(
     headers.set("Authorization", `Bearer ${token}`);
   }
 
-  const response = await fetch(path, {
-    ...init,
-    headers,
-    cache: "no-store",
-  });
+  const track = !shouldSkipGlobalLoader(path);
+  if (track) useApiLoadingStore.getState().start();
 
-  return parseJson<T>(response);
+  try {
+    const response = await fetch(path, {
+      ...init,
+      headers,
+      cache: "no-store",
+    });
+    return await parseJson<T>(response);
+  } finally {
+    if (track) useApiLoadingStore.getState().stop();
+  }
 }
 
 export function apiGet<T>(path: string, params?: object): Promise<T> {

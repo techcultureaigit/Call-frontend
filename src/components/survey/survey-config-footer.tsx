@@ -1,7 +1,8 @@
 "use client";
 
-import { ArrowLeft, ArrowRight, CalendarClock, Loader2 } from "lucide-react";
+import { ArrowLeft, ArrowRight, CalendarClock } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { AppLoaderSpinner } from "@/components/ui/app-loader";
 
 interface SurveyConfigFooterProps {
   onBack: () => void;
@@ -50,7 +51,7 @@ export function SurveyConfigFooter({
         </Button>
         <Button onClick={onNext} disabled={isSaving} className="min-w-[160px]">
           {isSaving ? (
-            <Loader2 className="size-4 animate-spin" />
+            <AppLoaderSpinner size="sm" />
           ) : isLast ? (
             <>
               <CalendarClock className="size-4" />

@@ -10,6 +10,10 @@ import {
   clearLegacyAuthLocalStorage,
   getAccessTokenFromCookie,
 } from "@/lib/auth/session";
+import {
+  shouldSkipGlobalLoader,
+  useApiLoadingStore,
+} from "@/stores/api-loading.store";
 import type { ApiErrorBody } from "@/types";
 
 export class ApiClientError extends Error {
@@ -66,15 +70,32 @@ function createAxiosInstance(options: ApiClientOptions = {}): AxiosInstance {
       config.headers.Authorization = `Bearer ${token}`;
     }
 
+    const url = `${config.baseURL ?? ""}${config.url ?? ""}`;
+    const skip = shouldSkipGlobalLoader(url);
+    (config as InternalAxiosRequestConfig & { _trackLoader?: boolean })._trackLoader =
+      !skip;
+    if (!skip) useApiLoadingStore.getState().start();
+
     return config;
   });
 
   instance.interceptors.response.use(
-    (response) => response,
+    (response) => {
+      const cfg = response.config as InternalAxiosRequestConfig & {
+        _trackLoader?: boolean;
+      };
+      if (cfg._trackLoader) useApiLoadingStore.getState().stop();
+      return response;
+    },
     async (error: AxiosError<ApiErrorBody>) => {
       const originalRequest = error.config as InternalAxiosRequestConfig & {
         _retry?: boolean;
+        _trackLoader?: boolean;
       };
+
+      if (originalRequest?._trackLoader) {
+        useApiLoadingStore.getState().stop();
+      }
 
       if (
         error.response?.status === 401 &&

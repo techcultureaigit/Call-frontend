@@ -1,4 +1,4 @@
-import type { AgentConfig } from "@/types/agent";
+import type { AgentConfig, AgentConfigTab } from "@/types/agent";
 
 export const DEFAULT_FAREWELL =
   "Thank you very much for your valuable time. We sincerely appreciate your participation in this survey. Have a wonderful day!";
@@ -18,16 +18,17 @@ export const AGENT_CONFIG_TABS = [
   { id: "farewell", label: "Farewell" },
   { id: "client-contact", label: "Contact of Client" },
   { id: "schedule", label: "Schedule" },
-  { id: "wisdom", label: "Knowledge" },
-  { id: "post-call", label: "Wrap-up" },
-  { id: "functions", label: "Tools" },
+  // Upcoming steps — keep commented (do not delete). Re-enable when ready.
+  // { id: "wisdom", label: "Knowledge" },
+  // { id: "post-call", label: "Wrap-up" },
+  // { id: "functions", label: "Tools" },
 ] as const;
 
-/** Steps kept in the stepper but not navigable yet */
+/** Upcoming / disabled steps — kept for reference; currently not in AGENT_CONFIG_TABS */
 export const DISABLED_AGENT_CONFIG_TABS = [
-  "wisdom",
-  "post-call",
-  "functions",
+  // "wisdom",
+  // "post-call",
+  // "functions",
 ] as const;
 
 export type DisabledAgentConfigTab =
@@ -35,23 +36,44 @@ export type DisabledAgentConfigTab =
 
 export const ENABLED_AGENT_CONFIG_TABS = AGENT_CONFIG_TABS.filter(
   (tab) =>
-    !DISABLED_AGENT_CONFIG_TABS.includes(
-      tab.id as DisabledAgentConfigTab
-    )
+    !(DISABLED_AGENT_CONFIG_TABS as readonly string[]).includes(tab.id)
 );
 
-export function isAgentConfigTabDisabled(
-  tab: (typeof AGENT_CONFIG_TABS)[number]["id"]
-): boolean {
-  return DISABLED_AGENT_CONFIG_TABS.includes(tab as DisabledAgentConfigTab);
+/** Tabs currently in the stepper (excludes commented upcoming steps). */
+const ACTIVE_AGENT_CONFIG_TAB_IDS = new Set<string>(
+  AGENT_CONFIG_TABS.map((tab) => tab.id)
+);
+
+export function isAgentConfigTabDisabled(tab: AgentConfigTab): boolean {
+  if (!ACTIVE_AGENT_CONFIG_TAB_IDS.has(tab)) return true;
+  return (DISABLED_AGENT_CONFIG_TABS as readonly string[]).includes(tab);
 }
 
+/** India languages — English + all 22 Eighth Schedule languages (ISO 639 codes). */
 export const AGENT_LANGUAGES = [
   { label: "English", value: "en" },
   { label: "Hindi", value: "hi" },
-  { label: "Chinese", value: "zh" },
-  { label: "Spanish", value: "es" },
-  { label: "French", value: "fr" },
+  { label: "Assamese", value: "as" },
+  { label: "Bengali", value: "bn" },
+  { label: "Bodo", value: "brx" },
+  { label: "Dogri", value: "doi" },
+  { label: "Gujarati", value: "gu" },
+  { label: "Kannada", value: "kn" },
+  { label: "Kashmiri", value: "ks" },
+  { label: "Konkani", value: "kok" },
+  { label: "Maithili", value: "mai" },
+  { label: "Malayalam", value: "ml" },
+  { label: "Manipuri (Meitei)", value: "mni" },
+  { label: "Marathi", value: "mr" },
+  { label: "Nepali", value: "ne" },
+  { label: "Odia", value: "or" },
+  { label: "Punjabi", value: "pa" },
+  { label: "Sanskrit", value: "sa" },
+  { label: "Santali", value: "sat" },
+  { label: "Sindhi", value: "sd" },
+  { label: "Tamil", value: "ta" },
+  { label: "Telugu", value: "te" },
+  { label: "Urdu", value: "ur" },
 ];
 
 export function getAgentLanguageLabel(code: string): string {
@@ -165,11 +187,10 @@ export const DEFAULT_AGENT_CONFIG: AgentConfig = {
     backgroundNoise: "off",
   },
   prompts: {
-    greeting: "Hello! Thank you for taking our call today. How are you doing?",
+    greeting: "",
     greetsFirst: true,
-    systemPrompt:
-      "You are a professional voice AI agent for enterprise customer outreach. Conduct surveys naturally, handle objections gracefully, and maintain a warm professional tone throughout the conversation.",
-    farewell: DEFAULT_FAREWELL,
+    systemPrompt: "",
+    farewell: "",
   },
   wisdom: {
     websiteUrls: [],

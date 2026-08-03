@@ -22,6 +22,8 @@ export const apiEndpoints = {
     questionsFile: (id: string) => `/api/surveys/${id}/questions-file`,
     results: (id: string) => `/api/surveys/${id}/results`,
     resultsExport: (id: string) => `/api/surveys/${id}/results/export`,
+    resultDetail: (id: string, resultId: string) =>
+      `/api/surveys/${id}/results/${resultId}`,
   },
   surveyTemplates: {
     list: "/api/survey/templates",

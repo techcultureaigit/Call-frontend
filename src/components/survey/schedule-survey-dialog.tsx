@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { CalendarClock, Loader2 } from "lucide-react";
+import { CalendarClock } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { AppLoaderSpinner } from "@/components/ui/app-loader";
 import {
   Dialog,
   DialogContent,
@@ -225,7 +226,7 @@ export function ScheduleSurveyDialog({
             className="min-w-[140px]"
           >
             {isSaving ? (
-              <Loader2 className="size-4 animate-spin" />
+              <AppLoaderSpinner size="sm" />
             ) : (
               "Schedule survey"
             )}

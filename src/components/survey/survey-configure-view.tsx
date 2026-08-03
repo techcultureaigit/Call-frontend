@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
 import { toast } from "sonner";
 import { PageContainer } from "@/components/layout";
+import { AppLoader } from "@/components/ui/app-loader";
 import { usePageMeta, usePermissions, useSurveyTemplateDetail } from "@/hooks";
 import {
   DEFAULT_AGENT_CONFIG,
@@ -30,13 +31,14 @@ import {
 } from "./survey-schedule-fields";
 import { PersonaTab } from "./tabs/persona-tab";
 import { PromptsTab } from "./tabs/prompts-tab";
-import { WisdomTab } from "./tabs/wisdom-tab";
-import { FunctionsTab } from "./tabs/functions-tab";
+// Upcoming steps — keep imports commented (do not delete)
+// import { WisdomTab } from "./tabs/wisdom-tab";
+// import { FunctionsTab } from "./tabs/functions-tab";
+// import { PostCallTab } from "./tabs/post-call-tab";
 import { SurveyQuestionsTab } from "./tabs/survey-questions-tab";
 import { FarewellTab } from "./tabs/farewell-tab";
 import { ClientContactTab } from "./tabs/client-contact-tab";
 import { ScheduleTab } from "./tabs/schedule-tab";
-import { PostCallTab } from "./tabs/post-call-tab";
 import type { Agent, AgentConfig, AgentConfigTab } from "@/types/agent";
 import type { SurveyTemplate } from "@/types/survey-template";
 
@@ -117,7 +119,7 @@ export function SurveyConfigureView({
 }: SurveyConfigureViewProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { canCreateSurvey, canUpdateSurvey } = usePermissions();
+  const { isReady, canCreateSurvey, canUpdateSurvey } = usePermissions();
   const templateId = searchParams.get("template");
   const shouldLoadTemplate = Boolean(isNew && !agent && templateId);
 
@@ -156,21 +158,21 @@ export function SurveyConfigureView({
     return () => resetPageMeta();
   }, [applyMeta, resetPageMeta, isNew, agent?.name]);
 
-  // Block create flow when role lacks surveys:create
+  // Block create flow when role lacks surveys:create (wait for session first)
   useEffect(() => {
-    if (isNew && !canCreateSurvey) {
-      toast.error("You do not have permission to create surveys");
-      router.replace("/survey");
-    }
-  }, [isNew, canCreateSurvey, router]);
+    if (!isReady || !isNew) return;
+    if (canCreateSurvey) return;
+    toast.error("You do not have permission to create surveys");
+    router.replace("/survey");
+  }, [isReady, isNew, canCreateSurvey, router]);
 
   // Block edit flow when role lacks surveys:update
   useEffect(() => {
-    if (!isNew && agent && !canUpdateSurvey) {
-      toast.error("You do not have permission to edit surveys");
-      router.replace(`/survey/${agent.id}`);
-    }
-  }, [isNew, agent, canUpdateSurvey, router]);
+    if (!isReady || isNew || !agent) return;
+    if (canUpdateSurvey) return;
+    toast.error("You do not have permission to edit surveys");
+    router.replace(`/survey/${agent.id}`);
+  }, [isReady, isNew, agent, canUpdateSurvey, router]);
 
   useEffect(() => {
     if (!template || templateApplied) return;
@@ -346,20 +348,21 @@ export function SurveyConfigureView({
             onChange={(v) => updateConfig("prompts", v)}
           />
         );
-      case "wisdom":
-        return (
-          <WisdomTab
-            values={config.wisdom}
-            onChange={(v) => updateConfig("wisdom", v)}
-          />
-        );
-      case "functions":
-        return (
-          <FunctionsTab
-            values={config.functions}
-            onChange={(v) => updateConfig("functions", v)}
-          />
-        );
+      // Upcoming steps — keep commented (do not delete)
+      // case "wisdom":
+      //   return (
+      //     <WisdomTab
+      //       values={config.wisdom}
+      //       onChange={(v) => updateConfig("wisdom", v)}
+      //     />
+      //   );
+      // case "functions":
+      //   return (
+      //     <FunctionsTab
+      //       values={config.functions}
+      //       onChange={(v) => updateConfig("functions", v)}
+      //     />
+      //   );
       case "survey-questions":
         return (
           <SurveyQuestionsTab
@@ -397,15 +400,25 @@ export function SurveyConfigureView({
             }
           />
         );
-      case "post-call":
-        return (
-          <PostCallTab
-            values={config.postCall}
-            onChange={(v) => updateConfig("postCall", v)}
-          />
-        );
+      // case "post-call":
+      //   return (
+      //     <PostCallTab
+      //       values={config.postCall}
+      //       onChange={(v) => updateConfig("postCall", v)}
+      //     />
+      //   );
+      default:
+        return null;
     }
   };
+
+  if (!isReady) {
+    return (
+      <PageContainer size="full" className="pt-4 pb-4">
+        <AppLoader variant="page" label="Checking permissions" hint="Please wait a moment" />
+      </PageContainer>
+    );
+  }
 
   return (
     <PageContainer
@@ -431,7 +444,6 @@ export function SurveyConfigureView({
               <SurveyConfigTabs
                 active={activeTab}
                 onChange={handleTabChange}
-                showUpcoming={isNew}
                 completedTabs={{
                   persona: computedProgress.identity.complete,
                   prompts: computedProgress.prompts.complete,

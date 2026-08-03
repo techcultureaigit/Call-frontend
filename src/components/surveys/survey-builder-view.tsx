@@ -19,7 +19,7 @@ import {
 } from "@dnd-kit/sortable";
 import { useCallback, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Loader2 } from "lucide-react";
+import { AppLoader } from "@/components/ui/app-loader";
 import { usePageMeta, useSurveyDetail, useSurveyMutations } from "@/hooks";
 import {
   agentQuestionsToBuilder,
@@ -175,9 +175,12 @@ export function SurveyBuilderView() {
 
   if (isLoading) {
     return (
-      <div className="flex min-h-[60vh] items-center justify-center">
-        <Loader2 className="size-8 animate-spin text-muted-foreground" />
-      </div>
+      <AppLoader
+        variant="section"
+        label="Loading survey"
+        hint="Opening builder"
+        className="m-4"
+      />
     );
   }
 

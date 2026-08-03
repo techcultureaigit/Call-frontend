@@ -13,7 +13,7 @@
  * Frontend shape: Agent (types/agent.ts)
  */
 
-import { DEFAULT_AGENT_CONFIG, DEFAULT_FAREWELL } from "@/lib/constants/agent-config";
+import { DEFAULT_AGENT_CONFIG } from "@/lib/constants/agent-config";
 import type {
   Agent,
   AgentConfig,
@@ -92,7 +92,7 @@ export function backendSurveyToAgent(s: BackendSurvey): Agent {
       greeting: prompts.greeting ?? "",
       greetsFirst: prompts.greetsFirst ?? true,
       systemPrompt: prompts.systemPrompt ?? "",
-      farewell: prompts.farewell?.trim() ? prompts.farewell : DEFAULT_FAREWELL,
+      farewell: prompts.farewell ?? "",
     },
     surveyQuestions: {
       enabled: sq.enabled ?? true,

@@ -1,10 +1,11 @@
+"use client";
+
+import { AppLoader } from "@/components/ui/app-loader";
+
 export default function Loading() {
   return (
-    <div className="flex min-h-svh items-center justify-center">
-      <div className="flex flex-col items-center gap-3">
-        <div className="size-8 animate-spin rounded-full border-2 border-muted border-t-primary" />
-        <p className="text-sm text-muted-foreground">Loading...</p>
-      </div>
+    <div className="flex min-h-svh items-center justify-center p-6">
+      <AppLoader variant="section" label="Loading" className="w-full max-w-3xl border-0" />
     </div>
   );
 }

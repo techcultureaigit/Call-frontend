@@ -1,8 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { Loader2, Sparkles, History } from "lucide-react";
+import { Sparkles, History } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { AppLoader } from "@/components/ui/app-loader";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
@@ -46,6 +47,7 @@ export function PromptsTab({ values, onChange }: PromptsTabProps) {
           rows={3}
           maxLength={250}
           className="w-full rounded-[6px] border border-input bg-transparent px-3 py-2 text-sm shadow-subtle focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          placeholder="Hello! Thank you for taking our call today. How are you doing?"
         />
         <p
           className={cn(
@@ -92,19 +94,14 @@ export function PromptsTab({ values, onChange }: PromptsTabProps) {
         </div>
         <div className="relative">
           {loadingPrompt ? (
-            <div className="flex h-48 items-center justify-center rounded-[6px] border border-border/50 bg-muted/20">
-              <Loader2 className="size-6 animate-spin text-primary" />
-              <span className="ml-2 text-sm text-muted-foreground">
-                Loading...
-              </span>
-            </div>
+            <AppLoader variant="compact" label="Loading" className="h-48" />
           ) : (
             <textarea
               value={values.systemPrompt}
               onChange={(e) => update("systemPrompt", e.target.value)}
               rows={10}
               className="w-full rounded-[6px] border border-input bg-transparent px-4 py-3 text-sm leading-relaxed shadow-subtle focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-              placeholder="Define your agent's system prompt..."
+              placeholder="You are a professional voice AI agent for enterprise customer outreach. Conduct surveys naturally, handle objections gracefully, and maintain a warm professional tone throughout the conversation."
             />
           )}
         </div>

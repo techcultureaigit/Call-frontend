@@ -70,10 +70,7 @@ export function NavGroup({
   }
 
   return (
-    <motion.div
-      initial={{ opacity: 0, x: -8 }}
-      animate={{ opacity: 1, x: 0 }}
-      transition={{ delay: index * 0.02, duration: 0.22 }}
+    <div
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
@@ -173,6 +170,6 @@ export function NavGroup({
           )}
         </AnimatePresence>
       </div>
-    </motion.div>
+    </div>
   );
 }

@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Loader2, Users } from "lucide-react";
+import { Users } from "lucide-react";
+import { AppLoader } from "@/components/ui/app-loader";
 import {
   fetchClientContactsFromUrl,
   getContactColumnKeys,
@@ -129,10 +130,7 @@ export function ClientContactsPreview({
       ) : null}
 
       {loading && rows.length === 0 ? (
-        <div className="flex items-center justify-center gap-2 py-8 text-sm text-muted-foreground">
-          <Loader2 className="size-4 animate-spin" />
-          Fetching contacts from file URL…
-        </div>
+        <AppLoader variant="compact" label="Fetching contacts" />
       ) : rows.length > 0 && columns.length > 0 ? (
         <div className="overflow-x-auto rounded-[6px] border border-border/50">
           <table className="w-full min-w-[480px] text-left text-sm">

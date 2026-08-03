@@ -1,8 +1,9 @@
 "use client";
 
 import { Fragment, useCallback, useEffect, useState } from "react";
-import { ChevronDown, ChevronRight, Loader2, Phone, Users } from "lucide-react";
+import { ChevronDown, ChevronRight, Phone, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { AppLoader } from "@/components/ui/app-loader";
 import { formatAgentCreatedAt } from "@/lib/utils/date";
 import { surveysModuleService } from "@/services/surveys-module.service";
 import type { SurveyResultRow } from "@/types/survey-result";
@@ -66,10 +67,7 @@ export function SurveyResultsPanel({ surveyId }: SurveyResultsPanelProps) {
       </div>
 
       {loading ? (
-        <div className="flex items-center justify-center gap-2 py-10 text-sm text-muted-foreground">
-          <Loader2 className="size-4 animate-spin" />
-          Loading customer details…
-        </div>
+        <AppLoader variant="compact" label="Loading customer details" />
       ) : error ? (
         <div className="rounded-[6px] border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive">
           {error}

@@ -1,9 +1,9 @@
 "use client";
 
-import { ClipboardList, Loader2, Plus, Sparkles } from "lucide-react";
+import { ClipboardList, Plus, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
+import { AppLoader, AppLoaderSpinner } from "@/components/ui/app-loader";
 import { useSurveys } from "@/hooks/use-surveys";
 import { cn } from "@/lib/utils";
 
@@ -32,11 +32,7 @@ export function SurveyPicker({ onSelect, onCreate, isCreating }: SurveyPickerPro
         </div>
 
         <Button onClick={onCreate} disabled={isCreating} size="lg" className="gap-2">
-          {isCreating ? (
-            <Loader2 className="size-4 animate-spin" />
-          ) : (
-            <Plus className="size-4" />
-          )}
+          {isCreating ? <AppLoaderSpinner size="sm" /> : <Plus className="size-4" />}
           Create New Survey
         </Button>
 
@@ -45,11 +41,7 @@ export function SurveyPicker({ onSelect, onCreate, isCreating }: SurveyPickerPro
             Existing Surveys
           </p>
           {isLoading ? (
-            <div className="space-y-2">
-              {Array.from({ length: 4 }).map((_, i) => (
-                <Skeleton key={i} className="h-16 rounded-[6px]" />
-              ))}
-            </div>
+            <AppLoader variant="compact" label="Loading surveys" className="w-full" />
           ) : (
             <div className="space-y-2">
               {surveys.map((survey) => (

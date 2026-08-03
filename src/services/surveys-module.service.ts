@@ -131,6 +131,20 @@ export const surveysModuleService = {
     };
   },
 
+  async getResult(
+    surveyId: string,
+    resultId: string
+  ): Promise<{
+    result: SurveyResultRow;
+    survey: SurveyResultsSurveyMeta | null;
+  }> {
+    const res = await surveysApi.getResult(surveyId, resultId);
+    return {
+      result: res.data.result,
+      survey: res.data.survey ?? null,
+    };
+  },
+
   async exportResults(
     id: string,
     params: { format?: SurveyResultsExportFormat; search?: string } = {}

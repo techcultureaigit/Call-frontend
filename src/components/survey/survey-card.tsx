@@ -2,8 +2,7 @@
 
 import type { ReactNode } from "react";
 import Link from "next/link";
-import { motion } from "framer-motion";
-import { CalendarClock, Copy, Eye, Pencil, Trash2 } from "lucide-react";
+import { CalendarClock, ChartColumn, Copy, Eye, Pencil, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { getAgentLanguageLabel } from "@/lib/constants/agent-config";
@@ -39,6 +38,7 @@ export function SurveyCard({
   onSchedule,
 }: SurveyCardProps) {
   const {
+    isReady,
     canCreateSurvey,
     canUpdateSurvey,
     canDeleteSurvey,
@@ -57,12 +57,9 @@ export function SurveyCard({
   const displayStatus = getSurveyDisplayStatus(agent);
 
   return (
-    <motion.article
-      initial={{ opacity: 0, y: 16 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: index * 0.05, duration: 0.35 }}
-      whileHover={{ y: -3 }}
-      className="group"
+    <article
+      className="group transition-transform duration-200 hover:-translate-y-0.5"
+      style={{ animationDelay: `${index * 40}ms` }}
     >
       <div
         className={cn(
@@ -109,7 +106,23 @@ export function SurveyCard({
             </p>
           </div>
 
-          <div className="flex shrink-0 items-center gap-1">
+          <div className="flex shrink-0 items-center gap-1.5">
+            {locked ? (
+              <Button
+                asChild
+                size="sm"
+                className="group/result relative h-8 overflow-hidden rounded-[6px] px-3 text-xs font-semibold shadow-brand"
+              >
+                <Link href={`/survey/${agent.id}/results`}>
+                  <span
+                    aria-hidden
+                    className="pointer-events-none absolute inset-0 bg-[linear-gradient(110deg,transparent_25%,rgba(255,255,255,0.28)_45%,transparent_65%)] opacity-0 transition-opacity duration-300 group-hover/result:opacity-100"
+                  />
+                  <ChartColumn className="size-3.5" />
+                  Survey Result
+                </Link>
+              </Button>
+            ) : null}
             <ActionButton
               label="View details"
               href={`/survey/${agent.id}`}
@@ -135,7 +148,7 @@ export function SurveyCard({
                 <CalendarClock className="size-3.5" />
               </ActionButton>
             ) : null}
-            {canCreateSurvey && (
+            {isReady && canCreateSurvey && (
               <ActionButton
                 label="Copy full survey"
                 onClick={() => onClone?.(agent)}
@@ -156,7 +169,7 @@ export function SurveyCard({
           </div>
         </div>
       </div>
-    </motion.article>
+    </article>
   );
 }
 

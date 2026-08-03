@@ -5,6 +5,7 @@ import type {
 } from "@/types/survey-result";
 import { createQueryString } from "@/lib/utils";
 import { getAccessTokenFromCookie } from "@/lib/auth/session";
+import { useApiLoadingStore } from "@/stores/api-loading.store";
 import { apiEndpoints } from "./endpoints";
 import { ApiError, apiDelete, apiGet, apiPost, apiUpload } from "./http";
 
@@ -95,6 +96,14 @@ export const surveysApi = {
   listResults: (id: string, params?: SurveyResultsListParams) =>
     apiGet<SurveyResultsResponse>(apiEndpoints.surveys.results(id), params),
 
+  getResult: (id: string, resultId: string) =>
+    apiGet<
+      ApiResponse<{
+        result: SurveyResultRow;
+        survey: SurveyResultsSurveyMeta;
+      }>
+    >(apiEndpoints.surveys.resultDetail(id, resultId)),
+
   /** Download survey results as Excel or CSV (blob). */
   exportResults: async (
     id: string,
@@ -109,29 +118,34 @@ export const surveysApi = {
     const token = getAccessTokenFromCookie();
     if (token) headers.set("Authorization", `Bearer ${token}`);
 
-    const response = await fetch(
-      `${apiEndpoints.surveys.resultsExport(id)}${query}`,
-      { headers, cache: "no-store" }
-    );
-
-    if (!response.ok) {
-      const error = (await response.json().catch(() => ({}))) as {
-        message?: string;
-        errors?: unknown;
-      };
-      throw new ApiError(
-        error.message ?? "Failed to export survey results",
-        response.status,
-        error.errors ?? null
+    useApiLoadingStore.getState().start();
+    try {
+      const response = await fetch(
+        `${apiEndpoints.surveys.resultsExport(id)}${query}`,
+        { headers, cache: "no-store" }
       );
-    }
 
-    const blob = await response.blob();
-    const filename = parseFilename(
-      response.headers.get("Content-Disposition"),
-      `survey-results.${format}`
-    );
-    return { blob, filename };
+      if (!response.ok) {
+        const error = (await response.json().catch(() => ({}))) as {
+          message?: string;
+          errors?: unknown;
+        };
+        throw new ApiError(
+          error.message ?? "Failed to export survey results",
+          response.status,
+          error.errors ?? null
+        );
+      }
+
+      const blob = await response.blob();
+      const filename = parseFilename(
+        response.headers.get("Content-Disposition"),
+        `survey-results.${format}`
+      );
+      return { blob, filename };
+    } finally {
+      useApiLoadingStore.getState().stop();
+    }
   },
 
   uploadContactFile: (id: string, file: File) => {

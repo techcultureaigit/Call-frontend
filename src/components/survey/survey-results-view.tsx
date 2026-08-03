@@ -2,32 +2,26 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import { motion } from "framer-motion";
 import {
   ArrowLeft,
+  ArrowRight,
   CalendarClock,
   Download,
-  Eye,
   FileSpreadsheet,
   FileText,
-  Loader2,
-  MessageCircle,
+  HelpCircle,
+  MessageSquareText,
   Phone,
   Search,
+  Sparkles,
   Users,
 } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import { PageContainer } from "@/components/layout";
 import { Button } from "@/components/ui/button";
+import { AppLoaderSpinner } from "@/components/ui/app-loader";
 import { Input } from "@/components/ui/input";
-import { Skeleton } from "@/components/ui/skeleton";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -48,6 +42,7 @@ import type {
 } from "@/types/survey-result";
 import { SurveysPagination } from "./surveys-pagination";
 import { SurveyStatusBadge } from "./survey-status-badge";
+import { SurveyFetchLoader } from "./survey-fetch-loader";
 import type { SurveyDisplayStatus } from "@/lib/utils/survey-readiness";
 
 interface SurveyResultsViewProps {
@@ -131,19 +126,63 @@ function answerTone(answer: string): "yes" | "no" | "neutral" {
   return "neutral";
 }
 
-function AnswerChip({ answer }: { answer: string }) {
+function AnswerChip({ answer, index }: { answer: string; index: number }) {
   const tone = answerTone(answer);
   return (
-    <span
+    <motion.span
+      initial={{ opacity: 0, scale: 0.9 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ delay: index * 0.04, duration: 0.2 }}
       className={cn(
-        "inline-flex max-w-full truncate rounded-md px-2 py-0.5 text-xs font-semibold",
-        tone === "yes" && "bg-emerald-500/12 text-emerald-700",
-        tone === "no" && "bg-rose-500/12 text-rose-700",
-        tone === "neutral" && "bg-primary/10 text-primary"
+        "inline-flex max-w-[9.5rem] items-center truncate rounded-full border px-2.5 py-1 text-[11px] font-semibold shadow-sm",
+        tone === "yes" &&
+          "border-emerald-500/25 bg-gradient-to-r from-emerald-500/15 to-emerald-400/5 text-emerald-800",
+        tone === "no" &&
+          "border-rose-500/25 bg-gradient-to-r from-rose-500/15 to-rose-400/5 text-rose-800",
+        tone === "neutral" &&
+          "border-primary/20 bg-gradient-to-r from-primary/12 to-sky-400/5 text-primary"
       )}
+      title={answer}
     >
       {answer || "—"}
-    </span>
+    </motion.span>
+  );
+}
+
+function StatCard({
+  label,
+  value,
+  icon: Icon,
+  glowClass,
+}: {
+  label: string;
+  value: string | number;
+  icon: typeof Users;
+  glowClass: string;
+}) {
+  return (
+    <div className="group relative overflow-hidden rounded-[10px] border border-border/40 bg-card/95 px-4 py-3.5 shadow-sm">
+      <div
+        aria-hidden
+        className={cn(
+          "pointer-events-none absolute -right-4 -top-4 size-20 rounded-full opacity-70 blur-2xl transition-opacity group-hover:opacity-100",
+          glowClass
+        )}
+      />
+      <div className="relative flex items-start justify-between gap-3">
+        <div>
+          <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+            {label}
+          </p>
+          <p className="mt-1.5 font-display text-2xl font-semibold tabular-nums tracking-tight text-foreground">
+            {value}
+          </p>
+        </div>
+        <span className="flex size-9 items-center justify-center rounded-[8px] border border-primary/15 bg-primary/10">
+          <Icon className="size-4 text-primary" />
+        </span>
+      </div>
+    </div>
   );
 }
 
@@ -157,7 +196,6 @@ export function SurveyResultsView({ surveyId }: SurveyResultsViewProps) {
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [selected, setSelected] = useState<SurveyResultRow | null>(null);
   const [exporting, setExporting] = useState(false);
 
   const questions = survey?.questions ?? [];
@@ -167,11 +205,7 @@ export function SurveyResultsView({ surveyId }: SurveyResultsViewProps) {
     breadcrumbs: [
       { label: "Surveys", href: "/survey" },
       { label: "My Surveys", href: "/survey" },
-      {
-        label: survey?.name ?? "Survey",
-        href: `/survey/${surveyId}`,
-      },
-      { label: "Results" },
+      { label: survey?.name ?? "Results" },
     ],
   });
 
@@ -222,11 +256,6 @@ export function SurveyResultsView({ surveyId }: SurveyResultsViewProps) {
     [rows, questions]
   );
 
-  const selectedAnswers = useMemo(() => {
-    if (!selected) return [];
-    return enrichRowAnswers(selected, questions);
-  }, [selected, questions]);
-
   const handleExport = async (format: SurveyResultsExportFormat) => {
     if (exporting) return;
     setExporting(true);
@@ -264,7 +293,7 @@ export function SurveyResultsView({ surveyId }: SurveyResultsViewProps) {
     <div className="relative overflow-hidden">
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-x-0 top-0 h-56 bg-[radial-gradient(ellipse_at_top_left,color-mix(in_oklch,var(--brand)_16%,transparent),transparent_55%)]"
+        className="pointer-events-none absolute inset-x-0 top-0 h-64 bg-[radial-gradient(ellipse_at_top_left,color-mix(in_oklch,var(--brand)_18%,transparent),transparent_55%),radial-gradient(ellipse_at_top_right,color-mix(in_oklch,var(--brand)_8%,transparent),transparent_45%)]"
       />
 
       <PageContainer size="full" className="relative">
@@ -275,9 +304,9 @@ export function SurveyResultsView({ surveyId }: SurveyResultsViewProps) {
                 type="button"
                 variant="outline"
                 size="icon"
-                className="mt-1 size-9 shrink-0 rounded-[6px] bg-card/80"
-                onClick={() => router.push(`/survey/${surveyId}`)}
-                aria-label="Back to survey"
+                className="mt-1 size-9 shrink-0 rounded-[8px] bg-card/80"
+                onClick={() => router.push("/survey")}
+                aria-label="Back to surveys"
               >
                 <ArrowLeft className="size-4" />
               </Button>
@@ -290,7 +319,8 @@ export function SurveyResultsView({ surveyId }: SurveyResultsViewProps) {
                     <SurveyStatusBadge status={status} />
                   ) : null}
                 </div>
-                <p className="mt-1 text-sm text-muted-foreground">
+                <p className="mt-1 flex flex-wrap items-center gap-1.5 text-sm text-muted-foreground">
+                  <Sparkles className="size-3.5 text-primary" />
                   {survey?.name ?? "Survey"}
                   {meta.total > 0
                     ? ` · ${meta.total} response${meta.total === 1 ? "" : "s"}`
@@ -306,7 +336,7 @@ export function SurveyResultsView({ surveyId }: SurveyResultsViewProps) {
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   placeholder="Search phone or session…"
-                  className="h-10 rounded-[6px] border-border/50 bg-card/90 pl-9 shadow-sm"
+                  className="h-10 rounded-[8px] border-border/50 bg-card/90 pl-9 shadow-sm"
                 />
               </div>
 
@@ -315,11 +345,11 @@ export function SurveyResultsView({ surveyId }: SurveyResultsViewProps) {
                   <Button
                     type="button"
                     variant="outline"
-                    className="h-10 shrink-0 rounded-[6px] gap-1.5"
+                    className="h-10 shrink-0 rounded-[8px] gap-1.5 border-primary/20 bg-card hover:border-primary/40"
                     disabled={exporting || meta.total === 0}
                   >
                     {exporting ? (
-                      <Loader2 className="size-4 animate-spin" />
+                      <AppLoaderSpinner size="sm" />
                     ) : (
                       <Download className="size-4" />
                     )}
@@ -348,152 +378,155 @@ export function SurveyResultsView({ surveyId }: SurveyResultsViewProps) {
             </div>
           </div>
 
-          {!error && (meta.total > 0 || questions.length > 0) ? (
+          {!error && meta.total > 0 ? (
             <div className="grid gap-3 sm:grid-cols-3">
-              <div className="rounded-[6px] border border-border/40 bg-card/90 px-4 py-3 shadow-sm">
-                <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                  Responses
-                </p>
-                <p className="mt-1 font-display text-2xl font-semibold tabular-nums text-foreground">
-                  {meta.total}
-                </p>
-              </div>
-              <div className="rounded-[6px] border border-border/40 bg-card/90 px-4 py-3 shadow-sm">
-                <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                  Questions
-                </p>
-                <p className="mt-1 font-display text-2xl font-semibold tabular-nums text-foreground">
-                  {questions.length || "—"}
-                </p>
-              </div>
-              <div className="rounded-[6px] border border-border/40 bg-card/90 px-4 py-3 shadow-sm">
-                <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                  On this page
-                </p>
-                <p className="mt-1 font-display text-2xl font-semibold tabular-nums text-foreground">
-                  {enrichedRows.length}
-                </p>
-              </div>
+              <StatCard
+                label="Responses"
+                value={meta.total}
+                icon={Users}
+                glowClass="bg-primary/25"
+              />
+              <StatCard
+                label="Questions"
+                value={questions.length || "—"}
+                icon={HelpCircle}
+                glowClass="bg-sky-400/25"
+              />
+              <StatCard
+                label="On this page"
+                value={enrichedRows.length}
+                icon={MessageSquareText}
+                glowClass="bg-emerald-400/25"
+              />
             </div>
           ) : null}
 
-          {loading && rows.length === 0 ? (
-            <div className="space-y-2">
-              <Skeleton className="h-10 w-full rounded-[6px]" />
-              <Skeleton className="h-40 w-full rounded-[6px]" />
-            </div>
+          {loading ? (
+            <SurveyFetchLoader
+              label="Loading results"
+              hint="Fetching survey responses"
+            />
           ) : error ? (
-            <div className="rounded-[6px] border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive">
+            <div className="rounded-[10px] border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive">
               {error}
             </div>
           ) : enrichedRows.length === 0 ? (
-            <div className="rounded-[6px] border border-dashed border-border/60 bg-card px-6 py-12 text-center">
-              <Users className="mx-auto size-8 text-muted-foreground/70" />
-              <p className="mt-3 text-sm font-medium text-foreground">
+            <div className="rounded-[12px] border border-dashed border-border/60 bg-card/80 px-6 py-14 text-center">
+              <div className="mx-auto flex size-14 items-center justify-center rounded-full bg-primary/10">
+                <Users className="size-7 text-primary" />
+              </div>
+              <p className="mt-4 text-base font-semibold text-foreground">
                 No responses found
               </p>
-              <p className="mt-1 text-xs text-muted-foreground">
+              <p className="mt-1 text-sm text-muted-foreground">
                 {debouncedSearch
                   ? "Try a different phone or session id."
                   : "Results will appear after calls complete."}
               </p>
             </div>
           ) : (
-            <div className="overflow-hidden rounded-[6px] border border-border/50 bg-card shadow-sm">
-              <div className="overflow-x-auto">
-                <table className="w-full min-w-160 text-left text-sm">
-                  <thead className="border-b border-border/50 bg-muted/25 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                    <tr>
-                      <th className="px-4 py-3">Customer</th>
-                      <th className="px-4 py-3">Preview</th>
-                      <th className="px-4 py-3">Extracted</th>
-                      <th className="px-4 py-3 text-right">Action</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {enrichedRows.map((row) => {
-                      const preview = row.answers.slice(0, 3);
-                      return (
-                        <tr
-                          key={row.id}
-                          className="group cursor-pointer border-b border-border/40 last:border-0 transition-colors hover:bg-brand/5"
-                          onClick={() => setSelected(row)}
-                        >
-                          <td className="px-4 py-3.5">
-                            <div className="flex items-center gap-3">
-                              <span className="flex size-9 shrink-0 items-center justify-center rounded-[6px] bg-primary/10 font-display text-xs font-bold text-primary">
-                                {phoneInitials(row.customer_number)}
-                              </span>
-                              <div className="min-w-0">
-                                <p className="inline-flex items-center gap-1.5 font-medium text-foreground">
-                                  <Phone className="size-3.5 text-primary" />
-                                  {row.customer_number || "—"}
-                                </p>
-                                <p className="mt-0.5 truncate text-xs text-muted-foreground">
-                                  {row.customer_name || "Unknown contact"}
-                                  {" · "}
-                                  {row.answers.length} answer
-                                  {row.answers.length === 1 ? "" : "s"}
-                                </p>
-                              </div>
-                            </div>
-                          </td>
-                          <td className="px-4 py-3.5">
-                            <div className="flex flex-wrap gap-1.5">
-                              {preview.length ? (
-                                preview.map((a) => (
-                                  <AnswerChip
-                                    key={a.questionId}
-                                    answer={a.answer}
-                                  />
-                                ))
-                              ) : (
-                                <span className="text-xs text-muted-foreground">
-                                  —
-                                </span>
-                              )}
-                              {row.answers.length > 3 ? (
-                                <span className="rounded-md bg-muted px-2 py-0.5 text-xs text-muted-foreground">
-                                  +{row.answers.length - 3}
-                                </span>
-                              ) : null}
-                            </div>
-                          </td>
-                          <td className="px-4 py-3.5 text-muted-foreground">
-                            <span className="inline-flex items-center gap-1.5">
-                              <CalendarClock className="size-3.5" />
-                              {row.extracted_at
-                                ? formatAgentCreatedAt(row.extracted_at)
-                                : "—"}
-                            </span>
-                          </td>
-                          <td className="px-4 py-3.5 text-right">
-                            <Button
-                              type="button"
-                              size="sm"
-                              className="h-8 rounded-[6px] gap-1.5 opacity-90 group-hover:opacity-100"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setSelected(row);
-                              }}
-                            >
-                              <Eye className="size-3.5" />
-                              Details
-                            </Button>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
+            <div className="overflow-hidden rounded-[12px] border border-border/50 bg-card/95 shadow-sm">
+              <div className="flex items-center justify-between gap-3 border-b border-border/40 bg-gradient-to-r from-primary/8 via-transparent to-sky-400/5 px-4 py-3">
+                <div>
+                  <p className="text-sm font-semibold text-foreground">
+                    Response list
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    Preview answers, then open full Q&A
+                  </p>
+                </div>
               </div>
 
-              {loading ? (
-                <div className="flex items-center justify-center gap-2 border-t border-border/40 px-4 py-2.5 text-xs text-muted-foreground">
-                  <Loader2 className="size-3.5 animate-spin" />
-                  Updating…
-                </div>
-              ) : null}
+              <div className="divide-y divide-border/40">
+                {enrichedRows.map((row, rowIndex) => {
+                  const preview = row.answers.slice(0, 3);
+                  return (
+                    <motion.div
+                      key={row.id}
+                      initial={{ opacity: 0, y: 8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: rowIndex * 0.04, duration: 0.25 }}
+                      className="group grid gap-4 px-4 py-4 transition-colors hover:bg-primary/[0.03] sm:grid-cols-[minmax(0,1.1fr)_minmax(0,1.4fr)_auto_auto] sm:items-center"
+                    >
+                      <div className="flex min-w-0 items-center gap-3">
+                        <span className="relative flex size-11 shrink-0 items-center justify-center rounded-[10px] bg-gradient-to-br from-primary/20 to-sky-400/10 font-display text-sm font-bold text-primary ring-1 ring-primary/15">
+                          {phoneInitials(row.customer_number)}
+                          <span
+                            aria-hidden
+                            className="absolute -bottom-0.5 -right-0.5 size-2.5 rounded-full border-2 border-card bg-emerald-500"
+                          />
+                        </span>
+                        <div className="min-w-0">
+                          <p className="inline-flex items-center gap-1.5 truncate font-semibold text-foreground">
+                            <Phone className="size-3.5 shrink-0 text-primary" />
+                            {row.customer_number || "—"}
+                          </p>
+                          <p className="mt-0.5 truncate text-xs text-muted-foreground">
+                            {row.customer_name || "Unknown contact"}
+                            {" · "}
+                            {row.answers.length} answer
+                            {row.answers.length === 1 ? "" : "s"}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="min-w-0">
+                        <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground sm:hidden">
+                          Preview
+                        </p>
+                        <div className="flex flex-wrap gap-1.5">
+                          {preview.length ? (
+                            preview.map((a, i) => (
+                              <AnswerChip
+                                key={a.questionId}
+                                answer={a.answer}
+                                index={i}
+                              />
+                            ))
+                          ) : (
+                            <span className="text-xs text-muted-foreground">
+                              —
+                            </span>
+                          )}
+                          {row.answers.length > 3 ? (
+                            <span className="inline-flex items-center rounded-full border border-border/60 bg-muted/60 px-2.5 py-1 text-[11px] font-medium text-muted-foreground">
+                              +{row.answers.length - 3} more
+                            </span>
+                          ) : null}
+                        </div>
+                      </div>
+
+                      <div className="text-xs text-muted-foreground sm:justify-self-end">
+                        <p className="mb-1 text-[10px] font-semibold uppercase tracking-wider sm:hidden">
+                          Extracted
+                        </p>
+                        <span className="inline-flex items-center gap-1.5 rounded-full bg-muted/50 px-2.5 py-1">
+                          <CalendarClock className="size-3.5" />
+                          {row.extracted_at
+                            ? formatAgentCreatedAt(row.extracted_at)
+                            : "—"}
+                        </span>
+                      </div>
+
+                      <div className="sm:justify-self-end">
+                        <Button
+                          type="button"
+                          size="sm"
+                          className="group/btn h-9 rounded-[8px] gap-1.5 px-3.5 font-semibold shadow-brand"
+                          onClick={() =>
+                            router.push(
+                              `/survey/${surveyId}/results/${row.id}`
+                            )
+                          }
+                        >
+                          View details
+                          <ArrowRight className="size-3.5 transition-transform duration-200 group-hover/btn:translate-x-0.5" />
+                        </Button>
+                      </div>
+                    </motion.div>
+                  );
+                })}
+              </div>
             </div>
           )}
 
@@ -506,118 +539,6 @@ export function SurveyResultsView({ surveyId }: SurveyResultsViewProps) {
           ) : null}
         </div>
       </PageContainer>
-
-      <Dialog
-        open={!!selected}
-        onOpenChange={(open) => {
-          if (!open) setSelected(null);
-        }}
-      >
-        <DialogContent className="max-h-[88vh] gap-0 overflow-hidden p-0 sm:max-w-xl">
-          <div className="relative overflow-hidden border-b border-border/40 bg-linear-to-br from-primary/12 via-background to-brand-soft/40 px-6 pb-5 pt-6">
-            <div
-              aria-hidden
-              className="pointer-events-none absolute -right-8 -top-10 size-36 rounded-full bg-primary/10 blur-2xl"
-            />
-            <DialogHeader className="relative text-left">
-              <DialogTitle className="font-display text-xl">
-                Response details
-              </DialogTitle>
-              <DialogDescription asChild>
-                <div className="mt-3 flex flex-wrap items-center gap-2">
-                  <span className="inline-flex items-center gap-1.5 rounded-[6px] bg-background/80 px-2.5 py-1 text-xs font-medium text-foreground shadow-sm">
-                    <Phone className="size-3.5 text-primary" />
-                    {selected?.customer_number || "—"}
-                  </span>
-                  {selected?.extracted_at ? (
-                    <span className="inline-flex items-center gap-1.5 rounded-[6px] bg-background/80 px-2.5 py-1 text-xs text-muted-foreground shadow-sm">
-                      <CalendarClock className="size-3.5" />
-                      {formatAgentCreatedAt(selected.extracted_at)}
-                    </span>
-                  ) : null}
-                  <span className="inline-flex items-center gap-1.5 rounded-[6px] bg-background/80 px-2.5 py-1 text-xs text-muted-foreground shadow-sm">
-                    <MessageCircle className="size-3.5" />
-                    {selectedAnswers.length} answers
-                  </span>
-                </div>
-              </DialogDescription>
-            </DialogHeader>
-          </div>
-
-          {selected ? (
-            <div className="max-h-[60vh] space-y-5 overflow-y-auto px-6 py-5">
-              <div className="grid gap-2 rounded-[6px] border border-border/40 bg-muted/15 p-3 text-xs sm:grid-cols-2">
-                <div>
-                  <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                    Customer
-                  </p>
-                  <p className="mt-1 text-sm font-medium text-foreground">
-                    {selected.customer_name || "Unknown contact"}
-                  </p>
-                </div>
-                <div className="min-w-0">
-                  <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                    Session
-                  </p>
-                  <p className="mt-1 truncate font-mono text-[11px] text-foreground">
-                    {selected.session_id || "—"}
-                  </p>
-                </div>
-              </div>
-
-              <div>
-                <p className="mb-3 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                  Question &amp; answers
-                </p>
-
-                {selectedAnswers.length ? (
-                  <ol className="relative space-y-0">
-                    <AnimatePresence>
-                      {selectedAnswers.map((answer, index) => {
-                        const isLast = index === selectedAnswers.length - 1;
-                        return (
-                          <motion.li
-                            key={answer.questionId}
-                            initial={{ opacity: 0, x: 8 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            transition={{ delay: index * 0.05, duration: 0.2 }}
-                            className="relative flex gap-3 pb-5 last:pb-0"
-                          >
-                            {!isLast ? (
-                              <span
-                                aria-hidden
-                                className="absolute left-4 top-8 bottom-0 w-px bg-border"
-                              />
-                            ) : null}
-                            <span className="relative z-10 flex size-8 shrink-0 items-center justify-center rounded-full border-2 border-primary/30 bg-primary/10 font-display text-xs font-bold text-primary">
-                              {index + 1}
-                            </span>
-                            <div className="min-w-0 flex-1 rounded-[6px] border border-border/50 bg-card p-3 shadow-sm">
-                              <p className="text-sm leading-snug text-muted-foreground">
-                                {answer.question}
-                              </p>
-                              <div className="mt-2.5 flex flex-wrap items-center gap-2">
-                                <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                                  Answer
-                                </span>
-                                <AnswerChip answer={answer.answer} />
-                              </div>
-                            </div>
-                          </motion.li>
-                        );
-                      })}
-                    </AnimatePresence>
-                  </ol>
-                ) : (
-                  <p className="text-sm text-muted-foreground">
-                    No answers recorded.
-                  </p>
-                )}
-              </div>
-            </div>
-          ) : null}
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }

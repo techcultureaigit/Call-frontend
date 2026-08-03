@@ -1,8 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { motion } from "framer-motion";
 import { Bot, HelpCircle, Search, UserPlus } from "lucide-react";
 import { toast } from "sonner";
 import { PageContainer } from "@/components/layout";
@@ -22,6 +21,7 @@ import {
   type ScheduleSurveyPayload,
 } from "./schedule-survey-dialog";
 import { SurveyCard } from "./survey-card";
+import { SurveyFetchLoader } from "./survey-fetch-loader";
 import { SurveysPagination } from "./surveys-pagination";
 
 const PAGE_SIZE = 9;
@@ -39,9 +39,12 @@ export function SurveyListView() {
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const [agents, setAgents] = useState<Agent[]>([]);
-  const { canCreateSurvey } = usePermissions();
+  const { isReady, canCreateSurvey } = usePermissions();
   const [meta, setMeta] = useState<PaginatedMeta>(EMPTY_META);
   const [isLoading, setIsLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const hasLoadedRef = useRef(false);
+  const requestIdRef = useRef(0);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [pendingDelete, setPendingDelete] = useState<Agent | null>(null);
@@ -62,21 +65,33 @@ export function SurveyListView() {
   }, [applyMeta, resetPageMeta]);
 
   const loadSurveys = useCallback(async (nextPage: number, nextSearch: string) => {
-    setIsLoading(true);
+    const requestId = ++requestIdRef.current;
+    const showInitialLoader = !hasLoadedRef.current;
+
+    if (showInitialLoader) setIsLoading(true);
+    else setIsRefreshing(true);
+
     try {
       const result = await surveysModuleService.list({
         page: nextPage,
         limit: PAGE_SIZE,
         search: nextSearch.trim() || undefined,
       });
+      // Ignore stale responses from an older search/page request
+      if (requestId !== requestIdRef.current) return;
       setAgents(result.data);
       setMeta(result.meta);
+      hasLoadedRef.current = true;
     } catch {
+      if (requestId !== requestIdRef.current) return;
       toast.error("Failed to load surveys");
       setAgents([]);
       setMeta(EMPTY_META);
     } finally {
-      setIsLoading(false);
+      if (requestId === requestIdRef.current) {
+        setIsLoading(false);
+        setIsRefreshing(false);
+      }
     }
   }, []);
 
@@ -238,15 +253,13 @@ export function SurveyListView() {
     }
   };
 
+  /** Same card loader for first load, search, and pagination refresh. */
+  const showLoader = isLoading || isRefreshing;
+
   return (
     <div className="bg-linear-to-b from-brand/5 to-transparent">
       <PageContainer size="full">
-        <motion.div
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.35 }}
-          className="space-y-6"
-        >
+        <div className="space-y-6">
           <div className="flex items-start justify-between gap-4">
             <div className="flex min-w-0 items-start gap-3">
               <SidebarCollapseToggle className="mt-1" />
@@ -276,9 +289,12 @@ export function SurveyListView() {
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Search surveys by name..."
                 className="h-11 rounded-[6px] border-border/50 bg-card pl-9 shadow-sm"
+                disabled={showLoader && agents.length === 0}
               />
             </div>
-            {canCreateSurvey ? (
+            {!isReady || (showLoader && agents.length === 0) ? (
+              <Skeleton className="h-11 w-44 shrink-0 rounded-[6px]" />
+            ) : canCreateSurvey ? (
               <Button
                 asChild
                 className="h-11 shrink-0 rounded-[6px] px-5 shadow-sm"
@@ -300,12 +316,8 @@ export function SurveyListView() {
             )}
           </div>
 
-          {isLoading ? (
-            <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
-              {Array.from({ length: 6 }).map((_, i) => (
-                <Skeleton key={i} className="h-52 rounded-[6px]" />
-              ))}
-            </div>
+          {showLoader ? (
+            <SurveyFetchLoader />
           ) : agents.length === 0 ? (
             <div className="flex flex-col items-center justify-center rounded-[6px] border border-dashed border-border/60 bg-card/60 px-6 py-20 text-center shadow-sm backdrop-blur-sm">
               <div className="mb-4 flex size-16 items-center justify-center rounded-[6px] bg-primary/10">
@@ -317,7 +329,7 @@ export function SurveyListView() {
                   ? "Try a different search term."
                   : "Create your first voice survey to get started."}
               </p>
-              {!search && canCreateSurvey && (
+              {!search && isReady && canCreateSurvey && (
                 <Button asChild className="mt-4 rounded-[6px]">
                   <Link href="/survey/new">
                     <UserPlus className="size-4" />
@@ -325,14 +337,14 @@ export function SurveyListView() {
                   </Link>
                 </Button>
               )}
-              {!search && !canCreateSurvey && (
+              {!search && isReady && !canCreateSurvey && (
                 <p className="mt-4 text-xs text-muted-foreground">
                   You have view-only access. Ask an admin for create permission.
                 </p>
               )}
             </div>
           ) : (
-            <>
+            <div className="space-y-4">
               <div className="flex items-center justify-between gap-3 rounded-[6px] border border-border/50 bg-card/70 px-3 py-2.5 shadow-sm">
                 <label className="flex cursor-pointer items-center gap-2.5 text-sm text-foreground">
                   <Checkbox
@@ -376,6 +388,7 @@ export function SurveyListView() {
                   />
                 ))}
               </div>
+
               <SurveysPagination
                 meta={meta}
                 onPageChange={(nextPage) => {
@@ -384,9 +397,9 @@ export function SurveyListView() {
                   scroller?.scrollTo({ top: 0, behavior: "smooth" });
                 }}
               />
-            </>
+            </div>
           )}
-        </motion.div>
+        </div>
       </PageContainer>
 
       <DeleteSurveyDialog

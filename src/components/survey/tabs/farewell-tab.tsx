@@ -1,6 +1,5 @@
 "use client";
 
-import { useEffect, useRef } from "react";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import { DEFAULT_FAREWELL } from "@/lib/constants/agent-config";
@@ -11,16 +10,6 @@ interface FarewellTabProps {
 }
 
 export function FarewellTab({ value, onChange }: FarewellTabProps) {
-  const didSeedDefault = useRef(false);
-
-  useEffect(() => {
-    if (didSeedDefault.current) return;
-    didSeedDefault.current = true;
-    if (!value?.trim()) {
-      onChange(DEFAULT_FAREWELL);
-    }
-  }, [value, onChange]);
-
   const farewellLeft = 500 - (value?.length ?? 0);
 
   return (

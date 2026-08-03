@@ -14,7 +14,15 @@ import type { User } from "@/types/user";
 
 async function fetchBackendSession(): Promise<User | null> {
   try {
-    const res = await apiGet<ApiResponse<BackendAuthUser>>("/auth/me");
+    const res = await apiGet<ApiResponse<BackendAuthUser>>("/auth/me", {
+      headers: {
+        "Cache-Control": "no-cache, no-store, must-revalidate",
+        Pragma: "no-cache",
+        Expires: "0",
+      },
+      // Unique URL so browser never serves a stale 304 for this session call
+      params: { _ts: Date.now() },
+    });
     if (!res.data) return null;
     return mapBackendUser(res.data);
   } catch (error) {
@@ -48,13 +56,20 @@ export function useAuth() {
       const nextUser = await fetchBackendSession();
       if (nextUser) setUser(nextUser);
       else if (hasToken) clearSession();
-      return nextUser ?? user;
+      return nextUser;
     },
     // Skip blocking refetch when login already populated user in memory
     enabled: isHydrated && hasToken && !user,
     staleTime: 5 * 60 * 1000,
     retry: false,
   });
+
+  // Keep Zustand in sync if React Query serves cached session data
+  useEffect(() => {
+    if (sessionQuery.data && !user) {
+      setUser(sessionQuery.data);
+    }
+  }, [sessionQuery.data, user, setUser]);
 
   const logout = async () => {
     try {
@@ -67,12 +82,20 @@ export function useAuth() {
     }
   };
 
+  /**
+   * Stay "loading" until cookies hydrate AND (if a token exists) the user
+   * is in the store. Do not trust React Query isLoading alone — it can be
+   * false for a frame before /auth/me starts, which caused false permission denies.
+   */
+  const isLoading =
+    !isHydrated || (hasToken && !user && !sessionQuery.isError);
+
   return {
-    user: sessionQuery.data ?? user,
+    user: user ?? sessionQuery.data ?? null,
     tokens,
-    isAuthenticated: isAuthenticated || Boolean(sessionQuery.data ?? user),
+    isAuthenticated: isAuthenticated || Boolean(user ?? sessionQuery.data),
     isHydrated,
-    isLoading: !isHydrated || (sessionQuery.isLoading && !user),
+    isLoading,
     isError: sessionQuery.isError,
     setSession,
     clearSession,

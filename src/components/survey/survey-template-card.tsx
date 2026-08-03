@@ -51,7 +51,7 @@ export function SurveyTemplateCard({
   onViewDetails,
 }: SurveyTemplateCardProps) {
   const Icon = ICON_MAP[template.icon] ?? Volume2;
-  const { canCreateSurvey } = usePermissions();
+  const { isReady, canCreateSurvey } = usePermissions();
 
   return (
     <motion.article
@@ -114,7 +114,7 @@ export function SurveyTemplateCard({
             >
               View Details
             </Button>
-            {canCreateSurvey && (
+            {isReady && canCreateSurvey && (
               <Button size="sm" className="flex-1 rounded-[6px]" asChild>
                 <Link href={`/survey/new?template=${template.id}`}>
                   + Create Survey

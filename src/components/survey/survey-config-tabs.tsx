@@ -16,7 +16,7 @@ import {
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import {
-  AGENT_CONFIG_TABS,
+  ENABLED_AGENT_CONFIG_TABS,
   isAgentConfigTabDisabled,
 } from "@/lib/constants/agent-config";
 import type { AgentConfigTab } from "@/types/agent";
@@ -24,11 +24,16 @@ import type { AgentConfigTab } from "@/types/agent";
 const TAB_ICONS: Record<AgentConfigTab, LucideIcon> = {
   persona: User,
   prompts: List,
-  functions: GitBranch,
+  // Upcoming — keep commented with tabs (do not delete)
+  // functions: GitBranch,
   "survey-questions": ClipboardList,
   farewell: MessageCircle,
   "client-contact": Users,
   schedule: CalendarClock,
+  // wisdom: Brain,
+  // "post-call": Monitor,
+  // Temporary stubs so Record<AgentConfigTab, …> still typechecks while upcoming tabs are commented out
+  functions: GitBranch,
   wisdom: Brain,
   "post-call": Monitor,
 };
@@ -36,7 +41,7 @@ const TAB_ICONS: Record<AgentConfigTab, LucideIcon> = {
 interface SurveyConfigTabsProps {
   active: AgentConfigTab;
   onChange: (tab: AgentConfigTab) => void;
-  /** Show "Upcoming" badge on disabled steps (create flow only) */
+  /** @deprecated Upcoming steps are hidden from the stepper */
   showUpcoming?: boolean;
   completedTabs?: Partial<Record<AgentConfigTab, boolean>>;
 }
@@ -44,18 +49,19 @@ interface SurveyConfigTabsProps {
 export function SurveyConfigTabs({
   active,
   onChange,
-  showUpcoming = false,
   completedTabs = {},
 }: SurveyConfigTabsProps) {
+  const visibleTabs = ENABLED_AGENT_CONFIG_TABS;
+
   return (
     <nav aria-label="Survey configuration steps" className="w-full">
       <ol className="flex flex-col gap-1">
-        {AGENT_CONFIG_TABS.map((tab, index) => {
+        {visibleTabs.map((tab, index) => {
           const Icon = TAB_ICONS[tab.id as AgentConfigTab];
           const isDisabled = isAgentConfigTabDisabled(tab.id);
           const isActive = active === tab.id;
           const isDone = Boolean(completedTabs[tab.id as AgentConfigTab]);
-          const isLast = index === AGENT_CONFIG_TABS.length - 1;
+          const isLast = index === visibleTabs.length - 1;
 
           return (
             <li key={tab.id} className="relative flex flex-col">
@@ -90,6 +96,7 @@ export function SurveyConfigTabs({
                       !isDisabled &&
                       "brand-gradient text-brand-foreground shadow-brand ring-2 ring-brand/20",
                     isDone &&
+                      !isActive &&
                       "bg-brand/12 text-brand ring-1 ring-inset ring-brand/25",
                     isDisabled &&
                       "bg-muted/70 text-muted-foreground/70 ring-1 ring-inset ring-border/70",
@@ -99,7 +106,7 @@ export function SurveyConfigTabs({
                       "bg-muted text-muted-foreground ring-1 ring-inset ring-border group-hover:text-foreground"
                   )}
                 >
-                  {isDone ? (
+                  {isDone && !isActive ? (
                     <Check className="size-4" />
                   ) : (
                     <Icon className="size-[18px]" />
@@ -116,11 +123,6 @@ export function SurveyConfigTabs({
                     )}
                   >
                     Step {index + 1}
-                    {showUpcoming && isDisabled && (
-                      <span className="rounded-full bg-muted px-1.5 py-0.5 text-[9px] font-bold tracking-[0.08em] text-muted-foreground normal-case">
-                        Upcoming
-                      </span>
-                    )}
                   </span>
                   <span
                     className={cn(
