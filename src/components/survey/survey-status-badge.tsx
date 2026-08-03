@@ -7,23 +7,29 @@ const STATUS_STYLES: Record<
   SurveyDisplayStatus,
   { label: string; className: string; dotClassName?: string }
 > = {
+  draft: {
+    label: "Draft",
+    className:
+      "border-amber-500/20 bg-amber-500/10 text-amber-700 dark:text-amber-400",
+    dotClassName: "bg-amber-500",
+  },
   scheduled: {
     label: "Scheduled",
     className:
       "border-emerald-500/20 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400",
     dotClassName: "bg-emerald-500",
   },
-  complete: {
-    label: "Complete",
+  processing: {
+    label: "Processing",
     className:
-      "border-blue-500/20 bg-blue-500/10 text-blue-700 dark:text-blue-400",
-    dotClassName: "bg-blue-500",
+      "border-violet-500/20 bg-violet-500/10 text-violet-700 dark:text-violet-400",
+    dotClassName: "bg-violet-500",
   },
-  draft: {
-    label: "Draft",
+  completed: {
+    label: "Completed",
     className:
-      "border-amber-500/20 bg-amber-500/10 text-amber-700 dark:text-amber-400",
-    dotClassName: "bg-amber-500",
+      "border-slate-500/20 bg-slate-500/10 text-slate-700 dark:text-slate-300",
+    dotClassName: "bg-slate-500",
   },
 };
 
@@ -40,7 +46,7 @@ export function SurveyStatusBadge({
   withDot = false,
   size = "sm",
 }: SurveyStatusBadgeProps) {
-  const style = STATUS_STYLES[status];
+  const style = STATUS_STYLES[status] ?? STATUS_STYLES.draft;
 
   return (
     <span

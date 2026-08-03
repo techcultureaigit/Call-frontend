@@ -7,6 +7,7 @@ export { SurveyCard } from "./survey-card";
 export { SurveyAvatar } from "./survey-avatar";
 export { SurveyDetailView } from "./survey-detail-view";
 export { SurveyDetailLoader } from "./survey-detail-loader";
+export { SurveyResultsView } from "./survey-results-view";
 export { DeleteSurveyDialog } from "./delete-survey-dialog";
 export { ClientContactsPreview } from "./client-contacts-preview";
 export { ScheduleSurveyDialog } from "./schedule-survey-dialog";

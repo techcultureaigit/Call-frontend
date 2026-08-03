@@ -2,7 +2,7 @@
  * Maps between the backend Survey model and the frontend Agent type.
  *
  * Backend shape (Mongoose):
- *   _id, name, status, conversationCount,
+ *   _id, name, scheduling_status, conversationCount,
  *   persona { language, maxCallDurationMinutes, audioCacheEnabled, livekitInferenceEnabled, stt, llm, tts },
  *   prompts { greeting, greetsFirst, systemPrompt, farewell },
  *   surveyQuestions { enabled, questions[] },
@@ -21,20 +21,11 @@ import type {
   AgentSchedule,
   AgentScheduleRecurrence,
   AgentScheduleStatus,
+  AgentSchedulingStatus,
 } from "@/types/agent";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type BackendSurvey = Record<string, any>;
-
-const DEFAULT_SCHEDULE: AgentSchedule = {
-  enabled: false,
-  startAt: null,
-  endAt: null,
-  timezone: "Asia/Kolkata",
-  recurrence: "once",
-  status: "idle",
-  lastScheduledAt: null,
-};
 
 const DEFAULT_PROGRESS: AgentProgress = {
   identity: { complete: false, missing: ["name"] },
@@ -47,6 +38,24 @@ const DEFAULT_PROGRESS: AgentProgress = {
   completedRequiredSteps: 0,
   totalRequiredSteps: 4,
 };
+
+function mapSchedulingStatus(s: BackendSurvey): AgentSchedulingStatus {
+  const raw = s.scheduling_status ?? s.status;
+  if (
+    raw === "draft" ||
+    raw === "scheduled" ||
+    raw === "completed" ||
+    raw === "processing"
+  ) {
+    return raw;
+  }
+  // Legacy status: active/paused → treat as draft unless schedule says otherwise
+  if (s.schedule?.enabled && s.schedule?.status === "scheduled") {
+    return "scheduled";
+  }
+  if (s.schedule?.status === "completed") return "completed";
+  return "draft";
+}
 
 export function backendSurveyToAgent(s: BackendSurvey): Agent {
   const id = s._id ?? s.id;
@@ -98,10 +107,11 @@ export function backendSurveyToAgent(s: BackendSurvey): Agent {
     clientContact: {
       contactFileUrl: cc.contactFileUrl ?? "",
       contactFileName: cc.contactFileName ?? "",
-      contacts: (cc.contacts ?? []).map(
+      contacts: (cc.contacts ?? [])
+        .filter((row: unknown) => row && typeof row === "object")
+        // Preserve every column from uploaded rows
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (row: any) => ({ ...row })
-      ),
+        .map((row: any) => ({ ...row })),
     },
     functions: DEFAULT_AGENT_CONFIG.functions,
     wisdom: DEFAULT_AGENT_CONFIG.wisdom,
@@ -135,7 +145,7 @@ export function backendSurveyToAgent(s: BackendSurvey): Agent {
   return {
     id,
     name: s.name ?? "",
-    status: s.status ?? "draft",
+    scheduling_status: mapSchedulingStatus(s),
     language: persona.language ?? "en",
     modelMode: "pipeline",
     phone: null,
@@ -151,12 +161,12 @@ export function backendSurveyToAgent(s: BackendSurvey): Agent {
 /**
  * Convert the frontend AgentConfig + metadata into a backend-compatible
  * payload for POST /surveys (create or update).
+ * scheduling_status is owned by the backend (draft / scheduled on schedule).
  */
 export function agentToBackendPayload(
   agent: {
     id?: string;
     config: AgentConfig;
-    status?: string;
     step?: number;
   },
   schedule?: {
@@ -172,7 +182,6 @@ export function agentToBackendPayload(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const payload: Record<string, any> = {
     name: c.persona.name.trim() || "Untitled Survey",
-    status: agent.status ?? "draft",
     persona: {
       language: c.persona.language,
       maxCallDurationMinutes: c.persona.maxCallDurationMinutes,

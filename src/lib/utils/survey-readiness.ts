@@ -1,4 +1,9 @@
-import type { Agent, AgentConfig, AgentSchedule } from "@/types/agent";
+import type {
+  Agent,
+  AgentConfig,
+  AgentSchedule,
+  AgentSchedulingStatus,
+} from "@/types/agent";
 
 export const DEFAULT_AGENT_SCHEDULE: AgentSchedule = {
   enabled: false,
@@ -39,22 +44,23 @@ export function getSurveySchedule(agent: Agent): AgentSchedule {
   return agent.schedule ?? DEFAULT_AGENT_SCHEDULE;
 }
 
-export function isSurveyScheduled(agent: Agent): boolean {
-  const schedule = getSurveySchedule(agent);
-  return Boolean(schedule.enabled && schedule.status === "scheduled");
+export function getSchedulingStatus(agent: Agent): AgentSchedulingStatus {
+  return agent.scheduling_status ?? "draft";
 }
 
-/** UI label for list / configure / detail (not raw DB status). */
-export type SurveyDisplayStatus = "scheduled" | "complete" | "draft";
+/** Completed surveys are locked — no edit or delete */
+export function isSurveyCompleted(agent: Agent): boolean {
+  return getSchedulingStatus(agent) === "completed";
+}
 
-export function getSurveyDisplayStatus(
-  agent: Agent,
-  options?: { overallComplete?: boolean }
-): SurveyDisplayStatus {
-  if (isSurveyScheduled(agent)) return "scheduled";
-  const complete =
-    options?.overallComplete ??
-    agent.progress?.overallComplete ??
-    isSurveyReadyToSchedule(agent);
-  return complete ? "complete" : "draft";
+export function isSurveyScheduled(agent: Agent): boolean {
+  const status = getSchedulingStatus(agent);
+  return status === "scheduled" || status === "processing";
+}
+
+/** Badge / label — mirrors backend `scheduling_status` only */
+export type SurveyDisplayStatus = AgentSchedulingStatus;
+
+export function getSurveyDisplayStatus(agent: Agent): SurveyDisplayStatus {
+  return getSchedulingStatus(agent);
 }

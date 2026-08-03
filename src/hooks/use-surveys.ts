@@ -73,7 +73,7 @@ export function useSurveys(activeOnly = true, search = "") {
         page: 1,
         limit: 100,
         search: search || undefined,
-        status: activeOnly ? "active" : undefined,
+        status: activeOnly ? "scheduled" : undefined,
       });
       return result.data;
     },
@@ -93,7 +93,7 @@ export interface BuilderSavePayload {
   name: string;
   description?: string;
   questions: SurveyQuestion[];
-  status?: Agent["status"];
+  scheduling_status?: Agent["scheduling_status"];
 }
 
 export function useSurveyMutations() {
@@ -117,7 +117,6 @@ export function useSurveyMutations() {
       };
       return surveysModuleService.save({
         config,
-        status: "draft",
       });
     },
     onSuccess: () => {
@@ -153,7 +152,6 @@ export function useSurveyMutations() {
       return surveysModuleService.save({
         id,
         config,
-        status: payload.status ?? existing.status,
       });
     },
     onSuccess: (_, { id }) => {
@@ -171,20 +169,21 @@ export function useSurveyMutations() {
       id: string;
       published: boolean;
     }) => {
-      const existing = await surveysModuleService.getById(id);
-      return surveysModuleService.save({
-        id,
-        config: existing.config,
-        status: published ? "active" : "draft",
+      if (!published) {
+        throw new Error("Unscheduling is not supported");
+      }
+      return surveysModuleService.schedule(id, {
+        startAt: new Date().toISOString(),
       });
     },
-    onSuccess: (data, { id }) => {
-      toast.success(
-        data.status === "active" ? "Survey published" : "Survey unpublished"
-      );
-      invalidate(id);
+    onSuccess: () => {
+      toast.success("Survey published");
+      invalidate();
     },
-    onError: () => toast.error("Failed to update publish status"),
+    onError: (error) =>
+      toast.error(
+        error instanceof Error ? error.message : "Failed to update publish status"
+      ),
   });
 
   const deleteSurvey = useMutation({

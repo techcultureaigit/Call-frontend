@@ -8,6 +8,7 @@ import { motion } from "framer-motion";
 import {
   ArrowLeft,
   CalendarClock,
+  ClipboardList,
   Clock,
   Copy,
   FileUp,
@@ -32,11 +33,11 @@ import { getContactFileOpenUrl } from "@/lib/utils/contact-file-url";
 import {
   getSurveyDisplayStatus,
   getSurveySchedule,
+  isSurveyCompleted,
   isSurveyReadyToSchedule,
   isSurveyScheduled,
 } from "@/lib/utils/survey-readiness";
 import type { Agent } from "@/types/agent";
-import { SurveyAvatar } from "./survey-avatar";
 import { SurveyStatusBadge } from "./survey-status-badge";
 import { ClientContactsPreview } from "./client-contacts-preview";
 import {
@@ -98,9 +99,12 @@ export function SurveyDetailView({ agent }: { agent: Agent }) {
     canCreateSurvey,
     canUpdateSurvey,
   } = usePermissions();
+  const locked = isSurveyCompleted(currentAgent);
   const canSchedule =
-    canUpdateSurvey && isSurveyReadyToSchedule(currentAgent);
-  const scheduled = isSurveyScheduled(currentAgent);
+    canUpdateSurvey &&
+    !locked &&
+    !isSurveyScheduled(currentAgent) &&
+    isSurveyReadyToSchedule(currentAgent);
   const displayStatus = getSurveyDisplayStatus(currentAgent);
 
   const { applyMeta, resetPageMeta } = usePageMeta({
@@ -170,19 +174,6 @@ export function SurveyDetailView({ agent }: { agent: Agent }) {
     }
   };
 
-  const confirmUnschedule = async () => {
-    try {
-      const updated = await surveysModuleService.unschedule(currentAgent.id);
-      setCurrentAgent(updated);
-      setScheduleOpen(false);
-      toast.success(`"${updated.name}" unscheduled`);
-    } catch (error) {
-      toast.error(
-        error instanceof Error ? error.message : "Failed to unschedule survey"
-      );
-    }
-  };
-
   return (
     <div className="bg-linear-to-b from-brand/5 to-transparent">
       <PageContainer size="full">
@@ -204,7 +195,6 @@ export function SurveyDetailView({ agent }: { agent: Agent }) {
               >
                 <ArrowLeft className="size-4" />
               </Button>
-              <SurveyAvatar seed={currentAgent.id} avatarId={persona.avatarId} />
               <div className="min-w-0">
                 <h1 className="font-display text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
                   {currentAgent.name}
@@ -223,6 +213,14 @@ export function SurveyDetailView({ agent }: { agent: Agent }) {
             </div>
 
             <div className="flex shrink-0 flex-wrap gap-2 sm:justify-end">
+              {locked ? (
+                <Button asChild className="rounded-[6px]">
+                  <Link href={`/survey/${currentAgent.id}/results`}>
+                    <ClipboardList className="size-4" />
+                    Survey results
+                  </Link>
+                </Button>
+              ) : null}
               {canSchedule ? (
                 <Button
                   type="button"
@@ -231,7 +229,7 @@ export function SurveyDetailView({ agent }: { agent: Agent }) {
                   onClick={() => setScheduleOpen(true)}
                 >
                   <CalendarClock className="size-4" />
-                  {scheduled ? "Reschedule" : "Schedule survey"}
+                  Schedule survey
                 </Button>
               ) : null}
               {canCreateSurvey && (
@@ -245,7 +243,7 @@ export function SurveyDetailView({ agent }: { agent: Agent }) {
                   Copy full survey
                 </Button>
               )}
-              {canUpdateSurvey && (
+              {canUpdateSurvey && !locked && (
                 <Button asChild className="rounded-[6px]">
                   <Link href={`/survey/${currentAgent.id}/configure`}>
                     <Pencil className="size-4" />
@@ -465,7 +463,7 @@ export function SurveyDetailView({ agent }: { agent: Agent }) {
             <StepSection step={6} title={stepMeta[5].title}>
               <div className="grid gap-3 rounded-[6px] border border-border/50 bg-muted/20 p-4 sm:grid-cols-2">
                 <DetailField label="Status">
-                  {scheduled ? "Scheduled" : "Not scheduled"}
+                  {isSurveyScheduled(currentAgent) ? "Scheduled" : "Not scheduled"}
                 </DetailField>
                 <DetailField label="Recurrence">
                   {getSurveySchedule(currentAgent).recurrence}
@@ -489,7 +487,6 @@ export function SurveyDetailView({ agent }: { agent: Agent }) {
         onOpenChange={setScheduleOpen}
         agent={currentAgent}
         onConfirm={confirmSchedule}
-        onUnschedule={confirmUnschedule}
       />
     </div>
   );

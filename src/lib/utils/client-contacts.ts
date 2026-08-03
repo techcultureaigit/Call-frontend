@@ -1,3 +1,4 @@
+import * as XLSX from "xlsx";
 import { parseCSV } from "@/lib/utils/csv";
 
 /** Any columns from the uploaded contact spreadsheet */
@@ -24,23 +25,61 @@ export function parseClientContactsFromText(text: string): ClientContactRow[] {
     .filter((r): r is ClientContactRow => r !== null);
 }
 
-export async function parseClientContactsFromFile(
-  file: File
-): Promise<ClientContactRow[]> {
-  const lower = file.name.toLowerCase();
-  const buffer = await file.arrayBuffer();
+/** Parse Excel / CSV ArrayBuffer into dynamic contact rows */
+export function parseClientContactsFromBuffer(
+  buffer: ArrayBuffer,
+  fileHint = ""
+): ClientContactRow[] {
+  const lower = fileHint.toLowerCase();
+  const bytes = new Uint8Array(buffer);
+  const isZip = bytes[0] === 0x50 && bytes[1] === 0x4b; // PK — xlsx/zip
+  const looksCsv =
+    lower.endsWith(".csv") ||
+    (!isZip && !lower.endsWith(".xlsx") && !lower.endsWith(".xls"));
 
-  if (lower.endsWith(".csv") || file.type.includes("csv") || file.type.includes("text")) {
+  if (looksCsv && !isZip) {
     const text = new TextDecoder().decode(buffer);
     return parseClientContactsFromText(text);
   }
 
-  const text = new TextDecoder("utf-8", { fatal: false }).decode(buffer);
-  if (text.includes(",")) {
-    return parseClientContactsFromText(text);
-  }
+  const book = XLSX.read(buffer, { type: "array", cellDates: true });
+  const sheetName = book.SheetNames[0];
+  if (!sheetName) return [];
 
-  throw new Error("Could not read contacts. Please upload a CSV or Excel file.");
+  const sheet = book.Sheets[sheetName];
+  const jsonRows = XLSX.utils.sheet_to_json<Record<string, unknown>>(sheet, {
+    defval: "",
+    raw: false,
+  });
+
+  return jsonRows
+    .map((row) => {
+      const normalized: Record<string, string> = {};
+      for (const [key, value] of Object.entries(row)) {
+        normalized[key] = String(value ?? "").trim();
+      }
+      return mapRowToClientContact(normalized);
+    })
+    .filter((r): r is ClientContactRow => r !== null);
+}
+
+export async function parseClientContactsFromFile(
+  file: File
+): Promise<ClientContactRow[]> {
+  const buffer = await file.arrayBuffer();
+  return parseClientContactsFromBuffer(buffer, file.name);
+}
+
+function fileHintFromUrl(url: string): string {
+  try {
+    const pathname = new URL(url).pathname.toLowerCase();
+    if (pathname.endsWith(".csv")) return ".csv";
+    if (pathname.endsWith(".xlsx")) return ".xlsx";
+    if (pathname.endsWith(".xls")) return ".xls";
+  } catch {
+    // ignore
+  }
+  return url.toLowerCase();
 }
 
 /**
@@ -50,30 +89,13 @@ export async function parseClientContactsFromFile(
 export async function fetchClientContactsFromUrl(
   url: string
 ): Promise<ClientContactRow[]> {
-  const tryParseBuffer = async (buffer: ArrayBuffer, contentType: string) => {
-    if (
-      contentType.includes("csv") ||
-      contentType.includes("text") ||
-      url.toLowerCase().includes(".csv")
-    ) {
-      const text = new TextDecoder().decode(buffer);
-      return parseClientContactsFromText(text);
-    }
-
-    const text = new TextDecoder("utf-8", { fatal: false }).decode(buffer);
-    if (text.includes(",")) {
-      return parseClientContactsFromText(text);
-    }
-
-    throw new Error("Unsupported contact file format from URL");
-  };
+  const hint = fileHintFromUrl(url);
 
   try {
     const res = await fetch(url, { mode: "cors" });
     if (res.ok) {
-      const contentType = (res.headers.get("content-type") || "").toLowerCase();
       const buffer = await res.arrayBuffer();
-      return tryParseBuffer(buffer, contentType);
+      return parseClientContactsFromBuffer(buffer, hint);
     }
   } catch {
     // Fall through to proxy
@@ -85,14 +107,29 @@ export async function fetchClientContactsFromUrl(
   const json = (await proxy.json()) as {
     success: boolean;
     message?: string;
-    data?: { text: string; contentType: string };
+    data?: {
+      rows?: ClientContactRow[];
+      text?: string;
+      contentType?: string;
+    };
   };
 
-  if (!proxy.ok || !json.success || !json.data?.text) {
+  if (!proxy.ok || !json.success || !json.data) {
     throw new Error(json.message || "Failed to load contacts from URL");
   }
 
-  return parseClientContactsFromText(json.data.text);
+  if (Array.isArray(json.data.rows)) {
+    return json.data.rows
+      .map(mapRowToClientContact)
+      .filter((r): r is ClientContactRow => r !== null);
+  }
+
+  // Legacy proxy shape (text only) — CSV only
+  if (json.data.text) {
+    return parseClientContactsFromText(json.data.text);
+  }
+
+  throw new Error("Failed to parse contacts from URL");
 }
 
 /** Collect column headers across dynamic contact rows */
@@ -104,4 +141,23 @@ export function getContactColumnKeys(rows: ClientContactRow[]): string[] {
     }
   }
   return Array.from(keys);
+}
+
+/** Drop null / empty contact placeholders from API payloads */
+export function sanitizeContactRows(
+  rows: unknown[] | undefined | null
+): ClientContactRow[] {
+  if (!Array.isArray(rows)) return [];
+  return rows
+    .filter((row): row is Record<string, unknown> =>
+      Boolean(row && typeof row === "object")
+    )
+    .map((row) => {
+      const normalized: Record<string, string> = {};
+      for (const [key, value] of Object.entries(row)) {
+        normalized[key] = String(value ?? "").trim();
+      }
+      return mapRowToClientContact(normalized);
+    })
+    .filter((r): r is ClientContactRow => r !== null);
 }

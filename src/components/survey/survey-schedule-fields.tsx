@@ -118,17 +118,23 @@ interface SurveyScheduleFieldsProps {
   onChange: (values: ScheduleFormValues) => void;
   /** Create vs edit copy */
   mode?: "create" | "edit";
+  /** When true, schedule cannot be changed (already scheduled) */
+  readOnly?: boolean;
 }
 
 export function SurveyScheduleFields({
   values,
   onChange,
   mode = "create",
+  readOnly = false,
 }: SurveyScheduleFieldsProps) {
   const update = <K extends keyof ScheduleFormValues>(
     key: K,
     value: ScheduleFormValues[K]
-  ) => onChange({ ...values, [key]: value });
+  ) => {
+    if (readOnly) return;
+    onChange({ ...values, [key]: value });
+  };
 
   return (
     <div className="space-y-4 rounded-[8px] border border-border/60 bg-muted/20 p-4">
@@ -139,14 +145,17 @@ export function SurveyScheduleFields({
             Schedule survey
           </h3>
           <p className="mt-1 text-xs text-muted-foreground">
-            {mode === "edit"
-              ? "Update when this survey should run. You can change this anytime."
-              : "Set when this survey should run after create. You can change it later from My Surveys."}
+            {readOnly
+              ? "This survey is already scheduled. Schedule cannot be changed."
+              : mode === "edit"
+                ? "Optionally schedule this survey to run."
+                : "Optionally set when this survey should run after create."}
           </p>
         </div>
         <Switch
           checked={values.enabled}
           onCheckedChange={(checked) => update("enabled", checked)}
+          disabled={readOnly}
         />
       </div>
 
@@ -160,6 +169,7 @@ export function SurveyScheduleFields({
               value={values.startAt}
               onChange={(e) => update("startAt", e.target.value)}
               className="rounded-[6px]"
+              disabled={readOnly}
             />
           </div>
 
@@ -173,6 +183,7 @@ export function SurveyScheduleFields({
               value={values.endAt}
               onChange={(e) => update("endAt", e.target.value)}
               className="rounded-[6px]"
+              disabled={readOnly}
             />
           </div>
 
@@ -186,6 +197,7 @@ export function SurveyScheduleFields({
                 onChange={(e) =>
                   update("recurrence", e.target.value as AgentScheduleRecurrence)
                 }
+                disabled={readOnly}
               />
             </div>
             <div className="space-y-2">
@@ -195,14 +207,14 @@ export function SurveyScheduleFields({
                 options={TIMEZONE_OPTIONS}
                 value={values.timezone}
                 onChange={(e) => update("timezone", e.target.value)}
+                disabled={readOnly}
               />
             </div>
           </div>
         </div>
       ) : (
         <p className="text-xs text-muted-foreground">
-          Turn on to set start time, recurrence, and timezone
-          {mode === "edit" ? " (or leave off to keep current / skip)." : "."}
+          Turn on to set start time, recurrence, and timezone.
         </p>
       )}
     </div>

@@ -18,9 +18,10 @@ export const apiEndpoints = {
     detail: (id: string) => `/api/surveys/${id}`,
     duplicate: (id: string) => `/api/surveys/${id}/duplicate`,
     schedule: (id: string) => `/api/surveys/${id}/schedule`,
-    unschedule: (id: string) => `/api/surveys/${id}/unschedule`,
     contactFile: (id: string) => `/api/surveys/${id}/contact-file`,
     questionsFile: (id: string) => `/api/surveys/${id}/questions-file`,
+    results: (id: string) => `/api/surveys/${id}/results`,
+    resultsExport: (id: string) => `/api/surveys/${id}/results/export`,
   },
   surveyTemplates: {
     list: "/api/survey/templates",

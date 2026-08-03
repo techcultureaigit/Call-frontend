@@ -8,6 +8,7 @@ import type { PaginatedMeta } from "@/types";
 interface SurveysPaginationProps {
   meta: PaginatedMeta;
   onPageChange: (page: number) => void;
+  itemLabel?: string;
 }
 
 function getVisiblePages(page: number, totalPages: number): number[] {
@@ -26,6 +27,7 @@ function getVisiblePages(page: number, totalPages: number): number[] {
 export function SurveysPagination({
   meta,
   onPageChange,
+  itemLabel = "surveys",
 }: SurveysPaginationProps) {
   const { page, totalPages, total, limit, hasPreviousPage, hasNextPage } = meta;
   const from = total === 0 ? 0 : (page - 1) * limit + 1;
@@ -45,7 +47,8 @@ export function SurveysPagination({
             Showing{" "}
             <span className="font-medium text-foreground">{from}</span>–
             <span className="font-medium text-foreground">{to}</span> of{" "}
-            <span className="font-medium text-foreground">{total}</span> surveys
+            <span className="font-medium text-foreground">{total}</span>{" "}
+            {itemLabel}
           </p>
         </div>
 

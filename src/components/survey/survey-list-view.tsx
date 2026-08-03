@@ -13,6 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useDebounce, usePageMeta, usePermissions } from "@/hooks";
 import { surveysModuleService } from "@/services/surveys-module.service";
+import { isSurveyCompleted } from "@/lib/utils/survey-readiness";
 import type { PaginatedMeta } from "@/types";
 import type { Agent } from "@/types/agent";
 import { DeleteSurveyDialog } from "./delete-survey-dialog";
@@ -127,11 +128,28 @@ export function SurveyListView() {
   };
 
   const openDelete = (agent: Agent) => {
+    if (isSurveyCompleted(agent)) {
+      toast.error("Completed surveys cannot be deleted");
+      return;
+    }
     setPendingDelete(agent);
     setDeleteOpen(true);
   };
 
   const openBulkDelete = () => {
+    const deletable = agents.filter(
+      (a) => selectedIds.has(a.id) && !isSurveyCompleted(a)
+    );
+    if (deletable.length === 0) {
+      toast.error("Completed surveys cannot be deleted");
+      return;
+    }
+    if (deletable.length < selectedIds.size) {
+      toast.warning(
+        `${selectedIds.size - deletable.length} completed survey(s) will be skipped`
+      );
+    }
+    setSelectedIds(new Set(deletable.map((a) => a.id)));
     setPendingDelete(null);
     setDeleteOpen(true);
   };
@@ -220,23 +238,6 @@ export function SurveyListView() {
     }
   };
 
-  const confirmUnschedule = async () => {
-    if (!pendingSchedule) return;
-    try {
-      const updated = await surveysModuleService.unschedule(pendingSchedule.id);
-      setAgents((prev) =>
-        prev.map((a) => (a.id === updated.id ? updated : a))
-      );
-      setScheduleOpen(false);
-      setPendingSchedule(null);
-      toast.success(`"${updated.name}" unscheduled`);
-    } catch (error) {
-      toast.error(
-        error instanceof Error ? error.message : "Failed to unschedule survey"
-      );
-    }
-  };
-
   return (
     <div className="bg-linear-to-b from-brand/5 to-transparent">
       <PageContainer size="full">
@@ -254,8 +255,7 @@ export function SurveyListView() {
                   My Surveys
                 </h1>
                 <p className="mt-1.5 max-w-xl text-sm text-muted-foreground">
-                  Schedule any survey with all steps filled. Reschedule anytime
-                  from the calendar action on the card.
+                  Schedule any survey once all required steps are filled.
                 </p>
               </div>
             </div>
@@ -409,7 +409,6 @@ export function SurveyListView() {
         }}
         agent={pendingSchedule}
         onConfirm={confirmSchedule}
-        onUnschedule={confirmUnschedule}
       />
     </div>
   );

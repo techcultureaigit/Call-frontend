@@ -16,7 +16,6 @@ import { buildSystemPromptFromTemplate } from "@/lib/data/mock-survey-templates"
 import { computeSurveyProgress } from "@/lib/utils/survey-progress";
 import {
   isSurveyReadyToSchedule,
-  isSurveyScheduled,
   type SurveyDisplayStatus,
 } from "@/lib/utils/survey-readiness";
 import { SurveyTopNav } from "./survey-top-nav";
@@ -202,11 +201,10 @@ export function SurveyConfigureView({
   );
 
   const displayStatus = useMemo((): SurveyDisplayStatus => {
-    if (agent && isSurveyScheduled(agent) && scheduleForm.enabled) {
-      return "scheduled";
-    }
-    return computedProgress.overallComplete ? "complete" : "draft";
-  }, [agent, scheduleForm.enabled, computedProgress.overallComplete]);
+    if (agent?.scheduling_status) return agent.scheduling_status;
+    if (scheduleForm.enabled) return "scheduled";
+    return "draft";
+  }, [agent?.scheduling_status, scheduleForm.enabled]);
 
   const tabIndex = ENABLED_TAB_ORDER.indexOf(activeTab);
   const isFirst = tabIndex <= 0;
@@ -222,7 +220,12 @@ export function SurveyConfigureView({
       return;
     }
 
-    if (isLast && scheduleForm.enabled) {
+    if (
+      isLast &&
+      scheduleForm.enabled &&
+      agent?.scheduling_status !== "scheduled" &&
+      agent?.scheduling_status !== "processing"
+    ) {
       const parsed = parseScheduleForm(scheduleForm);
       if (!parsed.ok) {
         toast.error(parsed.error);
@@ -257,19 +260,24 @@ export function SurveyConfigureView({
         return;
       }
 
-      const parsed = parseScheduleForm(scheduleForm);
-      if (!parsed.ok) {
-        toast.error(parsed.error);
-        return;
-      }
+      const alreadyScheduled =
+        agent?.scheduling_status === "scheduled" ||
+        agent?.scheduling_status === "processing";
 
-      const schedulePayload = isLast ? parsed.payload : null;
+      let schedulePayload: Parameters<typeof surveysModuleService.save>[1] = null;
+      if (isLast && !alreadyScheduled) {
+        const parsed = parseScheduleForm(scheduleForm);
+        if (!parsed.ok) {
+          toast.error(parsed.error);
+          return;
+        }
+        schedulePayload = parsed.payload;
+      }
 
       const saved = await surveysModuleService.save(
         {
           id: surveyId,
           config,
-          status: schedulePayload?.enabled ? "active" : "draft",
           step: Math.max(tabIndex, 0) + 1,
         },
         schedulePayload
@@ -383,6 +391,10 @@ export function SurveyConfigureView({
             values={scheduleForm}
             onChange={setScheduleForm}
             mode={isNew ? "create" : "edit"}
+            readOnly={
+              agent?.scheduling_status === "scheduled" ||
+              agent?.scheduling_status === "processing"
+            }
           />
         );
       case "post-call":

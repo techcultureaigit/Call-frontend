@@ -5,6 +5,7 @@ import { Loader2, Users } from "lucide-react";
 import {
   fetchClientContactsFromUrl,
   getContactColumnKeys,
+  sanitizeContactRows,
   type ClientContactRow,
 } from "@/lib/utils/client-contacts";
 import { cn } from "@/lib/utils";
@@ -33,7 +34,11 @@ export function ClientContactsPreview({
   compact = false,
   preferUrlFetch = false,
 }: ClientContactsPreviewProps) {
-  const [rows, setRows] = useState<ClientContactRow[]>(initialContacts ?? []);
+  const cachedContacts = useMemo(
+    () => sanitizeContactRows(initialContacts),
+    [initialContacts]
+  );
+  const [rows, setRows] = useState<ClientContactRow[]>(cachedContacts);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [fromUrl, setFromUrl] = useState(false);
@@ -51,11 +56,19 @@ export function ClientContactsPreview({
       if (parsed.length === 0) {
         setError("No contact rows found in file");
       }
-    } catch {
+    } catch (err) {
       setFromUrl(false);
       setRows((prev) => {
-        const fallback = prev.length > 0 ? prev : initialContacts ?? [];
-        setError("");
+        const fallback = prev.length > 0 ? prev : cachedContacts;
+        if (fallback.length === 0) {
+          setError(
+            err instanceof Error
+              ? err.message
+              : "Failed to load contacts from URL"
+          );
+        } else {
+          setError("");
+        }
         return fallback.length > 0 ? fallback : prev;
       });
     } finally {
@@ -64,28 +77,27 @@ export function ClientContactsPreview({
   };
 
   useEffect(() => {
-    const cached = initialContacts ?? [];
-    if (cached.length > 0) {
-      setRows(cached);
+    if (cachedContacts.length > 0) {
+      setRows(cachedContacts);
       setFromUrl(false);
       setError("");
     }
 
     const url = fileUrl?.trim();
-    if (url && (preferUrlFetch || cached.length === 0)) {
+    if (url && (preferUrlFetch || cachedContacts.length === 0)) {
       void loadFromUrl(url);
       return;
     }
 
-    if (cached.length === 0 && !url) {
+    if (cachedContacts.length === 0 && !url) {
       setRows([]);
       setError("");
       setFromUrl(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [fileUrl, initialContacts?.length, preferUrlFetch]);
+  }, [fileUrl, cachedContacts.length, preferUrlFetch]);
 
-  if (!fileUrl && (!initialContacts || initialContacts.length === 0)) {
+  if (!fileUrl && cachedContacts.length === 0) {
     return null;
   }
 

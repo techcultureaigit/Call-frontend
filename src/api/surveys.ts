@@ -1,6 +1,12 @@
 import type { ApiResponse } from "@/types/api";
+import type {
+  SurveyResultRow,
+  SurveyResultsSurveyMeta,
+} from "@/types/survey-result";
+import { createQueryString } from "@/lib/utils";
+import { getAccessTokenFromCookie } from "@/lib/auth/session";
 import { apiEndpoints } from "./endpoints";
-import { apiDelete, apiGet, apiPost, apiUpload } from "./http";
+import { ApiError, apiDelete, apiGet, apiPost, apiUpload } from "./http";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type BackendSurvey = Record<string, any>;
@@ -12,6 +18,19 @@ export interface SurveysListParams {
   status?: string;
 }
 
+export interface SurveyResultsListParams {
+  page?: number;
+  limit?: number;
+  search?: string;
+}
+
+export type SurveyResultsExportFormat = "xlsx" | "csv";
+
+export interface SurveyResultsExportParams {
+  format?: SurveyResultsExportFormat;
+  search?: string;
+}
+
 interface PaginatedResponse {
   success: boolean;
   data: BackendSurvey[];
@@ -21,6 +40,36 @@ interface PaginatedResponse {
     total: number;
     totalPages: number;
   };
+}
+
+interface SurveyResultsResponse {
+  success: boolean;
+  data:
+    | SurveyResultRow[]
+    | {
+        results: SurveyResultRow[];
+        survey: SurveyResultsSurveyMeta;
+      };
+  pagination?: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+  };
+}
+
+function parseFilename(disposition: string | null, fallback: string): string {
+  if (!disposition) return fallback;
+  const utfMatch = /filename\*=UTF-8''([^;]+)/i.exec(disposition);
+  if (utfMatch?.[1]) {
+    try {
+      return decodeURIComponent(utfMatch[1].trim());
+    } catch {
+      return utfMatch[1].trim();
+    }
+  }
+  const plainMatch = /filename="?([^";]+)"?/i.exec(disposition);
+  return plainMatch?.[1]?.trim() || fallback;
 }
 
 export const surveysApi = {
@@ -43,8 +92,47 @@ export const surveysApi = {
   schedule: (id: string, payload: Record<string, unknown>) =>
     apiPost<ApiResponse<BackendSurvey>>(apiEndpoints.surveys.schedule(id), payload),
 
-  unschedule: (id: string) =>
-    apiPost<ApiResponse<BackendSurvey>>(apiEndpoints.surveys.unschedule(id)),
+  listResults: (id: string, params?: SurveyResultsListParams) =>
+    apiGet<SurveyResultsResponse>(apiEndpoints.surveys.results(id), params),
+
+  /** Download survey results as Excel or CSV (blob). */
+  exportResults: async (
+    id: string,
+    params: SurveyResultsExportParams = {}
+  ): Promise<{ blob: Blob; filename: string }> => {
+    const format = params.format ?? "xlsx";
+    const query = createQueryString({
+      format,
+      search: params.search || undefined,
+    });
+    const headers = new Headers({ Accept: "*/*" });
+    const token = getAccessTokenFromCookie();
+    if (token) headers.set("Authorization", `Bearer ${token}`);
+
+    const response = await fetch(
+      `${apiEndpoints.surveys.resultsExport(id)}${query}`,
+      { headers, cache: "no-store" }
+    );
+
+    if (!response.ok) {
+      const error = (await response.json().catch(() => ({}))) as {
+        message?: string;
+        errors?: unknown;
+      };
+      throw new ApiError(
+        error.message ?? "Failed to export survey results",
+        response.status,
+        error.errors ?? null
+      );
+    }
+
+    const blob = await response.blob();
+    const filename = parseFilename(
+      response.headers.get("Content-Disposition"),
+      `survey-results.${format}`
+    );
+    return { blob, filename };
+  },
 
   uploadContactFile: (id: string, file: File) => {
     const fd = new FormData();

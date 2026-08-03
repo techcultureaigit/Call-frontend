@@ -196,10 +196,17 @@ export interface AgentConfig {
   postCall: AgentPostCallConfig;
 }
 
+export type AgentSchedulingStatus =
+  | "draft"
+  | "scheduled"
+  | "completed"
+  | "processing";
+
 export interface Agent extends Timestamps {
   id: ID;
   name: string;
-  status: "draft" | "active" | "paused";
+  /** Replaces legacy status — draft by default; scheduled on schedule action */
+  scheduling_status: AgentSchedulingStatus;
   language: string;
   modelMode: AgentModelMode;
   phone?: string | null;

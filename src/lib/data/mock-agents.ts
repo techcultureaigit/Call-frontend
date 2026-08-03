@@ -10,7 +10,7 @@ export const MOCK_AGENTS: Agent[] = [
   {
     id: "agent_001",
     name: "Grievance Help Desk",
-    status: "active",
+    scheduling_status: "draft",
     language: "en",
     modelMode: "pipeline",
     phone: null,
@@ -88,7 +88,7 @@ export const MOCK_AGENTS: Agent[] = [
   {
     id: "agent_002",
     name: "Candidate Screening",
-    status: "active",
+    scheduling_status: "draft",
     language: "en",
     modelMode: "pipeline",
     phone: null,

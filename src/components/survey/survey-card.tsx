@@ -10,7 +10,9 @@ import { getAgentLanguageLabel } from "@/lib/constants/agent-config";
 import { formatAgentCreatedAt } from "@/lib/utils/date";
 import {
   getSurveyDisplayStatus,
+  isSurveyCompleted,
   isSurveyReadyToSchedule,
+  isSurveyScheduled,
 } from "@/lib/utils/survey-readiness";
 import { cn } from "@/lib/utils";
 import { usePermissions } from "@/hooks";
@@ -46,10 +48,13 @@ export function SurveyCard({
     agent.config.persona.language || agent.language
   );
   const maxDuration = agent.config.persona.maxCallDurationMinutes;
+  const locked = isSurveyCompleted(agent);
   const canSchedule =
-    canUpdateSurvey && isSurveyReadyToSchedule(agent);
+    canUpdateSurvey &&
+    !locked &&
+    !isSurveyScheduled(agent) &&
+    isSurveyReadyToSchedule(agent);
   const displayStatus = getSurveyDisplayStatus(agent);
-  const scheduled = displayStatus === "scheduled";
 
   return (
     <motion.article
@@ -112,7 +117,7 @@ export function SurveyCard({
             >
               <Eye className="size-3.5" />
             </ActionButton>
-            {canUpdateSurvey && (
+            {canUpdateSurvey && !locked && (
               <ActionButton
                 label="Edit survey"
                 href={`/survey/${agent.id}/configure`}
@@ -123,7 +128,7 @@ export function SurveyCard({
             )}
             {canSchedule ? (
               <ActionButton
-                label={scheduled ? "Reschedule survey" : "Schedule survey"}
+                label="Schedule survey"
                 onClick={() => onSchedule?.(agent)}
                 className="text-amber-600 hover:bg-amber-500/10 hover:text-amber-700"
               >
@@ -139,7 +144,7 @@ export function SurveyCard({
                 <Copy className="size-3.5" />
               </ActionButton>
             )}
-            {canDeleteSurvey && (
+            {canDeleteSurvey && !locked && (
               <ActionButton
                 label="Delete survey"
                 onClick={() => onDelete?.(agent)}

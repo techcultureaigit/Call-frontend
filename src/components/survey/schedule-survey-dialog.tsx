@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { CalendarClock, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -15,10 +15,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import type { Agent, AgentScheduleRecurrence } from "@/types/agent";
-import {
-  getSurveySchedule,
-  isSurveyScheduled,
-} from "@/lib/utils/survey-readiness";
+import { getSurveySchedule } from "@/lib/utils/survey-readiness";
 
 const RECURRENCE_OPTIONS = [
   { label: "Once", value: "once" },
@@ -61,7 +58,6 @@ interface ScheduleSurveyDialogProps {
   onOpenChange: (open: boolean) => void;
   agent: Agent | null;
   onConfirm: (payload: ScheduleSurveyPayload) => void | Promise<void>;
-  onUnschedule?: () => void | Promise<void>;
   /** Show Skip when opened right after create wizard */
   allowSkip?: boolean;
   onSkip?: () => void;
@@ -72,7 +68,6 @@ export function ScheduleSurveyDialog({
   onOpenChange,
   agent,
   onConfirm,
-  onUnschedule,
   allowSkip = false,
   onSkip,
 }: ScheduleSurveyDialogProps) {
@@ -83,11 +78,6 @@ export function ScheduleSurveyDialog({
     useState<AgentScheduleRecurrence>("once");
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState("");
-
-  const isReschedule = useMemo(
-    () => (agent ? isSurveyScheduled(agent) : false),
-    [agent]
-  );
 
   useEffect(() => {
     if (!open || !agent) return;
@@ -148,12 +138,12 @@ export function ScheduleSurveyDialog({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <CalendarClock className="size-5 text-primary" />
-            {isReschedule ? "Reschedule survey" : "Schedule survey"}
+            Schedule survey
           </DialogTitle>
           <DialogDescription>
             Set when{" "}
             <span className="font-medium text-foreground">{agent.name}</span>{" "}
-            should run. You can reschedule anytime from My Surveys.
+            should run.
           </DialogDescription>
         </DialogHeader>
 
@@ -228,17 +218,6 @@ export function ScheduleSurveyDialog({
               Cancel
             </Button>
           )}
-          {isReschedule ? (
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => void onUnschedule?.()}
-              disabled={isSaving}
-              className="text-destructive hover:text-destructive"
-            >
-              Unschedule
-            </Button>
-          ) : null}
           <Button
             type="button"
             onClick={() => void handleConfirm()}
@@ -247,8 +226,6 @@ export function ScheduleSurveyDialog({
           >
             {isSaving ? (
               <Loader2 className="size-4 animate-spin" />
-            ) : isReschedule ? (
-              "Update schedule"
             ) : (
               "Schedule survey"
             )}

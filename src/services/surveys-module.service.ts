@@ -1,15 +1,15 @@
-import { surveysApi, type SurveysListParams } from "@/api/surveys";
+import { surveysApi, type SurveysListParams, type SurveyResultsListParams, type SurveyResultsExportFormat } from "@/api/surveys";
 import {
   agentToBackendPayload,
   backendSurveyToAgent,
 } from "@/lib/utils/survey-mapper";
 import type { PaginatedMeta } from "@/types";
 import type { Agent, AgentConfig, AgentSchedule } from "@/types/agent";
+import type { SurveyResultRow, SurveyResultsSurveyMeta } from "@/types/survey-result";
 
 export interface SaveSurveyInput {
   id?: string;
   config: AgentConfig;
-  status?: Agent["status"];
   step?: number;
 }
 
@@ -23,6 +23,12 @@ export interface ScheduleSurveyInput {
 
 export interface SurveysListResult {
   data: Agent[];
+  meta: PaginatedMeta;
+}
+
+export interface SurveyResultsListResult {
+  data: SurveyResultRow[];
+  survey: SurveyResultsSurveyMeta | null;
   meta: PaginatedMeta;
 }
 
@@ -102,9 +108,37 @@ export const surveysModuleService = {
     return backendSurveyToAgent(res.data);
   },
 
-  async unschedule(id: string): Promise<Agent> {
-    const res = await surveysApi.unschedule(id);
-    return backendSurveyToAgent(res.data);
+  async listResults(
+    id: string,
+    params: SurveyResultsListParams = {}
+  ): Promise<SurveyResultsListResult> {
+    const res = await surveysApi.listResults(id, {
+      page: params.page ?? 1,
+      limit: params.limit ?? 20,
+      search: params.search || undefined,
+    });
+
+    const payload = res.data;
+    const results = Array.isArray(payload)
+      ? payload
+      : payload?.results ?? [];
+    const survey = Array.isArray(payload) ? null : payload?.survey ?? null;
+
+    return {
+      data: results,
+      survey,
+      meta: toMeta(res.pagination),
+    };
+  },
+
+  async exportResults(
+    id: string,
+    params: { format?: SurveyResultsExportFormat; search?: string } = {}
+  ): Promise<{ blob: Blob; filename: string }> {
+    return surveysApi.exportResults(id, {
+      format: params.format ?? "xlsx",
+      search: params.search || undefined,
+    });
   },
 
   async uploadContactFile(surveyId: string, file: File): Promise<Agent> {

@@ -88,7 +88,7 @@ export function getAgentById(id: string): Agent | undefined {
 export interface SaveAgentInput {
   id?: string;
   config: AgentConfig;
-  status?: Agent["status"];
+  scheduling_status?: Agent["scheduling_status"];
 }
 
 export function saveAgent(input: SaveAgentInput): Agent {
@@ -100,10 +100,14 @@ export function saveAgent(input: SaveAgentInput): Agent {
     : undefined;
 
   if (existing) {
+    if (existing.scheduling_status === "completed") {
+      throw new Error("Completed surveys cannot be edited or deleted");
+    }
     const updated: Agent = {
       ...existing,
       name,
-      status: input.status ?? existing.status,
+      scheduling_status:
+        input.scheduling_status ?? existing.scheduling_status,
       language: input.config.persona.language,
       modelMode: input.config.persona.modelMode,
       config: structuredClone(input.config),
@@ -118,7 +122,7 @@ export function saveAgent(input: SaveAgentInput): Agent {
   const created: Agent = {
     id: generateAgentId(),
     name,
-    status: input.status ?? "active",
+    scheduling_status: input.scheduling_status ?? "draft",
     language: input.config.persona.language,
     modelMode: input.config.persona.modelMode,
     phone: null,
@@ -136,10 +140,13 @@ export function saveAgent(input: SaveAgentInput): Agent {
 
 export function deleteAgent(id: string): boolean {
   hydrate();
-  const before = agentsDB.length;
+  const existing = agentsDB.find((a) => a.id === id);
+  if (!existing) return false;
+  if (existing.scheduling_status === "completed") {
+    throw new Error("Completed surveys cannot be edited or deleted");
+  }
   agentsDB = agentsDB.filter((a) => a.id !== id);
   sessionCloneIds.delete(id);
-  if (agentsDB.length === before) return false;
   writeCreated(agentsDB);
   return true;
 }
@@ -164,7 +171,7 @@ export function cloneAgent(id: string): Agent | null {
   const cloned: Agent = {
     id: generateAgentId(),
     name: copyName,
-    status: source.status,
+    scheduling_status: "draft",
     language: source.language,
     modelMode: source.modelMode,
     phone: source.phone ?? null,
@@ -203,10 +210,14 @@ export function scheduleAgent(
     );
   }
 
+  if (existing.scheduling_status === "completed") {
+    throw new Error("Completed surveys cannot be edited or deleted");
+  }
+
   const now = new Date().toISOString();
   const updated: Agent = {
     ...existing,
-    status: "active",
+    scheduling_status: "scheduled",
     schedule: {
       enabled: true,
       startAt: input.startAt,
