@@ -61,31 +61,30 @@ export const PERMISSION_MODULE_GROUPS: PermissionModuleGroup[] = [
       {
         id: "survey",
         label: "Survey",
-        description: "Indicator — set CRUD on submodules below",
         actions: [],
         children: [
           {
             id: "my_surveys",
             label: "My Surveys",
-            description: "Create, read, update, delete surveys",
+            description: "Survey campaigns",
             actions: [...CRUD],
           },
           {
             id: "voices",
             label: "Voices",
-            description: "Create, read, update, delete voices",
+            description: "Voice library",
             actions: [...CRUD, "download"],
           },
           {
             id: "audio_buffer",
             label: "Audio Buffer",
-            description: "Create, read, update, delete cached audio",
+            description: "Cached audio",
             actions: [...CRUD],
           },
           {
             id: "survey_data",
             label: "Survey Data",
-            description: "Create, read, update, delete contacts",
+            description: "Contacts",
             actions: [...CRUD, "export", "import", "download"],
           },
         ],
@@ -99,22 +98,24 @@ export const PERMISSION_MODULE_GROUPS: PermissionModuleGroup[] = [
       {
         id: "calls",
         label: "Calls",
-        description: "Indicator — set CRUD on Live / History / Recordings",
         actions: [],
         children: [
           {
             id: "calls_live",
             label: "Live Calls",
+            description: "Active calls",
             actions: [...CRUD, "download"],
           },
           {
             id: "calls_history",
             label: "History",
+            description: "Past calls",
             actions: [...CRUD, "download"],
           },
           {
             id: "calls_recordings",
             label: "Recordings",
+            description: "Call audio",
             actions: [...CRUD, "download"],
           },
         ],
@@ -122,22 +123,24 @@ export const PERMISSION_MODULE_GROUPS: PermissionModuleGroup[] = [
       {
         id: "responses",
         label: "Responses",
-        description: "Indicator — set permissions on All / Pending / Flagged",
         actions: [],
         children: [
           {
             id: "responses_all",
             label: "All Responses",
+            description: "Full inbox",
             actions: ["read", "update", "delete", "download"],
           },
           {
             id: "responses_pending",
             label: "Pending",
+            description: "Awaiting follow-up",
             actions: ["read", "update", "delete"],
           },
           {
             id: "responses_flagged",
             label: "Flagged",
+            description: "Marked for review",
             actions: ["read", "update", "delete"],
           },
         ],
@@ -151,6 +154,7 @@ export const PERMISSION_MODULE_GROUPS: PermissionModuleGroup[] = [
       {
         id: "reports",
         label: "Reports",
+        description: "Analytics",
         actions: ["read", "download"],
       },
     ],
@@ -162,11 +166,13 @@ export const PERMISSION_MODULE_GROUPS: PermissionModuleGroup[] = [
       {
         id: "users",
         label: "Users",
+        description: "Team accounts",
         actions: [...CRUD, "export"],
       },
       {
         id: "roles",
         label: "Roles",
+        description: "Access control",
         actions: [...CRUD],
       },
     ],
@@ -178,16 +184,19 @@ export const PERMISSION_MODULE_GROUPS: PermissionModuleGroup[] = [
       {
         id: "notifications",
         label: "Notifications",
+        description: "Alerts",
         actions: ["read", "update"],
       },
       {
         id: "activity_logs",
         label: "Activity Logs",
+        description: "Audit trail",
         actions: ["read", "export", "download"],
       },
       {
         id: "settings",
         label: "Settings",
+        description: "App config",
         actions: [...CRUD],
       },
     ],

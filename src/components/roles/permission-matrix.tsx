@@ -251,8 +251,8 @@ export function PermissionMatrix({
                     {module.label}
                   </p>
                   {hasChildren && !isChild && (
-                    <span className="shrink-0 rounded-[6px] bg-brand/10 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-brand">
-                      {module.children!.length} sub
+                    <span className="shrink-0 rounded-[6px] bg-muted px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-muted-foreground">
+                      {module.children!.length} modules
                     </span>
                   )}
                   {isEditing && (
@@ -261,11 +261,11 @@ export function PermissionMatrix({
                     </span>
                   )}
                 </div>
-                {module.description && (
+                {module.description && !isIndicator ? (
                   <p className="mt-0.5 truncate text-[10px] leading-tight text-muted-foreground">
                     {module.description}
                   </p>
-                )}
+                ) : null}
               </div>
             </div>
           </td>
@@ -364,24 +364,35 @@ export function PermissionMatrix({
             </tr>
           </thead>
           <tbody>
-            {PERMISSION_MODULE_GROUPS.map((group) => (
-              <Fragment key={group.id}>
-                <tr className="bg-brand-soft/50">
-                  <td
-                    colSpan={1 + PERMISSION_ACTIONS.length}
-                    className="px-4 py-2"
-                  >
-                    <div className="flex items-center gap-2">
-                      <span className="h-3.5 w-0.5 shrink-0 rounded-full bg-brand" />
-                      <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-brand">
-                        {group.label}
-                      </span>
-                    </div>
-                  </td>
-                </tr>
-                {group.modules.map((module) => renderModuleRow(module, 0))}
-              </Fragment>
-            ))}
+            {PERMISSION_MODULE_GROUPS.map((group) => {
+              /** Avoid "Survey / Survey" — skip section header when it matches the only parent module */
+              const sole = group.modules[0];
+              const hideGroupHeader =
+                group.modules.length === 1 &&
+                sole?.label.toLowerCase() === group.label.toLowerCase() &&
+                Boolean(sole?.children?.length);
+
+              return (
+                <Fragment key={group.id}>
+                  {!hideGroupHeader ? (
+                    <tr className="bg-brand-soft/50">
+                      <td
+                        colSpan={1 + PERMISSION_ACTIONS.length}
+                        className="px-4 py-2"
+                      >
+                        <div className="flex items-center gap-2">
+                          <span className="h-3.5 w-0.5 shrink-0 rounded-full bg-brand" />
+                          <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-brand">
+                            {group.label}
+                          </span>
+                        </div>
+                      </td>
+                    </tr>
+                  ) : null}
+                  {group.modules.map((module) => renderModuleRow(module, 0))}
+                </Fragment>
+              );
+            })}
           </tbody>
         </table>
       </div>
