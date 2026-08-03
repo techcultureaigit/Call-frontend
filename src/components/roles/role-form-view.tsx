@@ -10,6 +10,7 @@ import { usePageMeta, useRoleMutations } from "@/hooks";
 import { useRoleDetail } from "@/hooks/use-roles";
 import type { RoleFormValues } from "@/lib/validators/role";
 import type { RolePermissions } from "@/types/role";
+import { canEditRolePermissions } from "@/types/role";
 import { RoleForm } from "./role-form";
 
 interface RoleFormViewProps {
@@ -77,11 +78,19 @@ export function RoleFormView({ roleId }: RoleFormViewProps) {
         <FormPageHeader
           backHref="/roles"
           backLabel="Back to roles"
-          title={isEdit ? "Edit Role" : "Create Role"}
+          title={
+            isEdit && role && !canEditRolePermissions(role)
+              ? "View Role"
+              : isEdit
+                ? "Edit Role"
+                : "Create Role"
+          }
           description={
-            isEdit
-              ? "Update role details and configure module permissions."
-              : "Define a new role with granular CRUD permissions."
+            isEdit && role && !canEditRolePermissions(role)
+              ? "Super Admin has full access and is locked — view only."
+              : isEdit
+                ? "Update role details and configure module permissions."
+                : "Define a new role with granular CRUD permissions."
           }
         />
 

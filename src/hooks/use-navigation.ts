@@ -10,9 +10,9 @@ import {
 import { useAuth } from "@/hooks/use-auth";
 import { useAuthStore } from "@/stores";
 
-function isPrivilegedRole(roleName?: string | null): boolean {
-  const name = roleName?.trim().toLowerCase() ?? "";
-  return name === "super admin" || name === "admin";
+/** Only Super Admin sees the full sidebar; other roles follow the permission matrix. */
+function isSuperAdmin(roleName?: string | null): boolean {
+  return roleName?.trim().toLowerCase() === "super admin";
 }
 
 export function useNavigation() {
@@ -26,8 +26,7 @@ export function useNavigation() {
       return dashboardNavigation;
     }
 
-    // Super Admin / Admin always see full navigation
-    if (isPrivilegedRole(user.roleName ?? user.role)) {
+    if (isSuperAdmin(user.roleName ?? user.role)) {
       return dashboardNavigation;
     }
 

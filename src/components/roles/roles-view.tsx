@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { Loader2, Save, Shield } from "lucide-react";
+import { Loader2, Lock, Save, Shield } from "lucide-react";
 import { PageContainer } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import { DashboardCard } from "@/components/dashboard/dashboard-card";
@@ -14,7 +14,11 @@ import { RoleCardsGrid } from "./role-cards-grid";
 import { PermissionMatrix } from "./permission-matrix";
 import { DeleteRoleDialog } from "./delete-role-dialog";
 import type { RoleListItem, RolePermissions } from "@/types/role";
-import { isProtectedRole } from "@/types/role";
+import {
+  canEditRolePermissions,
+  isProtectedRole,
+  isSuperAdminRole,
+} from "@/types/role";
 
 export function RolesView() {
   const router = useRouter();
@@ -44,6 +48,10 @@ export function RolesView() {
     [roles, selectedId]
   );
 
+  const permissionsEditable = activeRole
+    ? canEditRolePermissions(activeRole)
+    : false;
+
   useEffect(() => {
     applyMeta();
     return () => resetPageMeta();
@@ -64,20 +72,21 @@ export function RolesView() {
 
   const handlePermissionsChange = useCallback(
     (next: RolePermissions) => {
+      if (!permissionsEditable) return;
       setDraftPermissions(next);
       setPermissionsDirty(true);
     },
-    []
+    [permissionsEditable]
   );
 
   const handleSavePermissions = useCallback(async () => {
-    if (!activeRole || !draftPermissions) return;
+    if (!activeRole || !draftPermissions || !permissionsEditable) return;
     await updateRole.mutateAsync({
       id: activeRole.id,
       payload: { permissions: draftPermissions },
     });
     setPermissionsDirty(false);
-  }, [activeRole, draftPermissions, updateRole]);
+  }, [activeRole, draftPermissions, permissionsEditable, updateRole]);
 
   const handleDelete = useCallback(async () => {
     if (!selectedRole) return;
@@ -127,36 +136,49 @@ export function RolesView() {
         {activeRole && draftPermissions && !isLoading && (
           <DashboardCard
             title="Permission Matrix"
-            description={`Configure CRUD access for ${activeRole.name}`}
+            description={
+              permissionsEditable
+                ? `Configure CRUD access for ${activeRole.name}`
+                : `View-only access for ${activeRole.name} (full permissions locked)`
+            }
             icon={Shield}
             action={
               <div className="flex flex-wrap items-center gap-2">
-                {permissionsDirty && (
+                {permissionsEditable && permissionsDirty && (
                   <span className="rounded-md bg-amber-500/10 px-2 py-1 text-[10px] font-semibold text-amber-700 dark:text-amber-400">
                     Unsaved changes
                   </span>
                 )}
-                <Button
-                  size="sm"
-                  className="rounded-[6px]"
-                  onClick={handleSavePermissions}
-                  disabled={!permissionsDirty || updateRole.isPending}
-                >
-                  {updateRole.isPending ? (
-                    <Loader2 className="size-4 animate-spin" />
-                  ) : (
-                    <Save className="size-4" />
-                  )}
-                  Save permissions
-                </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="rounded-[6px]"
-                  onClick={() => openEdit(activeRole)}
-                >
-                  Edit role
-                </Button>
+                {permissionsEditable ? (
+                  <>
+                    <Button
+                      size="sm"
+                      className="rounded-[6px]"
+                      onClick={handleSavePermissions}
+                      disabled={!permissionsDirty || updateRole.isPending}
+                    >
+                      {updateRole.isPending ? (
+                        <Loader2 className="size-4 animate-spin" />
+                      ) : (
+                        <Save className="size-4" />
+                      )}
+                      Save permissions
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="rounded-[6px]"
+                      onClick={() => openEdit(activeRole)}
+                    >
+                      Edit role
+                    </Button>
+                  </>
+                ) : (
+                  <span className="inline-flex items-center gap-1.5 rounded-md bg-muted px-2.5 py-1.5 text-xs font-medium text-muted-foreground">
+                    <Lock className="size-3.5" />
+                    Locked
+                  </span>
+                )}
               </div>
             }
             contentClassName="p-0 pb-0"
@@ -166,8 +188,17 @@ export function RolesView() {
             <PermissionMatrix
               permissions={draftPermissions}
               onChange={handlePermissionsChange}
+              disabled={!permissionsEditable}
             />
-            {isProtectedRole(activeRole.name) && (
+            {isSuperAdminRole(activeRole.name) ? (
+              <div className="flex items-start gap-2 border-t border-border/50 bg-muted/20 px-5 py-3">
+                <Lock className="mt-0.5 size-3.5 shrink-0 text-muted-foreground" />
+                <p className="text-xs leading-relaxed text-muted-foreground">
+                  Super Admin has full access and is locked — view only. Edit
+                  Admin or other roles to change permissions.
+                </p>
+              </div>
+            ) : isProtectedRole(activeRole.name) ? (
               <div className="flex items-start gap-2 border-t border-border/50 bg-muted/20 px-5 py-3">
                 <Shield className="mt-0.5 size-3.5 shrink-0 text-muted-foreground" />
                 <p className="text-xs leading-relaxed text-muted-foreground">
@@ -175,7 +206,7 @@ export function RolesView() {
                   updated, but it cannot be renamed or deleted.
                 </p>
               </div>
-            )}
+            ) : null}
           </DashboardCard>
         )}
 

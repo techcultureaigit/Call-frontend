@@ -3,7 +3,7 @@ import {
   sanitizePermissions,
 } from "@/config/permission-modules";
 import { MOCK_ROLES, generateRoleId } from "@/lib/data/mock-roles";
-import { isImmutableRole, isProtectedRole, type Role, type RoleListItem, type RolePermissions } from "@/types/role";
+import { isImmutableRole, isProtectedRole, isSuperAdminRole, type Role, type RoleListItem, type RolePermissions } from "@/types/role";
 
 let rolesDB: Role[] = [...MOCK_ROLES];
 
@@ -13,7 +13,16 @@ export interface RolesQueryParams {
 
 function toListItem(role: Role): RoleListItem {
   const { enabled, total } = countEnabledPermissions(role.permissions);
-  return { ...role, permissionCount: enabled, totalPermissions: total };
+  return {
+    ...role,
+    permissionCount: enabled,
+    totalPermissions: total,
+    canEditPermissions: !isSuperAdminRole(role.name),
+    canDelete: !isProtectedRole(role.name),
+    canRename: !isProtectedRole(role.name),
+    isSuperAdmin: isSuperAdminRole(role.name),
+    isSystem: isProtectedRole(role.name),
+  };
 }
 
 export function queryRoles(params: RolesQueryParams = {}): RoleListItem[] {
@@ -65,7 +74,11 @@ export function updateRole(
   if (index === -1) return null;
 
   const existing = rolesDB[index];
-  // System roles: name stays fixed; permissions can update
+  // Super Admin: fully locked (view-only). Other system roles: name fixed; permissions can update.
+  if (isSuperAdminRole(existing.name)) {
+    return existing;
+  }
+
   const nextName = isProtectedRole(existing.name)
     ? existing.name
     : (payload.name ?? existing.name);

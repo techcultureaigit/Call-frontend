@@ -96,10 +96,13 @@ function AnswerChip({ answer }: { answer: string }) {
   return (
     <span
       className={cn(
-        "inline-flex max-w-full truncate rounded-md px-2.5 py-1 text-xs font-semibold",
-        tone === "yes" && "bg-emerald-500/12 text-emerald-700",
-        tone === "no" && "bg-rose-500/12 text-rose-700",
-        tone === "neutral" && "bg-primary/10 text-primary"
+        "inline-flex max-w-full items-center truncate rounded-full px-3 py-1 text-xs font-semibold tracking-tight",
+        tone === "yes" &&
+          "bg-emerald-500/12 text-emerald-700 ring-1 ring-inset ring-emerald-500/20",
+        tone === "no" &&
+          "bg-rose-500/12 text-rose-700 ring-1 ring-inset ring-rose-500/20",
+        tone === "neutral" &&
+          "bg-primary/10 text-primary ring-1 ring-inset ring-primary/20"
       )}
     >
       {answer || "—"}
@@ -246,36 +249,63 @@ export function SurveyResultDetailView({
                 </div>
               </header>
 
-              <div className="space-y-3 px-5 py-5 sm:px-6">
-                <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                  Questions &amp; answers
-                </p>
+              <div className="px-5 py-4 sm:px-6">
+                <div className="mb-3 flex items-center justify-between gap-3">
+                  <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                    Questions &amp; answers
+                  </p>
+                  <span className="text-[11px] text-muted-foreground">
+                    {answers.length} recorded
+                  </span>
+                </div>
 
                 {answers.length ? (
-                  <ol className="grid gap-3 md:grid-cols-2 xl:grid-cols-2">
-                    {answers.map((answer, index) => (
-                      <li
-                        key={answer.questionId}
-                        className="relative rounded-[6px] border border-border/50 bg-background px-3.5 py-3"
-                      >
-                        <span className="absolute left-0 top-0 h-full w-1 rounded-l-[6px] bg-primary/70" />
-                        <p className="pl-2 text-[10px] font-semibold uppercase tracking-wider text-primary">
-                          Question {index + 1}
-                        </p>
-                        <p className="mt-1 pl-2 text-sm leading-snug text-muted-foreground">
-                          {answer.question}
-                        </p>
-                        <div className="mt-2.5 flex flex-wrap items-center gap-2 pl-2">
-                          <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                            Answer
-                          </span>
-                          <AnswerChip answer={answer.answer} />
-                        </div>
-                      </li>
-                    ))}
+                  <ol className="relative space-y-2.5">
+                    {answers.map((answer, index) => {
+                      const tone = answerTone(answer.answer);
+                      return (
+                        <li
+                          key={answer.questionId}
+                          className="group relative overflow-hidden rounded-[6px] border border-border/50 bg-card shadow-sm transition-colors hover:border-primary/25"
+                        >
+                          <div
+                            aria-hidden
+                            className={cn(
+                              "absolute inset-y-0 left-0 w-1",
+                              tone === "yes" && "bg-emerald-500/70",
+                              tone === "no" && "bg-rose-500/70",
+                              tone === "neutral" && "bg-primary/60"
+                            )}
+                          />
+                          <div className="flex gap-3 px-3.5 py-3 pl-4 sm:gap-3.5 sm:px-4 sm:pl-5">
+                            <span
+                              className="mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-md bg-primary/10 text-[11px] font-bold tabular-nums text-primary"
+                              aria-hidden
+                            >
+                              {index + 1}
+                            </span>
+                            <div className="min-w-0 flex-1 space-y-2">
+                              <p className="text-sm leading-snug text-foreground">
+                                {answer.question}
+                              </p>
+                              <div className="flex items-center gap-2">
+                                <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/80">
+                                  Answer
+                                </span>
+                                <span
+                                  aria-hidden
+                                  className="h-px flex-1 bg-border/60"
+                                />
+                                <AnswerChip answer={answer.answer} />
+                              </div>
+                            </div>
+                          </div>
+                        </li>
+                      );
+                    })}
                   </ol>
                 ) : (
-                  <p className="text-sm text-muted-foreground">
+                  <p className="rounded-[6px] border border-dashed border-border/60 px-4 py-6 text-center text-sm text-muted-foreground">
                     No answers recorded.
                   </p>
                 )}

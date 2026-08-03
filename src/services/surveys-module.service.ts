@@ -60,6 +60,7 @@ export const surveysModuleService = {
       limit: params.limit ?? 9,
       search: params.search || undefined,
       status: params.status,
+      language: params.language || undefined,
     });
 
     return {

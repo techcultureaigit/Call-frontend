@@ -14,7 +14,7 @@ import {
 } from "@/lib/validators/role";
 import { PermissionMatrix } from "./permission-matrix";
 import type { Role, RolePermissions } from "@/types/role";
-import { isProtectedRole } from "@/types/role";
+import { canEditRolePermissions, isProtectedRole } from "@/types/role";
 
 interface RoleFormProps {
   role?: Role | null;
@@ -39,6 +39,8 @@ export function RoleForm({
 }: RoleFormProps) {
   const isEdit = Boolean(role);
   const nameLocked = role ? isProtectedRole(role.name) : false;
+  const permissionsLocked = role ? !canEditRolePermissions(role) : false;
+  const formLocked = permissionsLocked;
   const [permissions, setPermissions] = useState<RolePermissions>(
     createEmptyPermissions()
   );
@@ -72,6 +74,7 @@ export function RoleForm({
   }, [role?.id, reset]);
 
   const handleFormSubmit = handleSubmit(async (values) => {
+    if (formLocked) return;
     await onSubmit(values, permissions);
   });
 
@@ -88,17 +91,21 @@ export function RoleForm({
               id="role-name"
               {...register("name")}
               placeholder="e.g. Campaign Manager"
-              disabled={nameLocked}
+              disabled={nameLocked || formLocked}
             />
             {errors.name && (
               <p className="text-xs text-destructive">{errors.name.message}</p>
             )}
-            {nameLocked && (
+            {permissionsLocked ? (
+              <p className="text-xs text-muted-foreground">
+                Super Admin is locked with full access — view only.
+              </p>
+            ) : nameLocked ? (
               <p className="text-xs text-muted-foreground">
                 System role name is fixed. You can still add or change
                 permissions below.
               </p>
-            )}
+            ) : null}
           </div>
         </div>
 
@@ -107,6 +114,7 @@ export function RoleForm({
           <PermissionMatrix
             permissions={permissions}
             onChange={setPermissions}
+            disabled={permissionsLocked}
           />
         </div>
       </div>
@@ -118,12 +126,14 @@ export function RoleForm({
           onClick={onCancel}
           disabled={isLoading}
         >
-          Cancel
+          {formLocked ? "Back" : "Cancel"}
         </Button>
-        <Button type="submit" disabled={isLoading}>
-          {isLoading && <Loader2 className="size-4 animate-spin" />}
-          {isEdit ? "Save changes" : "Create role"}
-        </Button>
+        {!formLocked && (
+          <Button type="submit" disabled={isLoading}>
+            {isLoading && <Loader2 className="size-4 animate-spin" />}
+            {isEdit ? "Save changes" : "Create role"}
+          </Button>
+        )}
       </div>
     </form>
   );

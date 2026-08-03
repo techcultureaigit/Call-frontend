@@ -17,6 +17,7 @@ export interface SurveysListParams {
   limit?: number;
   search?: string;
   status?: string;
+  language?: string;
 }
 
 export interface SurveyResultsListParams {

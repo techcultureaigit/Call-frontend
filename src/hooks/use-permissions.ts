@@ -6,9 +6,9 @@ import { useAuth } from "@/hooks/use-auth";
 import { useAuthStore } from "@/stores";
 import type { PermissionAction } from "@/types/role";
 
-function isPrivilegedRole(roleName?: string | null): boolean {
-  const name = roleName?.trim().toLowerCase() ?? "";
-  return name === "super admin" || name === "admin";
+/** Only Super Admin bypasses the matrix; Admin/Viewer/custom roles use permissions as saved. */
+function isSuperAdmin(roleName?: string | null): boolean {
+  return roleName?.trim().toLowerCase() === "super admin";
 }
 
 /** Session permission helpers — mirrors backend authorize(module, action) */
@@ -22,7 +22,7 @@ export function usePermissions() {
 
   const canDo = useCallback(
     (module: string, action: PermissionAction = "read") => {
-      if (isPrivilegedRole(user?.roleName ?? user?.role)) return true;
+      if (isSuperAdmin(user?.roleName ?? user?.role)) return true;
       return can(permissions, module, action);
     },
     [permissions, user?.roleName, user?.role]
@@ -30,7 +30,7 @@ export function usePermissions() {
 
   const canAccess = useCallback(
     (module: NavModule) => {
-      if (isPrivilegedRole(user?.roleName ?? user?.role)) return true;
+      if (isSuperAdmin(user?.roleName ?? user?.role)) return true;
       return hasModuleAccess(permissions, module);
     },
     [permissions, user?.roleName, user?.role]

@@ -23,7 +23,7 @@ import {
 } from "@/lib/validators/role";
 import { PermissionMatrix } from "./permission-matrix";
 import type { Role, RolePermissions } from "@/types/role";
-import { isProtectedRole } from "@/types/role";
+import { canEditRolePermissions, isProtectedRole } from "@/types/role";
 
 interface RoleFormModalProps {
   open: boolean;
@@ -50,6 +50,8 @@ export function RoleFormModal({
 }: RoleFormModalProps) {
   const isEdit = Boolean(role);
   const nameLocked = role ? isProtectedRole(role.name) : false;
+  const permissionsLocked = role ? !canEditRolePermissions(role) : false;
+  const formLocked = permissionsLocked;
   const [permissions, setPermissions] = useState<RolePermissions>(
     createEmptyPermissions()
   );
@@ -84,6 +86,7 @@ export function RoleFormModal({
   }, [open, role?.id, reset]);
 
   const handleFormSubmit = handleSubmit(async (values) => {
+    if (formLocked) return;
     await onSubmit(values, permissions);
     onOpenChange(false);
   });
@@ -92,11 +95,15 @@ export function RoleFormModal({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="flex max-h-[90vh] flex-col gap-0 overflow-hidden p-0 sm:max-w-2xl">
         <DialogHeader className="shrink-0 border-b border-border/60 px-6 py-5">
-          <DialogTitle>{isEdit ? "Edit Role" : "Create Role"}</DialogTitle>
+          <DialogTitle>
+            {formLocked ? "View Role" : isEdit ? "Edit Role" : "Create Role"}
+          </DialogTitle>
           <DialogDescription>
-            {isEdit
-              ? "Update role details and configure module permissions."
-              : "Define a new role with granular CRUD permissions."}
+            {formLocked
+              ? "Super Admin has full access and is locked — view only."
+              : isEdit
+                ? "Update role details and configure module permissions."
+                : "Define a new role with granular CRUD permissions."}
           </DialogDescription>
         </DialogHeader>
 
@@ -110,7 +117,7 @@ export function RoleFormModal({
                     id="role-name"
                     {...register("name")}
                     placeholder="e.g. Campaign Manager"
-                    disabled={nameLocked}
+                    disabled={nameLocked || formLocked}
                   />
                   {errors.name && (
                     <p className="text-xs text-destructive">{errors.name.message}</p>
@@ -123,6 +130,7 @@ export function RoleFormModal({
                 <PermissionMatrix
                   permissions={permissions}
                   onChange={setPermissions}
+                  disabled={permissionsLocked}
                 />
               </div>
             </div>
@@ -135,12 +143,14 @@ export function RoleFormModal({
               onClick={() => onOpenChange(false)}
               disabled={isLoading}
             >
-              Cancel
+              {formLocked ? "Close" : "Cancel"}
             </Button>
-            <Button type="submit" disabled={isLoading}>
-              {isLoading && <Loader2 className="size-4 animate-spin" />}
-              {isEdit ? "Save changes" : "Create role"}
-            </Button>
+            {!formLocked && (
+              <Button type="submit" disabled={isLoading}>
+                {isLoading && <Loader2 className="size-4 animate-spin" />}
+                {isEdit ? "Save changes" : "Create role"}
+              </Button>
+            )}
           </DialogFooter>
         </form>
       </DialogContent>

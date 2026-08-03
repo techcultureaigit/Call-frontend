@@ -2,15 +2,17 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { Bot, HelpCircle, Search, UserPlus } from "lucide-react";
+import { AnimatePresence, motion } from "framer-motion";
+import { Bot, HelpCircle, Search, Trash2, UserPlus, X } from "lucide-react";
 import { toast } from "sonner";
 import { PageContainer } from "@/components/layout";
 import { SidebarCollapseToggle } from "@/components/layout/sidebar-collapse-toggle";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
+import { SearchableSelect } from "@/components/ui/searchable-select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useDebounce, usePageMeta, usePermissions } from "@/hooks";
+import { AGENT_LANGUAGES } from "@/lib/constants/agent-config";
 import { surveysModuleService } from "@/services/surveys-module.service";
 import { isSurveyCompleted } from "@/lib/utils/survey-readiness";
 import type { PaginatedMeta } from "@/types";
@@ -26,6 +28,11 @@ import { SurveysPagination } from "./surveys-pagination";
 
 const PAGE_SIZE = 9;
 
+const LANGUAGE_FILTER_OPTIONS = [
+  { label: "All languages", value: "all" },
+  ...AGENT_LANGUAGES,
+];
+
 const EMPTY_META: PaginatedMeta = {
   page: 1,
   limit: PAGE_SIZE,
@@ -37,6 +44,7 @@ const EMPTY_META: PaginatedMeta = {
 
 export function SurveyListView() {
   const [search, setSearch] = useState("");
+  const [language, setLanguage] = useState("all");
   const [page, setPage] = useState(1);
   const [agents, setAgents] = useState<Agent[]>([]);
   const { isReady, canCreateSurvey } = usePermissions();
@@ -64,62 +72,56 @@ export function SurveyListView() {
     return () => resetPageMeta();
   }, [applyMeta, resetPageMeta]);
 
-  const loadSurveys = useCallback(async (nextPage: number, nextSearch: string) => {
-    const requestId = ++requestIdRef.current;
-    const showInitialLoader = !hasLoadedRef.current;
+  const loadSurveys = useCallback(
+    async (nextPage: number, nextSearch: string, nextLanguage: string) => {
+      const requestId = ++requestIdRef.current;
+      const showInitialLoader = !hasLoadedRef.current;
 
-    if (showInitialLoader) setIsLoading(true);
-    else setIsRefreshing(true);
+      if (showInitialLoader) setIsLoading(true);
+      else setIsRefreshing(true);
 
-    try {
-      const result = await surveysModuleService.list({
-        page: nextPage,
-        limit: PAGE_SIZE,
-        search: nextSearch.trim() || undefined,
-      });
-      // Ignore stale responses from an older search/page request
-      if (requestId !== requestIdRef.current) return;
-      setAgents(result.data);
-      setMeta(result.meta);
-      hasLoadedRef.current = true;
-    } catch {
-      if (requestId !== requestIdRef.current) return;
-      toast.error("Failed to load surveys");
-      setAgents([]);
-      setMeta(EMPTY_META);
-    } finally {
-      if (requestId === requestIdRef.current) {
-        setIsLoading(false);
-        setIsRefreshing(false);
+      try {
+        const result = await surveysModuleService.list({
+          page: nextPage,
+          limit: PAGE_SIZE,
+          search: nextSearch.trim() || undefined,
+          language: nextLanguage !== "all" ? nextLanguage : undefined,
+        });
+        // Ignore stale responses from an older search/page request
+        if (requestId !== requestIdRef.current) return;
+        setAgents(result.data);
+        setMeta(result.meta);
+        hasLoadedRef.current = true;
+      } catch {
+        if (requestId !== requestIdRef.current) return;
+        toast.error("Failed to load surveys");
+        setAgents([]);
+        setMeta(EMPTY_META);
+      } finally {
+        if (requestId === requestIdRef.current) {
+          setIsLoading(false);
+          setIsRefreshing(false);
+        }
       }
-    }
-  }, []);
+    },
+    []
+  );
 
   useEffect(() => {
     setPage(1);
     setSelectedIds(new Set());
-  }, [debouncedSearch]);
+  }, [debouncedSearch, language]);
 
   useEffect(() => {
     setSelectedIds(new Set());
   }, [page]);
 
   useEffect(() => {
-    void loadSurveys(page, debouncedSearch);
-  }, [page, debouncedSearch, loadSurveys]);
+    void loadSurveys(page, debouncedSearch, language);
+  }, [page, debouncedSearch, language, loadSurveys]);
 
   const allSelected =
     agents.length > 0 && agents.every((agent) => selectedIds.has(agent.id));
-  const someSelected =
-    agents.some((agent) => selectedIds.has(agent.id)) && !allSelected;
-
-  const toggleSelectAll = () => {
-    if (allSelected) {
-      setSelectedIds(new Set());
-      return;
-    }
-    setSelectedIds(new Set(agents.map((agent) => agent.id)));
-  };
 
   const handleSelectChange = (agentId: string, selected: boolean) => {
     setSelectedIds((prev) => {
@@ -130,12 +132,16 @@ export function SurveyListView() {
     });
   };
 
+  const selectAllOnPage = () => {
+    setSelectedIds(new Set(agents.map((agent) => agent.id)));
+  };
+
   const handleClone = async (agent: Agent) => {
     try {
       const cloned = await surveysModuleService.duplicate(agent.id);
       toast.success(`Copied as "${cloned.name}"`);
       setSelectedIds(new Set());
-      await loadSurveys(1, debouncedSearch);
+      await loadSurveys(1, debouncedSearch, language);
       setPage(1);
     } catch {
       toast.error("Failed to copy survey");
@@ -192,7 +198,7 @@ export function SurveyListView() {
         const nextPage =
           agents.length === 1 && page > 1 ? page - 1 : page;
         if (nextPage !== page) setPage(nextPage);
-        else await loadSurveys(nextPage, debouncedSearch);
+        else await loadSurveys(nextPage, debouncedSearch, language);
       } catch {
         toast.error("Failed to delete survey");
       } finally {
@@ -225,7 +231,7 @@ export function SurveyListView() {
       const nextPage =
         remainingOnPage <= 0 && page > 1 ? page - 1 : page;
       if (nextPage !== page) setPage(nextPage);
-      else await loadSurveys(nextPage, debouncedSearch);
+      else await loadSurveys(nextPage, debouncedSearch, language);
     } catch {
       toast.error("Failed to delete surveys");
     } finally {
@@ -255,6 +261,7 @@ export function SurveyListView() {
 
   /** Same card loader for first load, search, and pagination refresh. */
   const showLoader = isLoading || isRefreshing;
+  const hasActiveFilters = Boolean(search.trim()) || language !== "all";
 
   return (
     <div className="bg-linear-to-b from-brand/5 to-transparent">
@@ -292,6 +299,15 @@ export function SurveyListView() {
                 disabled={showLoader && agents.length === 0}
               />
             </div>
+            <SearchableSelect
+              value={language}
+              onChange={setLanguage}
+              options={LANGUAGE_FILTER_OPTIONS}
+              searchPlaceholder="Search languages…"
+              className="h-11 w-full rounded-[6px] border-border/50 bg-card shadow-sm sm:w-52"
+              disabled={showLoader && agents.length === 0}
+              aria-label="Filter by language"
+            />
             {!isReady || (showLoader && agents.length === 0) ? (
               <Skeleton className="h-11 w-44 shrink-0 rounded-[6px]" />
             ) : canCreateSurvey ? (
@@ -304,16 +320,7 @@ export function SurveyListView() {
                   Create New Survey
                 </Link>
               </Button>
-            ) : (
-              <Button
-                className="h-11 shrink-0 rounded-[6px] px-5 shadow-sm"
-                disabled
-                title="You do not have permission to create surveys"
-              >
-                <UserPlus className="size-4" />
-                Create New Survey
-              </Button>
-            )}
+            ) : null}
           </div>
 
           {showLoader ? (
@@ -325,11 +332,11 @@ export function SurveyListView() {
               </div>
               <h3 className="text-lg font-semibold">No surveys found</h3>
               <p className="mt-2 max-w-sm text-sm text-muted-foreground">
-                {search
-                  ? "Try a different search term."
+                {hasActiveFilters
+                  ? "Try a different search term or language filter."
                   : "Create your first voice survey to get started."}
               </p>
-              {!search && isReady && canCreateSurvey && (
+              {!hasActiveFilters && isReady && canCreateSurvey && (
                 <Button asChild className="mt-4 rounded-[6px]">
                   <Link href="/survey/new">
                     <UserPlus className="size-4" />
@@ -337,7 +344,19 @@ export function SurveyListView() {
                   </Link>
                 </Button>
               )}
-              {!search && isReady && !canCreateSurvey && (
+              {hasActiveFilters && (
+                <Button
+                  variant="outline"
+                  className="mt-4 rounded-[6px]"
+                  onClick={() => {
+                    setSearch("");
+                    setLanguage("all");
+                  }}
+                >
+                  Clear filters
+                </Button>
+              )}
+              {!hasActiveFilters && isReady && !canCreateSurvey && (
                 <p className="mt-4 text-xs text-muted-foreground">
                   You have view-only access. Ask an admin for create permission.
                 </p>
@@ -345,35 +364,6 @@ export function SurveyListView() {
             </div>
           ) : (
             <div className="space-y-4">
-              <div className="flex items-center justify-between gap-3 rounded-[6px] border border-border/50 bg-card/70 px-3 py-2.5 shadow-sm">
-                <label className="flex cursor-pointer items-center gap-2.5 text-sm text-foreground">
-                  <Checkbox
-                    checked={allSelected}
-                    indeterminate={someSelected}
-                    onChange={toggleSelectAll}
-                    aria-label="Select all surveys on this page"
-                  />
-                  <span>
-                    {allSelected
-                      ? "Unselect all"
-                      : someSelected
-                        ? `${selectedIds.size} selected`
-                        : "Select all on page"}
-                  </span>
-                </label>
-                {selectedIds.size > 0 ? (
-                  <Button
-                    type="button"
-                    variant="destructive"
-                    size="sm"
-                    className="h-8"
-                    onClick={openBulkDelete}
-                  >
-                    Delete selected ({selectedIds.size})
-                  </Button>
-                ) : null}
-              </div>
-
               <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
                 {agents.map((agent, i) => (
                   <SurveyCard
@@ -401,6 +391,58 @@ export function SurveyListView() {
           )}
         </div>
       </PageContainer>
+
+      <AnimatePresence>
+        {selectedIds.size > 0 ? (
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 16 }}
+            transition={{ type: "spring", stiffness: 400, damping: 30 }}
+            className="fixed bottom-6 left-1/2 z-40 w-[calc(100%-2rem)] max-w-lg -translate-x-1/2"
+          >
+            <div className="flex items-center justify-between gap-3 rounded-[6px] border border-border/80 bg-background/95 px-4 py-3 shadow-elevated backdrop-blur-md">
+              <div className="flex min-w-0 flex-wrap items-center gap-1.5 sm:gap-2">
+                <span className="truncate text-sm font-medium">
+                  {selectedIds.size} selected
+                </span>
+                {!allSelected ? (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={selectAllOnPage}
+                    className="h-7 shrink-0 text-xs text-muted-foreground"
+                  >
+                    Select all
+                  </Button>
+                ) : null}
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setSelectedIds(new Set())}
+                  className="h-7 shrink-0 text-xs text-muted-foreground"
+                >
+                  <X className="size-3.5" />
+                  Clear
+                </Button>
+              </div>
+              <Button
+                type="button"
+                variant="destructive"
+                size="sm"
+                className="h-8 shrink-0"
+                onClick={openBulkDelete}
+                disabled={isDeleting}
+              >
+                <Trash2 className="size-3.5" />
+                Delete
+              </Button>
+            </div>
+          </motion.div>
+        ) : null}
+      </AnimatePresence>
 
       <DeleteSurveyDialog
         open={deleteOpen}

@@ -7,6 +7,7 @@ import {
   HelpCircle,
   Mic,
   Phone,
+  Search,
   Volume2,
   type LucideIcon,
 } from "lucide-react";
@@ -72,22 +73,43 @@ function OptionListPicker({
   options,
   onChange,
   hint,
+  searchable = false,
+  searchPlaceholder = "Search…",
 }: {
   label: string;
   value: string;
   options: { label: string; value: string }[];
   onChange: (value: string) => void;
   hint?: string;
+  searchable?: boolean;
+  searchPlaceholder?: string;
 }) {
   const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState("");
   const selected = options.find((o) => o.value === value);
+
+  const filtered = searchable
+    ? options.filter((opt) => {
+        const q = query.trim().toLowerCase();
+        if (!q) return true;
+        return (
+          opt.label.toLowerCase().includes(q) ||
+          opt.value.toLowerCase().includes(q)
+        );
+      })
+    : options;
+
+  const setExpanded = (next: boolean) => {
+    setOpen(next);
+    if (!next) setQuery("");
+  };
 
   return (
     <div className="space-y-1.5">
       <FieldLabel hint={hint}>{label}</FieldLabel>
       <button
         type="button"
-        onClick={() => setOpen((v) => !v)}
+        onClick={() => setExpanded(!open)}
         aria-expanded={open}
         className={cn(
           "flex h-10 w-full items-center justify-between rounded-[6px] border bg-card px-3 text-left text-sm shadow-subtle transition-colors",
@@ -109,39 +131,60 @@ function OptionListPicker({
 
       <AnimatePresence initial={false}>
         {open && (
-          <motion.ul
+          <motion.div
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: "auto", opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
             transition={{ duration: 0.18 }}
             className="overflow-hidden rounded-[6px] border border-border/70 bg-muted/20"
           >
-            <div className="max-h-44 space-y-0.5 overflow-y-auto p-1.5">
-              {options.map((opt) => {
-                const active = opt.value === value;
-                return (
-                  <li key={opt.value}>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        onChange(opt.value);
-                        setOpen(false);
-                      }}
-                      className={cn(
-                        "flex w-full items-center justify-between gap-2 rounded-[6px] px-2.5 py-2 text-left text-sm transition-colors",
-                        active
-                          ? "bg-brand/10 font-semibold text-brand"
-                          : "text-foreground hover:bg-card"
-                      )}
-                    >
-                      <span className="truncate">{opt.label}</span>
-                      {active && <Check className="size-3.5 shrink-0" />}
-                    </button>
-                  </li>
-                );
-              })}
-            </div>
-          </motion.ul>
+            {searchable ? (
+              <div className="border-b border-border/50 p-1.5">
+                <div className="relative">
+                  <Search className="pointer-events-none absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
+                  <Input
+                    value={query}
+                    onChange={(e) => setQuery(e.target.value)}
+                    placeholder={searchPlaceholder}
+                    className="h-8 border-border/60 bg-card pl-8 text-sm shadow-none"
+                    autoFocus
+                    aria-label={`Search ${label.toLowerCase()}`}
+                  />
+                </div>
+              </div>
+            ) : null}
+            <ul className="max-h-44 space-y-0.5 overflow-y-auto p-1.5">
+              {filtered.length === 0 ? (
+                <li className="px-2.5 py-2 text-sm text-muted-foreground">
+                  No matches found
+                </li>
+              ) : (
+                filtered.map((opt) => {
+                  const active = opt.value === value;
+                  return (
+                    <li key={opt.value}>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          onChange(opt.value);
+                          setExpanded(false);
+                        }}
+                        className={cn(
+                          "flex w-full items-center justify-between gap-2 rounded-[6px] px-2.5 py-2 text-left text-sm transition-colors",
+                          active
+                            ? "bg-brand/10 font-semibold text-brand"
+                            : "text-foreground hover:bg-card"
+                        )}
+                      >
+                        <span className="truncate">{opt.label}</span>
+                        {active && <Check className="size-3.5 shrink-0" />}
+                      </button>
+                    </li>
+                  );
+                })
+              )}
+            </ul>
+          </motion.div>
         )}
       </AnimatePresence>
     </div>
@@ -242,11 +285,13 @@ export function PersonaTab({ values, onChange }: PersonaTabProps) {
 
         <div className="grid gap-2.5 sm:grid-cols-2">
           <div className="space-y-1.5 rounded-[6px] border border-border/50 bg-card p-3 shadow-card">
-            <FieldLabel>Language</FieldLabel>
-            <Select
+            <OptionListPicker
+              label="Language"
               value={values.language}
-              onChange={(e) => update("language", e.target.value)}
               options={AGENT_LANGUAGES}
+              onChange={(v) => update("language", v)}
+              searchable
+              searchPlaceholder="Search languages…"
             />
           </div>
           <div className="space-y-1.5 rounded-[6px] border border-border/50 bg-card p-3 shadow-card">
