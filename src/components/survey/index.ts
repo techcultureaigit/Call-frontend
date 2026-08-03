@@ -4,6 +4,7 @@ export { SurveyListView } from "./survey-list-view";
 export { SurveyActionsView } from "./survey-actions-view";
 export { TelephonyView } from "./telephony-view";
 export { SurveyCard } from "./survey-card";
+export { SurveysTable } from "./surveys-table";
 export { SurveyAvatar } from "./survey-avatar";
 export { SurveyDetailView } from "./survey-detail-view";
 export { SurveyDetailLoader } from "./survey-detail-loader";

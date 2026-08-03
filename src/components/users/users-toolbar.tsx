@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { useRoles } from "@/hooks";
-import { USER_STATUS_OPTIONS } from "@/lib/validators/user";
 import type { UserStatus } from "@/types/user";
 
 interface UsersToolbarProps {
@@ -64,7 +63,7 @@ export function UsersToolbar({
         <div className="relative flex-1">
           <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
           <Input
-            placeholder="Search by name, email, or phone..."
+            placeholder="Search by name or email..."
             value={search}
             onChange={(e) => onSearchChange(e.target.value)}
             className="h-9 border-border/60 bg-muted/30 pl-9"
@@ -93,10 +92,8 @@ export function UsersToolbar({
               }
               options={[
                 { label: "All Statuses", value: "all" },
-                ...USER_STATUS_OPTIONS.map((o) => ({
-                  label: o.label,
-                  value: o.value,
-                })),
+                { label: "Active", value: "active" },
+                { label: "Inactive", value: "inactive" },
               ]}
               className="w-full sm:w-[160px]"
             />

@@ -3,12 +3,14 @@
 import { useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
+import { toast } from "sonner";
 import { PageContainer } from "@/components/layout";
 import { FormPageHeader } from "@/components/shared/form-page-header";
 import { Skeleton } from "@/components/ui/skeleton";
 import { usePageMeta, useUserMutations } from "@/hooks";
 import { useUserDetail } from "@/hooks/use-users";
 import type { UserFormValues } from "@/lib/validators/user";
+import { isSuperAdminRole } from "@/types/role";
 import { UserForm } from "./user-form";
 
 interface UserFormViewProps {
@@ -35,12 +37,23 @@ export function UserFormView({ userId }: UserFormViewProps) {
     return () => resetPageMeta();
   }, [applyMeta, resetPageMeta, isEdit]);
 
+  useEffect(() => {
+    if (isEdit && user && isSuperAdminRole(user.roleName || user.role)) {
+      toast.error("Super Admin cannot be edited");
+      router.replace("/users");
+    }
+  }, [isEdit, user, router]);
+
   const handleSubmit = useCallback(
     async (values: UserFormValues) => {
       if (isEdit && userId) {
-        await updateUser.mutateAsync({ id: userId, payload: values });
+        const { password: _pw, ...rest } = values;
+        await updateUser.mutateAsync({ id: userId, payload: rest });
       } else {
-        await createUser.mutateAsync(values);
+        await createUser.mutateAsync({
+          ...values,
+          password: values.password || "",
+        });
       }
       router.push("/users");
     },
@@ -57,6 +70,10 @@ export function UserFormView({ userId }: UserFormViewProps) {
         </div>
       </PageContainer>
     );
+  }
+
+  if (isEdit && user && isSuperAdminRole(user.roleName || user.role)) {
+    return null;
   }
 
   return (

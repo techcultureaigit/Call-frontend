@@ -5,10 +5,9 @@ import type { RolePermissions } from "@/types/role";
 function viewerPerms(): RolePermissions {
   const p = createEmptyPermissions();
   p.dashboard = { ...p.dashboard, read: true };
-  p.survey = { ...p.survey, read: true };
-  p.surveys = { ...p.surveys, read: true, export: true };
-  p.library = { ...p.library, read: true, download: true };
-  p.audio_buffer = { ...p.audio_buffer, read: true, download: true };
+  p.my_surveys = { ...p.my_surveys, read: true };
+  p.voices = { ...p.voices, read: true, download: true };
+  p.audio_buffer = { ...p.audio_buffer, read: true };
   p.customers = { ...p.customers, read: true, export: true };
   p.calls = { ...p.calls, read: true, export: true, download: true };
   p.calls_live = { ...p.calls_live, read: true, export: true, download: true };
@@ -53,7 +52,6 @@ export const MOCK_USERS: User[] = [
     role: "Super Admin",
     permissions: full,
     status: "active",
-    phone: "+1 415 555 0101",
     timezone: "America/Los_Angeles",
     lastLoginAt: "2026-03-13T08:30:00Z",
     createdAt: "2025-06-15T10:00:00Z",
@@ -69,7 +67,6 @@ export const MOCK_USERS: User[] = [
     role: "Admin",
     permissions: full,
     status: "active",
-    phone: "+1 212 555 0102",
     timezone: "America/New_York",
     lastLoginAt: "2026-03-13T07:15:00Z",
     createdAt: "2025-07-01T10:00:00Z",
@@ -85,7 +82,6 @@ export const MOCK_USERS: User[] = [
     role: "Viewer",
     permissions: viewer,
     status: "active",
-    phone: "+1 404 555 0106",
     timezone: "America/New_York",
     lastLoginAt: "2026-03-11T14:30:00Z",
     createdAt: "2025-10-01T10:00:00Z",
@@ -101,7 +97,6 @@ export const MOCK_USERS: User[] = [
     role: "Admin",
     permissions: full,
     status: "active",
-    phone: "+1 303 555 0109",
     timezone: "America/Denver",
     lastLoginAt: "2026-03-13T05:20:00Z",
     createdAt: "2025-11-01T10:00:00Z",
@@ -117,7 +112,6 @@ export const MOCK_USERS: User[] = [
     role: "Viewer",
     permissions: viewer,
     status: "active",
-    phone: "+1 510 555 0111",
     timezone: "America/Los_Angeles",
     lastLoginAt: "2026-03-10T11:00:00Z",
     createdAt: "2025-12-01T10:00:00Z",

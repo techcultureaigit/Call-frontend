@@ -25,7 +25,7 @@ export function RolesToolbar({
             Roles & Permissions
           </h2>
           <p className="mt-1 text-sm text-muted-foreground">
-            Configure access control with module-wise CRUD permissions.
+            Manage roles here — open any role to configure its permissions.
             {roleCount !== undefined && (
               <span className="ml-1 font-medium text-foreground">
                 ({roleCount} roles)

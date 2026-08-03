@@ -10,10 +10,12 @@ import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { useRoles } from "@/hooks";
 import {
+  createUserFormSchema,
   userFormSchema,
   USER_STATUS_OPTIONS,
   type UserFormValues,
 } from "@/lib/validators/user";
+import { isSuperAdminRole } from "@/types/role";
 import type { User } from "@/types/user";
 
 interface UserFormProps {
@@ -32,18 +34,26 @@ export function UserForm({
   const isEdit = Boolean(user);
   const { data: roles = [], isLoading: rolesLoading } = useRoles();
 
-  const roleOptions = roles.map((role) => ({
-    label: role.name,
-    value: role.id,
-  }));
+  const roleOptions = roles
+    .filter(
+      (role) =>
+        !role.isSuperAdmin &&
+        !isSuperAdminRole(role.name ?? "")
+    )
+    .map((role) => ({
+      label: role.name,
+      value: role.id,
+    }));
+
+  const defaultRoleId = roleOptions[0]?.value ?? "";
 
   const defaultValues: UserFormValues = {
     firstName: "",
     lastName: "",
     email: "",
-    phone: "",
-    roleId: roles[0]?.id ?? "",
-    status: "invited",
+    roleId: defaultRoleId,
+    status: "active",
+    password: "",
   };
 
   const {
@@ -53,7 +63,7 @@ export function UserForm({
     control,
     formState: { errors },
   } = useForm<UserFormValues>({
-    resolver: zodResolver(userFormSchema),
+    resolver: zodResolver(isEdit ? userFormSchema : createUserFormSchema),
     defaultValues,
   });
 
@@ -64,13 +74,13 @@ export function UserForm({
             firstName: user.firstName,
             lastName: user.lastName,
             email: user.email,
-            phone: user.phone ?? "",
             roleId: user.roleId,
             status: user.status,
+            password: "",
           }
         : {
             ...defaultValues,
-            roleId: roles[0]?.id ?? "",
+            roleId: defaultRoleId,
           }
     );
   }, [user, reset, roles]);
@@ -112,10 +122,20 @@ export function UserForm({
               <p className="text-xs text-destructive">{errors.email.message}</p>
             )}
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="phone">Phone</Label>
-            <Input id="phone" type="tel" {...register("phone")} />
-          </div>
+          {!isEdit && (
+            <div className="space-y-2">
+              <Label htmlFor="password">Password</Label>
+              <Input
+                id="password"
+                type="password"
+                autoComplete="new-password"
+                {...register("password")}
+              />
+              {errors.password && (
+                <p className="text-xs text-destructive">{errors.password.message}</p>
+              )}
+            </div>
+          )}
           <div className="space-y-2">
             <Label htmlFor="roleId">Role</Label>
             <Controller
@@ -145,7 +165,9 @@ export function UserForm({
                   id="status"
                   value={field.value}
                   onChange={(e) => field.onChange(e.target.value)}
-                  options={USER_STATUS_OPTIONS.map((o) => ({
+                  options={USER_STATUS_OPTIONS.filter(
+                    (o) => o.value === "active" || o.value === "inactive"
+                  ).map((o) => ({
                     label: o.label,
                     value: o.value,
                   }))}

@@ -45,5 +45,6 @@ export function usePermissions() {
     canUpdateSurvey: canDo("my_surveys", "update"),
     canDeleteSurvey: canDo("my_surveys", "delete"),
     canReadSurvey: canDo("my_surveys", "read"),
+    canExportSurvey: canDo("my_surveys", "export"),
   };
 }

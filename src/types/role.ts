@@ -61,7 +61,14 @@ export function isProtectedRole(name: string): boolean {
 
 /** Super Admin — view-only permissions (full access locked); cannot delete/rename */
 export function isSuperAdminRole(name: string): boolean {
-  return name.trim().toLowerCase() === SUPER_ADMIN_ROLE_NAME.toLowerCase();
+  const normalized = String(name ?? "")
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, " ");
+  return (
+    normalized === SUPER_ADMIN_ROLE_NAME.toLowerCase() ||
+    normalized.replace(/\s/g, "") === "superadmin"
+  );
 }
 
 /** Whether the permission matrix can be edited for this role */

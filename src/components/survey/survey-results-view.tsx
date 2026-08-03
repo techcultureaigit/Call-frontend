@@ -28,7 +28,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { usePageMeta } from "@/hooks";
+import { usePageMeta, usePermissions } from "@/hooks";
 import { cn } from "@/lib/utils";
 import { formatAgentCreatedAt } from "@/lib/utils/date";
 import { surveysModuleService } from "@/services/surveys-module.service";
@@ -188,6 +188,7 @@ function StatCard({
 
 export function SurveyResultsView({ surveyId }: SurveyResultsViewProps) {
   const router = useRouter();
+  const { canExportSurvey } = usePermissions();
   const [rows, setRows] = useState<SurveyResultRow[]>([]);
   const [survey, setSurvey] = useState<SurveyResultsSurveyMeta | null>(null);
   const [meta, setMeta] = useState<PaginatedMeta>(EMPTY_META);
@@ -340,6 +341,7 @@ export function SurveyResultsView({ surveyId }: SurveyResultsViewProps) {
                 />
               </div>
 
+              {canExportSurvey ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button
@@ -375,6 +377,7 @@ export function SurveyResultsView({ surveyId }: SurveyResultsViewProps) {
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
+              ) : null}
             </div>
           </div>
 

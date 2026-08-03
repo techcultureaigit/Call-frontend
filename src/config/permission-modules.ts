@@ -67,7 +67,7 @@ export const PERMISSION_MODULE_GROUPS: PermissionModuleGroup[] = [
             id: "my_surveys",
             label: "My Surveys",
             description: "Survey campaigns",
-            actions: [...CRUD],
+            actions: [...CRUD, "export"],
           },
           {
             id: "voices",

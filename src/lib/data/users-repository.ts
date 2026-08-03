@@ -37,8 +37,7 @@ export function queryUsers(params: UsersQueryParams = {}): PaginatedResponse<Use
       (user) =>
         user.firstName.toLowerCase().includes(q) ||
         user.lastName.toLowerCase().includes(q) ||
-        user.email.toLowerCase().includes(q) ||
-        user.phone?.toLowerCase().includes(q)
+        user.email.toLowerCase().includes(q)
     );
   }
 

@@ -39,7 +39,6 @@ export async function POST(request: Request) {
     role: roleName,
     permissions: body.permissions ?? createEmptyPermissions(),
     status: body.status ?? "invited",
-    phone: body.phone,
     timezone: body.timezone,
   });
 

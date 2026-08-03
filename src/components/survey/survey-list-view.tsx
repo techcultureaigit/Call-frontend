@@ -3,17 +3,37 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { AnimatePresence, motion } from "framer-motion";
-import { Bot, HelpCircle, Search, Trash2, UserPlus, X } from "lucide-react";
+import {
+  Bot,
+  Download,
+  FileSpreadsheet,
+  FileText,
+  HelpCircle,
+  Search,
+  Trash2,
+  UserPlus,
+  X,
+} from "lucide-react";
 import { toast } from "sonner";
 import { PageContainer } from "@/components/layout";
-import { SidebarCollapseToggle } from "@/components/layout/sidebar-collapse-toggle";
+import { AppLoaderSpinner } from "@/components/ui/app-loader";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { SearchableSelect } from "@/components/ui/searchable-select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useDebounce, usePageMeta, usePermissions } from "@/hooks";
 import { AGENT_LANGUAGES } from "@/lib/constants/agent-config";
 import { surveysModuleService } from "@/services/surveys-module.service";
+import {
+  exportSurveys,
+  type SurveysExportFormat,
+} from "@/lib/utils/surveys-export";
 import { isSurveyCompleted } from "@/lib/utils/survey-readiness";
 import type { PaginatedMeta } from "@/types";
 import type { Agent } from "@/types/agent";
@@ -22,11 +42,12 @@ import {
   ScheduleSurveyDialog,
   type ScheduleSurveyPayload,
 } from "./schedule-survey-dialog";
-import { SurveyCard } from "./survey-card";
 import { SurveyFetchLoader } from "./survey-fetch-loader";
 import { SurveysPagination } from "./surveys-pagination";
+import { SurveysTable } from "./surveys-table";
 
-const PAGE_SIZE = 9;
+const PAGE_SIZE = 10;
+const EXPORT_MAX_ROWS = 5000;
 
 const LANGUAGE_FILTER_OPTIONS = [
   { label: "All languages", value: "all" },
@@ -47,7 +68,7 @@ export function SurveyListView() {
   const [language, setLanguage] = useState("all");
   const [page, setPage] = useState(1);
   const [agents, setAgents] = useState<Agent[]>([]);
-  const { isReady, canCreateSurvey } = usePermissions();
+  const { isReady, canCreateSurvey, canExportSurvey } = usePermissions();
   const [meta, setMeta] = useState<PaginatedMeta>(EMPTY_META);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -59,6 +80,7 @@ export function SurveyListView() {
   const [isDeleting, setIsDeleting] = useState(false);
   const [scheduleOpen, setScheduleOpen] = useState(false);
   const [pendingSchedule, setPendingSchedule] = useState<Agent | null>(null);
+  const [isExporting, setIsExporting] = useState(false);
 
   const debouncedSearch = useDebounce(search, 300);
 
@@ -132,8 +154,36 @@ export function SurveyListView() {
     });
   };
 
-  const selectAllOnPage = () => {
-    setSelectedIds(new Set(agents.map((agent) => agent.id)));
+  const selectAllOnPage = (selected = true) => {
+    if (selected) {
+      setSelectedIds(new Set(agents.map((agent) => agent.id)));
+    } else {
+      setSelectedIds(new Set());
+    }
+  };
+
+  const handleExport = async (format: SurveysExportFormat) => {
+    setIsExporting(true);
+    try {
+      const result = await surveysModuleService.list({
+        page: 1,
+        limit: Math.min(Math.max(meta.total, PAGE_SIZE), EXPORT_MAX_ROWS),
+        search: debouncedSearch.trim() || undefined,
+        language: language !== "all" ? language : undefined,
+      });
+      if (result.data.length === 0) {
+        toast.error("No surveys to export");
+        return;
+      }
+      exportSurveys(result.data, format);
+      toast.success(
+        `Exported ${result.data.length} survey${result.data.length === 1 ? "" : "s"}`
+      );
+    } catch {
+      toast.error("Failed to export surveys");
+    } finally {
+      setIsExporting(false);
+    }
   };
 
   const handleClone = async (agent: Agent) => {
@@ -268,16 +318,13 @@ export function SurveyListView() {
       <PageContainer size="full">
         <div className="space-y-6">
           <div className="flex items-start justify-between gap-4">
-            <div className="flex min-w-0 items-start gap-3">
-              <SidebarCollapseToggle className="mt-1" />
-              <div>
-                <h1 className="font-display text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
-                  My Surveys
-                </h1>
-                <p className="mt-1.5 max-w-xl text-sm text-muted-foreground">
-                  Schedule any survey once all required steps are filled.
-                </p>
-              </div>
+            <div>
+              <h1 className="font-display text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
+                My Surveys
+              </h1>
+              <p className="mt-1.5 max-w-xl text-sm text-muted-foreground">
+                Schedule any survey once all required steps are filled.
+              </p>
             </div>
             <button
               type="button"
@@ -288,14 +335,14 @@ export function SurveyListView() {
             </button>
           </div>
 
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+          <div className="flex flex-col gap-3 rounded-[6px] border border-border/50 bg-card/70 p-3 shadow-card backdrop-blur-sm sm:flex-row sm:items-center sm:p-3.5">
             <div className="relative min-w-0 flex-1">
               <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
               <Input
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Search surveys by name..."
-                className="h-11 rounded-[6px] border-border/50 bg-card pl-9 shadow-sm"
+                className="h-11 rounded-[6px] border-border/50 bg-background/80 pl-9 shadow-subtle"
                 disabled={showLoader && agents.length === 0}
               />
             </div>
@@ -304,16 +351,57 @@ export function SurveyListView() {
               onChange={setLanguage}
               options={LANGUAGE_FILTER_OPTIONS}
               searchPlaceholder="Search languages…"
-              className="h-11 w-full rounded-[6px] border-border/50 bg-card shadow-sm sm:w-52"
+              className="h-11 w-full rounded-[6px] border-border/50 bg-background/80 shadow-subtle sm:w-52"
               disabled={showLoader && agents.length === 0}
               aria-label="Filter by language"
             />
+            {isReady && canExportSurvey ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="h-11 shrink-0 rounded-[6px] gap-1.5 border-border/50 bg-background/80 shadow-subtle hover:border-primary/30"
+                    disabled={
+                      isExporting ||
+                      (showLoader && agents.length === 0) ||
+                      meta.total === 0
+                    }
+                  >
+                    {isExporting ? (
+                      <AppLoaderSpinner size="sm" />
+                    ) : (
+                      <Download className="size-4" />
+                    )}
+                    Export
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-48">
+                  <DropdownMenuItem
+                    disabled={isExporting}
+                    onClick={() => void handleExport("xlsx")}
+                    className="gap-2"
+                  >
+                    <FileSpreadsheet className="size-4 text-primary" />
+                    Excel (.xlsx)
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    disabled={isExporting}
+                    onClick={() => void handleExport("csv")}
+                    className="gap-2"
+                  >
+                    <FileText className="size-4 text-primary" />
+                    CSV (.csv)
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : null}
             {!isReady || (showLoader && agents.length === 0) ? (
               <Skeleton className="h-11 w-44 shrink-0 rounded-[6px]" />
             ) : canCreateSurvey ? (
               <Button
                 asChild
-                className="h-11 shrink-0 rounded-[6px] px-5 shadow-sm"
+                className="h-11 shrink-0 rounded-[6px] px-5 shadow-brand"
               >
                 <Link href="/survey/new">
                   <UserPlus className="size-4" />
@@ -364,20 +452,15 @@ export function SurveyListView() {
             </div>
           ) : (
             <div className="space-y-4">
-              <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
-                {agents.map((agent, i) => (
-                  <SurveyCard
-                    key={agent.id}
-                    agent={agent}
-                    index={i}
-                    selected={selectedIds.has(agent.id)}
-                    onSelectChange={handleSelectChange}
-                    onClone={handleClone}
-                    onDelete={openDelete}
-                    onSchedule={openSchedule}
-                  />
-                ))}
-              </div>
+              <SurveysTable
+                agents={agents}
+                selectedIds={selectedIds}
+                onSelectChange={handleSelectChange}
+                onSelectAll={selectAllOnPage}
+                onClone={handleClone}
+                onDelete={openDelete}
+                onSchedule={openSchedule}
+              />
 
               <SurveysPagination
                 meta={meta}
@@ -393,52 +476,71 @@ export function SurveyListView() {
       </PageContainer>
 
       <AnimatePresence>
-        {selectedIds.size > 0 ? (
+        {selectedIds.size > 0 && !deleteOpen ? (
           <motion.div
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 16 }}
-            transition={{ type: "spring", stiffness: 400, damping: 30 }}
-            className="fixed bottom-6 left-1/2 z-40 w-[calc(100%-2rem)] max-w-lg -translate-x-1/2"
+            initial={{ opacity: 0, y: 20, scale: 0.96 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 12, scale: 0.96 }}
+            transition={{ type: "spring", stiffness: 420, damping: 28 }}
+            className="fixed bottom-6 left-1/2 z-40 w-[calc(100%-2rem)] max-w-xl -translate-x-1/2"
           >
-            <div className="flex items-center justify-between gap-3 rounded-[6px] border border-border/80 bg-background/95 px-4 py-3 shadow-elevated backdrop-blur-md">
-              <div className="flex min-w-0 flex-wrap items-center gap-1.5 sm:gap-2">
-                <span className="truncate text-sm font-medium">
-                  {selectedIds.size} selected
-                </span>
-                {!allSelected ? (
+            <div className="relative overflow-hidden rounded-[6px] border border-border/70 bg-card/95 shadow-elevated backdrop-blur-xl">
+              <div
+                aria-hidden
+                className="pointer-events-none absolute inset-x-0 top-0 h-px bg-linear-to-r from-transparent via-primary/40 to-transparent"
+              />
+              <div className="flex items-center justify-between gap-3 px-4 py-3">
+                <div className="flex min-w-0 flex-wrap items-center gap-2">
+                  <span className="relative inline-flex size-8 items-center justify-center rounded-[6px] bg-primary text-xs font-bold tabular-nums text-primary-foreground shadow-brand">
+                    {selectedIds.size}
+                    <span
+                      aria-hidden
+                      className="absolute -right-0.5 -top-0.5 size-2 rounded-full bg-emerald-400 ring-2 ring-card"
+                    />
+                  </span>
+                  <div className="min-w-0 leading-tight">
+                    <p className="truncate text-sm font-semibold text-foreground">
+                      {selectedIds.size} survey
+                      {selectedIds.size === 1 ? "" : "s"} selected
+                    </p>
+                    <p className="text-[11px] text-muted-foreground">
+                      Choose an action below
+                    </p>
+                  </div>
+                  {!allSelected ? (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => selectAllOnPage(true)}
+                      className="h-7 shrink-0 text-xs text-primary hover:text-primary"
+                    >
+                      Select all
+                    </Button>
+                  ) : null}
                   <Button
                     type="button"
                     variant="ghost"
                     size="sm"
-                    onClick={selectAllOnPage}
+                    onClick={() => setSelectedIds(new Set())}
                     className="h-7 shrink-0 text-xs text-muted-foreground"
                   >
-                    Select all
+                    <X className="size-3.5" />
+                    Clear
                   </Button>
-                ) : null}
+                </div>
                 <Button
                   type="button"
-                  variant="ghost"
+                  variant="destructive"
                   size="sm"
-                  onClick={() => setSelectedIds(new Set())}
-                  className="h-7 shrink-0 text-xs text-muted-foreground"
+                  className="h-9 shrink-0 gap-1.5 rounded-[6px] px-3.5 font-semibold shadow-[0_8px_18px_-8px_color-mix(in_oklch,var(--destructive)_50%,transparent)]"
+                  onClick={openBulkDelete}
+                  disabled={isDeleting}
                 >
-                  <X className="size-3.5" />
-                  Clear
+                  <Trash2 className="size-3.5" />
+                  Delete
                 </Button>
               </div>
-              <Button
-                type="button"
-                variant="destructive"
-                size="sm"
-                className="h-8 shrink-0"
-                onClick={openBulkDelete}
-                disabled={isDeleting}
-              >
-                <Trash2 className="size-3.5" />
-                Delete
-              </Button>
             </div>
           </motion.div>
         ) : null}
@@ -451,7 +553,11 @@ export function SurveyListView() {
           if (!open) setPendingDelete(null);
         }}
         agent={pendingDelete}
-        count={pendingDelete ? undefined : selectedIds.size}
+        agents={
+          pendingDelete
+            ? undefined
+            : agents.filter((a) => selectedIds.has(a.id))
+        }
         onConfirm={confirmDelete}
         isDeleting={isDeleting}
       />

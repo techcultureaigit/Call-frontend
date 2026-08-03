@@ -22,6 +22,7 @@ import {
   USER_STATUS_OPTIONS,
   type UserFormValues,
 } from "@/lib/validators/user";
+import { isSuperAdminRole } from "@/types/role";
 import type { User } from "@/types/user";
 
 interface UserFormModalProps {
@@ -41,17 +42,24 @@ export function UserFormModal({
 }: UserFormModalProps) {
   const isEdit = Boolean(user);
   const { data: roles = [], isLoading: rolesLoading } = useRoles();
-  const roleOptions = roles.map((role) => ({
-    label: role.name,
-    value: role.id,
-  }));
+  const roleOptions = roles
+    .filter(
+      (role) =>
+        !role.isSuperAdmin &&
+        !isSuperAdminRole(role.name ?? "")
+    )
+    .map((role) => ({
+      label: role.name,
+      value: role.id,
+    }));
+
+  const defaultRoleId = roleOptions[0]?.value ?? "";
 
   const defaultValues: UserFormValues = {
     firstName: "",
     lastName: "",
     email: "",
-    phone: "",
-    roleId: roles[0]?.id ?? "",
+    roleId: defaultRoleId,
     status: "invited",
   };
 
@@ -74,13 +82,12 @@ export function UserFormModal({
               firstName: user.firstName,
               lastName: user.lastName,
               email: user.email,
-              phone: user.phone ?? "",
               roleId: user.roleId,
               status: user.status,
             }
           : {
               ...defaultValues,
-              roleId: roles[0]?.id ?? "",
+              roleId: defaultRoleId,
             }
       );
     }
@@ -132,11 +139,6 @@ export function UserFormModal({
             {errors.email && (
               <p className="text-xs text-destructive">{errors.email.message}</p>
             )}
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="phone">Phone</Label>
-            <Input id="phone" type="tel" {...register("phone")} />
           </div>
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">

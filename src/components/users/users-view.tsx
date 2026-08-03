@@ -11,6 +11,8 @@ import { UsersTable } from "./users-table";
 import { UsersPagination } from "./users-pagination";
 import { DeleteUserDialog } from "./delete-user-dialog";
 import type { User, UserStatus } from "@/types/user";
+import { isSuperAdminRole } from "@/types/role";
+import { toast } from "sonner";
 
 export function UsersView() {
   const router = useRouter();
@@ -69,6 +71,10 @@ export function UsersView() {
 
   const handleToggleStatus = useCallback(
     async (user: User, active: boolean) => {
+      if (isSuperAdminRole(user.roleName || user.role)) {
+        toast.error("Super Admin status cannot be changed");
+        return;
+      }
       setTogglingId(user.id);
       try {
         await toggleStatus.mutateAsync({
@@ -83,9 +89,19 @@ export function UsersView() {
   );
 
   const openCreate = () => router.push("/users/new");
-  const openEdit = (user: User) => router.push(`/users/${user.id}/edit`);
+  const openEdit = (user: User) => {
+    if (isSuperAdminRole(user.roleName || user.role)) {
+      toast.error("Super Admin cannot be edited");
+      return;
+    }
+    router.push(`/users/${user.id}/edit`);
+  };
 
   const openDelete = (user: User) => {
+    if (isSuperAdminRole(user.roleName || user.role)) {
+      toast.error("Super Admin cannot be deleted");
+      return;
+    }
     setSelectedUser(user);
     setDeleteOpen(true);
   };

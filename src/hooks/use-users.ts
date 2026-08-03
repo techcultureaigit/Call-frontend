@@ -40,7 +40,8 @@ export function useUserMutations() {
       toast.success("User created successfully");
       invalidate();
     },
-    onError: () => toast.error("Failed to create user"),
+    onError: (error: Error) =>
+      toast.error(error.message || "Failed to create user"),
   });
 
   const updateUser = useMutation({
@@ -50,7 +51,8 @@ export function useUserMutations() {
       toast.success("User updated successfully");
       invalidate();
     },
-    onError: () => toast.error("Failed to update user"),
+    onError: (error: Error) =>
+      toast.error(error.message || "Failed to update user"),
   });
 
   const deleteUser = useMutation({
@@ -59,14 +61,16 @@ export function useUserMutations() {
       toast.success("User deleted successfully");
       invalidate();
     },
-    onError: () => toast.error("Failed to delete user"),
+    onError: (error: Error) =>
+      toast.error(error.message || "Failed to delete user"),
   });
 
   const toggleStatus = useMutation({
     mutationFn: ({ id, status }: { id: string; status: UserStatus }) =>
       usersModuleService.toggleStatus(id, status),
     onSuccess: () => invalidate(),
-    onError: () => toast.error("Failed to update status"),
+    onError: (error: Error) =>
+      toast.error(error.message || "Failed to update status"),
   });
 
   return { createUser, updateUser, deleteUser, toggleStatus };

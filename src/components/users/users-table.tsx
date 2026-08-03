@@ -33,7 +33,12 @@ import { formatDate, formatRelativeTime, getInitials } from "@/lib/utils";
 import { cn } from "@/lib/utils";
 import { RoleBadge } from "./role-badge";
 import { StatusBadge } from "./status-badge";
+import { isSuperAdminRole } from "@/types/role";
 import type { User, UserStatus } from "@/types/user";
+
+function isLockedUser(user: User) {
+  return isSuperAdminRole(user.roleName || user.role);
+}
 
 interface UsersTableProps {
   users: User[];
@@ -99,9 +104,11 @@ export function UsersTable({
         header: "Status",
         cell: ({ row }) => {
           const user = row.original;
+          const locked = isLockedUser(user);
           const isActive = user.status === "active";
           const canToggle =
-            user.status === "active" || user.status === "inactive";
+            !locked &&
+            (user.status === "active" || user.status === "inactive");
 
           return (
             <div className="flex items-center gap-3">
@@ -116,15 +123,6 @@ export function UsersTable({
             </div>
           );
         },
-      },
-      {
-        accessorKey: "phone",
-        header: "Phone",
-        cell: ({ row }) => (
-          <span className="text-sm text-muted-foreground">
-            {row.original.phone ?? "—"}
-          </span>
-        ),
       },
       {
         accessorKey: "lastLoginAt",
@@ -154,6 +152,16 @@ export function UsersTable({
         header: "",
         cell: ({ row }) => {
           const user = row.original;
+          if (isLockedUser(user)) {
+            return (
+              <span
+                className="px-2 text-xs text-muted-foreground"
+                title="Super Admin is locked"
+              >
+                Locked
+              </span>
+            );
+          }
           return (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>

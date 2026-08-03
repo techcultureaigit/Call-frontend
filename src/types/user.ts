@@ -19,7 +19,6 @@ export interface User extends Timestamps {
   /** Live permission matrix from Role.permissions */
   permissions: RolePermissions;
   status: UserStatus;
-  phone?: string;
   timezone?: string;
   lastLoginAt?: string;
 }
