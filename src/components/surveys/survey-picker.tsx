@@ -72,12 +72,13 @@ export function SurveyPicker({ onSelect, onCreate, isCreating }: SurveyPickerPro
                     <span
                       className={cn(
                         "rounded-md px-2 py-0.5 text-[10px] font-medium capitalize",
-                        survey.status === "active"
+                        survey.scheduling_status === "scheduled" ||
+                          survey.scheduling_status === "completed"
                           ? "bg-emerald-500/10 text-emerald-600"
                           : "bg-muted text-muted-foreground"
                       )}
                     >
-                      {survey.status}
+                      {survey.scheduling_status}
                     </span>
                   </CardContent>
                 </Card>

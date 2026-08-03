@@ -138,7 +138,6 @@ export function SurveyBuilderView() {
         name,
         description,
         questions,
-        status: survey?.status === "paused" ? "draft" : survey?.status,
       },
     });
     setDirty(false);
@@ -193,7 +192,11 @@ export function SurveyBuilderView() {
         <SurveyBuilderHeader
           name={name}
           onNameChange={(v) => { setName(v); markDirty(); }}
-          published={survey?.status === "active"}
+          published={
+            survey?.scheduling_status === "scheduled" ||
+            survey?.scheduling_status === "processing" ||
+            survey?.scheduling_status === "completed"
+          }
           onPublishToggle={handlePublishToggle}
           onPreview={() => setPreviewOpen(true)}
           onSave={handleSave}
