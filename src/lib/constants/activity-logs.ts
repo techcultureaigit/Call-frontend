@@ -57,10 +57,10 @@ export const ACTION_BADGE_STYLES: Record<AuditAction, string> = {
 };
 
 export const MODULE_BADGE_STYLES: Record<AuditModule, string> = {
-  customers: "bg-sky-500/10 text-sky-700 dark:text-sky-400",
+  survey_data: "bg-sky-500/10 text-sky-700 dark:text-sky-400",
   agents: "bg-indigo-500/10 text-indigo-700 dark:text-indigo-400",
-  library: "bg-teal-500/10 text-teal-700 dark:text-teal-400",
-  surveys: "bg-violet-500/10 text-violet-700 dark:text-violet-400",
+  voices: "bg-teal-500/10 text-teal-700 dark:text-teal-400",
+  my_surveys: "bg-violet-500/10 text-violet-700 dark:text-violet-400",
   calls: "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400",
   responses: "bg-amber-500/10 text-amber-700 dark:text-amber-400",
   users: "bg-rose-500/10 text-rose-700 dark:text-rose-400",

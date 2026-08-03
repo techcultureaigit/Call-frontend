@@ -35,7 +35,7 @@ export const MOCK_ACTIVITY_LOGS: ActivityLog[] = [
   {
     id: "log-1",
     action: "update",
-    module: "surveys",
+    module: "my_surveys",
     resourceType: "Campaign",
     resourceId: "camp-1",
     resourceName: "Enterprise NPS Survey",
@@ -106,7 +106,7 @@ export const MOCK_ACTIVITY_LOGS: ActivityLog[] = [
   {
     id: "log-5",
     action: "publish",
-    module: "surveys",
+    module: "my_surveys",
     resourceType: "Survey",
     resourceId: "survey-3",
     resourceName: "Product Feedback Q3",
@@ -156,7 +156,7 @@ export const MOCK_ACTIVITY_LOGS: ActivityLog[] = [
   {
     id: "log-8",
     action: "delete",
-    module: "surveys",
+    module: "my_surveys",
     resourceType: "Campaign",
     resourceId: "camp-9",
     resourceName: "Legacy Q1 Outreach",
@@ -224,7 +224,7 @@ export const MOCK_ACTIVITY_LOGS: ActivityLog[] = [
   {
     id: "log-12",
     action: "resume",
-    module: "surveys",
+    module: "my_surveys",
     resourceType: "Campaign",
     resourceId: "camp-2",
     resourceName: "Q2 Outbound Sales",
@@ -274,7 +274,7 @@ export const MOCK_ACTIVITY_LOGS: ActivityLog[] = [
   {
     id: "log-15",
     action: "create",
-    module: "surveys",
+    module: "my_surveys",
     resourceType: "Campaign",
     resourceId: "camp-12",
     resourceName: "Healthcare CX Survey",
@@ -340,7 +340,7 @@ export const MOCK_ACTIVITY_LOGS: ActivityLog[] = [
   {
     id: "log-19",
     action: "update",
-    module: "surveys",
+    module: "my_surveys",
     resourceType: "Survey",
     resourceId: "survey-1",
     resourceName: "Enterprise NPS Survey",
@@ -357,7 +357,7 @@ export const MOCK_ACTIVITY_LOGS: ActivityLog[] = [
   {
     id: "log-20",
     action: "pause",
-    module: "surveys",
+    module: "my_surveys",
     resourceType: "Campaign",
     resourceId: "camp-5",
     resourceName: "Product Feedback Q3",
@@ -423,7 +423,7 @@ export const MOCK_ACTIVITY_LOGS: ActivityLog[] = [
   {
     id: "log-24",
     action: "delete",
-    module: "surveys",
+    module: "my_surveys",
     resourceType: "Survey",
     resourceId: "survey-8",
     resourceName: "Deprecated CSAT v1",
