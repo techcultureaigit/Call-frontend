@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { AppLoaderSpinner } from "@/components/ui/app-loader";
 import { ClientContactsPreview } from "@/components/survey/client-contacts-preview";
 import { downloadClientContactsSample } from "@/lib/constants/survey-upload-samples";
+import { parseAndValidateClientContactsFile } from "@/lib/utils/client-contacts";
 import { getContactFileOpenUrl } from "@/lib/utils/contact-file-url";
 import { surveysModuleService } from "@/services/surveys-module.service";
 import type { AgentClientContactConfig } from "@/types/agent";
@@ -24,16 +25,27 @@ export function ClientContactTab({
 }: ClientContactTabProps) {
   const fileRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
+  const [formatErrors, setFormatErrors] = useState<string[]>([]);
 
   const handleUpload = async (file: File) => {
     const lower = file.name.toLowerCase();
     if (!/\.(csv|xlsx|xls)$/.test(lower)) {
-      toast.error("Only Excel (.xlsx / .xls) or CSV files are allowed");
+      const msg = "Only Excel (.xlsx / .xls) or CSV files are allowed";
+      setFormatErrors([msg]);
+      toast.error(msg);
       return;
     }
 
     setUploading(true);
+    setFormatErrors([]);
     try {
+      const validated = await parseAndValidateClientContactsFile(file);
+      if (!validated.ok) {
+        setFormatErrors(validated.errors);
+        toast.error("Invalid contact file — fix the errors and try again");
+        return;
+      }
+
       if (!surveyId) {
         throw new Error("Save previous steps first to upload contacts");
       }
@@ -49,17 +61,20 @@ export function ClientContactTab({
           values.contactFileUrl,
         contactFileName:
           uploadedSurvey.config.clientContact.contactFileName || file.name,
-        contacts: uploadedSurvey.config.clientContact.contacts ?? [],
+        contacts:
+          uploadedSurvey.config.clientContact.contacts?.length
+            ? uploadedSurvey.config.clientContact.contacts
+            : validated.contacts,
       });
+      setFormatErrors([]);
       toast.success(
-        `Uploaded ${
-          uploadedSurvey.config.clientContact.contacts?.length ?? 0
-        } row(s) — all columns saved`
+        `Uploaded ${validated.contacts.length} contact number(s)`
       );
     } catch (error) {
-      toast.error(
-        error instanceof Error ? error.message : "Failed to upload file"
-      );
+      const msg =
+        error instanceof Error ? error.message : "Failed to upload file";
+      setFormatErrors([msg]);
+      toast.error(msg);
     } finally {
       setUploading(false);
       if (fileRef.current) fileRef.current.value = "";
@@ -67,6 +82,7 @@ export function ClientContactTab({
   };
 
   const clearFile = () => {
+    setFormatErrors([]);
     onChange({
       contactFileUrl: "",
       contactFileName: "",
@@ -81,8 +97,49 @@ export function ClientContactTab({
           Contact of Client
         </h3>
         <p className="mt-1 text-xs text-muted-foreground">
-          Upload any Excel or CSV — every column from the file is saved as-is.
+          Upload Excel or CSV with only one column:{" "}
+          <span className="font-semibold text-foreground">contact</span>{" "}
+          (phone numbers only).
         </p>
+      </div>
+
+      {/* How to format */}
+      <div className="rounded-[8px] border border-border/60 bg-muted/20 px-4 py-3">
+        <p className="text-xs font-semibold text-foreground">
+          How to prepare your Excel / CSV
+        </p>
+        <ol className="mt-2 list-decimal space-y-1.5 pl-4 text-[11px] leading-relaxed text-muted-foreground">
+          <li>
+            Open Excel or Google Sheets and create a new sheet.
+          </li>
+          <li>
+            In cell <span className="font-medium text-foreground">A1</span>,
+            type exactly:{" "}
+            <span className="font-mono font-semibold text-foreground">
+              contact
+            </span>{" "}
+            (this is the only column header allowed).
+          </li>
+          <li>
+            From <span className="font-medium text-foreground">A2</span>{" "}
+            downward, enter phone numbers only — digits, 10 to 15 characters
+            (example:{" "}
+            <span className="font-mono text-foreground">9876543210</span>).
+          </li>
+          <li>
+            Do not add other columns (name, email, NUMBERS, etc.) — the file
+            will be rejected.
+          </li>
+          <li>
+            Do not use letters, spaces-only cells, or special characters in the
+            number cells.
+          </li>
+          <li>
+            Save as <span className="font-medium text-foreground">.xlsx</span>{" "}
+            or <span className="font-medium text-foreground">.csv</span>, then
+            upload below. You can also download the sample CSV first.
+          </li>
+        </ol>
       </div>
 
       <div className="space-y-3 rounded-[8px] border border-border/60 bg-muted/20 p-4">
@@ -109,7 +166,8 @@ export function ClientContactTab({
             {uploading ? "Uploading…" : "Upload Excel or CSV"}
           </span>
           <span className="max-w-sm text-[11px] text-muted-foreground">
-            Any columns accepted — no fixed field names required.
+            Only column <span className="font-semibold">contact</span> with
+            valid phone numbers will be accepted.
           </span>
         </button>
 
@@ -125,6 +183,19 @@ export function ClientContactTab({
             Download sample CSV
           </Button>
         </div>
+
+        {formatErrors.length > 0 ? (
+          <div className="rounded-[8px] border border-destructive/30 bg-destructive/5 px-3 py-3">
+            <p className="text-xs font-semibold text-destructive">
+              Upload rejected — fix these issues:
+            </p>
+            <ul className="mt-2 list-disc space-y-1 pl-4 text-[11px] text-destructive">
+              {formatErrors.map((err) => (
+                <li key={err}>{err}</li>
+              ))}
+            </ul>
+          </div>
+        ) : null}
 
         {values.contactFileUrl || values.contactFileName ? (
           <div className="flex items-start gap-3 rounded-[8px] border border-border/60 bg-card px-3 py-3">
@@ -147,7 +218,7 @@ export function ClientContactTab({
               ) : null}
               <p className="text-[11px] text-muted-foreground">
                 {values.contacts?.length
-                  ? `${values.contacts.length} row(s) loaded`
+                  ? `${values.contacts.length} contact number(s) loaded`
                   : "File uploaded"}
               </p>
             </div>
@@ -165,7 +236,8 @@ export function ClientContactTab({
         ) : null}
       </div>
 
-      {values.contactFileUrl || (values.contacts && values.contacts.length > 0) ? (
+      {values.contactFileUrl ||
+      (values.contacts && values.contacts.length > 0) ? (
         <ClientContactsPreview
           fileUrl={values.contactFileUrl}
           contacts={values.contacts}

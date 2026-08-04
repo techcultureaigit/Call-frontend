@@ -432,6 +432,7 @@ export function SurveyConfigureView({
       >
         <div className="shrink-0">
           <SurveyTopNav
+            surveyName={config.persona.name}
             previewOpen={showPreview}
             onTogglePreview={() => setShowPreview((v) => !v)}
             status={displayStatus}

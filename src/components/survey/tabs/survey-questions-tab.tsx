@@ -22,6 +22,7 @@ import {
 } from "@/lib/constants/agent-config";
 import { downloadSurveyQuestionsSample } from "@/lib/constants/survey-upload-samples";
 import { getContactFileOpenUrl } from "@/lib/utils/contact-file-url";
+import { parseAndValidateSurveyQuestionsFile } from "@/lib/utils/survey-questions-upload";
 import { surveysModuleService } from "@/services/surveys-module.service";
 import { cn } from "@/lib/utils";
 import type {
@@ -53,10 +54,18 @@ function parseOptionsPipe(raw: string): AgentSurveyQuestionOption[] {
     .map(makeOption);
 }
 
-const SKIP_DISPLAY_KEYS = new Set(["id", "_id", "type", "options", "question", "__v"]);
+const SKIP_DISPLAY_KEYS = new Set([
+  "id",
+  "_id",
+  "type",
+  "options",
+  "question",
+  "__v",
+]);
 
 function getQuestionDisplayText(q: AgentSurveyQuestion): string {
-  if (typeof q.question === "string" && q.question.trim()) return q.question.trim();
+  if (typeof q.question === "string" && q.question.trim())
+    return q.question.trim();
   for (const [key, value] of Object.entries(q)) {
     if (SKIP_DISPLAY_KEYS.has(key)) continue;
     if (typeof value === "string" && value.trim()) return value.trim();
@@ -64,7 +73,9 @@ function getQuestionDisplayText(q: AgentSurveyQuestion): string {
   return "Untitled row";
 }
 
-function getDynamicFieldEntries(q: AgentSurveyQuestion): Array<[string, string]> {
+function getDynamicFieldEntries(
+  q: AgentSurveyQuestion
+): Array<[string, string]> {
   return Object.entries(q)
     .filter(([key, value]) => {
       if (SKIP_DISPLAY_KEYS.has(key)) return false;
@@ -85,6 +96,7 @@ export function SurveyQuestionsTab({
 }: SurveyQuestionsTabProps) {
   const fileRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
+  const [formatErrors, setFormatErrors] = useState<string[]>([]);
   const [questionType, setQuestionType] = useState("text");
   const [questionText, setQuestionText] = useState("");
   const [optionsPipe, setOptionsPipe] = useState("");
@@ -128,17 +140,26 @@ export function SurveyQuestionsTab({
   const handleUpload = async (file: File) => {
     const lower = file.name.toLowerCase();
     if (!/\.(csv|xlsx|xls)$/.test(lower)) {
-      toast.error("Only Excel (.xlsx / .xls) or CSV files are allowed");
-      return;
-    }
-
-    if (!surveyId) {
-      toast.error("Save previous steps first to upload questions");
+      const msg = "Only Excel (.xlsx / .xls) or CSV files are allowed";
+      setFormatErrors([msg]);
+      toast.error(msg);
       return;
     }
 
     setUploading(true);
+    setFormatErrors([]);
     try {
+      const validated = await parseAndValidateSurveyQuestionsFile(file);
+      if (!validated.ok) {
+        setFormatErrors(validated.errors);
+        toast.error("Invalid questions file — fix the errors and try again");
+        return;
+      }
+
+      if (!surveyId) {
+        throw new Error("Save previous steps first to upload questions");
+      }
+
       const uploaded = await surveysModuleService.uploadQuestionsFile(
         surveyId,
         file
@@ -148,15 +169,15 @@ export function SurveyQuestionsTab({
         enabled: sq.enabled,
         questionsFileUrl: sq.questionsFileUrl || "",
         questionsFileName: sq.questionsFileName || file.name,
-        questions: sq.questions,
+        questions: sq.questions?.length ? sq.questions : validated.questions,
       });
-      toast.success(
-        `Uploaded ${sq.questions.length} row(s) — all columns saved`
-      );
+      setFormatErrors([]);
+      toast.success(`Uploaded ${validated.questions.length} question(s)`);
     } catch (error) {
-      toast.error(
-        error instanceof Error ? error.message : "Failed to upload questions"
-      );
+      const msg =
+        error instanceof Error ? error.message : "Failed to upload questions";
+      setFormatErrors([msg]);
+      toast.error(msg);
     } finally {
       setUploading(false);
       if (fileRef.current) fileRef.current.value = "";
@@ -164,6 +185,7 @@ export function SurveyQuestionsTab({
   };
 
   const clearUpload = () => {
+    setFormatErrors([]);
     onChange({
       ...values,
       questionsFileUrl: "",
@@ -180,8 +202,11 @@ export function SurveyQuestionsTab({
             Survey Questions
           </h3>
           <p className="mt-1 text-xs text-muted-foreground">
-            Upload any CSV/Excel — every column is saved as-is. Or add questions
-            manually.
+            Upload Excel/CSV with columns{" "}
+            <span className="font-semibold text-foreground">
+              question, type, options
+            </span>
+            — or add questions manually.
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -191,6 +216,63 @@ export function SurveyQuestionsTab({
             onCheckedChange={(enabled) => onChange({ ...values, enabled })}
           />
         </div>
+      </div>
+
+      <div
+        className={cn(
+          "rounded-[8px] border border-border/60 bg-muted/20 px-4 py-3",
+          !values.enabled && "pointer-events-none opacity-55"
+        )}
+      >
+        <p className="text-xs font-semibold text-foreground">
+          How to prepare your Excel / CSV
+        </p>
+        <ol className="mt-2 list-decimal space-y-1.5 pl-4 text-[11px] leading-relaxed text-muted-foreground">
+          <li>
+            Row 1 headers must be exactly:{" "}
+            <span className="font-mono font-semibold text-foreground">
+              question
+            </span>
+            ,{" "}
+            <span className="font-mono font-semibold text-foreground">type</span>
+            ,{" "}
+            <span className="font-mono font-semibold text-foreground">
+              options
+            </span>{" "}
+            (no other columns).
+          </li>
+          <li>
+            <span className="font-medium text-foreground">question</span> — full
+            question text in one cell.
+          </li>
+          <li>
+            <span className="font-medium text-foreground">type</span> — only one
+            of:{" "}
+            <span className="font-mono text-foreground">text</span>,{" "}
+            <span className="font-mono text-foreground">yes_no</span>,{" "}
+            <span className="font-mono text-foreground">rating</span>,{" "}
+            <span className="font-mono text-foreground">multi</span>.
+          </li>
+          <li>
+            <span className="font-medium text-foreground">options</span> — only
+            for <span className="font-mono text-foreground">multi</span>. Put
+            all choices in one cell, separated by{" "}
+            <span className="font-mono text-foreground">|</span> (example:{" "}
+            <span className="font-mono text-foreground">
+              Congress | BJP | Other
+            </span>
+            ). Leave blank for other types.
+          </li>
+          <li>
+            Do not split options into separate columns — that breaks the file
+            and will show a formatting error.
+          </li>
+          <li>
+            Save as <span className="font-medium text-foreground">.xlsx</span>{" "}
+            or <span className="font-medium text-foreground">.csv</span>, then
+            upload. Or download the sample CSV first.
+          </li>
+        </ol>
       </div>
 
       <div
@@ -222,7 +304,9 @@ export function SurveyQuestionsTab({
             {uploading ? "Uploading…" : "Upload Excel or CSV"}
           </span>
           <span className="max-w-sm text-[11px] text-muted-foreground">
-            Any columns accepted — no fixed field names required.
+            Only columns{" "}
+            <span className="font-semibold">question, type, options</span> are
+            accepted.
           </span>
         </button>
 
@@ -238,6 +322,19 @@ export function SurveyQuestionsTab({
             Download sample CSV
           </Button>
         </div>
+
+        {formatErrors.length > 0 ? (
+          <div className="rounded-[8px] border border-destructive/30 bg-destructive/5 px-3 py-3">
+            <p className="text-xs font-semibold text-destructive">
+              Upload rejected — fix these issues:
+            </p>
+            <ul className="mt-2 list-disc space-y-1 pl-4 text-[11px] text-destructive">
+              {formatErrors.map((err) => (
+                <li key={err}>{err}</li>
+              ))}
+            </ul>
+          </div>
+        ) : null}
 
         {values.questionsFileUrl || values.questionsFileName ? (
           <div className="flex items-start gap-3 rounded-[8px] border border-border/60 bg-card px-3 py-3">
@@ -257,7 +354,7 @@ export function SurveyQuestionsTab({
                 </a>
               ) : null}
               <p className="text-[11px] text-muted-foreground">
-                {values.questions.length} row(s) loaded
+                {values.questions.length} question(s) loaded
               </p>
             </div>
             <Button

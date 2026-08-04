@@ -139,13 +139,13 @@ export interface AgentSurveyQuestionsConfig {
   questions: AgentSurveyQuestion[];
 }
 
-/** Contact rows keep whatever columns were in the uploaded file */
-export type AgentClientContactRow = Record<string, string>;
+/** Contact row — single `contact` phone number column */
+export type AgentClientContactRow = { contact: string };
 
 export interface AgentClientContactConfig {
   contactFileUrl: string;
   contactFileName: string;
-  /** Parsed rows cached after upload; view can also reload from contactFileUrl */
+  /** Parsed contact numbers cached after upload */
   contacts?: AgentClientContactRow[];
 }
 

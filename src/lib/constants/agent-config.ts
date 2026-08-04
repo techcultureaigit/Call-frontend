@@ -141,7 +141,7 @@ export const DEFAULT_AGENT_CONFIG: AgentConfig = {
     name: "",
     avatarId: "aria",
     modelMode: "pipeline",
-    language: "en",
+    language: "hi",
     audioCacheEnabled: false,
     livekitInferenceEnabled: false,
     maxCallDurationMinutes: 15,
@@ -156,7 +156,7 @@ export const DEFAULT_AGENT_CONFIG: AgentConfig = {
       fallback: { provider: "deepgram", model: "nova-2" },
       advanced: {
         highVadSensitivity: false,
-        languageCode: "en-IN",
+        languageCode: "hi-IN",
         transcribeMode: "transcribe",
         interruptionSensitivity: 0.5,
         endpointingMs: 300,

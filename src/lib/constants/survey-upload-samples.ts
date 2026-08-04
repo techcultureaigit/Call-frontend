@@ -10,13 +10,13 @@ export const SURVEY_QUESTIONS_SAMPLE_CSV = [
   '"Any additional feedback for us?",text,',
 ].join("\n");
 
-/** Sample CSV for Contact of Client upload */
+/** Sample CSV for Contact of Client — one column `contact` (numbers only) */
 export const CLIENT_CONTACTS_SAMPLE_CSV = [
-  "name,phone,email,company",
-  "Rahul Sharma,9876543210,rahul.sharma@example.com,Acme Corp",
-  "Priya Patel,9123456780,priya.patel@example.com,TechCulture AI",
-  "Amit Verma,9988776655,amit.verma@example.com,Bright Retail",
-  "Sneha Kapoor,9012345678,sneha.kapoor@example.com,Northwind Foods",
+  "contact",
+  "9876543210",
+  "9123456780",
+  "9988776655",
+  "9012345678",
 ].join("\n");
 
 export function downloadSurveyQuestionsSample() {

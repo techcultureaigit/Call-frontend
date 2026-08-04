@@ -5,7 +5,6 @@ import { Users } from "lucide-react";
 import { AppLoader } from "@/components/ui/app-loader";
 import {
   fetchClientContactsFromUrl,
-  getContactColumnKeys,
   sanitizeContactRows,
   type ClientContactRow,
 } from "@/lib/utils/client-contacts";
@@ -45,7 +44,6 @@ export function ClientContactsPreview({
   const [fromUrl, setFromUrl] = useState(false);
 
   const displayName = fileName?.trim() || "Uploaded file";
-  const columns = useMemo(() => getContactColumnKeys(rows), [rows]);
 
   const loadFromUrl = async (url: string) => {
     setLoading(true);
@@ -118,7 +116,7 @@ export function ClientContactsPreview({
           {loading
             ? `Fetching from file URL…`
             : rows.length > 0
-              ? `${rows.length} row(s) · ${columns.length} column(s) · ${displayName}${fromUrl ? " · from URL" : ""}`
+              ? `${rows.length} contact(s) · ${displayName}${fromUrl ? " · from URL" : ""}`
               : displayName}
         </p>
       </div>
@@ -131,17 +129,13 @@ export function ClientContactsPreview({
 
       {loading && rows.length === 0 ? (
         <AppLoader variant="compact" label="Fetching contacts" />
-      ) : rows.length > 0 && columns.length > 0 ? (
+      ) : rows.length > 0 ? (
         <div className="overflow-x-auto rounded-[6px] border border-border/50">
-          <table className="w-full min-w-[480px] text-left text-sm">
+          <table className="w-full text-left text-sm">
             <thead>
               <tr className="border-b border-border/50 bg-muted/40 text-[11px] uppercase tracking-wide text-muted-foreground">
                 <th className="px-3 py-2 font-semibold">#</th>
-                {columns.map((col) => (
-                  <th key={col} className="px-3 py-2 font-semibold">
-                    {col}
-                  </th>
-                ))}
+                <th className="px-3 py-2 font-semibold">contact</th>
               </tr>
             </thead>
             <tbody>
@@ -158,18 +152,15 @@ export function ClientContactsPreview({
                   >
                     {index + 1}
                   </td>
-                  {columns.map((col) => (
-                    <td
-                      key={col}
-                      className={cn(
-                        "max-w-[220px] truncate px-3",
-                        compact ? "py-1.5" : "py-2.5"
-                      )}
-                      title={row[col] || undefined}
-                    >
-                      {row[col] || "—"}
-                    </td>
-                  ))}
+                  <td
+                    className={cn(
+                      "max-w-55 truncate px-3 font-mono tabular-nums",
+                      compact ? "py-1.5" : "py-2.5"
+                    )}
+                    title={row.contact || undefined}
+                  >
+                    {row.contact || "—"}
+                  </td>
                 </tr>
               ))}
             </tbody>

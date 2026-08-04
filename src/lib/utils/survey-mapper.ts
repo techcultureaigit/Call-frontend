@@ -70,7 +70,7 @@ export function backendSurveyToAgent(s: BackendSurvey): Agent {
     persona: {
       ...DEFAULT_AGENT_CONFIG.persona,
       name: s.name ?? "",
-      language: persona.language ?? "en",
+      language: persona.language ?? "hi",
       maxCallDurationMinutes: persona.maxCallDurationMinutes ?? 15,
       audioCacheEnabled: persona.audioCacheEnabled ?? false,
       livekitInferenceEnabled: persona.livekitInferenceEnabled ?? false,
@@ -146,7 +146,7 @@ export function backendSurveyToAgent(s: BackendSurvey): Agent {
     id,
     name: s.name ?? "",
     scheduling_status: mapSchedulingStatus(s),
-    language: persona.language ?? "en",
+    language: persona.language ?? "hi",
     modelMode: "pipeline",
     phone: null,
     conversationCount: s.conversationCount ?? 0,
