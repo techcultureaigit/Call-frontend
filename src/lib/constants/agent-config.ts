@@ -95,8 +95,20 @@ export const LLM_PROVIDERS = [
 export const TTS_PROVIDERS = [
   { label: "Google", value: "google" },
   { label: "ElevenLabs", value: "elevenlabs" },
-  { label: "Azure", value: "azure" },
 ];
+
+/** Model options by TTS provider (same as Vozzo) */
+export const TTS_MODELS_BY_PROVIDER: Record<
+  string,
+  { label: string; value: string }[]
+> = {
+  google: [{ label: "Google", value: "Google" }],
+  elevenlabs: [
+    { label: "Eleven_turbo_v2_5", value: "Eleven_turbo_v2_5" },
+    { label: "Eleven_flash_v2_5", value: "Eleven_flash_v2_5" },
+    { label: "Eleven_multilingual_v2", value: "Eleven_multilingual_v2" },
+  ],
+};
 
 export const BACKGROUND_NOISE = [
   { label: "Off", value: "off" },
@@ -176,8 +188,13 @@ export const DEFAULT_AGENT_CONFIG: AgentConfig = {
     tts: {
       provider: "google",
       model: "Google",
-      voice: "Aakash",
-      fallback: { provider: "elevenlabs", model: "multilingual-v2", voice: "Rachel" },
+      /** Set from Identity → Speak Voice Explorer (language + provider) */
+      voice: "",
+      fallback: {
+        provider: "elevenlabs",
+        model: "Eleven_flash_v2_5",
+        voice: "",
+      },
       advanced: {
         speakingRate: 1,
         stability: 0.6,

@@ -52,4 +52,8 @@ export const apiEndpoints = {
   auth: {
     me: "/api/auth/me",
   },
+  voices: {
+    list: "/api/voices",
+    detail: (id: string) => `/api/voices/${id}`,
+  },
 } as const;

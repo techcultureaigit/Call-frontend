@@ -114,4 +114,10 @@ export const queryKeys = {
     filters: () => ["activityLogs", "filters"] as const,
     detail: (id: string) => ["activityLogs", "detail", id] as const,
   },
+  voices: {
+    all: ["voices"] as const,
+    list: (params?: Record<string, unknown>) =>
+      ["voices", "list", params] as const,
+    detail: (id: string) => ["voices", "detail", id] as const,
+  },
 } as const;

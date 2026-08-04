@@ -5,6 +5,8 @@ import { cn } from "@/lib/utils";
 export interface SelectOption {
   label: string;
   value: string;
+  /** Optional gender for voice pickers */
+  gender?: "masculine" | "feminine" | "neutral";
 }
 
 interface SelectProps extends React.SelectHTMLAttributes<HTMLSelectElement> {

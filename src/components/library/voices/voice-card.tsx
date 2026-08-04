@@ -1,19 +1,10 @@
 "use client";
 
-import { useEffect, useState, type ElementType, type HTMLAttributes } from "react";
+import { useEffect, useState, type HTMLAttributes } from "react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { motion } from "framer-motion";
-import {
-  GripVertical,
-  Mars,
-  NonBinary,
-  Pause,
-  Sparkles,
-  Star,
-  Venus,
-  Volume2,
-} from "lucide-react";
+import { GripVertical, Pause, Volume2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -26,13 +17,8 @@ import {
   toggleVoiceRingtone,
 } from "@/lib/voice-playback";
 import { cn } from "@/lib/utils";
-import type { VoiceGender, VoiceProfile } from "@/types/voice";
-
-const GENDER_ICONS: Record<VoiceGender, ElementType> = {
-  feminine: Venus,
-  masculine: Mars,
-  neutral: NonBinary,
-};
+import type { VoiceProfile } from "@/types/voice";
+import { GenderIcon } from "./gender-icons";
 
 interface VoiceCardProps {
   voice: VoiceProfile;
@@ -53,7 +39,6 @@ export function VoiceCard({
   dragHandleProps,
   isDragging = false,
 }: VoiceCardProps) {
-  const GenderIcon = GENDER_ICONS[voice.gender];
   const providerStyle = VOICE_PROVIDER_STYLES[voice.provider];
   const genderStyle = VOICE_GENDER_STYLES[voice.gender];
   const [playingId, setPlayingId] = useState<string | null>(getPlayingVoiceId);
@@ -76,9 +61,9 @@ export function VoiceCard({
         }
       }}
       className={cn(
-        "group flex cursor-pointer gap-3 rounded-[6px] border bg-card p-4 shadow-card transition-all hover:shadow-elevated",
+        "group relative flex h-full min-h-37 cursor-pointer gap-3 rounded-[6px] border bg-card p-4 shadow-card transition-[box-shadow,border-color,background-color] hover:shadow-elevated",
         selected
-          ? "border-primary/50 ring-2 ring-primary/15"
+          ? "border-primary/50 bg-primary/5 ring-2 ring-primary/15"
           : "border-border/40 hover:border-primary/20",
         isDragging && "border-primary/40 shadow-elevated ring-2 ring-primary/15"
       )}
@@ -99,7 +84,7 @@ export function VoiceCard({
         type="button"
         onClick={(e) => {
           e.stopPropagation();
-          toggleVoiceRingtone(voice.id);
+          toggleVoiceRingtone(voice.id, voice.previewUrl);
         }}
         className={cn(
           "flex size-11 shrink-0 items-center justify-center rounded-full border transition-colors",
@@ -116,20 +101,10 @@ export function VoiceCard({
         )}
       </button>
 
-      <div className="min-w-0 flex-1">
-        <div className="flex flex-wrap items-center gap-2">
-          <h3 className="text-base font-semibold tracking-tight text-foreground dark:text-foreground">
-            {voice.name}
-          </h3>
-          {voice.isCloned && (
-            <Star className="size-3.5 fill-amber-400 text-amber-400" />
-          )}
-          {selected && (
-            <Badge className="rounded-full px-2 py-0 text-[10px] font-semibold">
-              Selected
-            </Badge>
-          )}
-        </div>
+      <div className="flex min-w-0 flex-1 flex-col">
+        <h3 className="truncate text-base font-semibold tracking-tight text-foreground">
+          {voice.name}
+        </h3>
 
         <div className="mt-2 flex flex-wrap items-center gap-1.5">
           <Badge
@@ -145,7 +120,7 @@ export function VoiceCard({
               genderStyle.className
             )}
           >
-            <GenderIcon className="mr-1 inline size-3" />
+            <GenderIcon gender={voice.gender} className="mr-1 inline size-3" />
             {genderStyle.label}
           </Badge>
           <Badge
@@ -159,33 +134,26 @@ export function VoiceCard({
           </Badge>
         </div>
 
-        <p className="mt-2 line-clamp-2 text-xs leading-relaxed text-muted-foreground">
+        <p className="mt-2 line-clamp-2 flex-1 text-xs leading-relaxed text-muted-foreground">
           {voice.description}
         </p>
       </div>
 
-      {selected ? (
-        <Button
-          size="sm"
-          variant="outline"
-          className="h-8 shrink-0 self-end rounded-[6px] border-brand/40 bg-brand/10 px-4 text-brand hover:bg-brand/15 hover:text-brand"
-          disabled
-          onClick={(e) => e.stopPropagation()}
-        >
-          Selected
-        </Button>
-      ) : (
-        <Button
-          size="sm"
-          className="h-8 shrink-0 self-end rounded-[6px] px-4"
-          onClick={(e) => {
-            e.stopPropagation();
-            onUse(voice);
-          }}
-        >
-          Choose
-        </Button>
-      )}
+      <Button
+        size="sm"
+        variant={selected ? "outline" : "default"}
+        className={cn(
+          "h-8 w-22 shrink-0 self-end rounded-[6px]",
+          selected &&
+            "border-brand/40 bg-brand/10 text-brand hover:bg-brand/15 hover:text-brand"
+        )}
+        onClick={(e) => {
+          e.stopPropagation();
+          onUse(voice);
+        }}
+      >
+        {selected ? "Unselect" : "Choose"}
+      </Button>
     </motion.article>
   );
 }
@@ -221,7 +189,7 @@ export function SortableVoiceCard({
         transform: CSS.Transform.toString(transform),
         transition,
       }}
-      className={cn(isDragging && "z-20 opacity-90")}
+      className={cn("h-full", isDragging && "z-20 opacity-90")}
     >
       <VoiceCard
         voice={voice}
@@ -236,15 +204,3 @@ export function SortableVoiceCard({
   );
 }
 
-interface VoiceCloneBannerProps {
-  onClone: () => void;
-}
-
-export function VoiceCloneButton({ onClone }: VoiceCloneBannerProps) {
-  return (
-    <Button className="rounded-[6px]" onClick={onClone}>
-      <Sparkles className="size-4" />
-      Voice Clone
-    </Button>
-  );
-}

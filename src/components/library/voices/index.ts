@@ -1,5 +1,6 @@
 export { VoiceExplorerView } from "./voice-explorer-view";
-export { VoiceCard, SortableVoiceCard, VoiceCloneButton } from "./voice-card";
+export { VoiceCard, SortableVoiceCard } from "./voice-card";
 export { VoiceFiltersSidebar } from "./voice-filters-sidebar";
 export { VoicePreviewDialog } from "./voice-preview-dialog";
+export { VoicePickerDialog } from "./voice-picker-dialog";
 export { VoicesPagination } from "./voices-pagination";

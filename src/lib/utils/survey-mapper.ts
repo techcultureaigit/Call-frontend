@@ -85,7 +85,7 @@ export function backendSurveyToAgent(s: BackendSurvey): Agent {
       tts: {
         provider: persona.tts?.provider ?? "google",
         model: persona.tts?.model ?? "Google",
-        voice: persona.tts?.voice ?? "Aakash",
+        voice: persona.tts?.voice ?? "",
       },
     },
     prompts: {

@@ -1,9 +1,33 @@
-import type { VoiceGender, VoiceProvider } from "@/types/voice";
+import type { VoiceFilters, VoiceGender, VoiceProvider } from "@/types/voice";
 
 export const VOICES_PAGE_SIZE = 12;
 
-/** Dummy ringtone used for voice preview / listen actions */
+export const DEFAULT_VOICE_FILTERS: VoiceFilters = {
+  search: "",
+  voiceType: "all",
+  gender: "all",
+  language: "",
+};
+
+/** Dummy ringtone used when a voice has no previewUrl */
 export const DUMMY_VOICE_RINGTONE = "/audio/dummy-ringtone.wav";
+
+/** Matches backend sync languages (Indian locales) */
+export const VOICE_LANGUAGE_OPTIONS = [
+  { label: "All languages", value: "" },
+  { label: "Assamese", value: "as" },
+  { label: "Bengali", value: "bn" },
+  { label: "English (India)", value: "en" },
+  { label: "Gujarati", value: "gu" },
+  { label: "Hindi", value: "hi" },
+  { label: "Kannada", value: "kn" },
+  { label: "Malayalam", value: "ml" },
+  { label: "Marathi", value: "mr" },
+  { label: "Odia", value: "or" },
+  { label: "Punjabi", value: "pa" },
+  { label: "Tamil", value: "ta" },
+  { label: "Telugu", value: "te" },
+];
 
 export const VOICE_PROVIDER_STYLES: Record<
   VoiceProvider,

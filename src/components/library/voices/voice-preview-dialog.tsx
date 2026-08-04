@@ -20,13 +20,13 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import {
-  DUMMY_VOICE_RINGTONE,
   VOICE_GENDER_STYLES,
   VOICE_PROVIDER_STYLES,
 } from "@/lib/constants/voices";
 import {
   getPlayingVoiceId,
   playVoiceRingtone,
+  resolveVoicePreviewUrl,
   stopVoiceRingtone,
   subscribeVoicePlayback,
   toggleVoiceRingtone,
@@ -93,8 +93,10 @@ export function VoicePreviewDialog({
   };
 
   const handleListen = () => {
-    toggleVoiceRingtone(voice.id);
+    toggleVoiceRingtone(voice.id, voice.previewUrl);
   };
+
+  const audioSrc = resolveVoicePreviewUrl(voice.previewUrl);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -143,12 +145,12 @@ export function VoicePreviewDialog({
 
           <div className="rounded-[6px] border border-border/60 bg-muted/20 p-4">
             <p className="mb-3 text-xs font-medium uppercase tracking-wide text-muted-foreground">
-              Dummy ringtone
+              {voice.previewUrl ? "Voice preview" : "Dummy ringtone"}
             </p>
             <audio
-              key={voice.id}
+              key={`${voice.id}-${audioSrc}`}
               controls
-              src={DUMMY_VOICE_RINGTONE}
+              src={audioSrc}
               className="w-full"
               preload="metadata"
             >
@@ -200,22 +202,20 @@ export function VoicePreviewDialog({
             </Button>
           </div>
 
-          {onChoose && !selected && (
+          {onChoose && (
             <Button
               type="button"
+              variant={selected ? "outline" : "default"}
               className="w-full rounded-[6px]"
               onClick={() => {
                 onChoose(voice);
-                void playVoiceRingtone(voice.id);
+                if (!selected) {
+                  void playVoiceRingtone(voice.id, voice.previewUrl);
+                }
               }}
             >
-              Choose this voice
+              {selected ? "Unselect this voice" : "Choose this voice"}
             </Button>
-          )}
-          {selected && (
-            <p className="text-center text-xs font-medium text-primary">
-              This voice is currently selected
-            </p>
           )}
         </div>
       </DialogContent>

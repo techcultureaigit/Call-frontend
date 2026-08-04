@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { Check, ChevronDown, Search } from "lucide-react";
+import { GenderIcon } from "@/components/library/voices/gender-icons";
 import { cn } from "@/lib/utils";
 import { Input } from "./input";
 import {
@@ -20,6 +21,7 @@ interface SearchableSelectProps {
   searchPlaceholder?: string;
   disabled?: boolean;
   className?: string;
+  emptyMessage?: string;
   "aria-label"?: string;
 }
 
@@ -31,6 +33,7 @@ export function SearchableSelect({
   searchPlaceholder = "Search…",
   disabled = false,
   className,
+  emptyMessage = "No matches found",
   "aria-label": ariaLabel,
 }: SearchableSelectProps) {
   const [open, setOpen] = useState(false);
@@ -66,8 +69,11 @@ export function SearchableSelect({
             className
           )}
         >
-          <span className="truncate font-medium text-foreground">
-            {selected?.label ?? placeholder}
+          <span className="flex min-w-0 items-center gap-2 truncate font-medium text-foreground">
+            {selected?.gender ? (
+              <GenderIcon gender={selected.gender} className="size-3.5 shrink-0" />
+            ) : null}
+            <span className="truncate">{selected?.label ?? placeholder}</span>
           </span>
           <ChevronDown
             className={cn(
@@ -99,7 +105,7 @@ export function SearchableSelect({
         <div className="max-h-56 overflow-y-auto p-1">
           {filtered.length === 0 ? (
             <p className="px-2 py-2 text-sm text-muted-foreground">
-              No matches found
+              {emptyMessage}
             </p>
           ) : (
             filtered.map((opt) => {
@@ -113,7 +119,12 @@ export function SearchableSelect({
                     active && "bg-accent font-semibold"
                   )}
                 >
-                  <span className="truncate">{opt.label}</span>
+                  <span className="flex min-w-0 items-center gap-2 truncate">
+                    {opt.gender ? (
+                      <GenderIcon gender={opt.gender} className="size-3.5 shrink-0" />
+                    ) : null}
+                    <span className="truncate">{opt.label}</span>
+                  </span>
                   {active ? <Check className="size-3.5 shrink-0" /> : null}
                 </DropdownMenuItem>
               );

@@ -36,3 +36,4 @@ export {
   useActivityLogFilterOptions,
   useActivityLogDetail,
 } from "./use-activity-logs";
+export { useVoices, useVoiceOptions, useVoiceDetail } from "./use-voices";

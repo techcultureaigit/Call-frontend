@@ -44,3 +44,6 @@ export type { ActivityLogsListParams } from "./activity-logs";
 export { dashboardApi } from "./dashboard";
 export { uploadApi } from "./upload";
 export type { CloudinaryUploadResult } from "./upload";
+
+export { voicesApi } from "./voices";
+export type { VoicesListParams } from "./voices";
