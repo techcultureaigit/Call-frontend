@@ -58,18 +58,8 @@ export const MOCK_AGENTS: Agent[] = [
         contactFileUrl: "https://example.com/contacts/grievance-helpdesk.csv",
         contactFileName: "grievance-helpdesk.csv",
         contacts: [
-          {
-            name: "Rahul Sharma",
-            phone: "9876543210",
-            email: "rahul.sharma@example.com",
-            company: "Acme Corp",
-          },
-          {
-            name: "Priya Patel",
-            phone: "9123456780",
-            email: "priya.patel@example.com",
-            company: "TechCulture AI",
-          },
+          { contact: "9876543210" },
+          { contact: "9123456780" },
         ],
       },
     },
@@ -131,18 +121,8 @@ export const MOCK_AGENTS: Agent[] = [
         contactFileUrl: "https://example.com/contacts/candidate-screening.csv",
         contactFileName: "candidate-screening.csv",
         contacts: [
-          {
-            name: "Amit Verma",
-            phone: "9988776655",
-            email: "amit.verma@example.com",
-            company: "Bright Retail",
-          },
-          {
-            name: "Sneha Kapoor",
-            phone: "9012345678",
-            email: "sneha.kapoor@example.com",
-            company: "Northwind Foods",
-          },
+          { contact: "9988776655" },
+          { contact: "9012345678" },
         ],
       },
     },
