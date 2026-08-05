@@ -5,7 +5,7 @@ import { apiConfig } from "@/config/api";
 import { NextResponse } from "next/server";
 
 /** Forward browser Bearer token (and cookies) to Express */
-export function backendAuthHeaders(request: Request): HeadersInit {
+export function backendAuthHeaders(request: Request): Record<string, string> {
   const headers: Record<string, string> = {
     Accept: "application/json",
   };
@@ -21,6 +21,31 @@ export function backendAuthHeaders(request: Request): HeadersInit {
   }
 
   return headers;
+}
+
+function mergeHeaders(
+  base: Record<string, string>,
+  extra?: HeadersInit
+): Record<string, string> {
+  if (!extra) return { ...base };
+
+  const merged: Record<string, string> = { ...base };
+
+  if (extra instanceof Headers) {
+    extra.forEach((value, key) => {
+      merged[key] = value;
+    });
+    return merged;
+  }
+
+  if (Array.isArray(extra)) {
+    for (const [key, value] of extra) {
+      merged[key] = value;
+    }
+    return merged;
+  }
+
+  return { ...merged, ...extra };
 }
 
 /** Build Express URL: `${NEXT_PUBLIC_API_URL}/{resource}{path}?query` */
@@ -74,10 +99,7 @@ export async function proxyToBackend(
   const url = backendUrl(resource, path, searchParams);
 
   try {
-    const headers: Record<string, string> = {
-      ...backendAuthHeaders(request),
-      ...(init.headers as Record<string, string> | undefined),
-    };
+    const headers = mergeHeaders(backendAuthHeaders(request), init.headers);
 
     const res = await fetch(url, {
       ...init,
