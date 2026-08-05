@@ -114,22 +114,22 @@ export function RolesListView() {
           roleCount={roles.length}
         />
 
-        {isLoading && roles.length === 0 ? (
+        {isLoading ? (
           <AppLoader
             variant="section"
             label="Loading roles"
             hint="Fetching latest data"
-            className="min-h-[min(60vh,560px)]"
           />
-        ) : (
+        ) : null}
+        {roles.length > 0 || !isLoading ? (
           <RolesTable
             roles={roles}
             onOpen={openRole}
             onEdit={openRole}
             onDelete={openDelete}
-            isLoading={isLoading}
+            isLoading={false}
           />
-        )}
+        ) : null}
       </motion.div>
 
       <DeleteRoleDialog

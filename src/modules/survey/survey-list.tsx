@@ -682,14 +682,14 @@ export function SurveyListView() {
               document.querySelector("main")?.scrollTo({ top: 0, behavior: "smooth" });
             }}
           >
-          {showLoader && surveys.length === 0 ? (
+          {showLoader ? (
             <AppLoader
               variant="section"
               label="Loading surveys"
               hint="Fetching latest data"
-              className="min-h-[min(60vh,560px)]"
             />
-          ) : surveys.length === 0 ? (
+          ) : null}
+          {!showLoader && surveys.length === 0 ? (
             <div className="flex flex-col items-center justify-center rounded-[6px] border border-dashed border-border/60 bg-card/60 px-6 py-20 text-center shadow-sm backdrop-blur-sm">
               <div className="mb-4 flex size-16 items-center justify-center rounded-[6px] bg-primary/10">
                 <Bot className="size-8 text-primary" />
@@ -726,14 +726,7 @@ export function SurveyListView() {
                 </p>
               )}
             </div>
-          ) : (
-            <div
-              className={
-                isRefreshing
-                  ? "opacity-70 transition-opacity"
-                  : undefined
-              }
-            >
+          ) : surveys.length > 0 ? (
               <SurveysTable
                 surveys={surveys}
                 selectedIds={selectedIds}
@@ -743,8 +736,7 @@ export function SurveyListView() {
                 onDelete={openDelete}
                 onSchedule={openSchedule}
               />
-            </div>
-          )}
+          ) : null}
           </PaginatedListShell>
         </div>
       </PageContainer>

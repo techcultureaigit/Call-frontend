@@ -21,9 +21,8 @@ import { Bot } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, type ReactNode } from "react";
 
-/** Local page loader — stops when survey fetch finishes (no forever global spin). */
+/** Viewport-centered popup while fetching by id (same as list / delete / save). */
 export function SurveyFetchLoader({
-  className,
   label = "Loading",
 }: {
   className?: string;
@@ -34,7 +33,6 @@ export function SurveyFetchLoader({
       variant="page"
       label={label}
       hint="Fetching survey details"
-      className={className ?? "min-h-40"}
     />
   );
 }
@@ -95,11 +93,7 @@ function SurveyByIdShell({
   const survey = useSurveyById(id);
 
   if (survey === undefined) {
-    return (
-      <PageContainer size="full" className="pt-6">
-        <SurveyFetchLoader className="min-h-[40vh]" label="Loading survey" />
-      </PageContainer>
-    );
+    return <SurveyFetchLoader label="Loading survey" />;
   }
 
   if (!survey) {

@@ -19,9 +19,8 @@ import { UserRound } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, type ReactNode } from "react";
 
-/** Local page loader — stops when user fetch finishes (no forever global spin). */
+/** Viewport-centered popup while fetching by id (same as list / delete / save). */
 export function UsersFetchLoader({
-  className,
   label = "Loading",
 }: {
   className?: string;
@@ -32,7 +31,6 @@ export function UsersFetchLoader({
       variant="page"
       label={label}
       hint="Fetching user details"
-      className={className ?? "min-h-40"}
     />
   );
 }
@@ -93,11 +91,7 @@ function UserByIdShell({
   const user = useUserById(id);
 
   if (user === undefined) {
-    return (
-      <PageContainer size="full" className="pt-6">
-        <UsersFetchLoader className="min-h-[40vh]" label="Loading user" />
-      </PageContainer>
-    );
+    return <UsersFetchLoader label="Loading user" />;
   }
 
   if (!user) {

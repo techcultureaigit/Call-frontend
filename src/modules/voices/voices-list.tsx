@@ -17,6 +17,7 @@ import { motion } from "framer-motion";
 import { HelpCircle, Volume2 } from "lucide-react";
 import { toast } from "sonner";
 import { PageContainer } from "@/components/layout";
+import { AppLoader } from "@/components/shared/app-loader";
 import { Button } from "@/components/ui/button";
 import { useDebounce, usePageMeta } from "@/hooks";
 import type { PaginatedMeta } from "@/types";
@@ -147,7 +148,7 @@ export function VoicesListView() {
 
   useEffect(() => {
     setPage(1);
-  }, [debouncedSearch, filters.gender, filters.language]);
+  }, [debouncedSearch, filters.gender, filters.language, filters.source]);
 
   useEffect(() => {
     if (previewFromUrl) setPreviewVoiceId(previewFromUrl);
@@ -233,7 +234,7 @@ export function VoicesListView() {
   const previewVoice =
     previewIndex >= 0 ? voices[previewIndex] : previewVoiceFallback;
 
-  const showSkeleton = isLoading && voices.length === 0;
+  const showLoader = isLoading || isRefreshing;
   const isError = Boolean(error);
 
   return (
@@ -291,21 +292,24 @@ export function VoicesListView() {
                 </Button>
               </div>
             ) : (
-              <div
-                className={
-                  isRefreshing && !showSkeleton
-                    ? "opacity-70 transition-opacity"
-                    : ""
-                }
-              >
-                <VoicesTable
-                  voices={voices}
-                  selectedVoiceId={selectedVoiceId}
-                  onOpen={handleOpenVoice}
-                  onUse={handleUse}
-                  isLoading={showSkeleton}
-                />
-              </div>
+              <>
+                {isLoading || isRefreshing ? (
+                  <AppLoader
+                    variant="section"
+                    label="Loading voices"
+                    hint="Fetching voice catalog"
+                  />
+                ) : null}
+                {voices.length > 0 || !showLoader ? (
+                  <VoicesTable
+                    voices={voices}
+                    selectedVoiceId={selectedVoiceId}
+                    onOpen={handleOpenVoice}
+                    onUse={handleUse}
+                    isLoading={false}
+                  />
+                ) : null}
+              </>
             )}
 
             <VoicePreviewDialog
@@ -330,7 +334,7 @@ export function VoicesListView() {
               onChoose={handleUse}
             />
 
-            {!showSkeleton && !isError && meta.total > 0 && (
+            {!showLoader && !isError && meta.total > 0 && (
               <VoicesPagination meta={meta} onPageChange={setPage} />
             )}
           </div>

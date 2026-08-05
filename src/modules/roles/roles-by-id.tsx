@@ -19,9 +19,8 @@ import { Shield } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, type ReactNode } from "react";
 
-/** Local page loader — stops when role fetch finishes (no forever global spin). */
+/** Viewport-centered popup while fetching by id (same as list / delete / save). */
 export function RolesFetchLoader({
-  className,
   label = "Loading",
 }: {
   className?: string;
@@ -32,7 +31,6 @@ export function RolesFetchLoader({
       variant="page"
       label={label}
       hint="Fetching role details"
-      className={className ?? "min-h-40"}
     />
   );
 }
@@ -93,11 +91,7 @@ function RoleByIdShell({
   const role = useRoleById(id);
 
   if (role === undefined) {
-    return (
-      <PageContainer size="full" className="pt-6">
-        <RolesFetchLoader className="min-h-[40vh]" label="Loading role" />
-      </PageContainer>
-    );
+    return <RolesFetchLoader label="Loading role" />;
   }
 
   if (!role) {

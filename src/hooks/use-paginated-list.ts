@@ -21,12 +21,12 @@ export interface UsePaginatedListOptions<T> {
     limit: number;
     search: string;
   }) => Promise<{ data: T[]; meta: PaginatedMeta }>;
-  /** Reset to page 1 when these change (e.g. filters) */
+  /** Reset to page 1 + refetch when these change (e.g. filters) */
   resetPageWhen?: unknown[];
   onError?: (error: unknown) => void;
 }
 
-/** Shared search + page + load state for list pages (surveys, results, users, …). */
+/** Shared search + page + load state for list pages (surveys, users, …). */
 export function usePaginatedList<T>({
   pageSize = 10,
   debounceMs = 300,
@@ -49,6 +49,9 @@ export function usePaginatedList<T>({
   const requestIdRef = useRef(0);
   const fetchPageRef = useRef(fetchPage);
   const onErrorRef = useRef(onError);
+
+  // Stable string so filter changes always recreate load() even when page stays 1
+  const filtersKey = JSON.stringify(resetPageWhen);
 
   useEffect(() => {
     fetchPageRef.current = fetchPage;
@@ -86,12 +89,12 @@ export function usePaginatedList<T>({
         setIsRefreshing(false);
       }
     }
-  }, [page, pageSize, debouncedSearch]);
+  }, [page, pageSize, debouncedSearch, filtersKey]);
 
+  // Search / filters → page 1 (no-op if already on 1, avoids extra render)
   useEffect(() => {
-    setPage(1);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [debouncedSearch, ...resetPageWhen]);
+    setPage((p) => (p === 1 ? p : 1));
+  }, [debouncedSearch, filtersKey]);
 
   useEffect(() => {
     void load();

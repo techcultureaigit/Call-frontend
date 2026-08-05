@@ -182,18 +182,18 @@ export function UsersListView() {
           totalCount={meta.total}
         />
 
-        {showLoader && users.length === 0 ? (
+        {showLoader ? (
           <AppLoader
             variant="section"
             label="Loading users"
             hint="Fetching latest data"
-            className="min-h-[min(60vh,560px)]"
           />
-        ) : (
+        ) : null}
+        {users.length > 0 || !showLoader ? (
           <>
             <UsersTable
               users={users}
-              isLoading={showLoader}
+              isLoading={false}
               sorting={sorting}
               onSortingChange={setSorting}
               onEdit={openEdit}
@@ -206,7 +206,7 @@ export function UsersListView() {
               <UsersPagination meta={meta} onPageChange={setPage} />
             )}
           </>
-        )}
+        ) : null}
       </motion.div>
 
       <DeleteUserDialog

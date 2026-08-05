@@ -1,5 +1,7 @@
 "use client";
 
+import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { cn } from "@/lib/utils";
 import {
   selectIsGlobalLoading,
@@ -17,7 +19,10 @@ export type AppLoaderVariant =
 interface AppLoaderProps {
   label?: string;
   hint?: string;
-  /** page/section/compact = card | inline = spinner | overlay = chip | global = fullscreen */
+  /**
+   * page / section / global → same fixed center popup (portal to body).
+   * compact → local card | inline / overlay → small indicators
+   */
   variant?: AppLoaderVariant;
   className?: string;
 }
@@ -74,15 +79,13 @@ export function AppLoaderSpinner({
 function LoaderCard({
   label,
   hint,
-  spinnerSize = "md",
 }: {
   label: string;
   hint?: string;
-  spinnerSize?: "md" | "lg";
 }) {
   return (
     <div className="flex w-full max-w-56 flex-col items-center gap-3 rounded-[12px] border border-border/60 bg-card/95 px-5 py-4 shadow-[0_16px_40px_-20px_rgba(0,0,0,0.3)] backdrop-blur-xl">
-      <AppLoaderSpinner size={spinnerSize} />
+      <AppLoaderSpinner size="md" />
       <div className="space-y-0.5 text-center">
         <p className="text-sm font-semibold tracking-tight text-foreground">
           {label}
@@ -104,9 +107,46 @@ function LoaderCard({
 }
 
 /**
- * One loader design for the whole app (card + rings).
- * When the global overlay is already open, page/section/compact render nothing
- * so the card never appears twice.
+ * ONE fullscreen center popup for the whole app.
+ * Portaled to document.body so parent transform/overflow never shifts it.
+ */
+function CenteredPopupLoader({
+  label,
+  hint,
+}: {
+  label: string;
+  hint?: string;
+}) {
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) return null;
+
+  return createPortal(
+    <div
+      role="status"
+      aria-live="polite"
+      aria-label={label}
+      className="fixed inset-0 z-[200] flex items-center justify-center bg-background/55 p-6 backdrop-blur-[6px]"
+    >
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,color-mix(in_oklch,var(--brand)_14%,transparent)_0%,transparent_68%)]"
+      />
+      <div className="relative z-10">
+        <LoaderCard label={label} hint={hint} />
+      </div>
+    </div>,
+    document.body
+  );
+}
+
+/**
+ * One loader design for the whole app.
+ * Change this file once → page / section / global all update.
  */
 export function AppLoader({
   label = "Loading",
@@ -145,88 +185,36 @@ export function AppLoader({
     );
   }
 
-  if (variant === "global") {
+  // compact: local in-panel card (tabs / nested panels)
+  if (variant === "compact") {
+    if (globalActive) {
+      return <div aria-hidden className={cn("min-h-40", className)} />;
+    }
     return (
       <div
         role="status"
         aria-live="polite"
         aria-label={label}
-        style={{ zIndex: 200 }}
         className={cn(
-          "fixed inset-0 flex items-center justify-center bg-background/55 p-6 backdrop-blur-[6px]",
+          "relative flex min-h-40 items-center justify-center overflow-hidden rounded-[14px]",
           className
         )}
       >
         <div
           aria-hidden
-          className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,color-mix(in_oklch,var(--brand)_14%,transparent)_0%,transparent_68%)]"
+          className="absolute inset-0 bg-background/50 backdrop-blur-[6px]"
         />
-        <div className="relative z-10">
-          <LoaderCard label={label} hint={hint} spinnerSize="md" />
+        <div className="relative z-10 flex items-center justify-center p-4">
+          <LoaderCard label={label} hint={hint} />
         </div>
       </div>
     );
   }
 
-  // Global overlay already showing — skip duplicate page/section/compact card
-  if (globalActive) {
-    const tall = variant === "page";
-    return (
-      <div
-        aria-hidden
-        className={cn(tall ? "min-h-50" : "min-h-40", className)}
-      />
-    );
+  // page | section | global → same body-portaled center popup
+  if (variant !== "global" && globalActive) {
+    return null;
   }
 
-  // page | section | compact → same card design (card centered in full area)
-  const tall = variant === "page";
-
-  return (
-    <div
-      role="status"
-      aria-live="polite"
-      aria-label={label}
-      className={cn(
-        "relative flex items-center justify-center overflow-hidden rounded-[14px]",
-        tall ? "min-h-50" : "min-h-40",
-        className
-      )}
-    >
-      <div
-        aria-hidden
-        className="absolute inset-0 grid gap-5 p-1 sm:grid-cols-2 xl:grid-cols-3"
-      >
-        {Array.from({ length: 6 }).map((_, i) => (
-          <div
-            key={i}
-            className="rounded-[10px] border border-border/30 bg-card/40 p-4"
-          >
-            <div className="mb-4 h-10 w-2/3 animate-pulse rounded-md bg-muted/60" />
-            <div className="mb-2 h-3 w-full animate-pulse rounded bg-muted/40" />
-            <div className="mb-6 h-3 w-4/5 animate-pulse rounded bg-muted/40" />
-            <div className="grid grid-cols-4 gap-2">
-              <div className="h-8 animate-pulse rounded bg-muted/35" />
-              <div className="h-8 animate-pulse rounded bg-muted/35" />
-              <div className="h-8 animate-pulse rounded bg-muted/35" />
-              <div className="h-8 animate-pulse rounded bg-muted/35" />
-            </div>
-          </div>
-        ))}
-      </div>
-
-      <div
-        aria-hidden
-        className="absolute inset-0 bg-background/50 backdrop-blur-[6px]"
-      />
-      <div
-        aria-hidden
-        className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,color-mix(in_oklch,var(--brand)_14%,transparent)_0%,transparent_68%)]"
-      />
-
-      <div className="relative z-10 flex items-center justify-center p-4">
-        <LoaderCard label={label} hint={hint} spinnerSize="md" />
-      </div>
-    </div>
-  );
+  return <CenteredPopupLoader label={label} hint={hint} />;
 }
