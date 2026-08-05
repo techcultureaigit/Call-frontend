@@ -34,6 +34,7 @@ import {
   apiGet,
   apiPost,
   apiUpload,
+  resolveApiUrl,
 } from "@/api/http";
 
 import {
@@ -91,6 +92,7 @@ export async function listSurveys(
     search: params.search || undefined,
     status: params.status,
     language: params.language || undefined,
+    includeQuestions: params.includeQuestions ? true : undefined,
   };
   const qs = createQueryString(query as Record<string, string | number | boolean | undefined | null>);
   return surveyCall("listSurveys", "GET", "/api/surveys", async () => {
@@ -232,7 +234,11 @@ export async function exportSurveyResults(
       .getState()
       .start({ label: "Exporting", hint: "Preparing your file" });
     try {
-      const response = await fetch(url, { headers, cache: "no-store" });
+      const response = await fetch(resolveApiUrl(url), {
+        headers,
+        cache: "no-store",
+        credentials: "include",
+      });
       if (!response.ok) {
         let error: { message?: string; errors?: unknown } = {};
         try {

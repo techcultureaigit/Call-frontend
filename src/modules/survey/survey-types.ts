@@ -57,6 +57,8 @@ export interface SurveysListParams {
   search?: string;
   status?: string;
   language?: string;
+  /** Include surveyQuestions.questions (needed for export; heavier payload) */
+  includeQuestions?: boolean;
 }
 
 export interface SurveyResultsListParams {

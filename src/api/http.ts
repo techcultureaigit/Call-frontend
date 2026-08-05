@@ -1,3 +1,4 @@
+import { apiConfig } from "@/config/api";
 import { createQueryString } from "@/lib/utils";
 import { getAccessTokenFromCookie } from "@/lib/auth/session";
 import {
@@ -9,6 +10,16 @@ import type { ApiResponse } from "@/types/api";
 
 type QueryValue = string | number | boolean | undefined | null;
 type QueryParams = Record<string, QueryValue>;
+
+/** Express resources mounted under NEXT_PUBLIC_API_URL (port 8000). */
+const BACKEND_RESOURCES = new Set([
+  "auth",
+  "roles",
+  "users",
+  "surveys",
+  "voices",
+  "audio",
+]);
 
 export class ApiError extends Error {
   status: number;
@@ -24,6 +35,25 @@ export class ApiError extends Error {
 
 function getClientAccessToken(): string | null {
   return getAccessTokenFromCookie();
+}
+
+/**
+ * Map browser paths to the real backend.
+ * `/api/surveys/...` → `http://localhost:8000/api/v1/surveys/...`
+ * Mock BFF-only routes (dashboard, notifications, …) stay on :3000.
+ */
+export function resolveApiUrl(path: string): string {
+  if (/^https?:\/\//i.test(path)) return path;
+
+  const match = /^\/api\/([^/?#]+)(.*)$/.exec(path);
+  if (!match) return path;
+
+  const resource = match[1];
+  if (!BACKEND_RESOURCES.has(resource)) return path;
+
+  const rest = match[2] ?? "";
+  const base = apiConfig.baseUrl.replace(/\/$/, "");
+  return `${base}/${resource}${rest}`;
 }
 
 async function parseErrorBody(response: Response): Promise<{
@@ -48,11 +78,12 @@ async function parseJson<T>(response: Response): Promise<T> {
   return response.json() as Promise<T>;
 }
 
-/** Shared fetch for Next.js `/api/*` BFF routes — attaches Bearer token when present */
+/** Shared fetch — real CRM APIs hit Express (:8000); mock BFF stays on Next (:3000) */
 export async function apiRequest<T>(
   path: string,
   init: RequestInit = {}
 ): Promise<T> {
+  const url = resolveApiUrl(path);
   const headers = new Headers(init.headers);
   if (!headers.has("Accept")) headers.set("Accept", "application/json");
 
@@ -69,10 +100,11 @@ export async function apiRequest<T>(
   }
 
   try {
-    const response = await fetch(path, {
+    const response = await fetch(url, {
       ...init,
       headers,
       cache: "no-store",
+      credentials: "include",
     });
     return await parseJson<T>(response);
   } finally {
@@ -96,6 +128,14 @@ export function apiPost<T>(path: string, body?: unknown): Promise<T> {
 export function apiPatch<T>(path: string, body?: unknown): Promise<T> {
   return apiRequest<T>(path, {
     method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: body === undefined ? undefined : JSON.stringify(body),
+  });
+}
+
+export function apiPut<T>(path: string, body?: unknown): Promise<T> {
+  return apiRequest<T>(path, {
+    method: "PUT",
     headers: { "Content-Type": "application/json" },
     body: body === undefined ? undefined : JSON.stringify(body),
   });

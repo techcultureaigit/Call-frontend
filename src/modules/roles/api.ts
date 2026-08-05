@@ -13,8 +13,8 @@
 import {
   apiDelete,
   apiGet,
-  apiPatch,
   apiPost,
+  apiPut,
   unwrapData,
 } from "@/api/http";
 import { createModuleApiCall, dedupeInflight } from "@/lib/api/module-helpers";
@@ -75,9 +75,9 @@ export async function createRole(payload: CreateRolePayload): Promise<Role> {
   }, body);
 }
 
-/* ========== UPDATE — PATCH /api/roles/:id ========== */
+/* ========== UPDATE — PUT /api/roles/:id ========== */
 
-/** updateRole() → PATCH /api/roles/:id */
+/** updateRole() → PUT /api/v1/roles/:id (Express uses PUT) */
 export async function updateRole(
   id: string,
   payload: UpdateRolePayload
@@ -87,8 +87,8 @@ export async function updateRole(
   if (payload.permissions) {
     body.permissions = sanitizeRolePermissions(payload.permissions);
   }
-  return rolesCall("updateRole", "PATCH", url, async () => {
-    return await unwrapData(apiPatch<ApiResponse<Role>>(url, body));
+  return rolesCall("updateRole", "PUT", url, async () => {
+    return await unwrapData(apiPut<ApiResponse<Role>>(url, body));
   }, { id, body });
 }
 

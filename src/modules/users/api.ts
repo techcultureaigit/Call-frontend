@@ -6,8 +6,8 @@
  * listUsers()         GET    /api/users
  * getUser()           GET    /api/users/:id
  * createUser()        POST   /api/users
- * updateUser()        PATCH  /api/users/:id
- * updateUserStatus()  PATCH  /api/users/:id
+ * updateUser()        PUT    /api/users/:id
+ * updateUserStatus()  PATCH  /api/users/:id/status
  * deleteUser()        DELETE /api/users/:id
  */
 import {
@@ -15,6 +15,7 @@ import {
   apiGet,
   apiPatch,
   apiPost,
+  apiPut,
   unwrapData,
 } from "@/api/http";
 import {
@@ -199,34 +200,35 @@ export async function createUser(payload: CreateUserPayload): Promise<User> {
   }, body);
 }
 
-/* ========== UPDATE — PATCH /api/users/:id ========== */
+/* ========== UPDATE — PUT /api/users/:id ========== */
 
-/** updateUser() → PATCH /api/users/:id */
+/** updateUser() → PUT /api/v1/users/:id (Express uses PUT) */
 export async function updateUser(
   id: string,
   payload: UpdateUserPayload
 ): Promise<User> {
   const url = `/api/users/${id}`;
   const body = toBackendUpdateBody(payload);
-  return usersCall("updateUser", "PATCH", url, async () => {
+  return usersCall("updateUser", "PUT", url, async () => {
     const raw = await unwrapData(
-      apiPatch<ApiResponse<BackendUser>>(url, body)
+      apiPut<ApiResponse<BackendUser>>(url, body)
     );
     return mapBackendUser(raw);
   }, { id, body });
 }
 
-/* ========== STATUS — PATCH /api/users/:id ========== */
+/* ========== STATUS — PATCH /api/users/:id/status ========== */
 
-/** updateUserStatus() → PATCH /api/users/:id */
+/** updateUserStatus() → PATCH /api/v1/users/:id/status */
 export async function updateUserStatus(
   id: string,
   status: UserStatus
 ): Promise<User> {
-  const url = `/api/users/${id}`;
+  const url = `/api/users/${id}/status`;
+  const body = { isActive: statusToIsActive(status) };
   return usersCall("updateUserStatus", "PATCH", url, async () => {
     const raw = await unwrapData(
-      apiPatch<ApiResponse<BackendUser>>(url, { status })
+      apiPatch<ApiResponse<BackendUser>>(url, body)
     );
     return mapBackendUser(raw);
   }, { id, status });

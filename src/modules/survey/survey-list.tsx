@@ -423,12 +423,13 @@ export function SurveyListView() {
   const handleExport = async (format: SurveysExportFormat) => {
     setIsExporting(true);
     try {
-      // API: listSurveys() → GET /api/surveys  (fetch all rows for export)
+      // API: listSurveys() → GET /api/surveys?includeQuestions=true  (full questions for export)
       const result = await listSurveys({
         page: 1,
         limit: Math.min(Math.max(meta.total, PAGE_SIZE), EXPORT_MAX_ROWS),
         search: debouncedSearch.trim() || undefined,
         language: language !== "all" ? language : undefined,
+        includeQuestions: true,
       });
       if (result.data.length === 0) {
         toast.error("No surveys to export");
