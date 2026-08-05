@@ -14,7 +14,7 @@ import {
   inferLoaderMessage,
   shouldSkipGlobalLoader,
   useApiLoadingStore,
-} from "@/stores/api-loading.store";
+} from "@/components/shared/api-loading.store";
 import type { ApiErrorBody } from "@/types";
 
 export class ApiClientError extends Error {
@@ -72,7 +72,7 @@ function createAxiosInstance(options: ApiClientOptions = {}): AxiosInstance {
     }
 
     const url = `${config.baseURL ?? ""}${config.url ?? ""}`;
-    const skip = shouldSkipGlobalLoader(url);
+    const skip = shouldSkipGlobalLoader(url, config.method ?? "GET");
     (config as InternalAxiosRequestConfig & { _trackLoader?: boolean })._trackLoader =
       !skip;
     if (!skip) {

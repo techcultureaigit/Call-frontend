@@ -1,19 +1,18 @@
 export {
-  forgotPasswordSchema,
   loginSchema,
-  registerSchema,
+  forgotPasswordSchema,
   resetPasswordSchema,
-  type ForgotPasswordFormValues,
   type LoginFormValues,
-  type RegisterFormValues,
+  type ForgotPasswordFormValues,
   type ResetPasswordFormValues,
 } from "./auth";
+
 export {
   userFormSchema,
-  USER_STATUS_OPTIONS,
   type UserFormValues,
-} from "./user";
+} from "@/modules/users/users-validator";
+
 export {
   roleFormSchema,
   type RoleFormValues,
-} from "./role";
+} from "@/modules/roles/roles-validator";

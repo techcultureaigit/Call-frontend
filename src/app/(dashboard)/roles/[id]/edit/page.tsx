@@ -1,4 +1,4 @@
-import { RoleFormView } from "@/components/roles/role-form-view";
+import { RolesCreateEditLoader } from "@/modules/roles/roles-by-id";
 
 export default async function EditRolePage({
   params,
@@ -6,5 +6,5 @@ export default async function EditRolePage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  return <RoleFormView roleId={id} />;
+  return <RolesCreateEditLoader id={id} />;
 }

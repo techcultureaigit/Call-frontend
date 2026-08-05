@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import {
   generateReportsData,
   getReportCampaigns,
-} from "@/lib/data/reports-repository";
+} from "@/modules/reports/reports-repository";
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);

@@ -17,11 +17,11 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   useNotificationFeed,
   useNotificationMutations,
-} from "@/hooks/use-notifications";
+} from "@/modules/notifications/use-notifications";
 import { formatRelativeTime } from "@/lib/utils";
 import { cn } from "@/lib/utils";
 import type { NotificationType } from "@/types/notification";
-import { notificationTypeDot } from "@/components/notifications/notification-type-badge";
+import { notificationTypeDot } from "@/modules/notifications/notification-type-badge";
 
 export function NotificationBell() {
   const { data: notifications = [], isFetching } = useNotificationFeed();

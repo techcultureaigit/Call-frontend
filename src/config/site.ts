@@ -4,7 +4,8 @@ export const siteConfig = {
   tagline: "Voice Survey CRM ADMIN",
   description:
     "VoxCRM — voice survey and calling CRM administration platform",
-  url: process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000",
+  /** Absolute base URL for metadata/OG tags only — update for production deploy */
+  url: "http://localhost:3000",
   ogImage: "/og.png",
   links: {
     docs: "/docs",

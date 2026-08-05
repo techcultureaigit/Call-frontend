@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getRecentNotifications } from "@/lib/data/notifications-repository";
+import { getRecentNotifications } from "@/modules/notifications/notifications-repository";
 import type { ApiResponse } from "@/types/api";
 import type { DashboardData } from "@/types/dashboard";
 

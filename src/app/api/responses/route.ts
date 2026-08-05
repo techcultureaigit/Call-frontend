@@ -4,7 +4,7 @@ import {
   getFilterOptions,
   getResponseStats,
   queryResponses,
-} from "@/lib/data/responses-repository";
+} from "@/modules/responses/responses-repository";
 import type { ResponseStatus } from "@/types/response";
 
 export async function GET(request: Request) {

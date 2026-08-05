@@ -1,4 +1,4 @@
-import { SurveyResultDetailView } from "@/components/survey/survey-result-detail-view";
+import { SurveyResultDetailView } from "@/modules/survey";
 
 interface PageProps {
   params: Promise<{ id: string; resultId: string }>;

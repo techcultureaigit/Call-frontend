@@ -4,7 +4,7 @@ import {
   inferLoaderMessage,
   shouldSkipGlobalLoader,
   useApiLoadingStore,
-} from "@/stores/api-loading.store";
+} from "@/components/shared/api-loading.store";
 import type { ApiResponse } from "@/types/api";
 
 type QueryValue = string | number | boolean | undefined | null;
@@ -61,7 +61,7 @@ export async function apiRequest<T>(
     headers.set("Authorization", `Bearer ${token}`);
   }
 
-  const track = !shouldSkipGlobalLoader(path);
+  const track = !shouldSkipGlobalLoader(path, init.method ?? "GET");
   if (track) {
     useApiLoadingStore
       .getState()

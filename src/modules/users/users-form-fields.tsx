@@ -1,0 +1,217 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { useForm, Controller } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { AppLoaderSpinner } from "@/components/shared/app-loader";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select } from "@/components/ui/select";
+import {
+  createUserFormSchema,
+  userFormSchema,
+  USER_STATUS_OPTIONS,
+  type UserFormValues,
+} from "@/modules/users/users-validator";
+import { listRoles } from "@/modules/roles/api";
+import { isSuperAdminRole, type RoleListItem } from "@/types/role";
+import type { User } from "@/types/user";
+
+interface UserFormProps {
+  user?: User | null;
+  onSubmit: (values: UserFormValues) => Promise<void>;
+  onCancel: () => void;
+  isLoading?: boolean;
+}
+
+export function UserForm({
+  user,
+  onSubmit,
+  onCancel,
+  isLoading,
+}: UserFormProps) {
+  const isEdit = Boolean(user);
+  const [roles, setRoles] = useState<RoleListItem[]>([]);
+  const [rolesLoading, setRolesLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    setRolesLoading(true);
+    (async () => {
+      try {
+        // API: listRoles() → GET /api/roles
+        const data = await listRoles();
+        if (!cancelled) setRoles(data);
+      } catch {
+        if (!cancelled) setRoles([]);
+      } finally {
+        if (!cancelled) setRolesLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const roleOptions = roles
+    .filter(
+      (role) =>
+        !role.isSuperAdmin &&
+        !isSuperAdminRole(role.name ?? "")
+    )
+    .map((role) => ({
+      label: role.name,
+      value: role.id,
+    }));
+
+  const defaultRoleId = roleOptions[0]?.value ?? "";
+
+  const defaultValues: UserFormValues = {
+    firstName: "",
+    lastName: "",
+    email: "",
+    roleId: defaultRoleId,
+    status: "active",
+    password: "",
+  };
+
+  const {
+    register,
+    handleSubmit,
+    reset,
+    control,
+    formState: { errors },
+  } = useForm<UserFormValues>({
+    resolver: zodResolver(isEdit ? userFormSchema : createUserFormSchema),
+    defaultValues,
+  });
+
+  useEffect(() => {
+    reset(
+      user
+        ? {
+            firstName: user.firstName,
+            lastName: user.lastName,
+            email: user.email,
+            roleId: user.roleId,
+            status: user.status,
+            password: "",
+          }
+        : {
+            ...defaultValues,
+            roleId: defaultRoleId,
+          }
+    );
+  }, [user, reset, roles]);
+
+  const handleFormSubmit = handleSubmit(async (values) => {
+    await onSubmit(values);
+  });
+
+  return (
+    <form
+      onSubmit={handleFormSubmit}
+      className="w-full rounded-[6px] border border-border/60 bg-card p-6 shadow-card lg:p-8"
+    >
+      <div className="space-y-6">
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
+          <div className="space-y-2">
+            <Label htmlFor="firstName">First name</Label>
+            <Input id="firstName" {...register("firstName")} />
+            {errors.firstName && (
+              <p className="text-xs text-destructive">{errors.firstName.message}</p>
+            )}
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="lastName">Last name</Label>
+            <Input id="lastName" {...register("lastName")} />
+            {errors.lastName && (
+              <p className="text-xs text-destructive">{errors.lastName.message}</p>
+            )}
+          </div>
+          <div className="space-y-2 md:col-span-2 xl:col-span-1">
+            <Label htmlFor="email">Email</Label>
+            <Input
+              id="email"
+              type="email"
+              {...register("email")}
+              disabled={isEdit}
+            />
+            {errors.email && (
+              <p className="text-xs text-destructive">{errors.email.message}</p>
+            )}
+          </div>
+          {!isEdit && (
+            <div className="space-y-2">
+              <Label htmlFor="password">Password</Label>
+              <Input
+                id="password"
+                type="password"
+                autoComplete="new-password"
+                {...register("password")}
+              />
+              {errors.password && (
+                <p className="text-xs text-destructive">{errors.password.message}</p>
+              )}
+            </div>
+          )}
+          <div className="space-y-2">
+            <Label htmlFor="roleId">Role</Label>
+            <Controller
+              name="roleId"
+              control={control}
+              render={({ field }) => (
+                <Select
+                  id="roleId"
+                  value={field.value}
+                  onChange={(e) => field.onChange(e.target.value)}
+                  disabled={rolesLoading || roleOptions.length === 0}
+                  options={roleOptions}
+                />
+              )}
+            />
+            {errors.roleId && (
+              <p className="text-xs text-destructive">{errors.roleId.message}</p>
+            )}
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="status">Status</Label>
+            <Controller
+              name="status"
+              control={control}
+              render={({ field }) => (
+                <Select
+                  id="status"
+                  value={field.value}
+                  onChange={(e) => field.onChange(e.target.value)}
+                  options={USER_STATUS_OPTIONS.filter(
+                    (o) => o.value === "active" || o.value === "inactive"
+                  ).map((o) => ({
+                    label: o.label,
+                    value: o.value,
+                  }))}
+                />
+              )}
+            />
+          </div>
+        </div>
+
+        <div className="flex flex-col-reverse gap-2 border-t border-border/60 pt-6 sm:flex-row sm:justify-end">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={onCancel}
+            disabled={isLoading}
+          >
+            Cancel
+          </Button>
+          <Button type="submit" disabled={isLoading}>
+            {isLoading && <AppLoaderSpinner size="sm" className="mr-1" />}
+            {isEdit ? "Save changes" : "Create user"}
+          </Button>
+        </div>
+      </div>
+    </form>
+  );
+}

@@ -3,8 +3,8 @@
 import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
-import { Eye, EyeOff } from "lucide-react";
-import { AppLoaderSpinner } from "@/components/ui/app-loader";
+import { Eye, EyeOff, Phone } from "lucide-react";
+import { AppLoaderSpinner } from "@/components/shared/app-loader";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -72,7 +72,7 @@ function LoginForm() {
     >
       <div className="mb-8 text-center">
         <div className="mx-auto mb-4 flex size-12 items-center justify-center rounded-[6px] bg-primary shadow-subtle">
-          <span className="text-lg font-bold text-primary-foreground">C</span>
+          <Phone className="size-5 text-primary-foreground" strokeWidth={2.4} />
         </div>
         <h1 className="text-2xl font-semibold tracking-tight">
           Sign in to {siteConfig.name}

@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useState } from "react";
 import { ChevronRight } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import type { NavItemConfig } from "@/config/navigation";
@@ -25,8 +26,7 @@ interface NavGroupProps {
 }
 
 /**
- * Nested module group — same pattern as Calls / Responses:
- * parent row toggles open; children are the real pages.
+ * Nested module group — parent row navigates; chevron toggles children.
  */
 export function NavGroup({
   item,
@@ -51,8 +51,6 @@ export function NavGroup({
   const Icon = item.icon;
 
   const handleToggle = () => {
-    // On an active route the group stays open — only toggle when inactive
-    if (isActive) return;
     setGroupExpanded(item.id, !isExpanded);
   };
 
@@ -87,15 +85,18 @@ export function NavGroup({
                   : "bg-transparent"
           )}
         >
-          <button
-            type="button"
-            onClick={handleToggle}
+          <Link
+            href={item.href}
+            onClick={() => {
+              if (!isExpanded) setGroupExpanded(item.id, true);
+              onNavigate?.();
+            }}
             className={cn(
               "flex min-w-0 flex-1 items-center gap-3 rounded-[6px] px-3 py-2.5 text-left text-[13px] font-medium tracking-[-0.01em]",
-              "transition-colors duration-[280ms] text-sidebar-foreground"
+              "transition-colors duration-[280ms] text-sidebar-foreground",
+              "hover:text-sidebar-foreground"
             )}
-            aria-expanded={isExpanded}
-            aria-label={`${isExpanded ? "Collapse" : "Expand"} ${item.title}`}
+            aria-current={isActive ? "page" : undefined}
           >
             <Icon
               className="size-[18px] shrink-0 text-sidebar-foreground transition-transform duration-[280ms] group-hover/nav:translate-x-0.5"
@@ -114,7 +115,7 @@ export function NavGroup({
                 {item.badge}
               </span>
             )}
-          </button>
+          </Link>
 
           <Tooltip delayDuration={400}>
             <TooltipTrigger asChild>

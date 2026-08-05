@@ -1,228 +1,17 @@
-import type { LucideIcon } from "lucide-react";
 import {
-  BarChart3,
-  Bell,
-  ClipboardList,
-  History,
-  Inbox,
-  LayoutDashboard,
-  MessageSquareReply,
-  Phone,
-  PhoneCall,
-  ScrollText,
-  Settings,
-  Shield,
-  ShieldCheck,
-  Users,
-  Voicemail,
-  Volume2,
-} from "lucide-react";
-import type { NavModule } from "./permissions";
+  moduleNavSections,
+  type ModuleNavItem,
+  type ModuleNavSection,
+} from "./modules-registry";
 
-export interface NavItemConfig {
-  id: string;
-  title: string;
-  href: string;
-  icon: LucideIcon;
-  module: NavModule;
-  description?: string;
-  badge?: string;
-  disabled?: boolean;
-  external?: boolean;
-  variant?: "default" | "cta";
-  children?: NavItemConfig[];
-}
+/** @deprecated use ModuleNavItem from modules-registry */
+export type NavItemConfig = ModuleNavItem;
 
-export interface NavSection {
-  id: string;
-  label?: string;
-  items: NavItemConfig[];
-}
+/** @deprecated use ModuleNavSection from modules-registry */
+export type NavSection = ModuleNavSection;
 
-export const dashboardNavigation: NavSection[] = [
-  {
-    id: "primary",
-    items: [
-      {
-        id: "dashboard",
-        title: "Dashboard",
-        href: "/dashboard",
-        icon: LayoutDashboard,
-        module: "dashboard",
-      },
-    ],
-  },
-  {
-    id: "surveys",
-    items: [
-      {
-        id: "survey",
-        title: "Survey",
-        href: "/survey",
-        icon: ClipboardList,
-        module: "survey",
-        description: "Survey module — campaigns and voices.",
-        children: [
-          {
-            id: "surveys-main",
-            title: "My Surveys",
-            href: "/survey",
-            icon: ClipboardList,
-            module: "my_surveys",
-            description: "List, create, edit, and delete surveys.",
-          },
-          {
-            id: "library-voices",
-            title: "Voices",
-            href: "/library/voices",
-            icon: Volume2,
-            module: "voices",
-            description: "Browse and select survey voices.",
-          },
-        ],
-      },
-    ],
-  },
-
-  {
-    id: "operations",
-    label: "Operations",
-    items: [
-      {
-        id: "calls",
-        title: "Calls",
-        href: "/calls",
-        icon: Phone,
-        module: "calls",
-        description: "Monitor live and historical call activity.",
-        children: [
-          {
-            id: "calls-live",
-            title: "Live Calls",
-            href: "/calls/live",
-            icon: PhoneCall,
-            module: "calls_live",
-            description: "Watch active calls in real time.",
-            badge: "Popular",
-          },
-          {
-            id: "calls-history",
-            title: "History",
-            href: "/calls/history",
-            icon: History,
-            module: "calls_history",
-            description: "Review past call records.",
-          },
-          {
-            id: "calls-recordings",
-            title: "Recordings",
-            href: "/calls/recordings",
-            icon: Voicemail,
-            module: "calls_recordings",
-            description: "Listen to stored call recordings.",
-          },
-        ],
-      },
-      {
-        id: "responses",
-        title: "Responses",
-        href: "/responses",
-        icon: MessageSquareReply,
-        module: "responses",
-        description: "Review inbound replies and flags.",
-        children: [
-          {
-            id: "responses-all",
-            title: "All Responses",
-            href: "/responses",
-            icon: MessageSquareReply,
-            module: "responses_all",
-            description: "See the full response inbox.",
-            badge: "Popular",
-          },
-          {
-            id: "responses-pending",
-            title: "Pending",
-            href: "/responses/pending",
-            icon: Inbox,
-            module: "responses_pending",
-            description: "Items waiting for follow-up.",
-          },
-          {
-            id: "responses-flagged",
-            title: "Flagged",
-            href: "/responses/flagged",
-            icon: Shield,
-            module: "responses_flagged",
-            description: "Responses marked for review.",
-          },
-        ],
-      },
-    ],
-  },
-  {
-    id: "insights",
-    label: "Insights",
-    items: [
-      {
-        id: "reports",
-        title: "Reports",
-        href: "/reports",
-        icon: BarChart3,
-        module: "reports",
-      },
-    ],
-  },
-  {
-    id: "management",
-    label: "Management",
-    items: [
-      {
-        id: "users",
-        title: "Users",
-        href: "/users",
-        icon: Users,
-        module: "users",
-      },
-      {
-        id: "roles",
-        title: "Roles",
-        href: "/roles",
-        icon: ShieldCheck,
-        module: "roles",
-      },
-    ],
-  },
-  {
-    id: "system",
-    label: "Configurations",
-    items: [
-      {
-        id: "notifications",
-        title: "Notifications",
-        href: "/notifications",
-        icon: Bell,
-        module: "notifications",
-      },
-      {
-        id: "activity-logs",
-        title: "Activity Logs",
-        href: "/activity-logs",
-        icon: ScrollText,
-        module: "activity_logs",
-      },
-      {
-        id: "settings",
-        title: "Settings",
-        href: "/settings",
-        icon: Settings,
-        module: "settings",
-      },
-      
-    ],
-  },
-
-];
+/** Sidebar navigation — built from module registry. */
+export const dashboardNavigation: ModuleNavSection[] = moduleNavSections;
 
 export const authNavigation = {
   login: "/login",
@@ -237,7 +26,6 @@ export const routePaths = {
     root: "/survey",
     new: "/survey/new",
     actions: "/survey/actions",
-    telephony: "/survey/telephony",
   },
   library: {
     voices: "/library/voices",

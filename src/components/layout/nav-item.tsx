@@ -64,7 +64,7 @@ export function NavItem({
       {isActive && !nested && (
         <motion.span
           layoutId="sidebar-active-bg"
-          className="absolute inset-0 rounded-[6px] bg-white"
+          className="pointer-events-none absolute inset-0 rounded-[6px] bg-white"
           transition={{ type: "spring", stiffness: 380, damping: 34 }}
         />
       )}

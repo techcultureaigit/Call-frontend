@@ -1,0 +1,136 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { Search, SlidersHorizontal, UserPlus, X } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Select } from "@/components/ui/select";
+import type { RoleListItem } from "@/types/role";
+import type { UserStatus } from "@/types/user";
+import { listRoles } from "@/modules/roles/api";
+
+interface UsersToolbarProps {
+  search: string;
+  onSearchChange: (value: string) => void;
+  role: string;
+  onRoleChange: (value: string) => void;
+  status: UserStatus | "all";
+  onStatusChange: (value: UserStatus | "all") => void;
+  onCreateClick: () => void;
+  totalCount?: number;
+}
+
+export function UsersToolbar({
+  search,
+  onSearchChange,
+  role,
+  onRoleChange,
+  status,
+  onStatusChange,
+  onCreateClick,
+  totalCount,
+}: UsersToolbarProps) {
+  const [roles, setRoles] = useState<RoleListItem[]>([]);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        // API: listRoles() → GET /api/roles
+        const data = await listRoles();
+        if (!cancelled) setRoles(data);
+      } catch {
+        if (!cancelled) setRoles([]);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const hasFilters = role !== "all" || status !== "all" || search.length > 0;
+
+  const clearFilters = () => {
+    onSearchChange("");
+    onRoleChange("all");
+    onStatusChange("all");
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h2 className="font-display text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
+            Users
+          </h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Manage team members, roles, and access permissions.
+            {totalCount !== undefined && (
+              <span className="ml-1 font-medium text-foreground">
+                ({totalCount} total)
+              </span>
+            )}
+          </p>
+        </div>
+        <Button onClick={onCreateClick} className="shrink-0">
+          <UserPlus className="size-4" />
+          Create User
+        </Button>
+      </div>
+
+      <div className="flex flex-col gap-3 rounded-[6px] border border-border/60 bg-card p-4 shadow-card lg:flex-row lg:items-center">
+        <div className="relative flex-1">
+          <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            placeholder="Search by name or email..."
+            value={search}
+            onChange={(e) => onSearchChange(e.target.value)}
+            className="h-9 border-border/60 bg-muted/30 pl-9"
+          />
+        </div>
+
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+          <div className="flex items-center gap-2">
+            <SlidersHorizontal className="hidden size-4 text-muted-foreground sm:block" />
+            <Select
+              value={role}
+              onChange={(e) => onRoleChange(e.target.value)}
+              options={[
+                { label: "All Roles", value: "all" },
+                ...roles.map((r) => ({
+                  label: r.name,
+                  value: r.id,
+                })),
+              ]}
+              className="w-full sm:w-[160px]"
+            />
+            <Select
+              value={status}
+              onChange={(e) =>
+                onStatusChange(e.target.value as UserStatus | "all")
+              }
+              options={[
+                { label: "All Statuses", value: "all" },
+                { label: "Active", value: "active" },
+                { label: "Inactive", value: "inactive" },
+              ]}
+              className="w-full sm:w-[160px]"
+            />
+          </div>
+
+          {hasFilters && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={clearFilters}
+              className="h-9 text-muted-foreground"
+            >
+              <X className="size-3.5" />
+              Clear
+            </Button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}

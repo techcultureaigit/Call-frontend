@@ -3,7 +3,7 @@ import {
   getActivityLogFilterOptions,
   getActivityLogStats,
   queryActivityLogs,
-} from "@/lib/data/activity-logs-repository";
+} from "@/modules/activity-logs/activity-logs-repository";
 import type { AuditAction, AuditModule } from "@/types/activity-log";
 
 export async function GET(request: Request) {

@@ -1,40 +1,30 @@
-import { NextResponse } from "next/server";
-import { deleteRole, getRoleById, updateRole } from "@/lib/data/roles-repository";
+import { proxyToBackend } from "@/lib/server/backend-proxy";
+
+export const dynamic = "force-dynamic";
 
 interface RouteParams {
   params: Promise<{ id: string }>;
 }
 
-export async function GET(_request: Request, { params }: RouteParams) {
+/** GET /api/roles/:id → GET /api/v1/roles/:id */
+export async function GET(request: Request, { params }: RouteParams) {
   const { id } = await params;
-  const role = getRoleById(id);
-
-  if (!role) {
-    return NextResponse.json({ message: "Role not found" }, { status: 404 });
-  }
-
-  return NextResponse.json({ success: true, data: role });
+  return proxyToBackend(request, "roles", `/${id}`);
 }
 
+/** PATCH /api/roles/:id → PUT /api/v1/roles/:id (Express uses PUT) */
 export async function PATCH(request: Request, { params }: RouteParams) {
   const { id } = await params;
-  const body = await request.json();
-  const role = updateRole(id, body);
-
-  if (!role) {
-    return NextResponse.json({ message: "Role not found" }, { status: 404 });
-  }
-
-  return NextResponse.json({ success: true, data: role });
+  const body = await request.text();
+  return proxyToBackend(request, "roles", `/${id}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body,
+  });
 }
 
-export async function DELETE(_request: Request, { params }: RouteParams) {
+/** DELETE /api/roles/:id → DELETE /api/v1/roles/:id */
+export async function DELETE(request: Request, { params }: RouteParams) {
   const { id } = await params;
-  const result = deleteRole(id);
-
-  if (!result.success) {
-    return NextResponse.json({ message: result.message }, { status: 400 });
-  }
-
-  return NextResponse.json({ success: true, data: null });
+  return proxyToBackend(request, "roles", `/${id}`, { method: "DELETE" });
 }

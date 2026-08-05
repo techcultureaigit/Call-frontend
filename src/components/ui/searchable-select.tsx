@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { Check, ChevronDown, Search } from "lucide-react";
-import { GenderIcon } from "@/components/library/voices/gender-icons";
+import { GenderIcon } from "@/modules/voices/gender-icons";
 import { cn } from "@/lib/utils";
 import { Input } from "./input";
 import {

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getResponseById } from "@/lib/data/responses-repository";
+import { getResponseById } from "@/modules/responses/responses-repository";
 
 export async function GET(
   _request: Request,

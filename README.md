@@ -89,10 +89,6 @@ cp .env.example .env
 ```
 
 ```env
-# App
-NEXT_PUBLIC_APP_URL=http://localhost:3000
-NEXT_PUBLIC_APP_NAME="CRM Admin"
-
 # API (calling-crm-backend)
 NEXT_PUBLIC_API_URL=http://localhost:8000/api/v1
 NEXT_PUBLIC_API_TIMEOUT=30000

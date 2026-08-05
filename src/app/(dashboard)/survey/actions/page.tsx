@@ -1,4 +1,4 @@
-import { SurveyActionsView } from "@/components/survey/survey-actions-view";
+import { SurveyActionsView } from "@/modules/survey";
 
 export default function SurveyActionsPage() {
   return <SurveyActionsView />;

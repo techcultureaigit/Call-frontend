@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getCallById } from "@/lib/data/calls-repository";
+import { getCallById } from "@/modules/calls/calls-repository";
 
 export async function GET(
   _request: Request,

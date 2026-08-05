@@ -1,4 +1,9 @@
-import { apiEndpoints } from "./endpoints";
+/**
+ * upload.ts
+ * Shared upload API — Cloudinary via Next.js BFF.
+ *
+ * uploadToCloudinary() → POST /api/upload/cloudinary
+ */
 import { apiUpload } from "./http";
 
 export interface CloudinaryUploadResult {
@@ -11,13 +16,14 @@ export interface CloudinaryUploadResult {
   };
 }
 
+/** uploadToCloudinary() → POST /api/upload/cloudinary */
+export async function uploadToCloudinary(file: File) {
+  const formData = new FormData();
+  formData.append("file", file);
+  return apiUpload<CloudinaryUploadResult>("/api/upload/cloudinary", formData);
+}
+
+/** @deprecated Use uploadToCloudinary */
 export const uploadApi = {
-  cloudinary: (file: File) => {
-    const formData = new FormData();
-    formData.append("file", file);
-    return apiUpload<CloudinaryUploadResult>(
-      apiEndpoints.upload.cloudinary,
-      formData
-    );
-  },
+  cloudinary: uploadToCloudinary,
 };

@@ -49,7 +49,6 @@ export type {
   CustomerSource,
   CustomerImportRow,
 } from "./customer";
-export type { Survey, SurveyStatus, SurveyDetail, SurveyQuestion, QuestionType, ConditionalRule, SaveSurveyPayload } from "./survey";
 export type {
   Call,
   CallStatus,
@@ -107,13 +106,6 @@ export type {
   AgentActionCustomApi,
   HttpMethod,
 } from "./agent-action";
-export type {
-  TelephonyTab,
-  PurchasedNumber,
-  SipTrunk,
-  BuyNumberFormValues,
-  SipTrunkFormValues,
-} from "./telephony";
 export type {
   VoiceProfile,
   VoiceGender,

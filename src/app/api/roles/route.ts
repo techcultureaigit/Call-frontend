@@ -1,25 +1,18 @@
-import { NextResponse } from "next/server";
-import { createRole, queryRoles } from "@/lib/data/roles-repository";
+import { proxyToBackend } from "@/lib/server/backend-proxy";
 
+export const dynamic = "force-dynamic";
+
+/** GET /api/roles → GET /api/v1/roles (Express) */
 export async function GET(request: Request) {
-  const { searchParams } = new URL(request.url);
-  const search = searchParams.get("search") ?? "";
-
-  await new Promise((resolve) => setTimeout(resolve, 250));
-
-  return NextResponse.json({
-    success: true,
-    data: queryRoles({ search }),
-  });
+  return proxyToBackend(request, "roles");
 }
 
+/** POST /api/roles → POST /api/v1/roles */
 export async function POST(request: Request) {
-  const body = await request.json();
-  const role = createRole({
-    name: body.name,
-    description: body.description,
-    permissions: body.permissions,
+  const body = await request.text();
+  return proxyToBackend(request, "roles", "", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body,
   });
-
-  return NextResponse.json({ success: true, data: role }, { status: 201 });
 }

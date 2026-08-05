@@ -14,6 +14,12 @@ export {
   type RoutePaths,
 } from "./navigation";
 export {
+  moduleNavSections,
+  getRegisteredModuleIds,
+  type ModuleNavItem,
+  type ModuleNavSection,
+} from "./modules-registry";
+export {
   SIDEBAR_MODULES,
   hasModuleAccess,
   can,

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getCallStats, queryCalls, retryCall } from "@/lib/data/calls-repository";
+import { getCallStats, queryCalls, retryCall } from "@/modules/calls/calls-repository";
 import type { CallStatus } from "@/types/call";
 
 export async function GET(request: Request) {

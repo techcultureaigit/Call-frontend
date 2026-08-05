@@ -1,4 +1,4 @@
-import { SurveyConfigureLoader } from "@/components/survey";
+import { SurveyConfigureLoader } from "@/modules/survey";
 
 interface PageProps {
   params: Promise<{ id: string }>;
