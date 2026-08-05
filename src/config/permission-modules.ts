@@ -41,7 +41,7 @@ export const PERMISSION_ACTION_LABELS: Record<PermissionAction, string> = {
   publish: "Publish",
 };
 
-/** Full CRUD — My Surveys, Voices, Audio Buffer, Users, Roles, Settings */
+/** Full CRUD — My Surveys, Voices, Users, Roles, Settings */
 const CRUD: PermissionAction[] = ["create", "read", "update", "delete"];
 
 /**
@@ -74,18 +74,6 @@ export const PERMISSION_MODULE_GROUPS: PermissionModuleGroup[] = [
             label: "Voices",
             description: "Voice library",
             actions: [...CRUD, "download"],
-          },
-          {
-            id: "audio_buffer",
-            label: "Audio Buffer",
-            description: "Cached audio",
-            actions: [...CRUD],
-          },
-          {
-            id: "survey_data",
-            label: "Survey Data",
-            description: "Contacts",
-            actions: [...CRUD, "export", "import", "download"],
           },
         ],
       },
@@ -302,7 +290,6 @@ export function slugifyRole(name: string): string {
 
 const MODULE_ALIASES: Record<string, string> = {
   library: "voices",
-  customers: "survey_data",
   surveys: "my_surveys",
 };
 

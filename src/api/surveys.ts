@@ -119,7 +119,10 @@ export const surveysApi = {
     const token = getAccessTokenFromCookie();
     if (token) headers.set("Authorization", `Bearer ${token}`);
 
-    useApiLoadingStore.getState().start();
+    useApiLoadingStore.getState().start({
+      label: "Exporting",
+      hint: "Preparing your file",
+    });
     try {
       const response = await fetch(
         `${apiEndpoints.surveys.resultsExport(id)}${query}`,

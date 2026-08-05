@@ -26,7 +26,6 @@ export function useVoices(
   return useQuery({
     queryKey: queryKeys.voices.list(params as Record<string, unknown>),
     queryFn: () => voicesModuleService.list(params),
-    placeholderData: (prev) => prev,
     staleTime: 30_000,
     enabled: (options?.enabled ?? true) && sourceOk,
   });

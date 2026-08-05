@@ -13,10 +13,10 @@ export const metadata: Metadata = {
   metadataBase: new URL(siteConfig.url),
   icons: {
     icon: [
-      { url: "/favicon.svg", type: "image/svg+xml" },
-      { url: "/icon", type: "image/png", sizes: "32x32" },
+      { url: "/favicon.svg?v=call-phone", type: "image/svg+xml" },
+      { url: "/icon?v=call-phone", type: "image/png", sizes: "32x32" },
     ],
-    shortcut: "/favicon.svg",
+    shortcut: "/favicon.svg?v=call-phone",
   },
   robots: {
     index: false,

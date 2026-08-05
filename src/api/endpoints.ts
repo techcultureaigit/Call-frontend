@@ -9,10 +9,6 @@ export const apiEndpoints = {
     list: "/api/users",
     detail: (id: string) => `/api/users/${id}`,
   },
-  customers: {
-    list: "/api/customers",
-    detail: (id: string) => `/api/customers/${id}`,
-  },
   surveys: {
     list: "/api/surveys",
     detail: (id: string) => `/api/surveys/${id}`,
@@ -53,7 +49,7 @@ export const apiEndpoints = {
     me: "/api/auth/me",
   },
   voices: {
-    list: "/api/voices",
-    detail: (id: string) => `/api/voices/${id}`,
+    list: "/voices",
+    detail: (id: string) => `/voices/${id}`,
   },
 } as const;

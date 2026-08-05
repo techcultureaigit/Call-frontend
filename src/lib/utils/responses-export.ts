@@ -1,5 +1,6 @@
 import type { SurveyResponse } from "@/types/response";
 import { downloadCSV } from "@/lib/utils/csv";
+import { withGlobalLoader } from "@/stores/api-loading.store";
 
 export function responsesToCSV(responses: SurveyResponse[]): string {
   const headers = [
@@ -46,10 +47,16 @@ export function responsesToCSV(responses: SurveyResponse[]): string {
   return [headers, ...rows].map((row) => row.map(escape).join(",")).join("\n");
 }
 
-export function exportResponsesCSV(
+export async function exportResponsesCSV(
   responses: SurveyResponse[],
   filename?: string
 ) {
-  const csv = responsesToCSV(responses);
-  downloadCSV(csv, filename ?? `responses-export-${Date.now()}.csv`);
+  await withGlobalLoader(
+    async () => {
+      await new Promise<void>((r) => setTimeout(r, 0));
+      const csv = responsesToCSV(responses);
+      downloadCSV(csv, filename ?? `responses-export-${Date.now()}.csv`);
+    },
+    { label: "Exporting", hint: "Preparing your file" }
+  );
 }

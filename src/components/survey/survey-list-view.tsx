@@ -42,7 +42,6 @@ import {
   ScheduleSurveyDialog,
   type ScheduleSurveyPayload,
 } from "./schedule-survey-dialog";
-import { SurveyFetchLoader } from "./survey-fetch-loader";
 import { SurveysPagination } from "./surveys-pagination";
 import { SurveysTable } from "./surveys-table";
 
@@ -175,7 +174,7 @@ export function SurveyListView() {
         toast.error("No surveys to export");
         return;
       }
-      exportSurveys(result.data, format);
+      await exportSurveys(result.data, format);
       toast.success(
         `Exported ${result.data.length} survey${result.data.length === 1 ? "" : "s"}`
       );
@@ -411,8 +410,8 @@ export function SurveyListView() {
             ) : null}
           </div>
 
-          {showLoader ? (
-            <SurveyFetchLoader />
+          {showLoader && agents.length === 0 ? (
+            <div className="min-h-[40vh]" aria-busy="true" aria-label="Loading surveys" />
           ) : agents.length === 0 ? (
             <div className="flex flex-col items-center justify-center rounded-[6px] border border-dashed border-border/60 bg-card/60 px-6 py-20 text-center shadow-sm backdrop-blur-sm">
               <div className="mb-4 flex size-16 items-center justify-center rounded-[6px] bg-primary/10">
@@ -451,7 +450,13 @@ export function SurveyListView() {
               )}
             </div>
           ) : (
-            <div className="space-y-4">
+            <div
+              className={
+                isRefreshing
+                  ? "space-y-4 opacity-70 transition-opacity"
+                  : "space-y-4"
+              }
+            >
               <SurveysTable
                 agents={agents}
                 selectedIds={selectedIds}

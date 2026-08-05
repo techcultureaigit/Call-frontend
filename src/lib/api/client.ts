@@ -11,6 +11,7 @@ import {
   getAccessTokenFromCookie,
 } from "@/lib/auth/session";
 import {
+  inferLoaderMessage,
   shouldSkipGlobalLoader,
   useApiLoadingStore,
 } from "@/stores/api-loading.store";
@@ -74,7 +75,11 @@ function createAxiosInstance(options: ApiClientOptions = {}): AxiosInstance {
     const skip = shouldSkipGlobalLoader(url);
     (config as InternalAxiosRequestConfig & { _trackLoader?: boolean })._trackLoader =
       !skip;
-    if (!skip) useApiLoadingStore.getState().start();
+    if (!skip) {
+      useApiLoadingStore
+        .getState()
+        .start(inferLoaderMessage(config.method ?? "get", url));
+    }
 
     return config;
   });

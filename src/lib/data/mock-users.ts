@@ -7,8 +7,6 @@ function viewerPerms(): RolePermissions {
   p.dashboard = { ...p.dashboard, read: true };
   p.my_surveys = { ...p.my_surveys, read: true };
   p.voices = { ...p.voices, read: true, download: true };
-  p.audio_buffer = { ...p.audio_buffer, read: true };
-  p.customers = { ...p.customers, read: true, export: true };
   p.calls = { ...p.calls, read: true, export: true, download: true };
   p.calls_live = { ...p.calls_live, read: true, export: true, download: true };
   p.calls_history = {

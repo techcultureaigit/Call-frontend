@@ -10,6 +10,7 @@ export function resolveVoicePreviewUrl(previewUrl?: string): string {
 
 let sharedAudio: HTMLAudioElement | null = null;
 let playingVoiceId: string | null = null;
+let suppressPauseNotify = false;
 const listeners = new Set<(id: string | null) => void>();
 
 function getAudio() {
@@ -19,11 +20,18 @@ function getAudio() {
     sharedAudio.preload = "auto";
     sharedAudio.addEventListener("ended", () => {
       playingVoiceId = null;
-      listeners.forEach((l) => l(null));
+      notify(null);
+    });
+    sharedAudio.addEventListener("pause", () => {
+      if (suppressPauseNotify) return;
+      if (playingVoiceId !== null) {
+        playingVoiceId = null;
+        notify(null);
+      }
     });
     sharedAudio.addEventListener("error", () => {
       playingVoiceId = null;
-      listeners.forEach((l) => l(null));
+      notify(null);
     });
   }
   return sharedAudio;
@@ -44,6 +52,13 @@ export function getPlayingVoiceId() {
   return playingVoiceId;
 }
 
+/** Mark a voice as playing (e.g. dialog `<audio>` controls). */
+export function setPlayingVoiceId(voiceId: string | null) {
+  if (playingVoiceId === voiceId) return;
+  playingVoiceId = voiceId;
+  notify(voiceId);
+}
+
 export async function playVoiceRingtone(
   voiceId: string,
   previewUrl?: string
@@ -53,14 +68,15 @@ export async function playVoiceRingtone(
 
   const primary = resolveVoicePreviewUrl(previewUrl);
 
+  suppressPauseNotify = true;
   try {
     audio.pause();
     audio.src = primary;
     audio.load();
     audio.currentTime = 0;
+    await audio.play();
     playingVoiceId = voiceId;
     notify(voiceId);
-    await audio.play();
   } catch {
     // Preview URL failed — fall back to local sample
     if (primary !== DUMMY_VOICE_RINGTONE) {
@@ -68,9 +84,9 @@ export async function playVoiceRingtone(
         audio.src = DUMMY_VOICE_RINGTONE;
         audio.load();
         audio.currentTime = 0;
+        await audio.play();
         playingVoiceId = voiceId;
         notify(voiceId);
-        await audio.play();
         return;
       } catch {
         /* ignore */
@@ -78,14 +94,25 @@ export async function playVoiceRingtone(
     }
     playingVoiceId = null;
     notify(null);
+  } finally {
+    suppressPauseNotify = false;
   }
 }
 
 export function stopVoiceRingtone() {
   const audio = getAudio();
-  if (!audio) return;
-  audio.pause();
-  audio.currentTime = 0;
+  if (!audio) {
+    playingVoiceId = null;
+    notify(null);
+    return;
+  }
+  suppressPauseNotify = true;
+  try {
+    audio.pause();
+    audio.currentTime = 0;
+  } finally {
+    suppressPauseNotify = false;
+  }
   playingVoiceId = null;
   notify(null);
 }

@@ -1,15 +1,12 @@
 "use client";
 
-import Link from "next/link";
 import {
   Building2,
-  ExternalLink,
   Mail,
   Phone,
   User,
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
 import { getInitials } from "@/lib/utils";
 import type { CallCustomerSnapshot } from "@/types/call";
 
@@ -35,12 +32,6 @@ export function CallCustomerDetails({ customer }: CallCustomerDetailsProps) {
           </p>
           <p className="text-sm text-muted-foreground">{customer.company}</p>
         </div>
-        <Button variant="outline" size="sm" className="h-8 shrink-0" asChild>
-          <Link href={`/customers?id=${customer.id}`}>
-            <ExternalLink className="size-3.5" />
-            Profile
-          </Link>
-        </Button>
       </div>
 
       <div className="mt-4 space-y-2.5">

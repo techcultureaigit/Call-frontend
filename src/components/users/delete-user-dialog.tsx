@@ -1,6 +1,6 @@
 "use client";
 
-import { Loader2 } from "lucide-react";
+import { AppLoaderSpinner } from "@/components/ui/app-loader";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -57,7 +57,7 @@ export function DeleteUserDialog({
             onClick={onConfirm}
             disabled={isLoading}
           >
-            {isLoading && <Loader2 className="size-4 animate-spin" />}
+            {isLoading && <AppLoaderSpinner size="sm" className="mr-1" />}
             Delete user
           </Button>
         </DialogFooter>

@@ -1,13 +1,20 @@
 "use client";
 
 import { cn } from "@/lib/utils";
+import { selectIsGlobalLoading, useApiLoadingStore } from "@/stores/api-loading.store";
 
-export type AppLoaderVariant = "page" | "section" | "compact" | "inline" | "overlay";
+export type AppLoaderVariant =
+  | "page"
+  | "section"
+  | "compact"
+  | "inline"
+  | "overlay"
+  | "global";
 
 interface AppLoaderProps {
   label?: string;
   hint?: string;
-  /** page / section / compact = same card | inline = spinner only | overlay = fixed global chip */
+  /** page/section/compact = card | inline = spinner | overlay = chip | global = fullscreen */
   variant?: AppLoaderVariant;
   className?: string;
 }
@@ -64,17 +71,17 @@ export function AppLoaderSpinner({
 function LoaderCard({
   label,
   hint,
-  spinnerSize = "lg",
+  spinnerSize = "md",
 }: {
   label: string;
   hint?: string;
   spinnerSize?: "md" | "lg";
 }) {
   return (
-    <div className="flex w-full max-w-[280px] flex-col items-center gap-5 rounded-[16px] border border-border/60 bg-card/95 px-8 py-9 shadow-[0_20px_50px_-24px_rgba(0,0,0,0.35)] backdrop-blur-xl">
+    <div className="flex w-full max-w-56 flex-col items-center gap-3 rounded-[12px] border border-border/60 bg-card/95 px-5 py-4 shadow-[0_16px_40px_-20px_rgba(0,0,0,0.3)] backdrop-blur-xl">
       <AppLoaderSpinner size={spinnerSize} />
-      <div className="space-y-1.5 text-center">
-        <p className="text-[15px] font-semibold tracking-tight text-foreground">
+      <div className="space-y-0.5 text-center">
+        <p className="text-sm font-semibold tracking-tight text-foreground">
           {label}
           <span className="ml-0.5 inline-block w-4 overflow-hidden align-bottom">
             <span className="inline-block animate-[survey-dots_1.2s_steps(4,end)_infinite]">
@@ -83,10 +90,10 @@ function LoaderCard({
           </span>
         </p>
         {hint ? (
-          <p className="text-xs text-muted-foreground">{hint}</p>
+          <p className="text-[11px] text-muted-foreground">{hint}</p>
         ) : null}
       </div>
-      <div className="h-1 w-full overflow-hidden rounded-full bg-muted">
+      <div className="h-0.5 w-full overflow-hidden rounded-full bg-muted">
         <div className="h-full w-1/3 animate-[survey-shimmer_1.2s_ease-in-out_infinite] rounded-full brand-gradient" />
       </div>
     </div>
@@ -95,8 +102,8 @@ function LoaderCard({
 
 /**
  * One loader design for the whole app (card + rings).
- * `page` / `section` / `compact` all use the same card — no alternate bar UI.
- * `inline` = spinner only (buttons). `overlay` = fixed global chip.
+ * When the global overlay is already open, page/section/compact render nothing
+ * so the card never appears twice.
  */
 export function AppLoader({
   label = "Loading",
@@ -104,6 +111,8 @@ export function AppLoader({
   variant = "page",
   className,
 }: AppLoaderProps) {
+  const globalActive = useApiLoadingStore(selectIsGlobalLoading);
+
   if (variant === "inline") {
     return (
       <span
@@ -133,6 +142,40 @@ export function AppLoader({
     );
   }
 
+  if (variant === "global") {
+    return (
+      <div
+        role="status"
+        aria-live="polite"
+        aria-label={label}
+        style={{ zIndex: 200 }}
+        className={cn(
+          "fixed inset-0 flex items-center justify-center bg-background/55 p-6 backdrop-blur-[6px]",
+          className
+        )}
+      >
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,color-mix(in_oklch,var(--brand)_14%,transparent)_0%,transparent_68%)]"
+        />
+        <div className="relative z-10">
+          <LoaderCard label={label} hint={hint} spinnerSize="md" />
+        </div>
+      </div>
+    );
+  }
+
+  // Global overlay already showing — skip duplicate page/section/compact card
+  if (globalActive) {
+    const tall = variant === "page";
+    return (
+      <div
+        aria-hidden
+        className={cn(tall ? "min-h-50" : "min-h-40", className)}
+      />
+    );
+  }
+
   // page | section | compact → same card design
   const tall = variant === "page";
 
@@ -143,7 +186,7 @@ export function AppLoader({
       aria-label={label}
       className={cn(
         "relative overflow-hidden rounded-[14px]",
-        tall ? "min-h-[58vh]" : "min-h-[40vh]",
+        tall ? "min-h-50" : "min-h-40",
         className
       )}
     >
@@ -180,11 +223,11 @@ export function AppLoader({
 
       <div
         className={cn(
-          "relative z-10 flex items-center justify-center p-6",
-          tall ? "min-h-[58vh]" : "min-h-[40vh]"
+          "relative z-10 flex items-center justify-center p-4",
+          tall ? "min-h-50" : "min-h-40"
         )}
       >
-        <LoaderCard label={label} hint={hint} spinnerSize="lg" />
+        <LoaderCard label={label} hint={hint} spinnerSize="md" />
       </div>
     </div>
   );

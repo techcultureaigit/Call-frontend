@@ -2,44 +2,36 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import {
-  DndContext,
-  KeyboardSensor,
-  PointerSensor,
-  closestCenter,
-  useSensor,
-  useSensors,
-  type DragEndEvent,
-} from "@dnd-kit/core";
-import {
-  SortableContext,
-  arrayMove,
-  rectSortingStrategy,
-  sortableKeyboardCoordinates,
-} from "@dnd-kit/sortable";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
 import { HelpCircle, Volume2 } from "lucide-react";
 import { toast } from "sonner";
 import { PageContainer } from "@/components/layout";
 import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
 import { useDebounce, usePageMeta, useVoices } from "@/hooks";
 import {
   DEFAULT_VOICE_FILTERS,
   VOICES_PAGE_SIZE,
 } from "@/lib/constants/voices";
+import { stopVoiceRingtone } from "@/lib/voice-playback";
 import type { VoiceFilters, VoiceProfile } from "@/types/voice";
-import { SortableVoiceCard } from "./voice-card";
 import { VoiceFiltersSidebar } from "./voice-filters-sidebar";
 import { VoicePreviewDialog } from "./voice-preview-dialog";
 import { VoicesPagination } from "./voices-pagination";
+import { VoicesTable } from "./voices-table";
 
 export function VoiceExplorerView() {
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const previewFromUrl = searchParams.get("preview");
+
   const [filters, setFilters] = useState<VoiceFilters>(DEFAULT_VOICE_FILTERS);
   const [page, setPage] = useState(1);
-  const [orderedIds, setOrderedIds] = useState<string[]>([]);
   const [selectedVoiceId, setSelectedVoiceId] = useState<string | null>(null);
-  const [previewVoiceId, setPreviewVoiceId] = useState<string | null>(null);
+  const [previewVoiceId, setPreviewVoiceId] = useState<string | null>(
+    previewFromUrl
+  );
 
   const debouncedSearch = useDebounce(filters.search, 300);
   const activeFilters = useMemo(
@@ -53,8 +45,7 @@ export function VoiceExplorerView() {
     VOICES_PAGE_SIZE
   );
 
-  const voices = data?.data;
-  const voiceList = voices ?? [];
+  const voices = data?.data ?? [];
   const meta = data?.meta ?? {
     page: 1,
     limit: VOICES_PAGE_SIZE,
@@ -63,13 +54,6 @@ export function VoiceExplorerView() {
     hasNextPage: false,
     hasPreviousPage: false,
   };
-
-  const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
-    useSensor(KeyboardSensor, {
-      coordinateGetter: sortableKeyboardCoordinates,
-    })
-  );
 
   const { applyMeta, resetPageMeta } = usePageMeta({
     title: "Voice Explorer",
@@ -89,38 +73,20 @@ export function VoiceExplorerView() {
   }, [debouncedSearch, filters.gender, filters.language]);
 
   useEffect(() => {
-    if (!voices) return;
-    setOrderedIds((prev) => {
-      const nextIds = voices.map((v) => v.id);
-      if (prev.length === 0) return nextIds;
-      const kept = prev.filter((id) => nextIds.includes(id));
-      const newcomers = nextIds.filter((id) => !kept.includes(id));
-      return [...kept, ...newcomers];
-    });
-  }, [voices]);
+    if (previewFromUrl) setPreviewVoiceId(previewFromUrl);
+  }, [previewFromUrl]);
 
-  const orderedVoices = useMemo(() => {
-    const byId = new Map(voiceList.map((v) => [v.id, v]));
-    return orderedIds
-      .map((id) => byId.get(id))
-      .filter((v): v is VoiceProfile => Boolean(v));
-  }, [voiceList, orderedIds]);
+  const syncPreviewInUrl = (voiceId: string | null) => {
+    const params = new URLSearchParams(searchParams.toString());
+    if (voiceId) params.set("preview", voiceId);
+    else params.delete("preview");
+    const query = params.toString();
+    router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
+  };
 
   const handleReset = () => {
     setFilters(DEFAULT_VOICE_FILTERS);
     setPage(1);
-  };
-
-  const handleDragEnd = (event: DragEndEvent) => {
-    const { active, over } = event;
-    if (!over || active.id === over.id) return;
-
-    setOrderedIds((prev) => {
-      const oldIndex = prev.indexOf(String(active.id));
-      const newIndex = prev.indexOf(String(over.id));
-      if (oldIndex < 0 || newIndex < 0) return prev;
-      return arrayMove(prev, oldIndex, newIndex);
-    });
   };
 
   const handleUse = (voice: VoiceProfile) => {
@@ -135,10 +101,24 @@ export function VoiceExplorerView() {
 
   const handleOpenVoice = (voice: VoiceProfile) => {
     setPreviewVoiceId(voice.id);
+    syncPreviewInUrl(voice.id);
   };
 
-  const previewIndex = orderedVoices.findIndex((v) => v.id === previewVoiceId);
-  const previewVoice = previewIndex >= 0 ? orderedVoices[previewIndex] : null;
+  const goToPreviewIndex = (index: number) => {
+    const next = voices[index];
+    if (!next) return;
+    stopVoiceRingtone();
+    setPreviewVoiceId(next.id);
+    syncPreviewInUrl(next.id);
+  };
+
+  const previewIndex = voices.findIndex((v) => v.id === previewVoiceId);
+  const previewVoice =
+    previewIndex >= 0
+      ? voices[previewIndex]
+      : previewVoiceId
+        ? (voices.find((v) => v.id === previewVoiceId) ?? null)
+        : null;
 
   const showSkeleton = isLoading && !data;
 
@@ -157,8 +137,8 @@ export function VoiceExplorerView() {
                 Voice Explorer
               </h1>
               <p className="max-w-2xl text-sm text-muted-foreground">
-                Browse, filter, and preview available voices. Drag cards to
-                reorder, or assign the perfect voice to your agent.
+                Browse, filter, and preview available voices. Select the perfect
+                voice for your agent.
               </p>
             </div>
             <div className="flex shrink-0 items-center gap-2 self-start">
@@ -179,13 +159,7 @@ export function VoiceExplorerView() {
               onReset={handleReset}
             />
 
-            {showSkeleton ? (
-              <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-                {Array.from({ length: 12 }).map((_, i) => (
-                  <Skeleton key={i} className="h-32 rounded-[6px]" />
-                ))}
-              </div>
-            ) : isError ? (
+            {isError ? (
               <div className="flex flex-col items-center justify-center rounded-[6px] border border-dashed border-border/60 bg-card/60 px-6 py-20 text-center shadow-sm">
                 <div className="mb-4 flex size-16 items-center justify-center rounded-[6px] bg-destructive/10">
                   <Volume2 className="size-8 text-destructive" />
@@ -204,48 +178,21 @@ export function VoiceExplorerView() {
                   Retry
                 </Button>
               </div>
-            ) : orderedVoices.length === 0 ? (
-              <div className="flex flex-col items-center justify-center rounded-[6px] border border-dashed border-border/60 bg-card/60 px-6 py-20 text-center shadow-sm">
-                <div className="mb-4 flex size-16 items-center justify-center rounded-[6px] bg-primary/10">
-                  <Volume2 className="size-8 text-primary" />
-                </div>
-                <h3 className="text-lg font-semibold">No voices found</h3>
-                <p className="mt-2 max-w-sm text-sm text-muted-foreground">
-                  Try adjusting your filters or search term.
-                </p>
-                <Button
-                  variant="outline"
-                  className="mt-4 rounded-[6px]"
-                  onClick={handleReset}
-                >
-                  Reset Filters
-                </Button>
-              </div>
             ) : (
-              <div className={isFetching ? "opacity-70 transition-opacity" : ""}>
-                <DndContext
-                  sensors={sensors}
-                  collisionDetection={closestCenter}
-                  onDragEnd={handleDragEnd}
-                >
-                  <SortableContext
-                    items={orderedVoices.map((v) => v.id)}
-                    strategy={rectSortingStrategy}
-                  >
-                    <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-                      {orderedVoices.map((voice, i) => (
-                        <SortableVoiceCard
-                          key={voice.id}
-                          voice={voice}
-                          index={i}
-                          selected={voice.id === selectedVoiceId}
-                          onOpen={handleOpenVoice}
-                          onUse={handleUse}
-                        />
-                      ))}
-                    </div>
-                  </SortableContext>
-                </DndContext>
+              <div
+                className={
+                  isFetching && !showSkeleton
+                    ? "opacity-70 transition-opacity"
+                    : ""
+                }
+              >
+                <VoicesTable
+                  voices={voices}
+                  selectedVoiceId={selectedVoiceId}
+                  onOpen={handleOpenVoice}
+                  onUse={handleUse}
+                  isLoading={showSkeleton}
+                />
               </div>
             )}
 
@@ -253,25 +200,17 @@ export function VoiceExplorerView() {
               voice={previewVoice}
               open={Boolean(previewVoice)}
               onOpenChange={(open) => {
-                if (!open) setPreviewVoiceId(null);
+                if (!open) {
+                  setPreviewVoiceId(null);
+                  syncPreviewInUrl(null);
+                }
               }}
               canGoBack={previewIndex > 0}
               canGoForward={
-                previewIndex >= 0 && previewIndex < orderedVoices.length - 1
+                previewIndex >= 0 && previewIndex < voices.length - 1
               }
-              onBack={() => {
-                if (previewIndex > 0) {
-                  setPreviewVoiceId(orderedVoices[previewIndex - 1].id);
-                }
-              }}
-              onForward={() => {
-                if (
-                  previewIndex >= 0 &&
-                  previewIndex < orderedVoices.length - 1
-                ) {
-                  setPreviewVoiceId(orderedVoices[previewIndex + 1].id);
-                }
-              }}
+              onBack={() => goToPreviewIndex(previewIndex - 1)}
+              onForward={() => goToPreviewIndex(previewIndex + 1)}
               selected={previewVoice?.id === selectedVoiceId}
               onChoose={handleUse}
             />

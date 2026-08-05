@@ -14,7 +14,6 @@ import {
   Shield,
   ShieldCheck,
   Users,
-  UserSquare2,
   Voicemail,
   Volume2,
 } from "lucide-react";
@@ -62,7 +61,7 @@ export const dashboardNavigation: NavSection[] = [
         href: "/survey",
         icon: ClipboardList,
         module: "survey",
-        description: "Survey module — campaigns, voices, and contact data.",
+        description: "Survey module — campaigns and voices.",
         children: [
           {
             id: "surveys-main",
@@ -79,22 +78,6 @@ export const dashboardNavigation: NavSection[] = [
             icon: Volume2,
             module: "voices",
             description: "Browse and select survey voices.",
-          },
-          {
-            id: "library-audio-buffer",
-            title: "Audio Buffer",
-            href: "/library/audio-buffer",
-            icon: Inbox,
-            module: "audio_buffer",
-            description: "Manage cached voice audio.",
-          },
-          {
-            id: "customers",
-            title: "Survey Data",
-            href: "/customers",
-            icon: UserSquare2,
-            module: "survey_data",
-            description: "Contact and survey data records.",
           },
         ],
       },
@@ -258,16 +241,9 @@ export const routePaths = {
   },
   library: {
     voices: "/library/voices",
-    audioBuffer: "/library/audio-buffer",
   },
   users: "/users",
   roles: "/roles",
-  customers: "/customers",
-  surveys: {
-    root: "/surveys",
-    builder: "/surveys/builder",
-    results: "/surveys/results",
-  },
   calls: {
     root: "/calls",
     live: "/calls/live",

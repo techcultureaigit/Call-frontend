@@ -6,6 +6,7 @@ import {
 import { formatAgentCreatedAt } from "@/lib/utils/date";
 import { downloadCSV } from "@/lib/utils/csv";
 import { getSurveyDisplayStatus } from "@/lib/utils/survey-readiness";
+import { withGlobalLoader } from "@/stores/api-loading.store";
 import type { Agent, AgentSurveyQuestion } from "@/types/agent";
 
 export type SurveysExportFormat = "xlsx" | "csv";
@@ -179,13 +180,20 @@ export function exportSurveysExcel(agents: Agent[], filename?: string): void {
   XLSX.writeFile(book, filename ?? `surveys-export-${Date.now()}.xlsx`);
 }
 
-export function exportSurveys(
+export async function exportSurveys(
   agents: Agent[],
   format: SurveysExportFormat
-): void {
-  if (format === "xlsx") {
-    exportSurveysExcel(agents);
-  } else {
-    exportSurveysCSV(agents);
-  }
+): Promise<void> {
+  await withGlobalLoader(
+    async () => {
+      // Yield so the global overlay can paint before heavy XLSX work
+      await new Promise<void>((r) => setTimeout(r, 0));
+      if (format === "xlsx") {
+        exportSurveysExcel(agents);
+      } else {
+        exportSurveysCSV(agents);
+      }
+    },
+    { label: "Exporting", hint: "Preparing your file" }
+  );
 }

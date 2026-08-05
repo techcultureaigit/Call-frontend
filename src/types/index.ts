@@ -122,8 +122,3 @@ export type {
   VoiceTypeFilter,
   VoiceGenderFilter,
 } from "./voice";
-export type {
-  CachedVoice,
-  AudioBufferEntry,
-  AudioBufferCacheData,
-} from "./audio-buffer";

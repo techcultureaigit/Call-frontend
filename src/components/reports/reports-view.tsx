@@ -64,14 +64,16 @@ export function ReportsView() {
 
   const handleExportPdf = useCallback(() => {
     if (!data) return;
-    exportReportsPdf(data);
-    toast.success("PDF export opened — use Save as PDF in print dialog");
+    void exportReportsPdf(data).then(() => {
+      toast.success("PDF export opened — use Save as PDF in print dialog");
+    });
   }, [data]);
 
   const handleExportExcel = useCallback(() => {
     if (!data) return;
-    exportReportsExcel(data);
-    toast.success("Excel file downloaded");
+    void exportReportsExcel(data).then(() => {
+      toast.success("Excel file downloaded");
+    });
   }, [data]);
 
   return (

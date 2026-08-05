@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Loader2 } from "lucide-react";
+import { AppLoaderSpinner } from "@/components/ui/app-loader";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -100,7 +100,7 @@ export function RoleFormModal({
           </DialogTitle>
           <DialogDescription>
             {formLocked
-              ? "Super Admin has full access and is locked — view only."
+              ? "Super Admin has full access and is locked â€” view only."
               : isEdit
                 ? "Update role details and configure module permissions."
                 : "Define a new role with granular CRUD permissions."}
@@ -147,7 +147,7 @@ export function RoleFormModal({
             </Button>
             {!formLocked && (
               <Button type="submit" disabled={isLoading}>
-                {isLoading && <Loader2 className="size-4 animate-spin" />}
+                {isLoading && <AppLoaderSpinner size="sm" className="mr-1" />}
                 {isEdit ? "Save changes" : "Create role"}
               </Button>
             )}

@@ -98,7 +98,7 @@ export function ResponsesView({ viewMode = "all" }: ResponsesViewProps) {
         surveyId,
         sentiment,
       });
-      exportResponsesCSV(rows);
+      await exportResponsesCSV(rows);
       toast.success(`Exported ${rows.length} responses`);
     } catch {
       toast.error("Export failed");

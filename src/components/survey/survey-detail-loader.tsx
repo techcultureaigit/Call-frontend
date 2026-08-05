@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import { Bot } from "lucide-react";
 import { PageContainer } from "@/components/layout";
 import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
 import { surveysModuleService } from "@/services/surveys-module.service";
 import type { Agent } from "@/types/agent";
 import { SurveyDetailView } from "./survey-detail-view";
@@ -32,10 +31,7 @@ export function SurveyDetailLoader({ id }: SurveyDetailLoaderProps) {
   if (agent === undefined) {
     return (
       <PageContainer size="full" className="pt-6">
-        <div className="space-y-4">
-          <Skeleton className="h-12 w-64 rounded-[6px]" />
-          <Skeleton className="h-[420px] w-full rounded-[6px]" />
-        </div>
+        <div className="min-h-[40vh]" aria-busy="true" aria-label="Loading survey" />
       </PageContainer>
     );
   }

@@ -1,7 +1,6 @@
 import type { ApiResponse } from "@/types/api";
 import type { BackendVoice } from "@/lib/utils/voice-mapper";
-import { apiEndpoints } from "./endpoints";
-import { apiGet } from "./http";
+import { apiGet } from "@/lib/api";
 
 export interface VoicesListParams {
   page?: number;
@@ -30,11 +29,11 @@ interface VoicesListResponse {
   };
 }
 
-/** Raw HTTP — services map to UI shapes */
+/** Direct Express `/api/v1/voices` — uses NEXT_PUBLIC_API_URL (port 8000) */
 export const voicesApi = {
   list: (params: VoicesListParams = {}) =>
-    apiGet<VoicesListResponse>(apiEndpoints.voices.list, params),
+    apiGet<VoicesListResponse>("/voices", { params }),
 
   getById: (id: string) =>
-    apiGet<ApiResponse<BackendVoice>>(apiEndpoints.voices.detail(id)),
+    apiGet<ApiResponse<BackendVoice>>(`/voices/${id}`),
 };

@@ -1,5 +1,6 @@
 import type { ReportsData } from "@/types/reports";
 import { downloadCSV } from "@/lib/utils/csv";
+import { withGlobalLoader } from "@/stores/api-loading.store";
 
 export function reportsToExcel(data: ReportsData): string {
   const sections: string[] = [];
@@ -48,13 +49,25 @@ export function reportsToExcel(data: ReportsData): string {
   return sections.join("\n");
 }
 
-export function exportReportsExcel(data: ReportsData) {
-  const csv = reportsToExcel(data);
-  downloadCSV(csv, `crm-report-${data.dateRange.from}-${data.dateRange.to}.csv`);
+export async function exportReportsExcel(data: ReportsData) {
+  await withGlobalLoader(
+    async () => {
+      await new Promise<void>((r) => setTimeout(r, 0));
+      const csv = reportsToExcel(data);
+      downloadCSV(
+        csv,
+        `crm-report-${data.dateRange.from}-${data.dateRange.to}.csv`
+      );
+    },
+    { label: "Exporting", hint: "Preparing your file" }
+  );
 }
 
-export function exportReportsPdf(data: ReportsData) {
-  const html = `
+export async function exportReportsPdf(data: ReportsData) {
+  await withGlobalLoader(
+    async () => {
+      await new Promise<void>((r) => setTimeout(r, 0));
+      const html = `
 <!DOCTYPE html>
 <html>
 <head>
@@ -120,10 +133,13 @@ export function exportReportsPdf(data: ReportsData) {
 </body>
 </html>`;
 
-  const win = window.open("", "_blank");
-  if (!win) return;
-  win.document.write(html);
-  win.document.close();
-  win.focus();
-  setTimeout(() => win.print(), 400);
+      const win = window.open("", "_blank");
+      if (!win) return;
+      win.document.write(html);
+      win.document.close();
+      win.focus();
+      setTimeout(() => win.print(), 400);
+    },
+    { label: "Exporting", hint: "Preparing your file" }
+  );
 }

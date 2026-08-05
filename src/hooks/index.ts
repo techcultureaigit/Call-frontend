@@ -15,7 +15,6 @@ export { useNavigation } from "./use-navigation";
 export { useDashboard } from "./use-dashboard";
 export { useUsers, useUserMutations, useUserDetail } from "./use-users";
 export { useRoles, useRoleMutations, useRoleDetail } from "./use-roles";
-export { useCustomers, useCustomerMutations } from "./use-customers";
 export { useSurveys, useSurveyDetail, useSurveyMutations } from "./use-surveys";
 export {
   useSurveyTemplates,

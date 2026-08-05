@@ -1,7 +1,8 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import { CheckCircle2, AlertCircle, Loader2 } from "lucide-react";
+import { CheckCircle2, AlertCircle } from "lucide-react";
+import { AppLoaderSpinner } from "@/components/ui/app-loader";
 
 export function SettingsStatusBadge({
   connected,
@@ -58,7 +59,7 @@ export function SettingsAutosaveIndicator({
     >
       {status === "saving" && (
         <>
-          <Loader2 className="size-3 animate-spin" />
+          <AppLoaderSpinner size="sm" />
           Saving…
         </>
       )}

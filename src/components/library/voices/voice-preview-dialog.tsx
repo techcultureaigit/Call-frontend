@@ -1,12 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   ChevronLeft,
   ChevronRight,
-  Pause,
   Play,
   Share2,
+  Square,
   Volume2,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -24,12 +24,9 @@ import {
   VOICE_PROVIDER_STYLES,
 } from "@/lib/constants/voices";
 import {
-  getPlayingVoiceId,
-  playVoiceRingtone,
   resolveVoicePreviewUrl,
+  setPlayingVoiceId,
   stopVoiceRingtone,
-  subscribeVoicePlayback,
-  toggleVoiceRingtone,
 } from "@/lib/voice-playback";
 import { cn } from "@/lib/utils";
 import type { VoiceProfile } from "@/types/voice";
@@ -46,6 +43,14 @@ interface VoicePreviewDialogProps {
   selected?: boolean;
 }
 
+function buildVoiceShareUrl(voice: VoiceProfile): string {
+  if (typeof window === "undefined") return "";
+  const url = new URL(window.location.href);
+  url.pathname = "/library/voices";
+  url.searchParams.set("preview", voice.id);
+  return url.toString();
+}
+
 export function VoicePreviewDialog({
   voice,
   open,
@@ -57,46 +62,187 @@ export function VoicePreviewDialog({
   onChoose,
   selected = false,
 }: VoicePreviewDialogProps) {
-  const [playingId, setPlayingId] = useState<string | null>(getPlayingVoiceId);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const voiceIdRef = useRef<string | null>(null);
+  const [isPlaying, setIsPlaying] = useState(false);
 
-  useEffect(() => subscribeVoicePlayback(setPlayingId), []);
+  voiceIdRef.current = voice?.id ?? null;
 
+  const bindAudio = useCallback((el: HTMLAudioElement | null) => {
+    audioRef.current = el;
+    if (!el) return;
+
+    const onPlay = () => {
+      setIsPlaying(true);
+      if (voiceIdRef.current) setPlayingVoiceId(voiceIdRef.current);
+    };
+    const onPauseOrEnd = () => {
+      setIsPlaying(false);
+      setPlayingVoiceId(null);
+    };
+
+    el.addEventListener("play", onPlay);
+    el.addEventListener("playing", onPlay);
+    el.addEventListener("pause", onPauseOrEnd);
+    el.addEventListener("ended", onPauseOrEnd);
+
+    // Store removers on the element for cleanup when ref changes
+    (
+      el as HTMLAudioElement & {
+        __voiceCleanup?: () => void;
+      }
+    ).__voiceCleanup = () => {
+      el.removeEventListener("play", onPlay);
+      el.removeEventListener("playing", onPlay);
+      el.removeEventListener("pause", onPauseOrEnd);
+      el.removeEventListener("ended", onPauseOrEnd);
+    };
+  }, []);
+
+  const audioCallbackRef = useCallback(
+    (el: HTMLAudioElement | null) => {
+      const prev = audioRef.current as
+        | (HTMLAudioElement & { __voiceCleanup?: () => void })
+        | null;
+      prev?.__voiceCleanup?.();
+      bindAudio(el);
+    },
+    [bindAudio]
+  );
+
+  // Stop shared ringtone + reset when dialog opens/closes
   useEffect(() => {
-    if (!open) stopVoiceRingtone();
+    stopVoiceRingtone();
+    setIsPlaying(false);
+    if (!open) setPlayingVoiceId(null);
   }, [open]);
+
+  // Reset player when switching voice
+  useEffect(() => {
+    setIsPlaying(false);
+    const el = audioRef.current;
+    if (!el) return;
+    el.pause();
+    el.currentTime = 0;
+  }, [voice?.id]);
+
+  // Keyboard: ← Back, → Forward
+  useEffect(() => {
+    if (!open) return;
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      const target = event.target as HTMLElement | null;
+      if (
+        target?.closest(
+          "input, textarea, select, [contenteditable='true'], audio"
+        )
+      ) {
+        return;
+      }
+
+      if (event.key === "ArrowLeft" && canGoBack) {
+        event.preventDefault();
+        onBack?.();
+      }
+      if (event.key === "ArrowRight" && canGoForward) {
+        event.preventDefault();
+        onForward?.();
+      }
+    };
+
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [open, canGoBack, canGoForward, onBack, onForward]);
 
   if (!voice) return null;
 
-  const isPlaying = playingId === voice.id;
   const genderStyle = VOICE_GENDER_STYLES[voice.gender];
   const providerStyle = VOICE_PROVIDER_STYLES[voice.provider];
+  const audioSrc = resolveVoicePreviewUrl(voice.previewUrl);
 
   const handleShare = async () => {
-    const shareData = {
-      title: `${voice.name} voice`,
-      text: voice.description,
-      url: typeof window !== "undefined" ? window.location.href : "",
-    };
+    const shareUrl = buildVoiceShareUrl(voice);
+    const shareText = [
+      voice.name,
+      voice.description,
+      `${genderStyle.label} · ${providerStyle.label}`,
+      shareUrl,
+    ]
+      .filter(Boolean)
+      .join("\n");
 
     try {
-      if (navigator.share) {
-        await navigator.share(shareData);
+      if (typeof navigator !== "undefined" && navigator.share) {
+        await navigator.share({
+          title: `${voice.name} — Voice Survey`,
+          text: voice.description,
+          url: shareUrl,
+        });
+        toast.success("Voice shared");
         return;
       }
-      await navigator.clipboard.writeText(
-        `${voice.name} — ${voice.description}`
-      );
-      toast.success("Voice details copied to clipboard");
-    } catch {
-      toast.message("Share cancelled");
+
+      await navigator.clipboard.writeText(shareText);
+      toast.success("Voice link copied to clipboard");
+    } catch (error) {
+      if (error instanceof DOMException && error.name === "AbortError") {
+        return;
+      }
+      try {
+        await navigator.clipboard.writeText(shareUrl || shareText);
+        toast.success("Voice link copied to clipboard");
+      } catch {
+        toast.error("Could not share this voice");
+      }
     }
   };
 
-  const handleListen = () => {
-    toggleVoiceRingtone(voice.id, voice.previewUrl);
+  const pausePreview = () => {
+    const el = audioRef.current;
+    if (el && !el.paused) el.pause();
+    setIsPlaying(false);
+    setPlayingVoiceId(null);
   };
 
-  const audioSrc = resolveVoicePreviewUrl(voice.previewUrl);
+  const handleBack = () => {
+    if (!canGoBack) return;
+    pausePreview();
+    onBack?.();
+  };
+
+  const handleForward = () => {
+    if (!canGoForward) return;
+    pausePreview();
+    onForward?.();
+  };
+
+  const handleListen = async () => {
+    const el = audioRef.current;
+    if (!el) return;
+
+    stopVoiceRingtone();
+
+    // Playing → stop (icon → Play)
+    if (!el.paused && !el.ended) {
+      el.pause();
+      el.currentTime = 0;
+      setIsPlaying(false);
+      setPlayingVoiceId(null);
+      return;
+    }
+
+    // Stopped → start (icon → Stop)
+    try {
+      el.currentTime = 0;
+      setIsPlaying(true);
+      setPlayingVoiceId(voice.id);
+      await el.play();
+    } catch {
+      toast.error("Could not play this voice preview");
+      setIsPlaying(false);
+      setPlayingVoiceId(null);
+    }
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -148,7 +294,7 @@ export function VoicePreviewDialog({
               {voice.previewUrl ? "Voice preview" : "Dummy ringtone"}
             </p>
             <audio
-              key={`${voice.id}-${audioSrc}`}
+              ref={audioCallbackRef}
               controls
               src={audioSrc}
               className="w-full"
@@ -163,7 +309,7 @@ export function VoicePreviewDialog({
               type="button"
               variant="outline"
               className="h-10 rounded-[6px]"
-              onClick={handleShare}
+              onClick={() => void handleShare()}
             >
               <Share2 className="size-4" />
               Share
@@ -172,8 +318,9 @@ export function VoicePreviewDialog({
               type="button"
               variant="outline"
               className="h-10 rounded-[6px]"
-              onClick={onBack}
+              onClick={handleBack}
               disabled={!canGoBack}
+              title={canGoBack ? "Previous voice (←)" : "No previous voice"}
             >
               <ChevronLeft className="size-4" />
               Back
@@ -182,8 +329,9 @@ export function VoicePreviewDialog({
               type="button"
               variant="outline"
               className="h-10 rounded-[6px]"
-              onClick={onForward}
+              onClick={handleForward}
               disabled={!canGoForward}
+              title={canGoForward ? "Next voice (→)" : "No next voice"}
             >
               Forward
               <ChevronRight className="size-4" />
@@ -191,14 +339,15 @@ export function VoicePreviewDialog({
             <Button
               type="button"
               className="h-10 rounded-[6px]"
-              onClick={handleListen}
+              onClick={() => void handleListen()}
+              aria-label={isPlaying ? "Stop preview" : "Play preview"}
             >
               {isPlaying ? (
-                <Pause className="size-4" />
+                <Square className="size-3.5 fill-current" />
               ) : (
-                <Play className="size-4" />
+                <Play className="size-4 fill-current" />
               )}
-              Listen
+              {isPlaying ? "Stop" : "Listen"}
             </Button>
           </div>
 
@@ -210,7 +359,9 @@ export function VoicePreviewDialog({
               onClick={() => {
                 onChoose(voice);
                 if (!selected) {
-                  void playVoiceRingtone(voice.id, voice.previewUrl);
+                  void handleListen();
+                } else {
+                  pausePreview();
                 }
               }}
             >

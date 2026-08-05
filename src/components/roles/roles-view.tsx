@@ -18,7 +18,7 @@ export function RolesView() {
   const [selectedRole, setSelectedRole] = useState<RoleListItem | null>(null);
 
   const debouncedSearch = useDebounce(search, 300);
-  const { data: roles = [], isLoading, isFetching } = useRoles(debouncedSearch);
+  const { data: roles = [], isLoading } = useRoles(debouncedSearch);
   const { deleteRole } = useRoleMutations();
 
   const { applyMeta, resetPageMeta } = usePageMeta({
@@ -74,12 +74,6 @@ export function RolesView() {
           onDelete={openDelete}
           isLoading={isLoading}
         />
-
-        {isFetching && !isLoading && (
-          <div className="flex justify-center">
-            <div className="size-1.5 animate-pulse rounded-full bg-primary" />
-          </div>
-        )}
       </motion.div>
 
       <DeleteRoleDialog

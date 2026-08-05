@@ -1,6 +1,7 @@
 import { createQueryString } from "@/lib/utils";
 import { getAccessTokenFromCookie } from "@/lib/auth/session";
 import {
+  inferLoaderMessage,
   shouldSkipGlobalLoader,
   useApiLoadingStore,
 } from "@/stores/api-loading.store";
@@ -61,7 +62,11 @@ export async function apiRequest<T>(
   }
 
   const track = !shouldSkipGlobalLoader(path);
-  if (track) useApiLoadingStore.getState().start();
+  if (track) {
+    useApiLoadingStore
+      .getState()
+      .start(inferLoaderMessage(init.method ?? "GET", path));
+  }
 
   try {
     const response = await fetch(path, {

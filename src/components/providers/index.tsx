@@ -1,9 +1,10 @@
 "use client";
 
-import type { ReactNode } from "react";
+import { type ReactNode } from "react";
 import { QueryProvider } from "./query-provider";
 import { ThemeProvider } from "./theme-provider";
 import { ToastProvider } from "./toast-provider";
+import { GlobalApiLoader } from "./global-api-loader";
 
 interface AppProvidersProps {
   children: ReactNode;
@@ -13,8 +14,11 @@ export function AppProviders({ children }: AppProvidersProps) {
   return (
     <ThemeProvider>
       <QueryProvider>
-        {/* Page-level AppLoader only — no top-right global chip */}
-        <ToastProvider>{children}</ToastProvider>
+        <ToastProvider>
+          {/* Single fullscreen loader — no NavigationLoader (avoids double flash) */}
+          <GlobalApiLoader />
+          {children}
+        </ToastProvider>
       </QueryProvider>
     </ThemeProvider>
   );

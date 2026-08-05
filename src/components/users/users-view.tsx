@@ -33,7 +33,7 @@ export function UsersView() {
   const sortBy = sorting[0]?.id ?? "createdAt";
   const sortOrder = sorting[0]?.desc ? "desc" : "asc";
 
-  const { data, isLoading, isFetching } = useUsers({
+  const { data, isLoading } = useUsers({
     page,
     limit: 10,
     search: debouncedSearch,
@@ -138,12 +138,6 @@ export function UsersView() {
 
         {data?.meta && data.meta.total > 0 && (
           <UsersPagination meta={data.meta} onPageChange={setPage} />
-        )}
-
-        {isFetching && !isLoading && (
-          <div className="flex justify-center">
-            <div className="size-1.5 animate-pulse rounded-full bg-primary" />
-          </div>
         )}
       </motion.div>
 

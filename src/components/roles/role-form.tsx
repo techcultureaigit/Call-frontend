@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Loader2 } from "lucide-react";
+import { AppLoaderSpinner } from "@/components/ui/app-loader";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -69,7 +69,7 @@ export function RoleForm({
         ? sanitizePermissions(role.permissions)
         : createEmptyPermissions()
     );
-    // Only re-hydrate when switching roles — not on every parent re-render
+    // Only re-hydrate when switching roles â€” not on every parent re-render
     // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional: role.id
   }, [role?.id, reset]);
 
@@ -98,7 +98,7 @@ export function RoleForm({
             )}
             {permissionsLocked ? (
               <p className="text-xs text-muted-foreground">
-                Super Admin is locked with full access — view only.
+                Super Admin is locked with full access â€” view only.
               </p>
             ) : nameLocked ? (
               <p className="text-xs text-muted-foreground">
@@ -130,7 +130,7 @@ export function RoleForm({
         </Button>
         {!formLocked && (
           <Button type="submit" disabled={isLoading}>
-            {isLoading && <Loader2 className="size-4 animate-spin" />}
+            {isLoading && <AppLoaderSpinner size="sm" className="mr-1" />}
             {isEdit ? "Save changes" : "Create role"}
           </Button>
         )}

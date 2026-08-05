@@ -3,7 +3,8 @@
 import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
-import { Eye, EyeOff, Loader2 } from "lucide-react";
+import { Eye, EyeOff } from "lucide-react";
+import { AppLoaderSpinner } from "@/components/ui/app-loader";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -140,7 +141,7 @@ function LoginForm() {
         <Button type="submit" className="w-full" disabled={isLoading}>
           {isLoading ? (
             <>
-              <Loader2 className="size-4 animate-spin" />
+              <AppLoaderSpinner size="sm" className="mr-1" />
               Signing in...
             </>
           ) : (

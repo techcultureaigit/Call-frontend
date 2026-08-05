@@ -32,11 +32,8 @@ function viewerPermissions(): RolePermissions {
   const perms = createEmptyPermissions();
 
   perms.dashboard = flags({ read: true });
-  perms.survey = flags({ read: true });
-  perms.surveys = flags({ read: true });
-  perms.library = flags({ read: true, download: true });
-  perms.audio_buffer = flags({ read: true });
-  perms.customers = flags({ read: true, export: true });
+  perms.my_surveys = flags({ read: true });
+  perms.voices = flags({ read: true, download: true });
   perms.calls = flags({ read: true, download: true });
   perms.calls_live = flags({ read: true, download: true });
   perms.calls_history = flags({ read: true, download: true });

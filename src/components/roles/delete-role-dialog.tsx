@@ -1,6 +1,6 @@
 "use client";
 
-import { Loader2 } from "lucide-react";
+import { AppLoaderSpinner } from "@/components/ui/app-loader";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -80,7 +80,7 @@ export function DeleteRoleDialog({
             onClick={onConfirm}
             disabled={isLoading || role.userCount > 0 || blocked}
           >
-            {isLoading && <Loader2 className="size-4 animate-spin" />}
+            {isLoading && <AppLoaderSpinner size="sm" className="mr-1" />}
             Delete role
           </Button>
         </DialogFooter>

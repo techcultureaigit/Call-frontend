@@ -48,9 +48,9 @@ const actions: QuickAction[] = [
     ring: "group-hover:ring-emerald-500/30",
   },
   {
-    title: "Survey Data",
-    description: "Customer records",
-    href: "/customers",
+    title: "Users",
+    description: "Manage team access",
+    href: "/users",
     icon: UserPlus,
     tile: "bg-gradient-to-br from-cyan-500/20 to-cyan-500/5 text-cyan-600 dark:text-cyan-400",
     ring: "group-hover:ring-cyan-500/30",

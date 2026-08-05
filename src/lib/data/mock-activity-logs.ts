@@ -54,7 +54,7 @@ export const MOCK_ACTIVITY_LOGS: ActivityLog[] = [
   {
     id: "log-2",
     action: "create",
-    module: "survey_data",
+    module: "my_surveys",
     resourceType: "Customer",
     resourceId: "cust-128",
     resourceName: "Acme Corporation",
@@ -139,7 +139,7 @@ export const MOCK_ACTIVITY_LOGS: ActivityLog[] = [
   {
     id: "log-7",
     action: "bulk_update",
-    module: "survey_data",
+    module: "my_surveys",
     resourceType: "Customer",
     resourceId: "bulk-12",
     resourceName: "52 customers",
@@ -190,7 +190,7 @@ export const MOCK_ACTIVITY_LOGS: ActivityLog[] = [
   {
     id: "log-10",
     action: "import",
-    module: "survey_data",
+    module: "my_surveys",
     resourceType: "Import",
     resourceId: "import-7",
     resourceName: "CRM Sync Import",
@@ -309,7 +309,7 @@ export const MOCK_ACTIVITY_LOGS: ActivityLog[] = [
   {
     id: "log-17",
     action: "bulk_delete",
-    module: "survey_data",
+    module: "my_surveys",
     resourceType: "Customer",
     resourceId: "bulk-del-3",
     resourceName: "8 customers",
@@ -439,7 +439,7 @@ export const MOCK_ACTIVITY_LOGS: ActivityLog[] = [
   {
     id: "log-25",
     action: "export",
-    module: "survey_data",
+    module: "my_surveys",
     resourceType: "Export",
     resourceId: "export-31",
     resourceName: "Customers Excel Export",

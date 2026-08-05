@@ -10,8 +10,6 @@ export type NavModule =
   | "survey"
   | "my_surveys"
   | "voices"
-  | "audio_buffer"
-  | "survey_data"
   | "calls"
   | "calls_live"
   | "calls_history"
@@ -32,8 +30,6 @@ export const SIDEBAR_MODULES: readonly NavModule[] = [
   "survey",
   "my_surveys",
   "voices",
-  "audio_buffer",
-  "survey_data",
   "calls",
   "calls_live",
   "calls_history",

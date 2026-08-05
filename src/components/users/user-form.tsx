@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Loader2 } from "lucide-react";
+import { AppLoaderSpinner } from "@/components/ui/app-loader";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -187,7 +187,7 @@ export function UserForm({
             Cancel
           </Button>
           <Button type="submit" disabled={isLoading}>
-            {isLoading && <Loader2 className="size-4 animate-spin" />}
+            {isLoading && <AppLoaderSpinner size="sm" className="mr-1" />}
             {isEdit ? "Save changes" : "Create user"}
           </Button>
         </div>

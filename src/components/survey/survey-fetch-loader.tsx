@@ -1,25 +1,24 @@
 "use client";
 
-import { AppLoader } from "@/components/ui/app-loader";
-
 interface SurveyFetchLoaderProps {
   label?: string;
   hint?: string;
   className?: string;
 }
 
-/** Survey alias of the shared AppLoader card — same design for fetch & search. */
+/**
+ * Placeholder only — fullscreen GlobalApiLoader handles the visible spinner.
+ * Avoids a second in-page loader card on survey results.
+ */
 export function SurveyFetchLoader({
-  label = "Loading surveys",
-  hint = "Please wait a moment",
   className,
+  label = "Loading",
 }: SurveyFetchLoaderProps) {
   return (
-    <AppLoader
-      variant="page"
-      label={label}
-      hint={hint}
-      className={className}
+    <div
+      className={className ?? "min-h-40"}
+      aria-busy="true"
+      aria-label={label}
     />
   );
 }
