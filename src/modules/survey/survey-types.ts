@@ -16,19 +16,57 @@ export interface SurveyResultAnswer {
   type: string;
   answer: string;
   rawAnswer: unknown;
+  /** Present only when this answer has its own recording */
+  recording_url?: string | null;
+}
+
+export interface SurveyResultCallData {
+  call_status?: string;
+  direction?: string;
+  call_connected?: string;
+  duration?: string;
+  billsec?: string;
+  start_stamp?: string;
+  answer_stamp?: string;
+  end_stamp?: string;
+  agent_number?: string;
+  agent_ring_time?: string;
+  agent_transfer_ring_time?: string;
+  customer_ring_time?: string;
+  outbound_sec?: string;
+  caller_id_number?: string;
+  call_to_number?: string;
+  customer_no_with_prefix?: string;
+  answered_agent_name?: string;
+  answered_agent_number?: string;
+  missed_agent?: string;
+  campaign_name?: string;
+  custom_identifier?: string;
+  digits_dialed?: string;
+  broadcast_lead_fields?: string;
+  hangup_cause_description?: string;
+  reason_key?: string;
+  received_at?: string;
+  billing_circle?: { operator?: string; circle?: string } | null;
 }
 
 export interface SurveyResultRow {
   id: string;
   session_id: string;
+  call_sid?: string;
   customer_number: string;
   customer_name: string;
   customer_email: string;
   customer_company: string;
   extracted_at: string | null;
-  extracted_data: Record<string, unknown>;
+  /** Optional raw map — prefer `answers` when present */
+  extracted_data?: Record<string, unknown>;
   answers: SurveyResultAnswer[];
   survey_id: string;
+  /** Resolved once at root (not repeated inside `call`) */
+  recording_url?: string | null;
+  recording_duration_seconds?: number | null;
+  call?: SurveyResultCallData | null;
 }
 
 export interface SurveyResultQuestionOption {
