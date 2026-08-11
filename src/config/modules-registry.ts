@@ -20,6 +20,7 @@ import {
   Users,
   Voicemail,
   Volume2,
+  Cpu,
 } from "lucide-react";
 import type { NavModule } from "./permissions";
 
@@ -83,6 +84,14 @@ export const moduleNavSections: ModuleNavSection[] = [
             icon: Volume2,
             module: "voices",
             description: "Browse and select survey voices.",
+          },
+          {
+            id: "library-providers",
+            title: "Providers",
+            href: "/library/providers",
+            icon: Cpu,
+            module: "providers",
+            description: "Type + provider + models for survey speech pipeline.",
           },
         ],
       },

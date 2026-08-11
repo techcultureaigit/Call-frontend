@@ -46,6 +46,49 @@ function mapSchedulingStatus(s: BackendSurvey): SurveySchedulingStatus {
   return "draft";
 }
 
+/** Survey stores modelId; GET returns populated { id, name, provider } */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function mapStack(stack: any = {}) {
+  const rawModel = stack?.modelId;
+  let modelId: string | undefined;
+  let providerId: string | undefined;
+  let provider = stack?.provider ?? "";
+  let model = stack?.model ?? "";
+
+  if (rawModel && typeof rawModel === "object") {
+    modelId = String(rawModel._id ?? rawModel.id ?? "");
+    model = String(rawModel.name || model);
+
+    // Nested provider: modelId.provider OR modelId.provider_id
+    const pref = rawModel.provider ?? rawModel.provider_id;
+    if (pref && typeof pref === "object") {
+      providerId = String(pref._id ?? pref.id ?? "");
+      provider = String(pref.name || provider);
+    } else if (pref) {
+      providerId = String(pref);
+    }
+  } else if (rawModel) {
+    modelId = String(rawModel);
+  }
+
+  // Legacy flat fields (older API responses)
+  if (!providerId && stack?.providerId) {
+    const raw = stack.providerId;
+    providerId =
+      raw && typeof raw === "object"
+        ? String(raw._id ?? raw.id ?? "")
+        : String(raw);
+    if (raw && typeof raw === "object" && raw.name) provider = String(raw.name);
+  }
+
+  return {
+    modelId: modelId || undefined,
+    providerId: providerId || undefined,
+    provider,
+    model: model || "",
+  };
+}
+
 export function backendSurveyToAgent(s: BackendSurvey): Survey {
   const id = s._id ?? s.id;
   const persona = s.persona ?? {};
@@ -63,17 +106,10 @@ export function backendSurveyToAgent(s: BackendSurvey): Survey {
       maxCallDurationMinutes: persona.maxCallDurationMinutes ?? 15,
       audioCacheEnabled: persona.audioCacheEnabled ?? false,
       livekitInferenceEnabled: persona.livekitInferenceEnabled ?? false,
-      stt: {
-        provider: persona.stt?.provider ?? "sarvam",
-        model: persona.stt?.model ?? "Saaras:v3",
-      },
-      llm: {
-        provider: persona.llm?.provider ?? "openai",
-        model: persona.llm?.model ?? "gpt-4o",
-      },
+      stt: mapStack(persona.stt),
+      llm: mapStack(persona.llm),
       tts: {
-        provider: persona.tts?.provider ?? "google",
-        model: persona.tts?.model ?? "Google",
+        ...mapStack(persona.tts),
         voice: persona.tts?.voice ?? "",
       },
     },
@@ -162,12 +198,15 @@ export function agentToBackendPayload(
       maxCallDurationMinutes: c.persona.maxCallDurationMinutes,
       audioCacheEnabled: c.persona.audioCacheEnabled,
       livekitInferenceEnabled: c.persona.livekitInferenceEnabled,
-      stt: { provider: c.persona.stt.provider, model: c.persona.stt.model },
-      llm: { provider: c.persona.llm.provider, model: c.persona.llm.model },
+      stt: {
+        modelId: c.persona.stt.modelId || null,
+      },
+      llm: {
+        modelId: c.persona.llm.modelId || null,
+      },
       tts: {
-        provider: c.persona.tts.provider,
-        model: c.persona.tts.model,
-        voice: c.persona.tts.voice,
+        modelId: c.persona.tts.modelId || null,
+        voice: c.persona.tts.voice || "",
       },
     },
     prompts: {

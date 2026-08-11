@@ -25,7 +25,18 @@ import { SearchableSelect } from "@/components/ui/searchable-select";
 import { Select } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { DEFAULT_FAREWELL, AGENT_LANGUAGES as SURVEY_LANGUAGES, LLM_PROVIDERS, STT_PROVIDERS, TTS_MODELS_BY_PROVIDER, TTS_PROVIDERS, getSurveyQuestionTypeLabel, SURVEY_QUESTION_TYPES } from "@/lib/constants/agent-config";
+import { DEFAULT_FAREWELL, AGENT_LANGUAGES as SURVEY_LANGUAGES, getSurveyQuestionTypeLabel, SURVEY_QUESTION_TYPES } from "@/lib/constants/agent-config";
+import { listProviders } from "@/modules/providers/api";
+import {
+  modelNameById,
+  modelsForProviderId,
+  providerNameById,
+  providersForType,
+  resolveModelId,
+  resolveProviderId,
+  selectedModelValue,
+} from "@/modules/providers/provider-options";
+import type { ProviderItem } from "@/modules/providers/provider-types";
 import { cn } from "@/lib/utils";
 import {
   fetchClientContactsFromUrl,
@@ -429,6 +440,8 @@ function PipelineStage({
   onChange: (next: SurveyStackConfig) => void;
   extra?: ReactNode;
 }) {
+  const providerValue = stack.providerId || "";
+
   return (
     <article className="flex flex-col overflow-hidden rounded-[6px] border border-border/60 bg-card shadow-card">
       <div className="flex items-start gap-3 border-b border-border/40 bg-muted/15 px-4 py-3.5">
@@ -449,15 +462,51 @@ function PipelineStage({
       <div className="flex flex-1 flex-col gap-3 p-4">
         <OptionListPicker
           label="Provider"
-          value={stack.provider}
+          value={providerValue}
           options={providerOptions}
-          onChange={(v) => onChange({ ...stack, provider: v })}
+          onChange={(v) => {
+            if (!v) {
+              onChange({
+                ...stack,
+                providerId: "",
+                modelId: "",
+                provider: "",
+                model: "",
+                ...(stack.voice !== undefined ? { voice: "" } : {}),
+              });
+              return;
+            }
+            const opt = providerOptions.find((o) => o.value === v);
+            onChange({
+              ...stack,
+              providerId: v,
+              modelId: "",
+              provider: opt?.label ?? "",
+              model: "",
+              ...(stack.voice !== undefined ? { voice: "" } : {}),
+            });
+          }}
         />
         <OptionListPicker
           label="Model"
-          value={stack.model}
+          value={selectedModelValue(
+            modelOptions,
+            stack.modelId,
+            stack.model
+          )}
           options={modelOptions}
-          onChange={(v) => onChange({ ...stack, model: v })}
+          onChange={(v) => {
+            if (!v) {
+              onChange({ ...stack, modelId: "", model: "" });
+              return;
+            }
+            const opt = modelOptions.find((o) => o.value === v);
+            onChange({
+              ...stack,
+              modelId: v,
+              model: opt?.label ?? v,
+            });
+          }}
         />
         {extra}
       </div>
@@ -499,39 +548,127 @@ function VoiceSelectField({
 
 export function PersonaTab({ values, onChange }: PersonaTabProps) {
   const [voicePickerOpen, setVoicePickerOpen] = useState(false);
+  const [providers, setProviders] = useState<ProviderItem[]>([]);
 
   const update = <K extends keyof SurveyPersonaConfig>(
     key: K,
     val: SurveyPersonaConfig[K]
   ) => onChange({ ...values, [key]: val });
 
-  const ttsProvider =
-    values.tts.provider === "google" || values.tts.provider === "elevenlabs"
-      ? values.tts.provider
-      : "google";
-  const language = values.language;
-  const hasVoiceSource = true;
-
-  const ttsModelOptions =
-    TTS_MODELS_BY_PROVIDER[ttsProvider] ?? TTS_MODELS_BY_PROVIDER.google;
-
-  // Keep provider/model valid (no Azure; models match Vozzo lists)
   useEffect(() => {
-    const provider =
-      values.tts.provider === "elevenlabs" ? "elevenlabs" : "google";
-    const models = TTS_MODELS_BY_PROVIDER[provider];
-    const modelOk = models.some((m) => m.value === values.tts.model);
-
-    if (provider !== values.tts.provider || !modelOk) {
-      update("tts", {
-        ...values.tts,
-        provider,
-        model: modelOk ? values.tts.model : models[0].value,
-        voice: provider !== values.tts.provider ? "" : values.tts.voice,
+    let cancelled = false;
+    void listProviders()
+      .then((rows) => {
+        if (!cancelled) setProviders(rows.filter((r) => r.isActive !== false));
+      })
+      .catch(() => {
+        if (!cancelled) setProviders([]);
       });
-    }
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  // Resolve legacy surveys → providerId + modelId once providers load
+  useEffect(() => {
+    if (!providers.length) return;
+
+    const patchStack = (
+      type: "stt" | "llm" | "tts",
+      stack: SurveyStackConfig
+    ): SurveyStackConfig | null => {
+      const id = resolveProviderId(
+        providers,
+        type,
+        stack.provider,
+        stack.providerId
+      );
+      const mid = id
+        ? resolveModelId(providers, id, stack.model, stack.modelId)
+        : "";
+      const name = id ? providerNameById(providers, id) : stack.provider;
+      const modelName = mid
+        ? modelNameById(providers, id, mid) || stack.model
+        : stack.model;
+
+      if (
+        id === (stack.providerId || "") &&
+        mid === (stack.modelId || "") &&
+        name === stack.provider &&
+        modelName === stack.model
+      ) {
+        return null;
+      }
+
+      return {
+        ...stack,
+        providerId: id,
+        modelId: mid,
+        provider: name || stack.provider,
+        model: modelName,
+      };
+    };
+
+    const nextStt = patchStack("stt", values.stt);
+    const nextLlm = patchStack("llm", values.llm);
+    const nextTts = patchStack("tts", values.tts);
+    if (!nextStt && !nextLlm && !nextTts) return;
+
+    onChange({
+      ...values,
+      stt: nextStt ?? values.stt,
+      llm: nextLlm ?? values.llm,
+      tts: nextTts ?? values.tts,
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [values.tts.provider, values.tts.model]);
+  }, [providers]);
+
+  const sttProviders = providersForType(providers, "stt");
+  const llmProviders = providersForType(providers, "llm");
+  const ttsProviders = providersForType(providers, "tts");
+
+  const sttProviderId = values.stt.providerId || "";
+  const llmProviderId = values.llm.providerId || "";
+  const ttsProviderId = values.tts.providerId || "";
+
+  const sttModels = modelsForProviderId(providers, sttProviderId);
+  const llmModels = modelsForProviderId(providers, llmProviderId);
+  const ttsModels = modelsForProviderId(providers, ttsProviderId);
+
+  const language = values.language;
+  const ttsProviderKey =
+    values.tts.provider ||
+    (ttsProviderId ? providerNameById(providers, ttsProviderId) : "google");
+  const hasVoiceSource = Boolean(ttsProviderId || values.tts.provider);
+
+  const onStackChange = (
+    key: "stt" | "llm" | "tts",
+    next: SurveyStackConfig
+  ) => {
+    if (next.providerId) {
+      const name = providerNameById(providers, next.providerId);
+      const models = modelsForProviderId(providers, next.providerId, false);
+      const providerChanged = next.providerId !== values[key].providerId;
+      const modelId = providerChanged ? "" : next.modelId || "";
+      const modelOpt = models.find((m) => m.value === modelId);
+      update(key, {
+        ...next,
+        provider: name || next.provider,
+        modelId,
+        model: providerChanged ? "" : modelOpt?.label || next.model || "",
+        ...(key === "tts" && providerChanged ? { voice: "" } : {}),
+      });
+      return;
+    }
+    update(key, {
+      ...next,
+      providerId: "",
+      modelId: "",
+      provider: "",
+      model: "",
+      ...(key === "tts" ? { voice: "" } : {}),
+    });
+  };
 
   return (
     <div className="space-y-6">
@@ -660,12 +797,9 @@ export function PersonaTab({ values, onChange }: PersonaTabProps) {
             subtitle="Convert caller audio into text"
             icon={Mic}
             stack={values.stt}
-            providerOptions={STT_PROVIDERS}
-            modelOptions={[
-              { label: "Saaras:v3", value: "Saaras:v3" },
-              { label: "Nova-2", value: "nova-2" },
-            ]}
-            onChange={(next) => update("stt", next)}
+            providerOptions={sttProviders}
+            modelOptions={sttModels}
+            onChange={(next) => onStackChange("stt", next)}
           />
           <PipelineStage
             step="02 · Reason"
@@ -673,33 +807,19 @@ export function PersonaTab({ values, onChange }: PersonaTabProps) {
             subtitle="Decide what to say next"
             icon={BrainCircuit}
             stack={values.llm}
-            providerOptions={LLM_PROVIDERS}
-            modelOptions={[
-              { label: "GPT-4o", value: "gpt-4o" },
-              { label: "Claude Sonnet", value: "claude-sonnet" },
-            ]}
-            onChange={(next) => update("llm", next)}
+            providerOptions={llmProviders}
+            modelOptions={llmModels}
+            onChange={(next) => onStackChange("llm", next)}
           />
           <PipelineStage
             step="03 · Speak"
             title="Text to speech"
             subtitle="Voice the survey’s reply"
             icon={Volume2}
-            stack={{ ...values.tts, provider: ttsProvider }}
-            providerOptions={TTS_PROVIDERS}
-            modelOptions={ttsModelOptions}
-            onChange={(next) => {
-              const models =
-                TTS_MODELS_BY_PROVIDER[next.provider] ?? ttsModelOptions;
-              const modelOk = models.some((m) => m.value === next.model);
-              const providerChanged = next.provider !== ttsProvider;
-              update("tts", {
-                ...next,
-                // Provider change → first model of that provider (Vozzo behavior)
-                model: modelOk ? next.model : (models[0]?.value ?? next.model),
-                voice: providerChanged ? "" : next.voice,
-              });
-            }}
+            stack={values.tts}
+            providerOptions={ttsProviders}
+            modelOptions={ttsModels}
+            onChange={(next) => onStackChange("tts", next)}
             extra={
               <VoiceSelectField
                 value={values.tts.voice ?? ""}
@@ -715,7 +835,7 @@ export function PersonaTab({ values, onChange }: PersonaTabProps) {
         open={voicePickerOpen}
         onOpenChange={setVoicePickerOpen}
         language={language}
-        provider={ttsProvider}
+        provider={ttsProviderKey}
         selectedVoice={values.tts.voice}
         onSelect={(voice) =>
           update("tts", {

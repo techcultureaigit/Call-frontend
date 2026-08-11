@@ -29,6 +29,7 @@ export const routePaths = {
   },
   library: {
     voices: "/library/voices",
+    providers: "/library/providers",
   },
   users: "/users",
   roles: "/roles",

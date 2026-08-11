@@ -75,6 +75,12 @@ export const PERMISSION_MODULE_GROUPS: PermissionModuleGroup[] = [
             description: "Voice library",
             actions: [...CRUD, "download"],
           },
+          {
+            id: "providers",
+            label: "Providers",
+            description: "STT / LLM / TTS providers and models",
+            actions: [...CRUD],
+          },
         ],
       },
     ],

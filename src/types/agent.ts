@@ -42,6 +42,10 @@ export interface AgentStackFallback {
 export interface AgentStackConfig {
   provider: string;
   model: string;
+  /** Providers collection document id */
+  providerId?: string;
+  /** Model subdocument id on the provider */
+  modelId?: string;
   voice?: string;
   fallback?: AgentStackFallback;
   advanced?: AgentStackAdvanced;

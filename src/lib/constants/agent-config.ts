@@ -80,43 +80,6 @@ export function getAgentLanguageLabel(code: string): string {
   return AGENT_LANGUAGES.find((l) => l.value === code)?.label ?? code;
 }
 
-export const STT_PROVIDERS = [
-  { label: "Sarvam AI", value: "sarvam" },
-  { label: "Deepgram", value: "deepgram" },
-  { label: "OpenAI Whisper", value: "whisper" },
-];
-
-export const LLM_PROVIDERS = [
-  { label: "OpenAI", value: "openai" },
-  { label: "Anthropic", value: "anthropic" },
-  { label: "Google", value: "google" },
-];
-
-export const TTS_PROVIDERS = [
-  { label: "Google", value: "google" },
-  { label: "ElevenLabs", value: "elevenlabs" },
-];
-
-/** Model options by TTS provider (same as Vozzo) */
-export const TTS_MODELS_BY_PROVIDER: Record<
-  string,
-  { label: string; value: string }[]
-> = {
-  google: [{ label: "Google", value: "Google" }],
-  elevenlabs: [
-    { label: "Eleven_turbo_v2_5", value: "Eleven_turbo_v2_5" },
-    { label: "Eleven_flash_v2_5", value: "Eleven_flash_v2_5" },
-    { label: "Eleven_multilingual_v2", value: "Eleven_multilingual_v2" },
-  ],
-};
-
-export const BACKGROUND_NOISE = [
-  { label: "Off", value: "off" },
-  { label: "Office", value: "office" },
-  { label: "Cafe", value: "cafe" },
-  { label: "Call Center", value: "call-center" },
-];
-
 export const AGENT_TOOLS = [
   { id: "end-call", name: "End Call", description: "Gracefully end the conversation" },
   { id: "call-transfer", name: "Call Transfer", description: "Transfer to human agent" },
@@ -125,13 +88,6 @@ export const AGENT_TOOLS = [
   { id: "additional-detail", name: "Additional Detail (RAG)", description: "Fetch extra context from KB" },
   { id: "voice-mail", name: "Voice Mail", description: "Leave voicemail message" },
   { id: "external-transfer", name: "External Call Transfer", description: "Transfer to external number" },
-];
-
-export const QUESTION_TYPES = [
-  { label: "Text Input", value: "text" },
-  { label: "Yes / No", value: "yes_no" },
-  { label: "Rating", value: "rating" },
-  { label: "Multiple Choice", value: "multiple_choice" },
 ];
 
 export const SURVEY_QUESTION_TYPES = [
