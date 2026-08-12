@@ -173,7 +173,7 @@ export function SurveysTable({
         cell: (survey) => (
           <DataTableMetaChip
             icon={Mic2}
-            label={survey.config.persona.tts.voice?.trim() || "—"}
+            label={survey.config.persona.tts.voiceName?.trim() || "—"}
           />
         ),
       },

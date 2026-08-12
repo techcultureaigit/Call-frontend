@@ -70,7 +70,7 @@ function formatQuestionsSummary(questions: SurveyQuestion[]): string {
 }
 
 function surveyToRow(survey: Survey): string[] {
-  const voice = survey.config.persona.tts.voice?.trim() || "";
+  const voice = survey.config.persona.tts.voiceName?.trim() || "";
   const language = getSurveyLanguageLabel(
     survey.config.persona.language || survey.language
   );

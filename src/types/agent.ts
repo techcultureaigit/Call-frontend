@@ -46,7 +46,12 @@ export interface AgentStackConfig {
   providerId?: string;
   /** Model subdocument id on the provider */
   modelId?: string;
+  /** Voice collection document id */
   voice?: string;
+  /** Display name from the populated voice response */
+  voiceName?: string;
+  /** Provider/Cloudinary audio preview from the populated voice response */
+  voicePreviewUrl?: string;
   fallback?: AgentStackFallback;
   advanced?: AgentStackAdvanced;
 }

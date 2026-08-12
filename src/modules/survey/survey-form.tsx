@@ -29,7 +29,7 @@ import { ENABLED_AGENT_CONFIG_TABS as ENABLED_SURVEY_CONFIG_TABS, isAgentConfigT
 import { cn } from "@/lib/utils";
 import type { AgentConfigTab as SurveyConfigTab, Agent as Survey, AgentConfig as SurveyConfig } from "@/types/agent";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, HelpCircle, PanelRightClose, PanelRightOpen, Brain, CalendarClock, Check, ClipboardList, GitBranch, List, MessageCircle, Monitor, User, Users, ArrowRight, Maximize2, Mic, MicOff, Phone, PhoneOff, Volume2, Bot } from "lucide-react";
+import { ArrowLeft, HelpCircle, PanelRightClose, PanelRightOpen, Brain, CalendarClock, Check, ClipboardList, GitBranch, List, MessageCircle, Monitor, User, Users, ArrowRight, Maximize2, Mic, MicOff, Phone, PhoneOff, Volume2, Bot, AlertCircle } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -136,12 +136,14 @@ interface SurveyConfigTabsProps {
   active: SurveyConfigTab;
   onChange: (tab: SurveyConfigTab) => void;
   completedTabs?: Partial<Record<SurveyConfigTab, boolean>>;
+  invalidTabs?: Partial<Record<SurveyConfigTab, boolean>>;
 }
 
 export function SurveyConfigTabs({
   active,
   onChange,
   completedTabs = {},
+  invalidTabs = {},
 }: SurveyConfigTabsProps) {
   const visibleTabs = ENABLED_SURVEY_CONFIG_TABS;
 
@@ -153,6 +155,7 @@ export function SurveyConfigTabs({
           const isDisabled = isSurveyConfigTabDisabled(tab.id);
           const isActive = active === tab.id;
           const isDone = Boolean(completedTabs[tab.id as SurveyConfigTab]);
+          const isInvalid = Boolean(invalidTabs[tab.id as SurveyConfigTab]);
           const isLast = index === visibleTabs.length - 1;
 
           return (
@@ -190,15 +193,21 @@ export function SurveyConfigTabs({
                     isDone &&
                       !isActive &&
                       "bg-brand/12 text-brand ring-1 ring-inset ring-brand/25",
+                    isInvalid &&
+                      !isActive &&
+                      "bg-amber-500/10 text-amber-700 ring-1 ring-inset ring-amber-500/25",
                     isDisabled &&
                       "bg-muted/70 text-muted-foreground/70 ring-1 ring-inset ring-border/70",
                     !isActive &&
                       !isDone &&
+                      !isInvalid &&
                       !isDisabled &&
                       "bg-muted text-muted-foreground ring-1 ring-inset ring-border group-hover:text-foreground"
                   )}
                 >
-                  {isDone && !isActive ? (
+                  {isInvalid ? (
+                    <AlertCircle className="size-4" />
+                  ) : isDone && !isActive ? (
                     <Check className="size-4" />
                   ) : (
                     <Icon className="size-[18px]" />
@@ -218,7 +227,7 @@ export function SurveyConfigTabs({
                   </span>
                   <span
                     className={cn(
-                      "block truncate text-sm font-semibold tracking-tight transition-colors",
+                      "flex items-center gap-1.5 truncate text-sm font-semibold tracking-tight transition-colors",
                       isActive && !isDisabled
                         ? "text-foreground"
                         : isDone
@@ -228,7 +237,13 @@ export function SurveyConfigTabs({
                             : "text-muted-foreground group-hover:text-foreground"
                     )}
                   >
-                    {tab.label}
+                    <span className="truncate">{tab.label}</span>
+                    {isInvalid ? (
+                      <span
+                        className="size-1.5 shrink-0 rounded-full bg-amber-500"
+                        aria-label="Required fields missing"
+                      />
+                    ) : null}
                   </span>
                 </span>
               </button>
@@ -722,17 +737,17 @@ const TAB_REQUIRED_KEYS: Record<SurveyConfigTab, StepRequirementKey[]> = {
   functions: ["identity", "prompts", "survey-questions", "client-contact"],
 };
 
-const STEP_LABELS: Record<StepRequirementKey, string> = {
-  identity: "Identity",
-  prompts: "Instructions",
-  "survey-questions": "Survey Questions",
-  farewell: "Farewell",
-  "client-contact": "Contact of Client",
-  schedule: "Schedule",
-};
-
 const TAB_TO_PROGRESS_KEY: Partial<Record<SurveyConfigTab, StepRequirementKey>> = {
   persona: "identity",
+  prompts: "prompts",
+  "survey-questions": "survey-questions",
+  farewell: "farewell",
+  "client-contact": "client-contact",
+  schedule: "schedule",
+};
+
+const PROGRESS_TO_TAB: Record<StepRequirementKey, SurveyConfigTab> = {
+  identity: "persona",
   prompts: "prompts",
   "survey-questions": "survey-questions",
   farewell: "farewell",
@@ -765,6 +780,7 @@ export function SurveyCreateEditView({
   const [surveyId, setSurveyId] = useState(survey?.id);
   const [config, setConfig] = useState<SurveyConfig>(baseConfig);
   const [isSaving, setIsSaving] = useState(false);
+  const [showValidationErrors, setShowValidationErrors] = useState(false);
   const [scheduleForm, setScheduleForm] = useState<ScheduleFormValues>(() =>
     survey ? scheduleToFormValues(survey.schedule) : createEmptyScheduleForm()
   );
@@ -828,17 +844,31 @@ export function SurveyCreateEditView({
   const tabIndex = ENABLED_TAB_ORDER.indexOf(activeTab);
   const isFirst = tabIndex <= 0;
   const isLast = tabIndex === ENABLED_TAB_ORDER.length - 1;
+  const activeProgressKey = TAB_TO_PROGRESS_KEY[activeTab];
+  const activeMissing =
+    showValidationErrors && activeProgressKey
+      ? computedProgress[activeProgressKey].missing
+      : [];
+  const invalidTabs = useMemo(() => {
+    if (!showValidationErrors) return {};
+    return {
+      persona: !computedProgress.identity.complete,
+      prompts: !computedProgress.prompts.complete,
+      "survey-questions": !computedProgress["survey-questions"].complete,
+      "client-contact": !computedProgress["client-contact"].complete,
+    };
+  }, [computedProgress, showValidationErrors]);
+
+  const showBlockedStep = (key: StepRequirementKey) => {
+    setShowValidationErrors(true);
+    setActiveTab(PROGRESS_TO_TAB[key]);
+  };
 
   const handleBack = () => {
     if (tabIndex > 0) setActiveTab(ENABLED_TAB_ORDER[tabIndex - 1]);
   };
 
   const handleNext = async () => {
-    if (!config.persona.name.trim() && activeTab === "persona") {
-      toast.error("Please enter a survey name");
-      return;
-    }
-
     if (
       isLast &&
       scheduleForm.enabled &&
@@ -847,13 +877,20 @@ export function SurveyCreateEditView({
     ) {
       const parsed = parseScheduleForm(scheduleForm);
       if (!parsed.ok) {
+        setShowValidationErrors(true);
         toast.error(parsed.error);
         return;
       }
       if (!isSurveyReadyToSchedule(config)) {
-        toast.error(
-          "Add questions and upload a contact file before scheduling"
+        const blockedKey = ([
+          "identity",
+          "prompts",
+          "survey-questions",
+          "client-contact",
+        ] as StepRequirementKey[]).find(
+          (key) => !computedProgress[key].complete
         );
+        if (blockedKey) showBlockedStep(blockedKey);
         return;
       }
     }
@@ -873,9 +910,7 @@ export function SurveyCreateEditView({
       const requiredKeys = TAB_REQUIRED_KEYS[activeTab] ?? [];
       const blockedKey = requiredKeys.find((key) => !computedProgress[key].complete);
       if (blockedKey) {
-        toast.error(
-          `Complete required fields in ${STEP_LABELS[blockedKey]} before continuing`
-        );
+        showBlockedStep(blockedKey);
         return;
       }
 
@@ -944,7 +979,13 @@ export function SurveyCreateEditView({
       return step.optional || step.complete;
     });
     if (!canOpen) {
-      toast.error("Complete previous required steps first");
+      const blockedKey = ENABLED_TAB_ORDER.slice(0, targetIndex)
+        .map((stepTab) => TAB_TO_PROGRESS_KEY[stepTab])
+        .find(
+          (key): key is StepRequirementKey =>
+            Boolean(key && !computedProgress[key].optional && !computedProgress[key].complete)
+        );
+      if (blockedKey) showBlockedStep(blockedKey);
       return;
     }
     setActiveTab(tab);
@@ -957,6 +998,7 @@ export function SurveyCreateEditView({
           <PersonaTab
             values={config.persona}
             onChange={(v) => updateConfig("persona", v)}
+            showRequiredError={activeMissing.includes("name")}
           />
         );
       case "prompts":
@@ -964,6 +1006,7 @@ export function SurveyCreateEditView({
           <PromptsTab
             values={config.prompts}
             onChange={(v) => updateConfig("prompts", v)}
+            showRequiredError={activeMissing.includes("greeting_or_systemPrompt")}
           />
         );
       case "survey-questions":
@@ -972,6 +1015,7 @@ export function SurveyCreateEditView({
             surveyId={surveyId}
             values={config.surveyQuestions}
             onChange={(v) => updateConfig("surveyQuestions", v)}
+            showRequiredError={activeMissing.includes("questions")}
           />
         );
       case "farewell":
@@ -989,6 +1033,7 @@ export function SurveyCreateEditView({
             surveyId={surveyId}
             values={config.clientContact}
             onChange={(v) => updateConfig("clientContact", v)}
+            showRequiredError={activeMissing.includes("contact_file")}
           />
         );
       case "schedule":
@@ -1051,6 +1096,7 @@ export function SurveyCreateEditView({
                     computedProgress["client-contact"].complete,
                   schedule: computedProgress.schedule.complete,
                 }}
+                invalidTabs={invalidTabs}
               />
             </aside>
 

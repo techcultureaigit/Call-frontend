@@ -23,9 +23,14 @@ import { usePageMeta, usePermissions } from "@/hooks";
 import { AGENT_CONFIG_TABS as SURVEY_CONFIG_TABS, getAgentLanguageLabel as getSurveyLanguageLabel, isAgentConfigTabDisabled as isSurveyConfigTabDisabled } from "@/lib/constants/agent-config";
 import { getContactFileOpenUrl } from "@/lib/utils/contact-file-url";
 import { formatAgentCreatedAt as formatSurveyCreatedAt } from "@/lib/utils/date";
+import {
+  getPlayingVoiceId,
+  subscribeVoicePlayback,
+  toggleVoiceRingtone,
+} from "@/modules/voices/voice-playback";
 import type { Agent as Survey } from "@/types/agent";
 import { motion } from "framer-motion";
-import { ArrowLeft, CalendarClock, Clock, Copy, FileUp, Globe, MessageSquare, Mic, Pencil, Volume2, Bot } from "lucide-react";
+import { ArrowLeft, CalendarClock, Clock, Copy, FileUp, Globe, MessageSquare, Mic, Pencil, Volume2, Bot, Pause, Play } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -82,6 +87,9 @@ export function SurveyDetailView({ survey }: { survey: Survey }) {
   const router = useRouter();
   const [scheduleOpen, setScheduleOpen] = useState(false);
   const [currentSurvey, setCurrentAgent] = useState(survey);
+  const [playingVoiceId, setPlayingVoiceId] = useState<string | null>(() =>
+    getPlayingVoiceId()
+  );
   const {
     isReady,
     canCreateSurvey,
@@ -108,13 +116,21 @@ export function SurveyDetailView({ survey }: { survey: Survey }) {
     setCurrentAgent(survey);
   }, [survey]);
 
+  useEffect(
+    () => subscribeVoicePlayback(setPlayingVoiceId),
+    []
+  );
+
   useEffect(() => {
     applyMeta();
     return () => resetPageMeta();
   }, [applyMeta, resetPageMeta]);
 
   const persona = currentSurvey.config.persona;
-  const voice = persona.tts.voice?.trim() || "—";
+  const voice = persona.tts.voiceName?.trim() || "—";
+  const voiceId = persona.tts.voice?.trim() || "";
+  const voicePreviewUrl = persona.tts.voicePreviewUrl?.trim() || "";
+  const isVoicePlaying = Boolean(voiceId && playingVoiceId === voiceId);
   const language = getSurveyLanguageLabel(persona.language || currentSurvey.language);
   const greeting = currentSurvey.config.prompts.greeting?.trim() || "—";
   const systemPrompt = currentSurvey.config.prompts.systemPrompt?.trim() || "—";
@@ -248,9 +264,32 @@ export function SurveyDetailView({ survey }: { survey: Survey }) {
                     </span>
                   </DetailField>
                   <DetailField label="Voice">
-                    <span className="inline-flex items-center gap-1.5">
-                      <Volume2 className="size-3.5 text-primary" />
-                      {voice}
+                    <span className="inline-flex flex-wrap items-center gap-2">
+                      <span className="inline-flex items-center gap-1.5">
+                        <Volume2 className="size-3.5 text-primary" />
+                        {voice}
+                      </span>
+                      {voiceId && voicePreviewUrl ? (
+                        <button
+                          type="button"
+                          onClick={() =>
+                            toggleVoiceRingtone(voiceId, voicePreviewUrl)
+                          }
+                          className="inline-flex h-7 items-center gap-1 rounded-full border border-primary/20 bg-primary/5 px-2.5 text-[11px] font-semibold text-primary transition-colors hover:bg-primary/10"
+                          aria-label={
+                            isVoicePlaying
+                              ? `Pause ${voice}`
+                              : `Listen to ${voice}`
+                          }
+                        >
+                          {isVoicePlaying ? (
+                            <Pause className="size-3" />
+                          ) : (
+                            <Play className="size-3" />
+                          )}
+                          {isVoicePlaying ? "Pause" : "Listen"}
+                        </button>
+                      ) : null}
                     </span>
                   </DetailField>
                   <DetailField label="Max duration">
@@ -297,7 +336,7 @@ export function SurveyDetailView({ survey }: { survey: Survey }) {
                     <span className="inline-flex flex-col gap-0.5">
                       <span>
                         {tts.provider}
-                        {tts.voice ? ` · ${tts.voice}` : ""}
+                        {tts.voiceName ? ` · ${tts.voiceName}` : ""}
                       </span>
                       <span className="text-xs text-muted-foreground">
                         {tts.model}

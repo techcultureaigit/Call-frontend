@@ -261,10 +261,17 @@ export function FarewellTab({ value, onChange }: FarewellTabProps) {
 interface PromptsTabProps {
   values: SurveyPromptsConfig;
   onChange: (values: SurveyPromptsConfig) => void;
+  showRequiredError?: boolean;
 }
 
-export function PromptsTab({ values, onChange }: PromptsTabProps) {
+export function PromptsTab({
+  values,
+  onChange,
+  showRequiredError = false,
+}: PromptsTabProps) {
   const [loadingPrompt, setLoadingPrompt] = useState(false);
+  const [greetingTouched, setGreetingTouched] = useState(false);
+  const [promptTouched, setPromptTouched] = useState(false);
 
   const update = <K extends keyof SurveyPromptsConfig>(
     key: K,
@@ -284,6 +291,12 @@ export function PromptsTab({ values, onChange }: PromptsTabProps) {
   };
 
   const greetingLeft = 250 - values.greeting.length;
+  const bothPromptFieldsEmpty =
+    !values.greeting.trim() && !values.systemPrompt.trim();
+  const greetingError =
+    bothPromptFieldsEmpty && (showRequiredError || greetingTouched);
+  const promptError =
+    bothPromptFieldsEmpty && (showRequiredError || promptTouched);
 
   return (
     <div className="space-y-6">
@@ -293,9 +306,15 @@ export function PromptsTab({ values, onChange }: PromptsTabProps) {
           id="greeting"
           value={values.greeting}
           onChange={(e) => update("greeting", e.target.value)}
+          onBlur={() => setGreetingTouched(true)}
           rows={3}
           maxLength={250}
-          className="w-full rounded-[6px] border border-input bg-transparent px-3 py-2 text-sm shadow-subtle focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          aria-invalid={greetingError}
+          className={cn(
+            "w-full rounded-[6px] border border-input bg-transparent px-3 py-2 text-sm shadow-subtle focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+            greetingError &&
+              "border-destructive focus-visible:border-destructive focus-visible:ring-destructive/20"
+          )}
           placeholder="Hello! Thank you for taking our call today. How are you doing?"
         />
         <p
@@ -306,6 +325,11 @@ export function PromptsTab({ values, onChange }: PromptsTabProps) {
         >
           {greetingLeft} characters left
         </p>
+        {greetingError ? (
+          <p className="text-xs font-medium text-destructive">
+            Greeting or Survey Prompt is required.
+          </p>
+        ) : null}
       </div>
 
       <div className="max-w-xs space-y-1.5">
@@ -348,12 +372,23 @@ export function PromptsTab({ values, onChange }: PromptsTabProps) {
             <textarea
               value={values.systemPrompt}
               onChange={(e) => update("systemPrompt", e.target.value)}
+              onBlur={() => setPromptTouched(true)}
               rows={10}
-              className="w-full rounded-[6px] border border-input bg-transparent px-4 py-3 text-sm leading-relaxed shadow-subtle focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              aria-invalid={promptError}
+              className={cn(
+                "w-full rounded-[6px] border border-input bg-transparent px-4 py-3 text-sm leading-relaxed shadow-subtle focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                promptError &&
+                  "border-destructive focus-visible:border-destructive focus-visible:ring-destructive/20"
+              )}
               placeholder="You are a professional voice AI survey for enterprise customer outreach. Conduct surveys naturally, handle objections gracefully, and maintain a warm professional tone throughout the conversation."
             />
           )}
         </div>
+        {promptError ? (
+          <p className="text-xs font-medium text-destructive">
+            Survey Prompt or Greeting is required.
+          </p>
+        ) : null}
       </div>
     </div>
   );
@@ -362,6 +397,7 @@ export function PromptsTab({ values, onChange }: PromptsTabProps) {
 interface PersonaTabProps {
   values: SurveyPersonaConfig;
   onChange: (values: SurveyPersonaConfig) => void;
+  showRequiredError?: boolean;
 }
 
 function FieldLabel({
@@ -546,9 +582,16 @@ function VoiceSelectField({
   );
 }
 
-export function PersonaTab({ values, onChange }: PersonaTabProps) {
+export function PersonaTab({
+  values,
+  onChange,
+  showRequiredError = false,
+}: PersonaTabProps) {
   const [voicePickerOpen, setVoicePickerOpen] = useState(false);
   const [providers, setProviders] = useState<ProviderItem[]>([]);
+  const [nameTouched, setNameTouched] = useState(false);
+  const nameError =
+    !values.name.trim() && (showRequiredError || nameTouched);
 
   const update = <K extends keyof SurveyPersonaConfig>(
     key: K,
@@ -656,7 +699,7 @@ export function PersonaTab({ values, onChange }: PersonaTabProps) {
         provider: name || next.provider,
         modelId,
         model: providerChanged ? "" : modelOpt?.label || next.model || "",
-        ...(key === "tts" && providerChanged ? { voice: "" } : {}),
+        ...(key === "tts" && providerChanged ? { voice: "", voiceName: "" } : {}),
       });
       return;
     }
@@ -666,7 +709,7 @@ export function PersonaTab({ values, onChange }: PersonaTabProps) {
       modelId: "",
       provider: "",
       model: "",
-      ...(key === "tts" ? { voice: "" } : {}),
+      ...(key === "tts" ? { voice: "", voiceName: "" } : {}),
     });
   };
 
@@ -679,9 +722,20 @@ export function PersonaTab({ values, onChange }: PersonaTabProps) {
             id="survey-name"
             value={values.name}
             onChange={(e) => update("name", e.target.value)}
+            onBlur={() => setNameTouched(true)}
             placeholder="e.g. Customer Feedback Survey"
-            className="h-9"
+            aria-invalid={nameError}
+            className={cn(
+              "h-9",
+              nameError &&
+                "border-destructive focus-visible:border-destructive focus-visible:ring-destructive/20"
+            )}
           />
+          {nameError ? (
+            <p className="text-xs font-medium text-destructive">
+              Survey name is required.
+            </p>
+          ) : null}
         </div>
       </section>
 
@@ -706,7 +760,7 @@ export function PersonaTab({ values, onChange }: PersonaTabProps) {
                 onChange({
                   ...values,
                   language: v,
-                  tts: { ...values.tts, voice: "" },
+                  tts: { ...values.tts, voice: "", voiceName: "" },
                 });
               }}
               searchPlaceholder="Search languages…"
@@ -822,7 +876,7 @@ export function PersonaTab({ values, onChange }: PersonaTabProps) {
             onChange={(next) => onStackChange("tts", next)}
             extra={
               <VoiceSelectField
-                value={values.tts.voice ?? ""}
+                value={values.tts.voiceName ?? ""}
                 disabled={!hasVoiceSource}
                 onOpen={() => setVoicePickerOpen(true)}
               />
@@ -840,7 +894,8 @@ export function PersonaTab({ values, onChange }: PersonaTabProps) {
         onSelect={(voice) =>
           update("tts", {
             ...values.tts,
-            voice: voice?.name ?? "",
+            voice: voice?.id ?? "",
+            voiceName: voice?.name ?? "",
           })
         }
       />
@@ -852,6 +907,7 @@ interface SurveyQuestionsTabProps {
   surveyId?: string;
   values: SurveyQuestionsConfig;
   onChange: (values: SurveyQuestionsConfig) => void;
+  showRequiredError?: boolean;
 }
 
 function makeOption(label: string): SurveyQuestionOption {
@@ -910,6 +966,7 @@ export function SurveyQuestionsTab({
   surveyId,
   values,
   onChange,
+  showRequiredError = false,
 }: SurveyQuestionsTabProps) {
   const fileRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
@@ -1096,6 +1153,8 @@ export function SurveyQuestionsTab({
       <div
         className={cn(
           "space-y-3 rounded-[8px] border border-border/60 bg-muted/20 p-4",
+          showRequiredError &&
+            "border-destructive/60",
           !values.enabled && "pointer-events-none opacity-55"
         )}
       >
@@ -1192,6 +1251,8 @@ export function SurveyQuestionsTab({
       <div
         className={cn(
           "space-y-3 rounded-[8px] border border-border/60 bg-muted/20 p-4",
+          showRequiredError &&
+            "border-destructive/60",
           !values.enabled && "pointer-events-none opacity-55"
         )}
       >
@@ -1253,9 +1314,16 @@ export function SurveyQuestionsTab({
       </div>
 
       {values.questions.length === 0 ? (
-        <p className="text-xs text-muted-foreground">
-          No questions yet. Upload a CSV or add one manually.
-        </p>
+        <div>
+          <p className="text-xs text-muted-foreground">
+            No questions yet. Upload a CSV or add one manually.
+          </p>
+          {showRequiredError ? (
+            <p className="mt-1 text-xs font-medium text-destructive">
+              At least one survey question is required.
+            </p>
+          ) : null}
+        </div>
       ) : (
         <ul className="space-y-2">
           {values.questions.map((q, index) => {
@@ -1341,12 +1409,14 @@ interface ClientContactTabProps {
   surveyId?: string;
   values: SurveyClientContactConfig;
   onChange: (values: SurveyClientContactConfig) => void;
+  showRequiredError?: boolean;
 }
 
 export function ClientContactTab({
   surveyId,
   values,
   onChange,
+  showRequiredError = false,
 }: ClientContactTabProps) {
   const fileRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
@@ -1468,7 +1538,13 @@ export function ClientContactTab({
         </ol>
       </div>
 
-      <div className="space-y-3 rounded-[8px] border border-border/60 bg-muted/20 p-4">
+      <div
+        className={cn(
+          "space-y-3 rounded-[8px] border border-border/60 bg-muted/20 p-4",
+          showRequiredError &&
+            "border-destructive/60"
+        )}
+      >
         <input
           ref={fileRef}
           type="file"
@@ -1561,6 +1637,11 @@ export function ClientContactTab({
           </div>
         ) : null}
       </div>
+      {showRequiredError ? (
+        <p className="-mt-3 text-xs font-medium text-destructive">
+          Client contact file is required.
+        </p>
+      ) : null}
 
       {values.contactFileUrl ||
       (values.contacts && values.contacts.length > 0) ? (

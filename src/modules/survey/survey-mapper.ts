@@ -97,6 +97,19 @@ export function backendSurveyToAgent(s: BackendSurvey): Survey {
   const cc = s.clientContact ?? {};
   const sch = s.schedule ?? {};
   const progress = s.progress ?? {};
+  const rawVoice = persona.tts?.voice;
+  const voiceId =
+    rawVoice && typeof rawVoice === "object"
+      ? String(rawVoice._id ?? rawVoice.id ?? "")
+      : String(rawVoice ?? "");
+  const voiceName =
+    rawVoice && typeof rawVoice === "object"
+      ? String(rawVoice.name ?? "")
+      : String(rawVoice ?? "");
+  const voicePreviewUrl =
+    rawVoice && typeof rawVoice === "object"
+      ? String(rawVoice.previewUrl ?? "")
+      : "";
 
   const config: SurveyConfig = {
     persona: {
@@ -110,7 +123,9 @@ export function backendSurveyToAgent(s: BackendSurvey): Survey {
       llm: mapStack(persona.llm),
       tts: {
         ...mapStack(persona.tts),
-        voice: persona.tts?.voice ?? "",
+        voice: voiceId,
+        voiceName,
+        voicePreviewUrl,
       },
     },
     prompts: {
@@ -206,7 +221,7 @@ export function agentToBackendPayload(
       },
       tts: {
         modelId: c.persona.tts.modelId || null,
-        voice: c.persona.tts.voice || "",
+        voice: c.persona.tts.voice || null,
       },
     },
     prompts: {
