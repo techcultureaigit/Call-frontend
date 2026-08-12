@@ -11,7 +11,7 @@ import {
   DataTablePrimaryCell,
   type DataTableColumn,
 } from "@/components/shared/data-table";
-import { PROVIDER_TYPE_LABEL, type ProviderItem } from "./provider-types";
+import { PROVIDER_TYPE_LABEL, providerLabel, type ProviderItem } from "./provider-types";
 
 interface ProviderTableProps {
   items: ProviderItem[];
@@ -41,13 +41,22 @@ export function ProviderTable({
         ),
       },
       {
-        id: "provider",
-        header: "Provider",
+        id: "displayName",
+        header: "Display name",
         cell: (row) => (
           <DataTablePrimaryCell
             icon={<Cpu className="size-4" />}
-            title={row.name || row.provider || ""}
+            title={providerLabel(row) || "—"}
           />
+        ),
+      },
+      {
+        id: "name",
+        header: "Provider name",
+        cell: (row) => (
+          <span className="text-sm font-medium text-foreground">
+            {row.name || row.provider || "—"}
+          </span>
         ),
       },
       {
@@ -130,7 +139,7 @@ export function ProviderTable({
       emptyTitle="No providers found"
       emptyDescription="Add a provider with its models."
       footerHint="Type tells which pipeline stage this provider belongs to."
-      minWidthClassName="min-w-160"
+      minWidthClassName="min-w-[52rem]"
       skeletonRows={4}
     />
   );

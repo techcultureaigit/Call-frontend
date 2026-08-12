@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, type MouseEvent } from "react";
+import { useEffect, useRef, useState, type MouseEvent } from "react";
 import { motion } from "framer-motion";
 import {
   Check,
@@ -34,6 +34,7 @@ import {
   toggleVoiceRingtone,
 } from "@/modules/voices/voice-playback";
 import { filtersToVoicesParams, listVoices } from "@/modules/voices/api";
+import { VoicesPagination } from "@/modules/voices/voices-pagination";
 import { cn } from "@/lib/utils";
 import type { VoiceGenderFilter, VoiceProfile } from "@/types/voice";
 import type { PaginatedMeta } from "@/types";
@@ -77,11 +78,23 @@ export function VoicePickerDialog({
   const [isLoading, setIsLoading] = useState(false);
   const [isFetching, setIsFetching] = useState(false);
 
+  const filterKey = `${debouncedSearch}|${gender}|${language}|${source}`;
+  const prevFilterKeyRef = useRef(filterKey);
+
   useEffect(() => {
     if (!open || !sourceOk) {
       setVoices([]);
       setMeta(null);
       return;
+    }
+
+    const filtersChanged = prevFilterKeyRef.current !== filterKey;
+    if (filtersChanged) {
+      prevFilterKeyRef.current = filterKey;
+      if (page !== 1) {
+        setPage(1);
+        return;
+      }
     }
 
     let cancelled = false;
@@ -108,6 +121,7 @@ export function VoicePickerDialog({
         if (!cancelled) {
           setVoices(result.data);
           setMeta(result.meta);
+          setPage(result.meta.page);
         }
       } catch {
         if (!cancelled) {
@@ -126,9 +140,7 @@ export function VoicePickerDialog({
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, sourceOk, debouncedSearch, gender, language, source, page]);
-
-  const totalPages = meta?.totalPages ?? 1;
+  }, [open, sourceOk, filterKey, page]);
 
   useEffect(() => {
     if (!open) {
@@ -136,23 +148,15 @@ export function VoicePickerDialog({
       setSearch("");
       setGender("all");
       setPage(1);
+      prevFilterKeyRef.current = "";
     }
   }, [open]);
-
-  useEffect(() => {
-    setPage(1);
-  }, [debouncedSearch, gender, language, provider]);
 
   const handleReset = () => {
     setSearch("");
     setGender("all");
     setPage(1);
   };
-
-  const pageButtons = Array.from(
-    { length: Math.min(totalPages, 5) },
-    (_, i) => i + 1
-  );
 
   const providerLabel =
     provider === "elevenlabs"
@@ -171,32 +175,32 @@ export function VoicePickerDialog({
         onOpenChange(next);
       }}
     >
-      <DialogContent className="flex max-h-[90vh] w-full max-w-4xl flex-col gap-0 overflow-hidden border-0 p-0 shadow-2xl sm:rounded-[14px]">
+      <DialogContent className="flex max-h-[90vh] w-full max-w-4xl flex-col gap-0 overflow-hidden border-0 p-0 shadow-2xl sm:rounded-[14px] [&>button]:text-white [&>button]:hover:text-white">
         {/* Hero header */}
-        <DialogHeader className="relative isolate overflow-hidden px-6 pb-5 pt-6 text-left text-white">
+        <DialogHeader className="relative isolate shrink-0 px-6 pb-6 pt-6 text-left text-white sm:rounded-t-[14px]">
           <div
             aria-hidden
-            className="absolute inset-0 brand-gradient"
+            className="absolute inset-0 overflow-hidden brand-gradient sm:rounded-t-[14px]"
           />
           <div
             aria-hidden
-            className="absolute inset-0 opacity-30"
+            className="absolute inset-0 overflow-hidden opacity-30 sm:rounded-t-[14px]"
             style={{
               backgroundImage:
                 "radial-gradient(circle at 12% 20%, rgba(255,255,255,0.35), transparent 42%), radial-gradient(circle at 88% 10%, rgba(255,255,255,0.2), transparent 36%)",
             }}
           />
           <WaveformDecor />
-          <div className="relative z-10 flex items-start justify-between gap-4 pr-8">
-            <div className="space-y-2">
+          <div className="relative z-10 flex items-start justify-between gap-4 pr-10">
+            <div className="min-w-0 space-y-2.5">
               <div className="inline-flex items-center gap-1.5 rounded-full bg-white/15 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-white/90 backdrop-blur-sm">
                 <Sparkles className="size-3" />
                 Voice library
               </div>
-              <DialogTitle className="font-display text-2xl font-semibold tracking-tight text-white sm:text-[1.7rem]">
+              <DialogTitle className="font-display text-2xl font-semibold leading-tight tracking-tight text-white sm:text-[1.7rem]">
                 Find your agent voice
               </DialogTitle>
-              <p className="max-w-md text-sm text-white/80">
+              <p className="max-w-lg text-sm leading-relaxed text-white/80">
                 Listening first? Tap preview. Ready? Choose — filtered for{" "}
                 <span className="font-semibold text-white">{langLabel}</span> on{" "}
                 <span className="font-semibold text-white">{providerLabel}</span>.
@@ -214,7 +218,7 @@ export function VoicePickerDialog({
         </DialogHeader>
 
         {/* Filters */}
-        <div className="space-y-3 border-b border-border/50 bg-card px-6 py-4">
+        <div className="shrink-0 space-y-3 border-b border-border/50 bg-card px-6 py-4">
           <div className="relative">
             <Search className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
             <Input
@@ -261,7 +265,7 @@ export function VoicePickerDialog({
         {/* Grid */}
         <div
           className={cn(
-            "min-h-0 flex-1 overflow-y-auto px-6 py-5",
+            "min-h-0 flex-1 overflow-y-auto px-6 py-5 pb-6",
             "bg-[radial-gradient(ellipse_at_top,color-mix(in_oklch,var(--brand)_7%,transparent),transparent_55%)]",
             isFetching && "opacity-75"
           )}
@@ -269,15 +273,15 @@ export function VoicePickerDialog({
           {!sourceOk ? (
             <EmptyState message="Choose Google or ElevenLabs as the TTS provider." />
           ) : isLoading ? (
-            <div className="grid items-stretch gap-4 sm:grid-cols-2">
+            <div className="grid items-start gap-4 sm:grid-cols-2">
               {Array.from({ length: 6 }).map((_, i) => (
-                <Skeleton key={i} className="h-40 rounded-[12px]" />
+                <Skeleton key={i} className="h-44 rounded-[12px]" />
               ))}
             </div>
           ) : voices.length === 0 ? (
             <EmptyState message="No voices for this language and provider. Try another filter." />
           ) : (
-            <div className="grid items-stretch gap-4 sm:grid-cols-2">
+            <div className="grid items-start gap-4 sm:grid-cols-2">
               {voices.map((voice, i) => {
                 const isSelected =
                   voice.name === selectedVoice ||
@@ -305,31 +309,19 @@ export function VoicePickerDialog({
           )}
         </div>
 
-        <DialogFooter className="flex-row items-center justify-between gap-3 border-t border-border/50 bg-card px-6 py-3.5 sm:justify-between">
-          <div className="flex flex-wrap items-center gap-1">
-            {totalPages > 1 &&
-              pageButtons.map((p) => (
-                <Button
-                  key={p}
-                  type="button"
-                  size="sm"
-                  variant={p === page ? "default" : "ghost"}
-                  className="size-8 rounded-[8px] p-0 text-xs"
-                  onClick={() => setPage(p)}
-                >
-                  {p}
-                </Button>
-              ))}
-            {meta && meta.total > 0 && (
-              <span className="ml-2 text-xs text-muted-foreground">
-                Page {page} of {totalPages}
-              </span>
-            )}
-          </div>
+        <DialogFooter className="shrink-0 flex-col gap-3 border-t border-border/50 bg-card px-6 py-3.5 sm:flex-row sm:items-center sm:justify-between">
+          {meta && meta.total > 0 ? (
+            <VoicesPagination
+              meta={meta}
+              onPageChange={setPage}
+            />
+          ) : (
+            <div />
+          )}
           <Button
             type="button"
             variant="outline"
-            className="rounded-[10px]"
+            className="rounded-[10px] sm:ml-auto"
             onClick={() => {
               stopVoiceRingtone();
               onOpenChange(false);
@@ -444,7 +436,7 @@ function PickerVoiceCard({
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: Math.min(index, 6) * 0.04, duration: 0.28 }}
       className={cn(
-        "group relative flex h-full min-h-40 flex-col overflow-hidden rounded-[12px] border bg-card/95 p-4 shadow-sm backdrop-blur-sm transition-[border-color,box-shadow,transform] duration-200 hover:-translate-y-0.5 hover:shadow-md",
+        "group relative flex flex-col rounded-[12px] border bg-card p-4 shadow-sm transition-[border-color,box-shadow,transform] duration-200 hover:-translate-y-0.5 hover:shadow-md",
         selected
           ? "border-brand/55 shadow-brand ring-1 ring-brand/25"
           : "border-border/45 hover:border-brand/30"
@@ -463,11 +455,11 @@ function PickerVoiceCard({
         )}
       />
 
-      <div className="relative flex flex-1 gap-3">
+      <div className="relative flex gap-3">
         <button
           type="button"
           onClick={handleListen}
-          className="shrink-0"
+          className="shrink-0 self-start"
           aria-label={
             isPlaying ? `Pause ${voice.name}` : `Listen to ${voice.name}`
           }
@@ -482,12 +474,12 @@ function PickerVoiceCard({
 
         <div className="min-w-0 flex-1">
           <div className="flex items-start gap-2">
-            <h3 className="line-clamp-1 flex-1 text-[15px] font-semibold tracking-tight text-foreground">
+            <h3 className="line-clamp-2 flex-1 text-[15px] font-semibold leading-snug tracking-tight text-foreground">
               {voice.name}
             </h3>
             <span
               className={cn(
-                "flex size-5 shrink-0 items-center justify-center rounded-full transition-all",
+                "mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full transition-all",
                 selected
                   ? "bg-brand text-brand-foreground"
                   : "border border-border/60 bg-transparent text-transparent"
@@ -521,13 +513,16 @@ function PickerVoiceCard({
             </span>
           </div>
 
-          <p className="mt-2.5 line-clamp-2 text-xs leading-relaxed text-muted-foreground">
+          <p
+            className="mt-2.5 line-clamp-3 text-xs leading-relaxed text-muted-foreground"
+            title={voice.description || `${voice.name} voice sample`}
+          >
             {voice.description || `${voice.name} voice sample`}
           </p>
         </div>
       </div>
 
-      <div className="relative mt-4 flex gap-2">
+      <div className="relative mt-4 flex shrink-0 gap-2">
         <Button
           type="button"
           size="sm"

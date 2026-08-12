@@ -55,10 +55,10 @@ export function toBackendGender(
 
 export function backendVoiceToProfile(v: BackendVoice): VoiceProfile {
   const languageLabel = v.languageLabel?.trim() || v.language || "";
-  const category =
-    v.category?.trim() ||
-    languageLabel ||
-    (v.language ? v.language.toUpperCase() : "Voice");
+  // Category must be independent from language.
+  // If backend category is missing, keep it empty (do not fall back to languageLabel),
+  // otherwise UI shows category repeating language and feels "filtered" incorrectly.
+  const category = v.category?.trim() || "";
 
   return {
     id: v._id,

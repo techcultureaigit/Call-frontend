@@ -10,7 +10,7 @@
  *   getVoice()   → GET /api/voices/:id
  */
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
@@ -72,6 +72,11 @@ export function VoicesListView() {
     () => ({ ...filters, search: debouncedSearch }),
     [filters, debouncedSearch]
   );
+  const activeFiltersKey = useMemo(
+    () => JSON.stringify(activeFilters),
+    [activeFilters]
+  );
+  const prevFiltersKeyRef = useRef(activeFiltersKey);
 
   const loadVoices = useCallback(async () => {
     setIsRefreshing(true);
@@ -83,6 +88,7 @@ export function VoicesListView() {
       );
       setVoices(result.data);
       setMeta(result.meta);
+      setPage(result.meta.page);
     } catch (err) {
       setError(
         err instanceof Error
@@ -98,8 +104,18 @@ export function VoicesListView() {
   }, [activeFilters, page]);
 
   useEffect(() => {
+    const filtersChanged = prevFiltersKeyRef.current !== activeFiltersKey;
+    if (filtersChanged) {
+      prevFiltersKeyRef.current = activeFiltersKey;
+      if (page !== 1) {
+        setPage(1);
+        return;
+      }
+    }
+
     let cancelled = false;
-    setIsLoading(true);
+    setIsRefreshing(true);
+    if (voices.length === 0) setIsLoading(true);
     setError(null);
     (async () => {
       try {
@@ -110,6 +126,7 @@ export function VoicesListView() {
         if (!cancelled) {
           setVoices(result.data);
           setMeta(result.meta);
+          setPage(result.meta.page);
         }
       } catch (err) {
         if (!cancelled) {
@@ -131,7 +148,8 @@ export function VoicesListView() {
     return () => {
       cancelled = true;
     };
-  }, [activeFilters, page]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeFiltersKey, page]);
 
   const { applyMeta, resetPageMeta } = usePageMeta({
     title: "Voice Explorer",
@@ -145,10 +163,6 @@ export function VoicesListView() {
     applyMeta();
     return () => resetPageMeta();
   }, [applyMeta, resetPageMeta]);
-
-  useEffect(() => {
-    setPage(1);
-  }, [debouncedSearch, filters.gender, filters.language, filters.source]);
 
   useEffect(() => {
     if (previewFromUrl) setPreviewVoiceId(previewFromUrl);
@@ -234,7 +248,7 @@ export function VoicesListView() {
   const previewVoice =
     previewIndex >= 0 ? voices[previewIndex] : previewVoiceFallback;
 
-  const showLoader = isLoading || isRefreshing;
+  const showInitialLoader = isLoading && voices.length === 0;
   const isError = Boolean(error);
 
   return (
@@ -293,20 +307,20 @@ export function VoicesListView() {
               </div>
             ) : (
               <>
-                {isLoading || isRefreshing ? (
+                {showInitialLoader ? (
                   <AppLoader
                     variant="section"
                     label="Loading voices"
                     hint="Fetching voice catalog"
                   />
                 ) : null}
-                {voices.length > 0 || !showLoader ? (
+                {voices.length > 0 || !showInitialLoader ? (
                   <VoicesTable
                     voices={voices}
                     selectedVoiceId={selectedVoiceId}
                     onOpen={handleOpenVoice}
                     onUse={handleUse}
-                    isLoading={false}
+                    isLoading={isRefreshing}
                   />
                 ) : null}
               </>
@@ -334,7 +348,7 @@ export function VoicesListView() {
               onChoose={handleUse}
             />
 
-            {!showLoader && !isError && meta.total > 0 && (
+            {!showInitialLoader && !isError && meta.total > 0 && (
               <VoicesPagination meta={meta} onPageChange={setPage} />
             )}
           </div>

@@ -7,7 +7,11 @@ import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { VOICE_LANGUAGE_OPTIONS } from "@/modules/voices/voices-constants";
 import { cn } from "@/lib/utils";
-import type { VoiceFilters, VoiceGenderFilter } from "@/types/voice";
+import type {
+  VoiceFilters,
+  VoiceGenderFilter,
+  VoiceProvider,
+} from "@/types/voice";
 import { GenderIcon } from "./gender-icons";
 
 interface VoiceFiltersSidebarProps {
@@ -38,6 +42,38 @@ export function VoiceFiltersSidebar({
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
+          <FilterGroup label="Provider">
+            <FilterToggle
+              active={!filters.source}
+              onClick={() => onChange({ ...filters, source: undefined })}
+              ariaLabel="All providers"
+            >
+              All
+            </FilterToggle>
+            <ProviderChip
+              active={filters.source === "google"}
+              onClick={() =>
+                onChange({
+                  ...filters,
+                  source: "google" as VoiceProvider,
+                })
+              }
+              label="Google"
+              tone="google"
+            />
+            <ProviderChip
+              active={filters.source === "elevenlabs"}
+              onClick={() =>
+                onChange({
+                  ...filters,
+                  source: "elevenlabs" as VoiceProvider,
+                })
+              }
+              label="ElevenLabs"
+              tone="elevenlabs"
+            />
+          </FilterGroup>
+
           <FilterGroup label="Gender">
             <FilterToggle
               active={filters.gender === "all"}
@@ -176,6 +212,17 @@ const GENDER_TONE = {
   },
 } as const;
 
+const PROVIDER_TONE = {
+  google: {
+    idle: "border-transparent text-emerald-700 hover:bg-emerald-50 dark:text-emerald-300 dark:hover:bg-emerald-950/50",
+    active: "bg-emerald-500 text-white shadow-sm hover:bg-emerald-500",
+  },
+  elevenlabs: {
+    idle: "border-transparent text-orange-700 hover:bg-orange-50 dark:text-orange-300 dark:hover:bg-orange-950/50",
+    active: "bg-orange-500 text-white shadow-sm hover:bg-orange-500",
+  },
+} as const;
+
 function GenderChip({
   active,
   onClick,
@@ -202,6 +249,34 @@ function GenderChip({
       )}
     >
       {icon}
+      <span>{label}</span>
+    </button>
+  );
+}
+
+function ProviderChip({
+  active,
+  onClick,
+  label,
+  tone,
+}: {
+  active: boolean;
+  onClick: () => void;
+  label: string;
+  tone: keyof typeof PROVIDER_TONE;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-label={`${label} voices`}
+      aria-pressed={active}
+      title={label}
+      className={cn(
+        "inline-flex h-8 items-center gap-1.5 rounded-[6px] px-2.5 text-xs font-medium transition-all",
+        active ? PROVIDER_TONE[tone].active : PROVIDER_TONE[tone].idle
+      )}
+    >
       <span>{label}</span>
     </button>
   );

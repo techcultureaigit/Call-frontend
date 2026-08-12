@@ -45,6 +45,7 @@ export function ProviderFormDialog({
   const isEdit = Boolean(item);
   const [type, setType] = useState<ProviderType>("stt");
   const [name, setName] = useState("");
+  const [displayName, setDisplayName] = useState("");
   const [models, setModels] = useState<ProviderModel[]>([]);
   const [modelInput, setModelInput] = useState("");
   const [active, setActive] = useState(true);
@@ -56,6 +57,7 @@ export function ProviderFormDialog({
     if (!open) return;
     setType(item?.type ?? "stt");
     setName(item?.name || item?.provider || "");
+    setDisplayName(item?.displayName || item?.name || item?.provider || "");
     setModels(
       (item?.models ?? []).map((m) => ({
         id: m.id ?? null,
@@ -143,6 +145,7 @@ export function ProviderFormDialog({
     await onSubmit({
       type,
       name: name.trim(),
+      displayName: displayName.trim() || name.trim(),
       models,
       active,
     });
@@ -150,7 +153,7 @@ export function ProviderFormDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle>{isEdit ? "Edit provider" : "Add provider"}</DialogTitle>
           <DialogDescription>
@@ -161,25 +164,47 @@ export function ProviderFormDialog({
         </DialogHeader>
 
         <div className="space-y-4 py-1">
-          <div className="space-y-1.5">
-            <Label>Type</Label>
-            <Select
-              value={type}
-              onChange={(e) => setType(e.target.value as ProviderType)}
-              options={PROVIDER_TYPE_OPTIONS}
-              className="rounded-[6px]"
-            />
-            <p className="text-xs text-muted-foreground">{PROVIDER_TYPE_HINT[type]}</p>
+          <div className="grid gap-4 sm:grid-cols-[1fr_auto] sm:items-end">
+            <div className="space-y-1.5">
+              <Label>Type</Label>
+              <Select
+                value={type}
+                onChange={(e) => setType(e.target.value as ProviderType)}
+                options={PROVIDER_TYPE_OPTIONS}
+                className="rounded-[6px]"
+              />
+              <p className="text-xs text-muted-foreground">{PROVIDER_TYPE_HINT[type]}</p>
+            </div>
+
+            <div className="flex items-center justify-between gap-3 rounded-[6px] border border-border/60 px-3 py-2.5 sm:min-w-44">
+              <div>
+                <p className="text-sm font-medium">Active</p>
+                <p className="text-xs text-muted-foreground">Survey dropdowns</p>
+              </div>
+              <Switch checked={active} onCheckedChange={setActive} />
+            </div>
           </div>
 
-          <div className="space-y-1.5">
-            <Label>Provider name</Label>
-            <Input
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="e.g. Google"
-              className="rounded-[6px]"
-            />
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="space-y-1.5">
+              <Label>Provider name</Label>
+              <Input
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="e.g. Google"
+                className="rounded-[6px]"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <Label>Display name</Label>
+              <Input
+                value={displayName}
+                onChange={(e) => setDisplayName(e.target.value)}
+                placeholder="e.g. Google Cloud"
+                className="rounded-[6px]"
+              />
+            </div>
           </div>
 
           <div className="space-y-1.5">
@@ -298,16 +323,6 @@ export function ProviderFormDialog({
               </p>
             )}
           </div>
-
-          <div className="flex items-center justify-between rounded-[6px] border border-border/60 px-3 py-2.5">
-            <div>
-              <p className="text-sm font-medium">Active</p>
-              <p className="text-xs text-muted-foreground">
-                Show in survey dropdowns
-              </p>
-            </div>
-            <Switch checked={active} onCheckedChange={setActive} />
-          </div>
         </div>
 
         <DialogFooter>
@@ -358,7 +373,7 @@ export function DeleteProviderDialog({
           <DialogDescription>
             Delete{" "}
             <span className="font-medium text-foreground">
-              {item.name || item.provider}
+              {item.displayName || item.name || item.provider}
             </span>{" "}
             ({PROVIDER_TYPE_LABEL[item.type]}) and its {item.models.length}{" "}
             model

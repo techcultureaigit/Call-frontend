@@ -11,6 +11,7 @@ export interface ProviderItem {
   type: ProviderType;
   /** Canonical field */
   name: string;
+  displayName?: string;
   /** Alias from API for older UI */
   provider?: string;
   models: ProviderModel[];
@@ -22,6 +23,7 @@ export interface ProviderItem {
 export interface ProviderFormValues {
   type: ProviderType;
   name: string;
+  displayName: string;
   models: ProviderModel[];
   active: boolean;
 }
@@ -44,8 +46,8 @@ export const PROVIDER_TYPE_HINT: Record<ProviderType, string> = {
   tts: "Used in survey Identity → Speak dropdown",
 };
 
-export function providerLabel(p: Pick<ProviderItem, "name" | "provider">): string {
-  return p.name || p.provider || "";
+export function providerLabel(p: Pick<ProviderItem, "name" | "provider" | "displayName">): string {
+  return p.displayName || p.name || p.provider || "";
 }
 
 export function modelLabel(m: ProviderModel): string {
