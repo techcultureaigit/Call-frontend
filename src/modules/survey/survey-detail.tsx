@@ -24,17 +24,17 @@ import { AGENT_CONFIG_TABS as SURVEY_CONFIG_TABS, getAgentLanguageLabel as getSu
 import { getContactFileOpenUrl } from "@/lib/utils/contact-file-url";
 import { formatAgentCreatedAt as formatSurveyCreatedAt } from "@/lib/utils/date";
 import {
-  getPlayingVoiceId,
-  subscribeVoicePlayback,
-  toggleVoiceRingtone,
+  resolveVoicePreviewUrl,
+  stopVoiceRingtone,
 } from "@/modules/voices/voice-playback";
 import type { Agent as Survey } from "@/types/agent";
 import { motion } from "framer-motion";
-import { ArrowLeft, CalendarClock, Clock, Copy, FileUp, Globe, MessageSquare, Mic, Pencil, Volume2, Bot, Pause, Play } from "lucide-react";
+import { ArrowLeft, CalendarClock, Clock, Copy, FileUp, Globe, MessageSquare, Mic, Pencil, Volume2, Bot } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import type { ReactNode } from "react";
+import type { LucideIcon } from "lucide-react";
 import { toast } from "sonner";
 
 function DetailField({
@@ -82,14 +82,54 @@ function onOff(value: boolean): string {
   return value ? "On" : "Off";
 }
 
+function PipelineStage({
+  step,
+  title,
+  icon: Icon,
+  provider,
+  model,
+}: {
+  step: string;
+  title: string;
+  icon: LucideIcon;
+  provider?: string;
+  model?: string;
+}) {
+  const isConfigured = Boolean(provider?.trim() || model?.trim());
+
+  return (
+    <div className="rounded-[8px] border border-border/60 bg-background/80 p-3.5 shadow-sm">
+      <div className="flex items-center gap-2.5">
+        <span className="flex size-9 shrink-0 items-center justify-center rounded-[7px] bg-primary/10 text-primary ring-1 ring-primary/15">
+          <Icon className="size-4" />
+        </span>
+        <div className="min-w-0">
+          <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+            {step}
+          </p>
+          <p className="font-display text-sm font-semibold text-foreground">
+            {title}
+          </p>
+        </div>
+      </div>
+      <div className="mt-3 border-t border-border/45 pt-2.5">
+        <p className="text-sm font-medium text-foreground">
+          {provider?.trim() || "Not configured"}
+        </p>
+        <p className="mt-0.5 text-xs text-muted-foreground">
+          {model?.trim() ||
+            (isConfigured ? "Default model" : `Choose ${title} in Edit survey`)}
+        </p>
+      </div>
+    </div>
+  );
+}
+
 /** View Details ordered by Create Survey stepper steps */
 export function SurveyDetailView({ survey }: { survey: Survey }) {
   const router = useRouter();
   const [scheduleOpen, setScheduleOpen] = useState(false);
   const [currentSurvey, setCurrentAgent] = useState(survey);
-  const [playingVoiceId, setPlayingVoiceId] = useState<string | null>(() =>
-    getPlayingVoiceId()
-  );
   const {
     isReady,
     canCreateSurvey,
@@ -116,11 +156,6 @@ export function SurveyDetailView({ survey }: { survey: Survey }) {
     setCurrentAgent(survey);
   }, [survey]);
 
-  useEffect(
-    () => subscribeVoicePlayback(setPlayingVoiceId),
-    []
-  );
-
   useEffect(() => {
     applyMeta();
     return () => resetPageMeta();
@@ -128,9 +163,7 @@ export function SurveyDetailView({ survey }: { survey: Survey }) {
 
   const persona = currentSurvey.config.persona;
   const voice = persona.tts.voiceName?.trim() || "—";
-  const voiceId = persona.tts.voice?.trim() || "";
   const voicePreviewUrl = persona.tts.voicePreviewUrl?.trim() || "";
-  const isVoicePlaying = Boolean(voiceId && playingVoiceId === voiceId);
   const language = getSurveyLanguageLabel(persona.language || currentSurvey.language);
   const greeting = currentSurvey.config.prompts.greeting?.trim() || "—";
   const systemPrompt = currentSurvey.config.prompts.systemPrompt?.trim() || "—";
@@ -263,35 +296,30 @@ export function SurveyDetailView({ survey }: { survey: Survey }) {
                       {language}
                     </span>
                   </DetailField>
-                  <DetailField label="Voice">
-                    <span className="inline-flex flex-wrap items-center gap-2">
-                      <span className="inline-flex items-center gap-1.5">
+                  <div className="md:col-span-2">
+                    <DetailField label="Voice">
+                      <span className="inline-flex items-center gap-1.5 text-sm font-medium">
                         <Volume2 className="size-3.5 text-primary" />
                         {voice}
                       </span>
-                      {voiceId && voicePreviewUrl ? (
-                        <button
-                          type="button"
-                          onClick={() =>
-                            toggleVoiceRingtone(voiceId, voicePreviewUrl)
-                          }
-                          className="inline-flex h-7 items-center gap-1 rounded-full border border-primary/20 bg-primary/5 px-2.5 text-[11px] font-semibold text-primary transition-colors hover:bg-primary/10"
-                          aria-label={
-                            isVoicePlaying
-                              ? `Pause ${voice}`
-                              : `Listen to ${voice}`
-                          }
+                      {voicePreviewUrl ? (
+                        <audio
+                          controls
+                          preload="metadata"
+                          src={resolveVoicePreviewUrl(voicePreviewUrl)}
+                          className="mt-1.5 h-9 w-full max-w-72"
+                          aria-label={`Listen to ${voice}`}
+                          onPlay={stopVoiceRingtone}
                         >
-                          {isVoicePlaying ? (
-                            <Pause className="size-3" />
-                          ) : (
-                            <Play className="size-3" />
-                          )}
-                          {isVoicePlaying ? "Pause" : "Listen"}
-                        </button>
-                      ) : null}
-                    </span>
-                  </DetailField>
+                          Your browser does not support audio playback.
+                        </audio>
+                      ) : (
+                        <p className="mt-1 text-[11px] text-muted-foreground">
+                          No preview available
+                        </p>
+                      )}
+                    </DetailField>
+                  </div>
                   <DetailField label="Max duration">
                     {persona.maxCallDurationMinutes} min
                   </DetailField>
@@ -313,36 +341,29 @@ export function SurveyDetailView({ survey }: { survey: Survey }) {
                   Speech pipeline · Listen → Reason → Speak
                 </p>
                 <div className="grid gap-3 sm:grid-cols-3">
-                  <DetailField label="01 · Listen (STT)">
-                    <span className="inline-flex flex-col gap-0.5">
-                      <span className="inline-flex items-center gap-1">
-                        <Mic className="size-3.5 text-primary" />
-                        {stt.provider}
-                      </span>
-                      <span className="text-xs text-muted-foreground">
-                        {stt.model}
-                      </span>
-                    </span>
-                  </DetailField>
-                  <DetailField label="02 · Reason (LLM)">
-                    <span className="inline-flex flex-col gap-0.5">
-                      <span>{llm.provider}</span>
-                      <span className="text-xs text-muted-foreground">
-                        {llm.model}
-                      </span>
-                    </span>
-                  </DetailField>
-                  <DetailField label="03 · Speak (TTS)">
-                    <span className="inline-flex flex-col gap-0.5">
-                      <span>
-                        {tts.provider}
-                        {tts.voiceName ? ` · ${tts.voiceName}` : ""}
-                      </span>
-                      <span className="text-xs text-muted-foreground">
-                        {tts.model}
-                      </span>
-                    </span>
-                  </DetailField>
+                  <PipelineStage
+                    step="01 · STT"
+                    title="Listen"
+                    icon={Mic}
+                    provider={stt.provider}
+                    model={stt.model}
+                  />
+                  <PipelineStage
+                    step="02 · LLM"
+                    title="Reason"
+                    icon={Bot}
+                    provider={llm.provider}
+                    model={llm.model}
+                  />
+                  <PipelineStage
+                    step="03 · TTS"
+                    title="Speak"
+                    icon={Volume2}
+                    provider={
+                      [tts.provider, tts.voiceName].filter(Boolean).join(" · ")
+                    }
+                    model={tts.model}
+                  />
                 </div>
               </div>
             </StepSection>

@@ -17,7 +17,7 @@ import { Select } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
 import type { AgentSchedule as SurveySchedule, AgentScheduleRecurrence as SurveyScheduleRecurrence, Agent as Survey } from "@/types/agent";
-import { CalendarClock, AlertTriangle, Ban, Trash2 } from "lucide-react";
+import { CalendarClock, CalendarX, AlertTriangle, Ban, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
 
 const STATUS_STYLES: Record<
@@ -126,7 +126,7 @@ function defaultStartLocal(): string {
 export function createEmptyScheduleForm(): ScheduleFormValues {
   return {
     enabled: false,
-    startAt: "",
+    startAt: defaultStartLocal(),
     endAt: "",
     timezone: "Asia/Kolkata",
     recurrence: "once",
@@ -141,7 +141,7 @@ export function scheduleToFormValues(
 
   return {
     enabled: hasStart ? Boolean(s.enabled) : false,
-    startAt: toLocalInputValue(s.startAt),
+    startAt: toLocalInputValue(s.startAt) || defaultStartLocal(),
     endAt: toLocalInputValue(s.endAt),
     timezone: s.timezone || "Asia/Kolkata",
     recurrence: s.recurrence || "once",
@@ -198,6 +198,8 @@ interface SurveyScheduleFieldsProps {
   mode?: "create" | "edit";
   /** When true, schedule cannot be changed (already scheduled) */
   readOnly?: boolean;
+  onUnschedule?: () => void;
+  isUnscheduling?: boolean;
 }
 
 export function SurveyScheduleFields({
@@ -205,6 +207,8 @@ export function SurveyScheduleFields({
   onChange,
   mode = "create",
   readOnly = false,
+  onUnschedule,
+  isUnscheduling = false,
 }: SurveyScheduleFieldsProps) {
   const update = <K extends keyof ScheduleFormValues>(
     key: K,
@@ -230,11 +234,30 @@ export function SurveyScheduleFields({
                 : "Optionally set when this survey should run after create."}
           </p>
         </div>
-        <Switch
-          checked={values.enabled}
-          onCheckedChange={(checked) => update("enabled", checked)}
-          disabled={readOnly}
-        />
+        <div className="flex shrink-0 items-center gap-2">
+          {readOnly && onUnschedule ? (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={onUnschedule}
+              disabled={isUnscheduling}
+              className="border-amber-500/30 text-amber-700 hover:bg-amber-500/10 hover:text-amber-800"
+            >
+              {isUnscheduling ? (
+                <AppLoaderSpinner size="sm" />
+              ) : (
+                <CalendarX className="size-3.5" />
+              )}
+              {isUnscheduling ? "Unscheduling…" : "Unschedule"}
+            </Button>
+          ) : null}
+          <Switch
+            checked={values.enabled}
+            onCheckedChange={(checked) => update("enabled", checked)}
+            disabled={readOnly}
+          />
+        </div>
       </div>
 
       {values.enabled ? (

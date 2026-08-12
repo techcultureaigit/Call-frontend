@@ -57,6 +57,7 @@ export {
   bulkDeleteSurveys,
   duplicateSurvey,
   scheduleSurvey,
+  unscheduleSurvey,
   listSurveyResults,
   getSurveyResult,
   exportSurveyResults,

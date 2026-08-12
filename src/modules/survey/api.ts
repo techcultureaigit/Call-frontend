@@ -8,6 +8,7 @@
  * saveSurvey           POST   /api/surveys
  * duplicateSurvey      POST   /api/surveys/:id/duplicate
  * scheduleSurvey       POST   /api/surveys/:id/schedule
+ * unscheduleSurvey     POST   /api/surveys/:id/unschedule
  * deleteSurvey         DELETE /api/surveys/:id
  * bulkDeleteSurveys    DELETE /api/surveys/:id (multiple)
  * listSurveyResults    GET    /api/surveys/:id/results
@@ -153,6 +154,15 @@ export async function scheduleSurvey(
     );
     return backendSurveyToAgent(res.data);
   }, { id, input });
+}
+
+/** unscheduleSurvey() → POST /api/surveys/:id/unschedule */
+export async function unscheduleSurvey(id: string): Promise<Survey> {
+  const url = `/api/surveys/${id}/unschedule`;
+  return surveyCall("unscheduleSurvey", "POST", url, async () => {
+    const res = await apiPost<ApiResponse<BackendSurvey>>(url);
+    return backendSurveyToAgent(res.data);
+  }, { id });
 }
 
 /* ========== DELETE — DELETE /api/surveys/:id ========== */
@@ -305,6 +315,7 @@ export const surveysApi = {
   bulkDelete: bulkDeleteSurveys,
   duplicate: duplicateSurvey,
   schedule: scheduleSurvey,
+  unschedule: unscheduleSurvey,
   listResults: listSurveyResults,
   getResult: getSurveyResult,
   exportResults: exportSurveyResults,

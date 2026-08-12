@@ -12,28 +12,20 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
 import { HelpCircle, Volume2 } from "lucide-react";
-import { toast } from "sonner";
 import { PageContainer } from "@/components/layout";
 import { AppLoader } from "@/components/shared/app-loader";
 import { Button } from "@/components/ui/button";
 import { useDebounce, usePageMeta } from "@/hooks";
 import type { PaginatedMeta } from "@/types";
 import type { VoiceFilters, VoiceProfile } from "@/types/voice";
-import {
-  filtersToVoicesParams,
-  getVoice,
-  listVoices,
-} from "./api";
+import { filtersToVoicesParams, listVoices } from "./api";
 import {
   DEFAULT_VOICE_FILTERS,
   VOICES_PAGE_SIZE,
 } from "./voices-constants";
-import { stopVoiceRingtone } from "./voice-playback";
 import { VoiceFiltersSidebar } from "./voice-filters-sidebar";
-import { VoicePreviewDialog } from "./voice-preview-dialog";
 import { VoicesPagination } from "./voices-pagination";
 import { VoicesTable } from "./voices-table";
 
@@ -47,11 +39,6 @@ const EMPTY_META: PaginatedMeta = {
 };
 
 export function VoicesListView() {
-  const router = useRouter();
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
-  const previewFromUrl = searchParams.get("preview");
-
   const [filters, setFilters] = useState<VoiceFilters>(DEFAULT_VOICE_FILTERS);
   const [page, setPage] = useState(1);
   const [voices, setVoices] = useState<VoiceProfile[]>([]);
@@ -59,13 +46,6 @@ export function VoicesListView() {
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [selectedVoiceId, setSelectedVoiceId] = useState<string | null>(null);
-  const [previewVoiceId, setPreviewVoiceId] = useState<string | null>(
-    previewFromUrl
-  );
-  const [previewVoiceFallback, setPreviewVoiceFallback] =
-    useState<VoiceProfile | null>(null);
-  const [isFetchingPreviewVoice, setIsFetchingPreviewVoice] = useState(false);
 
   const debouncedSearch = useDebounce(filters.search, 300);
   const activeFilters = useMemo(
@@ -164,89 +144,10 @@ export function VoicesListView() {
     return () => resetPageMeta();
   }, [applyMeta, resetPageMeta]);
 
-  useEffect(() => {
-    if (previewFromUrl) setPreviewVoiceId(previewFromUrl);
-  }, [previewFromUrl]);
-
-  const syncPreviewInUrl = useCallback(
-    (voiceId: string | null) => {
-      const params = new URLSearchParams(searchParams.toString());
-      if (voiceId) params.set("preview", voiceId);
-      else params.delete("preview");
-      const query = params.toString();
-      router.replace(query ? `${pathname}?${query}` : pathname, {
-        scroll: false,
-      });
-    },
-    [pathname, router, searchParams]
-  );
-
-  const previewVoiceFromList = previewVoiceId
-    ? voices.find((v) => v.id === previewVoiceId) ?? null
-    : null;
-
-  useEffect(() => {
-    if (!previewVoiceId || previewVoiceFromList) {
-      setPreviewVoiceFallback(null);
-      setIsFetchingPreviewVoice(false);
-      return;
-    }
-
-    let cancelled = false;
-    setIsFetchingPreviewVoice(true);
-    (async () => {
-      try {
-        // API: getVoice() → GET /api/voices/:id
-        const voice = await getVoice(previewVoiceId);
-        if (!cancelled) setPreviewVoiceFallback(voice);
-      } catch {
-        if (!cancelled) {
-          toast.error("Could not load this voice preview");
-          setPreviewVoiceId(null);
-          syncPreviewInUrl(null);
-          setPreviewVoiceFallback(null);
-        }
-      } finally {
-        if (!cancelled) setIsFetchingPreviewVoice(false);
-      }
-    })();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [previewVoiceId, previewVoiceFromList, syncPreviewInUrl]);
-
   const handleReset = () => {
     setFilters(DEFAULT_VOICE_FILTERS);
     setPage(1);
   };
-
-  const handleUse = (voice: VoiceProfile) => {
-    if (selectedVoiceId === voice.id) {
-      setSelectedVoiceId(null);
-      toast.message(`"${voice.name}" unselected`);
-      return;
-    }
-    setSelectedVoiceId(voice.id);
-    toast.success(`"${voice.name}" selected`);
-  };
-
-  const handleOpenVoice = (voice: VoiceProfile) => {
-    setPreviewVoiceId(voice.id);
-    syncPreviewInUrl(voice.id);
-  };
-
-  const goToPreviewIndex = (index: number) => {
-    const next = voices[index];
-    if (!next) return;
-    stopVoiceRingtone();
-    setPreviewVoiceId(next.id);
-    syncPreviewInUrl(next.id);
-  };
-
-  const previewIndex = voices.findIndex((v) => v.id === previewVoiceId);
-  const previewVoice =
-    previewIndex >= 0 ? voices[previewIndex] : previewVoiceFallback;
 
   const showInitialLoader = isLoading && voices.length === 0;
   const isError = Boolean(error);
@@ -317,36 +218,11 @@ export function VoicesListView() {
                 {voices.length > 0 || !showInitialLoader ? (
                   <VoicesTable
                     voices={voices}
-                    selectedVoiceId={selectedVoiceId}
-                    onOpen={handleOpenVoice}
-                    onUse={handleUse}
                     isLoading={isRefreshing}
                   />
                 ) : null}
               </>
             )}
-
-            <VoicePreviewDialog
-              voice={previewVoice}
-              open={
-                Boolean(previewVoiceId) &&
-                (Boolean(previewVoice) || isFetchingPreviewVoice)
-              }
-              onOpenChange={(open) => {
-                if (!open) {
-                  setPreviewVoiceId(null);
-                  syncPreviewInUrl(null);
-                }
-              }}
-              canGoBack={previewIndex > 0}
-              canGoForward={
-                previewIndex >= 0 && previewIndex < voices.length - 1
-              }
-              onBack={() => goToPreviewIndex(previewIndex - 1)}
-              onForward={() => goToPreviewIndex(previewIndex + 1)}
-              selected={previewVoice?.id === selectedVoiceId}
-              onChoose={handleUse}
-            />
 
             {!showInitialLoader && !isError && meta.total > 0 && (
               <VoicesPagination meta={meta} onPageChange={setPage} />

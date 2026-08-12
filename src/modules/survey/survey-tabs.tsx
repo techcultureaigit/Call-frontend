@@ -1661,6 +1661,8 @@ interface ScheduleTabProps {
   onChange: (values: ScheduleFormValues) => void;
   mode?: "create" | "edit";
   readOnly?: boolean;
+  onUnschedule?: () => void;
+  isUnscheduling?: boolean;
 }
 
 /** Dedicated Create Survey step for schedule — Contact stays upload/view only */
@@ -1669,6 +1671,8 @@ export function ScheduleTab({
   onChange,
   mode = "create",
   readOnly = false,
+  onUnschedule,
+  isUnscheduling = false,
 }: ScheduleTabProps) {
   return (
     <SurveyScheduleFields
@@ -1676,6 +1680,8 @@ export function ScheduleTab({
       onChange={onChange}
       mode={mode}
       readOnly={readOnly}
+      onUnschedule={onUnschedule}
+      isUnscheduling={isUnscheduling}
     />
   );
 }

@@ -1,91 +1,145 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import { Check, Pause, Volume2 } from "lucide-react";
+import { useMemo, useState } from "react";
+import { Volume2 } from "lucide-react";
 import {
   DataTable,
-  DataTableActionButton,
-  DataTableActionDivider,
-  DataTableActionGroup,
-  DataTablePrimaryCell,
   type DataTableColumn,
 } from "@/components/shared/data-table";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import {
   VOICE_GENDER_STYLES,
   VOICE_PROVIDER_STYLES,
 } from "@/modules/voices/voices-constants";
 import {
-  getPlayingVoiceId,
-  subscribeVoicePlayback,
-  toggleVoiceRingtone,
+  resolveVoicePreviewUrl,
+  stopVoiceRingtone,
 } from "@/modules/voices/voice-playback";
 import { cn } from "@/lib/utils";
 import type { VoiceProfile } from "@/types/voice";
 import { GenderIcon } from "./gender-icons";
 
+function getTableAudio(voiceId: string) {
+  return Array.from(
+    document.querySelectorAll<HTMLAudioElement>(
+      "audio[data-voice-table-preview]"
+    )
+  ).find((audio) => audio.dataset.voiceId === voiceId);
+}
+
+function stopOtherTableAudio(current: HTMLAudioElement) {
+  stopVoiceRingtone();
+  document
+    .querySelectorAll<HTMLAudioElement>("audio[data-voice-table-preview]")
+    .forEach((audio) => {
+      if (audio !== current) audio.pause();
+    });
+}
+
+function VoiceIdentityCell({
+  voice,
+}: {
+  voice: VoiceProfile;
+}) {
+  const [expanded, setExpanded] = useState(false);
+  const description = voice.description || "Voice sample";
+  const canExpand = description.length > 95;
+
+  const toggleAudio = () => {
+    const audio = getTableAudio(voice.id);
+    if (!audio) return;
+
+    if (audio.paused) {
+      stopOtherTableAudio(audio);
+      void audio.play();
+    } else {
+      audio.pause();
+    }
+  };
+
+  return (
+    <div className="flex min-w-80 items-start gap-3">
+      <button
+        type="button"
+        data-row-ignore-click
+        onClick={toggleAudio}
+        className="flex size-10 shrink-0 items-center justify-center rounded-[8px] bg-muted/70 text-foreground/80 ring-1 ring-border/50 transition-colors hover:bg-brand/10 hover:text-brand hover:ring-brand/20"
+        aria-label={`Play or pause ${voice.name}`}
+        title="Play or pause voice"
+      >
+        <Volume2 className="size-4" />
+      </button>
+
+      <div className="min-w-0">
+        <p
+          className="truncate font-display text-[15px] font-semibold tracking-tight text-foreground"
+          title={voice.name}
+        >
+          {voice.name}
+        </p>
+        <p
+          className={cn(
+            "mt-0.5 max-w-md text-xs leading-relaxed text-muted-foreground",
+            !expanded && "line-clamp-1"
+          )}
+        >
+          {description}
+        </p>
+        {canExpand ? (
+          <button
+            type="button"
+            data-row-ignore-click
+            onClick={() => setExpanded((value) => !value)}
+            className="mt-0.5 text-[11px] font-medium text-brand hover:underline"
+          >
+            {expanded ? "Read less" : "Read more"}
+          </button>
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
 interface VoicesTableProps {
   voices: VoiceProfile[];
-  selectedVoiceId?: string | null;
-  onOpen: (voice: VoiceProfile) => void;
-  onUse: (voice: VoiceProfile) => void;
   isLoading?: boolean;
 }
 
 export function VoicesTable({
   voices,
-  selectedVoiceId = null,
-  onOpen,
-  onUse,
   isLoading,
 }: VoicesTableProps) {
-  const [playingId, setPlayingId] = useState<string | null>(getPlayingVoiceId);
-
-  useEffect(() => subscribeVoicePlayback(setPlayingId), []);
-
   const columns = useMemo<DataTableColumn<VoiceProfile>[]>(
     () => [
       {
         id: "voice",
         header: "Voice",
         headerClassName: "pl-5",
-        cellClassName: "pl-5",
+        cellClassName: "min-w-100 pl-5",
         showAccent: true,
-        cell: (voice) => {
-          const selected = voice.id === selectedVoiceId;
-          const isPlaying = playingId === voice.id;
-          return (
-            <DataTablePrimaryCell
-              selected={selected}
-              icon={
-                <button
-                  type="button"
-                  data-row-ignore-click
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    toggleVoiceRingtone(voice.id, voice.previewUrl);
-                  }}
-                  className={cn(
-                    "flex size-full items-center justify-center rounded-[8px]",
-                    isPlaying && "brand-gradient text-brand-foreground"
-                  )}
-                  aria-label={
-                    isPlaying ? `Pause ${voice.name}` : `Play ${voice.name}`
-                  }
-                >
-                  {isPlaying ? (
-                    <Pause className="size-4" />
-                  ) : (
-                    <Volume2 className="size-4" />
-                  )}
-                </button>
-              }
-              title={voice.name}
-              subtitle={voice.description || "Click to preview this voice"}
-            />
-          );
-        },
+        cell: (voice) => <VoiceIdentityCell voice={voice} />,
+      },
+      {
+        id: "preview",
+        header: "Preview",
+        headerClassName: "w-90 min-w-90",
+        cellClassName: "w-90 min-w-90",
+        cell: (voice) => (
+          <audio
+            controls
+            preload="metadata"
+            src={resolveVoicePreviewUrl(voice.previewUrl)}
+            className="h-10 w-84"
+            aria-label={`Preview ${voice.name}`}
+            onPlay={(event) => {
+              stopOtherTableAudio(event.currentTarget);
+            }}
+            data-voice-table-preview
+            data-voice-id={voice.id}
+          >
+            Your browser does not support audio playback.
+          </audio>
+        ),
       },
       {
         id: "gender",
@@ -145,49 +199,8 @@ export function VoicesTable({
           </span>
         ),
       },
-      {
-        id: "actions",
-        header: "Actions",
-        align: "right",
-        cell: (voice) => {
-          const selected = voice.id === selectedVoiceId;
-          return (
-            <DataTableActionGroup>
-              <DataTableActionButton
-                label={`Preview ${voice.name}`}
-                onClick={() => onOpen(voice)}
-                tone="sky"
-              >
-                <Volume2 className="size-3.5" />
-              </DataTableActionButton>
-              <DataTableActionDivider />
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                className={cn(
-                  "h-7 rounded-[5px] px-2.5 text-[11px] font-medium",
-                  selected
-                    ? "bg-brand/10 text-brand hover:bg-brand/15 hover:text-brand"
-                    : "text-emerald-700 hover:bg-emerald-500/12 hover:text-emerald-800"
-                )}
-                onClick={() => onUse(voice)}
-              >
-                {selected ? (
-                  <>
-                    <Check className="mr-1 size-3.5" />
-                    Selected
-                  </>
-                ) : (
-                  "Choose"
-                )}
-              </Button>
-            </DataTableActionGroup>
-          );
-        },
-      },
     ],
-    [onOpen, onUse, playingId, selectedVoiceId]
+    []
   );
 
   return (
@@ -195,14 +208,12 @@ export function VoicesTable({
       columns={columns}
       data={voices}
       getRowId={(voice) => voice.id}
-      onRowClick={onOpen}
       isLoading={isLoading}
       emptyIcon={Volume2}
       emptyTitle="No voices found"
       emptyDescription="Try adjusting your filters or search term."
-      footerHint="Click a row to open preview. Use Choose to select a voice for your agent."
-      minWidthClassName="min-w-215"
-      isRowSelected={(voice) => voice.id === selectedVoiceId}
+      footerHint="Play and compare voice samples directly in the table."
+      minWidthClassName="min-w-320"
       getRowAccentClassName={() => "bg-brand"}
       skeletonRows={6}
     />

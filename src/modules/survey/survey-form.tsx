@@ -10,7 +10,7 @@
  *   saveSurvey() → POST /api/surveys
  */
 
-import { saveSurvey } from "./api";
+import { saveSurvey, unscheduleSurvey } from "./api";
 import { computeSurveyProgress, isSurveyReadyToSchedule, isSurveyCompleted } from "./survey-lib";
 import type { SurveyDisplayStatus } from "./survey-lib";
 import {
@@ -780,6 +780,9 @@ export function SurveyCreateEditView({
   const [surveyId, setSurveyId] = useState(survey?.id);
   const [config, setConfig] = useState<SurveyConfig>(baseConfig);
   const [isSaving, setIsSaving] = useState(false);
+  const [isUnscheduling, setIsUnscheduling] = useState(false);
+  const [schedulingStatus, setSchedulingStatus] =
+    useState<SurveyDisplayStatus>(survey?.scheduling_status ?? "draft");
   const [showValidationErrors, setShowValidationErrors] = useState(false);
   const [scheduleForm, setScheduleForm] = useState<ScheduleFormValues>(() =>
     survey ? scheduleToFormValues(survey.schedule) : createEmptyScheduleForm()
@@ -836,10 +839,27 @@ export function SurveyCreateEditView({
   );
 
   const displayStatus = useMemo((): SurveyDisplayStatus => {
-    if (survey?.scheduling_status) return survey.scheduling_status;
+    if (schedulingStatus !== "draft") return schedulingStatus;
     if (scheduleForm.enabled) return "scheduled";
     return "draft";
-  }, [survey?.scheduling_status, scheduleForm.enabled]);
+  }, [schedulingStatus, scheduleForm.enabled]);
+
+  const handleUnschedule = async () => {
+    if (!surveyId || isUnscheduling) return;
+    setIsUnscheduling(true);
+    try {
+      const updated = await unscheduleSurvey(surveyId);
+      setSchedulingStatus("draft");
+      setScheduleForm(scheduleToFormValues(updated.schedule));
+      toast.success(`"${updated.name}" moved back to draft`);
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Failed to unschedule survey"
+      );
+    } finally {
+      setIsUnscheduling(false);
+    }
+  };
 
   const tabIndex = ENABLED_TAB_ORDER.indexOf(activeTab);
   const isFirst = tabIndex <= 0;
@@ -872,8 +892,8 @@ export function SurveyCreateEditView({
     if (
       isLast &&
       scheduleForm.enabled &&
-      survey?.scheduling_status !== "scheduled" &&
-      survey?.scheduling_status !== "processing"
+      schedulingStatus !== "scheduled" &&
+      schedulingStatus !== "processing"
     ) {
       const parsed = parseScheduleForm(scheduleForm);
       if (!parsed.ok) {
@@ -915,8 +935,8 @@ export function SurveyCreateEditView({
       }
 
       const alreadyScheduled =
-        survey?.scheduling_status === "scheduled" ||
-        survey?.scheduling_status === "processing";
+        schedulingStatus === "scheduled" ||
+        schedulingStatus === "processing";
 
       let schedulePayload: Parameters<typeof saveSurvey>[1] = null;
       if (isLast && !alreadyScheduled) {
@@ -1043,9 +1063,11 @@ export function SurveyCreateEditView({
             onChange={setScheduleForm}
             mode={isNew ? "create" : "edit"}
             readOnly={
-              survey?.scheduling_status === "scheduled" ||
-              survey?.scheduling_status === "processing"
+              schedulingStatus === "scheduled" ||
+              schedulingStatus === "processing"
             }
+            onUnschedule={handleUnschedule}
+            isUnscheduling={isUnscheduling}
           />
         );
       default:

@@ -21,6 +21,7 @@ import {
   deleteSurvey,
   bulkDeleteSurveys,
   scheduleSurvey,
+  unscheduleSurvey,
 } from "./api";
 import { DeleteSurveyDialog } from "./survey-dialogs";
 import {
@@ -62,6 +63,8 @@ interface SurveysTableProps {
   onClone: (survey: Survey) => void;
   onDelete: (survey: Survey) => void;
   onSchedule: (survey: Survey) => void;
+  onUnschedule: (survey: Survey) => void;
+  unschedulingId?: string | null;
 }
 
 const STATUS_ACCENT: Record<SurveyDisplayStatus, string> = {
@@ -88,6 +91,8 @@ export function SurveysTable({
   onClone,
   onDelete,
   onSchedule,
+  onUnschedule,
+  unschedulingId,
 }: SurveysTableProps) {
   const router = useRouter();
   const {
@@ -258,6 +263,24 @@ export function SurveysTable({
                     <CalendarClock className="size-3.5" />
                   </DataTableActionButton>
                 ) : null}
+                {canUpdateSurvey && isSurveyScheduled(survey) ? (
+                  <DataTableActionButton
+                    label="Unschedule survey"
+                    onClick={() => onUnschedule(survey)}
+                    tone="danger"
+                    className={
+                      unschedulingId === survey.id
+                        ? "pointer-events-none opacity-60"
+                        : undefined
+                    }
+                  >
+                    {unschedulingId === survey.id ? (
+                      <AppLoaderSpinner size="sm" />
+                    ) : (
+                      <Ban className="size-3.5" />
+                    )}
+                  </DataTableActionButton>
+                ) : null}
                 {isReady && canCreateSurvey && (
                   <DataTableActionButton
                     label="Copy full survey"
@@ -294,6 +317,8 @@ export function SurveysTable({
       onClone,
       onDelete,
       onSchedule,
+      onUnschedule,
+      unschedulingId,
       isReady,
       canCreateSurvey,
       canUpdateSurvey,
@@ -341,6 +366,7 @@ export function SurveyListView() {
   const [isDeleting, setIsDeleting] = useState(false);
   const [scheduleOpen, setScheduleOpen] = useState(false);
   const [pendingSchedule, setPendingSchedule] = useState<Survey | null>(null);
+  const [unschedulingId, setUnschedulingId] = useState<string | null>(null);
   const [isExporting, setIsExporting] = useState(false);
 
   const fetchPage = useCallback(
@@ -574,6 +600,22 @@ export function SurveyListView() {
     }
   };
 
+  const handleUnschedule = async (survey: Survey) => {
+    if (unschedulingId) return;
+    setUnschedulingId(survey.id);
+    try {
+      await unscheduleSurvey(survey.id);
+      toast.success(`"${survey.name}" unscheduled`);
+      await reload();
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Failed to unschedule survey"
+      );
+    } finally {
+      setUnschedulingId(null);
+    }
+  };
+
   /** Same card loader for first load, search, and pagination refresh. */
   const showLoader = isLoading || isRefreshing;
   const hasActiveFilters = Boolean(search.trim()) || language !== "all";
@@ -735,6 +777,8 @@ export function SurveyListView() {
                 onClone={handleClone}
                 onDelete={openDelete}
                 onSchedule={openSchedule}
+                onUnschedule={handleUnschedule}
+                unschedulingId={unschedulingId}
               />
           ) : null}
           </PaginatedListShell>
