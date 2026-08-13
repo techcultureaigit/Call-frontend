@@ -6,10 +6,12 @@ import {
   Check,
   Gauge,
   Pause,
+  Play,
   RotateCcw,
   Search,
   Sparkles,
   Volume2,
+  VolumeX,
 } from "lucide-react";
 import { GenderIcon } from "@/modules/voices/gender-icons";
 import { Button } from "@/components/ui/button";
@@ -21,6 +23,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { Select } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useDebounce } from "@/hooks";
 import {
@@ -28,6 +31,7 @@ import {
   getAgentLanguageLabel,
   getVoiceSpeedLabel,
   normalizeVoiceSpeed,
+  VOICE_SPEED_OPTIONS,
 } from "@/lib/constants/agent-config";
 import {
   VOICE_GENDER_STYLES,
@@ -62,6 +66,13 @@ function pauseAllPickerAudio(except?: HTMLAudioElement) {
     .forEach((audio) => {
       if (audio !== except) audio.pause();
     });
+}
+
+function formatAudioTime(value: number) {
+  if (!Number.isFinite(value) || value < 0) return "0:00";
+  const minutes = Math.floor(value / 60);
+  const seconds = Math.floor(value % 60);
+  return `${minutes}:${String(seconds).padStart(2, "0")}`;
 }
 
 interface VoicePickerDialogProps {
@@ -289,8 +300,8 @@ export function VoicePickerDialog({
             </span>
           </div>
           <p className="text-[11px] text-muted-foreground">
-            Set the speaking speed from a preview player’s ⋮ menu → Playback
-            speed. It is saved with the survey voice.
+            Select a speed from 0.7x to 1.2x on any voice card. The selected
+            speed is used for previews and saved with the survey.
           </p>
         </div>
 
@@ -457,6 +468,9 @@ function PickerVoiceCard({
 }) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [duration, setDuration] = useState(0);
+  const [isMuted, setIsMuted] = useState(false);
   const providerStyle = VOICE_PROVIDER_STYLES[voice.provider];
   const genderStyle = VOICE_GENDER_STYLES[voice.gender];
 
@@ -569,11 +583,9 @@ function PickerVoiceCard({
       <div className="relative mt-4 flex shrink-0 flex-col gap-2">
         <audio
           ref={audioRef}
-          controls
           preload="metadata"
           src={resolveVoicePreviewUrl(voice.previewUrl)}
           data-voice-picker-preview
-          className="h-10 w-full"
           aria-label={`Preview ${voice.name}`}
           onPlay={(e) => {
             stopVoiceRingtone();
@@ -582,26 +594,102 @@ function PickerVoiceCard({
             setIsPlaying(true);
           }}
           onPause={() => setIsPlaying(false)}
-          onEnded={() => setIsPlaying(false)}
-          onRateChange={(e) => {
-            const rate = normalizeVoiceSpeed(e.currentTarget.playbackRate);
-            if (rate !== speed) onSpeedChange?.(rate);
+          onEnded={() => {
+            setIsPlaying(false);
+            setCurrentTime(0);
           }}
+          onLoadedMetadata={(e) => setDuration(e.currentTarget.duration || 0)}
+          onDurationChange={(e) => setDuration(e.currentTarget.duration || 0)}
+          onTimeUpdate={(e) => setCurrentTime(e.currentTarget.currentTime)}
         >
           Your browser does not support audio playback.
         </audio>
+
+        <div className="space-y-2 rounded-[12px] border border-border/60 bg-muted/35 p-2.5 shadow-inner">
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={handleListen}
+              className="flex size-8 shrink-0 items-center justify-center rounded-full bg-foreground text-background transition-opacity hover:opacity-80"
+              aria-label={isPlaying ? `Pause ${voice.name}` : `Play ${voice.name}`}
+            >
+              {isPlaying ? (
+                <Pause className="size-3.5 fill-current" />
+              ) : (
+                <Play className="ml-0.5 size-3.5 fill-current" />
+              )}
+            </button>
+
+            <span className="w-17.5 shrink-0 text-[11px] font-medium tabular-nums text-muted-foreground">
+              {formatAudioTime(currentTime)} / {formatAudioTime(duration)}
+            </span>
+
+            <input
+              type="range"
+              min={0}
+              max={duration || 0}
+              step={0.01}
+              value={Math.min(currentTime, duration || 0)}
+              onChange={(e) => {
+                const next = Number(e.target.value);
+                if (audioRef.current) audioRef.current.currentTime = next;
+                setCurrentTime(next);
+              }}
+              className="h-1.5 min-w-0 flex-1 cursor-pointer accent-foreground"
+              aria-label={`Seek ${voice.name} preview`}
+            />
+
+            <button
+              type="button"
+              onClick={() => {
+                const next = !isMuted;
+                if (audioRef.current) audioRef.current.muted = next;
+                setIsMuted(next);
+              }}
+              className="flex size-8 shrink-0 items-center justify-center rounded-full text-foreground hover:bg-background/70"
+              aria-label={isMuted ? "Unmute preview" : "Mute preview"}
+            >
+              {isMuted ? (
+                <VolumeX className="size-4" />
+              ) : (
+                <Volume2 className="size-4" />
+              )}
+            </button>
+          </div>
+
+          <div className="flex items-center gap-2 border-t border-border/50 pt-2">
+            <span className="inline-flex shrink-0 items-center gap-1 text-[11px] font-semibold text-muted-foreground">
+              <Gauge className="size-3.5 text-brand" />
+              Playback speed
+            </span>
+            <div className="min-w-0 flex-1">
+              <Select
+                value={String(speed)}
+                options={[...VOICE_SPEED_OPTIONS]}
+                onChange={(e) => {
+                  const rate = normalizeVoiceSpeed(e.target.value);
+                  if (audioRef.current) audioRef.current.playbackRate = rate;
+                  onSpeedChange?.(rate);
+                }}
+                className="h-8 rounded-[8px] bg-card text-xs"
+                aria-label={`Playback speed for ${voice.name}`}
+              />
+            </div>
+          </div>
+        </div>
+
         <Button
-          type="button"
-          size="sm"
-          variant={selected ? "outline" : "default"}
-          className={cn(
-            "h-9 w-full rounded-[10px] text-xs font-medium",
-            selected &&
-              "border-brand/45 bg-brand/10 text-brand hover:bg-brand/15 hover:text-brand"
-          )}
-          onClick={onSelect}
-        >
-          {selected ? "Unselect" : "Choose"}
+            type="button"
+            size="sm"
+            variant={selected ? "outline" : "default"}
+            className={cn(
+              "h-9 w-full rounded-[10px] text-xs font-medium",
+              selected &&
+                "border-brand/45 bg-brand/10 text-brand hover:bg-brand/15 hover:text-brand"
+            )}
+            onClick={onSelect}
+          >
+            {selected ? "Unselect" : "Choose"}
         </Button>
       </div>
     </motion.article>

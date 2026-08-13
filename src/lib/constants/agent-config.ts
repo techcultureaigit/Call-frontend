@@ -92,16 +92,14 @@ export const AGENT_TOOLS = [
 
 export const DEFAULT_VOICE_SPEED = 1;
 
-/** Mirrors the browser audio player's playback-speed menu */
+/** TTS rates supported by the survey voice configuration */
 export const VOICE_SPEED_OPTIONS = [
-  { label: "0.25x", value: "0.25" },
-  { label: "0.5x", value: "0.5" },
-  { label: "0.75x", value: "0.75" },
-  { label: "Normal", value: "1" },
-  { label: "1.25x", value: "1.25" },
-  { label: "1.5x", value: "1.5" },
-  { label: "1.75x", value: "1.75" },
-  { label: "2x", value: "2" },
+  { label: "0.7x", value: "0.7" },
+  { label: "0.8x", value: "0.8" },
+  { label: "0.9x", value: "0.9" },
+  { label: "Normal (1.0x)", value: "1" },
+  { label: "1.1x", value: "1.1" },
+  { label: "1.2x", value: "1.2" },
 ] as const;
 
 export function normalizeVoiceSpeed(value: unknown): number {
