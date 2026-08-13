@@ -51,7 +51,6 @@ export function subscribeVoicePlayback(listener: (id: string | null) => void) {
 export function getPlayingVoiceId() {
   return playingVoiceId;
 }
-
 /** Mark a voice as playing (e.g. dialog `<audio>` controls). */
 export function setPlayingVoiceId(voiceId: string | null) {
   if (playingVoiceId === voiceId) return;

@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, type MouseEvent } from "react";
 import { motion } from "framer-motion";
 import {
   Check,
+  Gauge,
   Pause,
   RotateCcw,
   Search,
@@ -22,16 +23,19 @@ import {
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useDebounce } from "@/hooks";
-import { getAgentLanguageLabel } from "@/lib/constants/agent-config";
+import {
+  DEFAULT_VOICE_SPEED,
+  getAgentLanguageLabel,
+  getVoiceSpeedLabel,
+  normalizeVoiceSpeed,
+} from "@/lib/constants/agent-config";
 import {
   VOICE_GENDER_STYLES,
   VOICE_PROVIDER_STYLES,
 } from "@/modules/voices/voices-constants";
 import {
-  getPlayingVoiceId,
+  resolveVoicePreviewUrl,
   stopVoiceRingtone,
-  subscribeVoicePlayback,
-  toggleVoiceRingtone,
 } from "@/modules/voices/voice-playback";
 import { filtersToVoicesParams, listVoices } from "@/modules/voices/api";
 import { VoicesPagination } from "@/modules/voices/voices-pagination";
@@ -48,12 +52,27 @@ const GENDER_FILTERS: { value: VoiceGenderFilter; label: string }[] = [
   { value: "neutral", label: "Neutral" },
 ];
 
+const PREVIEW_SELECTOR = "audio[data-voice-picker-preview]";
+
+/** Only one preview should ever be audible — also silences the shared player. */
+function pauseAllPickerAudio(except?: HTMLAudioElement) {
+  if (typeof document === "undefined") return;
+  document
+    .querySelectorAll<HTMLAudioElement>(PREVIEW_SELECTOR)
+    .forEach((audio) => {
+      if (audio !== except) audio.pause();
+    });
+}
+
 interface VoicePickerDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   language: string;
   provider: string;
   selectedVoice?: string;
+  /** Speaking rate saved on the survey — also used for the previews here */
+  speed?: number;
+  onSpeedChange?: (speed: number) => void;
   onSelect: (voice: VoiceProfile | null) => void;
 }
 
@@ -63,6 +82,8 @@ export function VoicePickerDialog({
   language,
   provider,
   selectedVoice,
+  speed = DEFAULT_VOICE_SPEED,
+  onSpeedChange,
   onSelect,
 }: VoicePickerDialogProps) {
   const [search, setSearch] = useState("");
@@ -142,13 +163,12 @@ export function VoicePickerDialog({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, sourceOk, filterKey, page]);
 
+  const activeSpeed = normalizeVoiceSpeed(speed);
+
   useEffect(() => {
     if (!open) {
       stopVoiceRingtone();
-      setSearch("");
-      setGender("all");
-      setPage(1);
-      prevFilterKeyRef.current = "";
+      pauseAllPickerAudio();
     }
   }, [open]);
 
@@ -259,7 +279,19 @@ export function VoicePickerDialog({
               <RotateCcw className="size-3.5" />
               Reset
             </Button>
+
+            <span className="inline-flex h-8 items-center gap-1.5 rounded-[10px] border border-border/50 bg-muted/25 px-2.5 text-[11px] font-semibold text-muted-foreground sm:ml-auto">
+              <Gauge className="size-3.5 text-brand" />
+              Speed
+              <span className="tabular-nums text-brand">
+                {getVoiceSpeedLabel(activeSpeed)}
+              </span>
+            </span>
           </div>
+          <p className="text-[11px] text-muted-foreground">
+            Set the speaking speed from a preview player’s ⋮ menu → Playback
+            speed. It is saved with the survey voice.
+          </p>
         </div>
 
         {/* Grid */}
@@ -284,6 +316,7 @@ export function VoicePickerDialog({
             <div className="grid items-start gap-4 sm:grid-cols-2">
               {voices.map((voice, i) => {
                 const isSelected =
+                  voice.id === selectedVoice ||
                   voice.name === selectedVoice ||
                   voice.voiceId === selectedVoice;
 
@@ -293,14 +326,15 @@ export function VoicePickerDialog({
                     voice={voice}
                     index={i}
                     selected={isSelected}
+                    speed={activeSpeed}
+                    onSpeedChange={onSpeedChange}
                     onSelect={() => {
                       if (isSelected) {
                         onSelect(null);
                         return;
                       }
-                      stopVoiceRingtone();
+                      pauseAllPickerAudio();
                       onSelect(voice);
-                      onOpenChange(false);
                     }}
                   />
                 );
@@ -410,24 +444,34 @@ function PickerVoiceCard({
   voice,
   index,
   selected,
+  speed,
+  onSpeedChange,
   onSelect,
 }: {
   voice: VoiceProfile;
   index: number;
   selected: boolean;
+  speed: number;
+  onSpeedChange?: (speed: number) => void;
   onSelect: () => void;
 }) {
-  const [playingId, setPlayingId] = useState<string | null>(getPlayingVoiceId);
-  const isPlaying = playingId === voice.id;
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const [isPlaying, setIsPlaying] = useState(false);
   const providerStyle = VOICE_PROVIDER_STYLES[voice.provider];
   const genderStyle = VOICE_GENDER_STYLES[voice.gender];
 
-  useEffect(() => subscribeVoicePlayback(setPlayingId), []);
+  useEffect(() => {
+    const el = audioRef.current;
+    if (el && el.playbackRate !== speed) el.playbackRate = speed;
+  }, [speed]);
 
   const handleListen = (e: MouseEvent) => {
     e.stopPropagation();
     e.preventDefault();
-    toggleVoiceRingtone(voice.id, voice.previewUrl);
+    const el = audioRef.current;
+    if (!el) return;
+    if (el.paused) void el.play();
+    else el.pause();
   };
 
   return (
@@ -522,35 +566,36 @@ function PickerVoiceCard({
         </div>
       </div>
 
-      <div className="relative mt-4 flex shrink-0 gap-2">
-        <Button
-          type="button"
-          size="sm"
-          variant="outline"
-          className={cn(
-            "h-9 flex-1 rounded-[10px] text-xs font-medium",
-            isPlaying && "border-brand/40 bg-brand/10 text-brand"
-          )}
-          onClick={handleListen}
+      <div className="relative mt-4 flex shrink-0 flex-col gap-2">
+        <audio
+          ref={audioRef}
+          controls
+          preload="metadata"
+          src={resolveVoicePreviewUrl(voice.previewUrl)}
+          data-voice-picker-preview
+          className="h-10 w-full"
+          aria-label={`Preview ${voice.name}`}
+          onPlay={(e) => {
+            stopVoiceRingtone();
+            pauseAllPickerAudio(e.currentTarget);
+            e.currentTarget.playbackRate = speed;
+            setIsPlaying(true);
+          }}
+          onPause={() => setIsPlaying(false)}
+          onEnded={() => setIsPlaying(false)}
+          onRateChange={(e) => {
+            const rate = normalizeVoiceSpeed(e.currentTarget.playbackRate);
+            if (rate !== speed) onSpeedChange?.(rate);
+          }}
         >
-          {isPlaying ? (
-            <>
-              <Pause className="size-3.5" />
-              Playing…
-            </>
-          ) : (
-            <>
-              <Volume2 className="size-3.5" />
-              Listen
-            </>
-          )}
-        </Button>
+          Your browser does not support audio playback.
+        </audio>
         <Button
           type="button"
           size="sm"
           variant={selected ? "outline" : "default"}
           className={cn(
-            "h-9 w-28 shrink-0 rounded-[10px] text-xs font-medium",
+            "h-9 w-full rounded-[10px] text-xs font-medium",
             selected &&
               "border-brand/45 bg-brand/10 text-brand hover:bg-brand/15 hover:text-brand"
           )}

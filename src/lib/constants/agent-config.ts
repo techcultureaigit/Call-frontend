@@ -90,6 +90,35 @@ export const AGENT_TOOLS = [
   { id: "external-transfer", name: "External Call Transfer", description: "Transfer to external number" },
 ];
 
+export const DEFAULT_VOICE_SPEED = 1;
+
+/** Mirrors the browser audio player's playback-speed menu */
+export const VOICE_SPEED_OPTIONS = [
+  { label: "0.25x", value: "0.25" },
+  { label: "0.5x", value: "0.5" },
+  { label: "0.75x", value: "0.75" },
+  { label: "Normal", value: "1" },
+  { label: "1.25x", value: "1.25" },
+  { label: "1.5x", value: "1.5" },
+  { label: "1.75x", value: "1.75" },
+  { label: "2x", value: "2" },
+] as const;
+
+export function normalizeVoiceSpeed(value: unknown): number {
+  const num = Number(value);
+  return VOICE_SPEED_OPTIONS.some((o) => Number(o.value) === num)
+    ? num
+    : DEFAULT_VOICE_SPEED;
+}
+
+export function getVoiceSpeedLabel(value: unknown): string {
+  const speed = normalizeVoiceSpeed(value);
+  return (
+    VOICE_SPEED_OPTIONS.find((o) => Number(o.value) === speed)?.label ??
+    `${speed}x`
+  );
+}
+
 export const SURVEY_QUESTION_TYPES = [
   { label: "Normal Question", value: "text" },
   { label: "Yes / No", value: "yes_no" },
@@ -146,6 +175,7 @@ export const DEFAULT_AGENT_CONFIG: AgentConfig = {
       model: "Google",
       /** Set from Identity → Speak Voice Explorer (language + provider) */
       voice: "",
+      tts_speed: 1,
       fallback: {
         provider: "elevenlabs",
         model: "Eleven_flash_v2_5",

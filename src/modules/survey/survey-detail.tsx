@@ -20,7 +20,7 @@ import { ClientContactsPreview } from "./survey-tabs";
 import { PageContainer } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import { usePageMeta, usePermissions } from "@/hooks";
-import { AGENT_CONFIG_TABS as SURVEY_CONFIG_TABS, getAgentLanguageLabel as getSurveyLanguageLabel, isAgentConfigTabDisabled as isSurveyConfigTabDisabled } from "@/lib/constants/agent-config";
+import { AGENT_CONFIG_TABS as SURVEY_CONFIG_TABS, getAgentLanguageLabel as getSurveyLanguageLabel, getVoiceSpeedLabel, isAgentConfigTabDisabled as isSurveyConfigTabDisabled } from "@/lib/constants/agent-config";
 import { getContactFileOpenUrl } from "@/lib/utils/contact-file-url";
 import { formatAgentCreatedAt as formatSurveyCreatedAt } from "@/lib/utils/date";
 import {
@@ -360,7 +360,15 @@ export function SurveyDetailView({ survey }: { survey: Survey }) {
                     title="Speak"
                     icon={Volume2}
                     provider={
-                      [tts.provider, tts.voiceName].filter(Boolean).join(" · ")
+                      [
+                        tts.provider,
+                        tts.voiceName,
+                        tts.voiceName
+                          ? getVoiceSpeedLabel(tts.tts_speed)
+                          : "",
+                      ]
+                        .filter(Boolean)
+                        .join(" · ")
                     }
                     model={tts.model}
                   />

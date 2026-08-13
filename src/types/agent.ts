@@ -52,6 +52,8 @@ export interface AgentStackConfig {
   voiceName?: string;
   /** Provider/Cloudinary audio preview from the populated voice response */
   voicePreviewUrl?: string;
+  /** Speaking rate for the selected voice — 1 is normal */
+  tts_speed?: number;
   fallback?: AgentStackFallback;
   advanced?: AgentStackAdvanced;
 }

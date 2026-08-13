@@ -25,7 +25,7 @@ import { SearchableSelect } from "@/components/ui/searchable-select";
 import { Select } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { DEFAULT_FAREWELL, AGENT_LANGUAGES as SURVEY_LANGUAGES, getSurveyQuestionTypeLabel, SURVEY_QUESTION_TYPES } from "@/lib/constants/agent-config";
+import { DEFAULT_FAREWELL, AGENT_LANGUAGES as SURVEY_LANGUAGES, getSurveyQuestionTypeLabel, getVoiceSpeedLabel, DEFAULT_VOICE_SPEED, SURVEY_QUESTION_TYPES } from "@/lib/constants/agent-config";
 import { listProviders } from "@/modules/providers/api";
 import {
   modelNameById,
@@ -552,17 +552,19 @@ function PipelineStage({
 
 function VoiceSelectField({
   value,
+  speed,
   disabled,
   onOpen,
 }: {
   value: string;
+  speed: number;
   disabled?: boolean;
   onOpen: () => void;
 }) {
   return (
     <div className="space-y-1.5">
-      <FieldLabel hint="Opens Voice Explorer — filtered by language + provider">
-        Voice
+      <FieldLabel hint="Opens Voice Explorer — pick the voice and its speaking speed">
+        Voice &amp; speed
       </FieldLabel>
       <button
         type="button"
@@ -576,7 +578,14 @@ function VoiceSelectField({
           <Volume2 className="size-3.5 shrink-0 text-muted-foreground" />
           <span className="truncate">{value || "Select Voice"}</span>
         </span>
-        <ChevronDown className="size-4 shrink-0 text-muted-foreground" />
+        <span className="flex shrink-0 items-center gap-2">
+          {value ? (
+            <span className="rounded-full bg-brand/10 px-2 py-0.5 text-[11px] font-semibold tabular-nums text-brand">
+              {getVoiceSpeedLabel(speed)}
+            </span>
+          ) : null}
+          <ChevronDown className="size-4 shrink-0 text-muted-foreground" />
+        </span>
       </button>
     </div>
   );
@@ -699,7 +708,9 @@ export function PersonaTab({
         provider: name || next.provider,
         modelId,
         model: providerChanged ? "" : modelOpt?.label || next.model || "",
-        ...(key === "tts" && providerChanged ? { voice: "", voiceName: "" } : {}),
+        ...(key === "tts" && providerChanged
+          ? { voice: "", voiceName: "", tts_speed: DEFAULT_VOICE_SPEED }
+          : {}),
       });
       return;
     }
@@ -709,7 +720,9 @@ export function PersonaTab({
       modelId: "",
       provider: "",
       model: "",
-      ...(key === "tts" ? { voice: "", voiceName: "" } : {}),
+      ...(key === "tts"
+        ? { voice: "", voiceName: "", tts_speed: DEFAULT_VOICE_SPEED }
+        : {}),
     });
   };
 
@@ -760,7 +773,12 @@ export function PersonaTab({
                 onChange({
                   ...values,
                   language: v,
-                  tts: { ...values.tts, voice: "", voiceName: "" },
+                  tts: {
+                    ...values.tts,
+                    voice: "",
+                    voiceName: "",
+                    tts_speed: DEFAULT_VOICE_SPEED,
+                  },
                 });
               }}
               searchPlaceholder="Search languages…"
@@ -877,6 +895,7 @@ export function PersonaTab({
             extra={
               <VoiceSelectField
                 value={values.tts.voiceName ?? ""}
+                speed={values.tts.tts_speed ?? DEFAULT_VOICE_SPEED}
                 disabled={!hasVoiceSource}
                 onOpen={() => setVoicePickerOpen(true)}
               />
@@ -891,11 +910,18 @@ export function PersonaTab({
         language={language}
         provider={ttsProviderKey}
         selectedVoice={values.tts.voice}
+        speed={values.tts.tts_speed ?? DEFAULT_VOICE_SPEED}
+        onSpeedChange={(tts_speed) =>
+          update("tts", { ...values.tts, tts_speed })
+        }
         onSelect={(voice) =>
           update("tts", {
             ...values.tts,
             voice: voice?.id ?? "",
             voiceName: voice?.name ?? "",
+            tts_speed: voice
+              ? (values.tts.tts_speed ?? DEFAULT_VOICE_SPEED)
+              : DEFAULT_VOICE_SPEED,
           })
         }
       />

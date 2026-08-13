@@ -3,7 +3,10 @@
  * Maps backend survey JSON to frontend Agent shape.
  * Used internally by api.ts — not called from UI files directly.
  */
-import { DEFAULT_AGENT_CONFIG as DEFAULT_SURVEY_CONFIG } from "@/lib/constants/agent-config";
+import {
+  DEFAULT_AGENT_CONFIG as DEFAULT_SURVEY_CONFIG,
+  normalizeVoiceSpeed,
+} from "@/lib/constants/agent-config";
 import type {
   Agent as Survey,
   AgentConfig as SurveyConfig,
@@ -126,6 +129,9 @@ export function backendSurveyToAgent(s: BackendSurvey): Survey {
         voice: voiceId,
         voiceName,
         voicePreviewUrl,
+        tts_speed: normalizeVoiceSpeed(
+          persona.tts?.tts_speed ?? persona.tts?.speed
+        ),
       },
     },
     prompts: {
@@ -222,6 +228,10 @@ export function agentToBackendPayload(
       tts: {
         modelId: c.persona.tts.modelId || null,
         voice: c.persona.tts.voice || null,
+        // Speed belongs to the voice — nothing is stored without one
+        tts_speed: c.persona.tts.voice
+          ? normalizeVoiceSpeed(c.persona.tts.tts_speed)
+          : null,
       },
     },
     prompts: {
