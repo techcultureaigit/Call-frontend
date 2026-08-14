@@ -13,7 +13,6 @@ export const DEFAULT_SURVEY_SCHEDULE: SurveySchedule = {
   endAt: null,
   timezone: "Asia/Kolkata",
   recurrence: "once",
-  status: "idle",
   lastScheduledAt: null,
 };
 

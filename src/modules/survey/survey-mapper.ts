@@ -13,7 +13,6 @@ import type {
   AgentProgress as SurveyProgress,
   AgentSchedule as SurveySchedule,
   AgentScheduleRecurrence as SurveyScheduleRecurrence,
-  AgentScheduleStatus as SurveyScheduleStatus,
   AgentSchedulingStatus as SurveySchedulingStatus,
 } from "@/types/agent";
 
@@ -44,8 +43,6 @@ function mapSchedulingStatus(s: BackendSurvey): SurveySchedulingStatus {
   ) {
     return raw;
   }
-  if (s.schedule?.enabled && s.schedule?.status === "scheduled") return "scheduled";
-  if (s.schedule?.status === "completed") return "completed";
   return "draft";
 }
 
@@ -166,7 +163,6 @@ export function backendSurveyToAgent(s: BackendSurvey): Survey {
     endAt: sch.endAt ?? null,
     timezone: sch.timezone ?? "Asia/Kolkata",
     recurrence: (sch.recurrence ?? "once") as SurveyScheduleRecurrence,
-    status: (sch.status ?? "idle") as SurveyScheduleStatus,
     lastScheduledAt: sch.lastScheduledAt ?? null,
   };
 

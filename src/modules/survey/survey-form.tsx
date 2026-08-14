@@ -832,7 +832,6 @@ export function SurveyCreateEditView({
         endAt: scheduleForm.endAt || null,
         timezone: scheduleForm.timezone || "Asia/Kolkata",
         recurrence: scheduleForm.recurrence,
-        status: "idle",
         lastScheduledAt: null,
       }),
     [config, scheduleForm]

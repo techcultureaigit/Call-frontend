@@ -162,20 +162,12 @@ export interface AgentClientContactConfig {
 
 export type AgentScheduleRecurrence = "once" | "daily" | "weekly" | "monthly";
 
-export type AgentScheduleStatus =
-  | "idle"
-  | "scheduled"
-  | "running"
-  | "completed"
-  | "cancelled";
-
 export interface AgentSchedule {
   enabled: boolean;
   startAt: string | null;
   endAt: string | null;
   timezone: string;
   recurrence: AgentScheduleRecurrence;
-  status: AgentScheduleStatus;
   lastScheduledAt: string | null;
 }
 
