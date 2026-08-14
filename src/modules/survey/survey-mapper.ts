@@ -17,6 +17,7 @@ import type {
 } from "@/types/agent";
 
 import type { SaveSurveyInput } from "./survey-types";
+import { DEFAULT_SURVEY_SCHEDULE } from "./survey-lib";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type BackendSurvey = Record<string, any>;
@@ -157,14 +158,18 @@ export function backendSurveyToAgent(s: BackendSurvey): Survey {
     postCall: DEFAULT_SURVEY_CONFIG.postCall,
   };
 
-  const schedule: SurveySchedule = {
-    enabled: sch.enabled ?? false,
-    startAt: sch.startAt ?? null,
-    endAt: sch.endAt ?? null,
-    timezone: sch.timezone ?? "Asia/Kolkata",
-    recurrence: (sch.recurrence ?? "once") as SurveyScheduleRecurrence,
-    lastScheduledAt: sch.lastScheduledAt ?? null,
-  };
+  const scheduling_status = mapSchedulingStatus(s);
+  const schedule: SurveySchedule =
+    scheduling_status === "draft"
+      ? { ...DEFAULT_SURVEY_SCHEDULE }
+      : {
+          enabled: sch.enabled ?? false,
+          startAt: sch.startAt ?? null,
+          endAt: sch.endAt ?? null,
+          timezone: sch.timezone ?? "Asia/Kolkata",
+          recurrence: (sch.recurrence ?? "once") as SurveyScheduleRecurrence,
+          lastScheduledAt: sch.lastScheduledAt ?? null,
+        };
 
   const mappedProgress: SurveyProgress = {
     identity: progress.identity ?? DEFAULT_PROGRESS.identity,
@@ -183,7 +188,7 @@ export function backendSurveyToAgent(s: BackendSurvey): Survey {
   return {
     id,
     name: s.name ?? "",
-    scheduling_status: mapSchedulingStatus(s),
+    scheduling_status,
     language: persona.language ?? "hi",
     modelMode: "pipeline",
     phone: null,

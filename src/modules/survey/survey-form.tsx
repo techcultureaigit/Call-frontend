@@ -785,7 +785,9 @@ export function SurveyCreateEditView({
     useState<SurveyDisplayStatus>(survey?.scheduling_status ?? "draft");
   const [showValidationErrors, setShowValidationErrors] = useState(false);
   const [scheduleForm, setScheduleForm] = useState<ScheduleFormValues>(() =>
-    survey ? scheduleToFormValues(survey.schedule) : createEmptyScheduleForm()
+    survey && survey.scheduling_status !== "draft"
+      ? scheduleToFormValues(survey.schedule)
+      : createEmptyScheduleForm()
   );
 
   const { applyMeta, resetPageMeta } = usePageMeta({
@@ -837,11 +839,7 @@ export function SurveyCreateEditView({
     [config, scheduleForm]
   );
 
-  const displayStatus = useMemo((): SurveyDisplayStatus => {
-    if (schedulingStatus !== "draft") return schedulingStatus;
-    if (scheduleForm.enabled) return "scheduled";
-    return "draft";
-  }, [schedulingStatus, scheduleForm.enabled]);
+  const displayStatus = schedulingStatus;
 
   const handleUnschedule = async () => {
     if (!surveyId || isUnscheduling) return;
@@ -849,7 +847,7 @@ export function SurveyCreateEditView({
     try {
       const updated = await unscheduleSurvey(surveyId);
       setSchedulingStatus("draft");
-      setScheduleForm(scheduleToFormValues(updated.schedule));
+      setScheduleForm(createEmptyScheduleForm());
       toast.success(`"${updated.name}" moved back to draft`);
     } catch (error) {
       toast.error(
