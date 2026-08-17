@@ -74,7 +74,8 @@ export interface AgentPersonaConfig {
   stt: AgentStackConfig;
   llm: AgentStackConfig;
   tts: AgentStackConfig;
-  backgroundNoise: string;
+  noise_type: string;
+  volume: number;
 }
 
 export interface AgentPromptsConfig {

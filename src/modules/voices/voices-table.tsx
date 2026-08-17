@@ -114,8 +114,7 @@ export function VoicesTable({
       {
         id: "voice",
         header: "Voice",
-        headerClassName: "pl-5",
-        cellClassName: "min-w-100 pl-5",
+        cellClassName: "min-w-100",
         showAccent: true,
         cell: (voice) => <VoiceIdentityCell voice={voice} />,
       },
@@ -205,6 +204,7 @@ export function VoicesTable({
 
   return (
     <DataTable
+      columnLayoutKey="voices"
       columns={columns}
       data={voices}
       getRowId={(voice) => voice.id}

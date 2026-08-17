@@ -34,6 +34,12 @@ const DEFAULT_PROGRESS: SurveyProgress = {
   totalRequiredSteps: 4,
 };
 
+function clampNoiseVolume(value: unknown): number {
+  const num = Number(value);
+  if (!Number.isFinite(num)) return DEFAULT_SURVEY_CONFIG.persona.volume;
+  return Math.min(1, Math.max(0, num));
+}
+
 function mapSchedulingStatus(s: BackendSurvey): SurveySchedulingStatus {
   const raw = s.scheduling_status ?? s.status;
   if (
@@ -131,6 +137,8 @@ export function backendSurveyToAgent(s: BackendSurvey): Survey {
           persona.tts?.tts_speed ?? persona.tts?.speed
         ),
       },
+      noise_type: persona.noise_type || DEFAULT_SURVEY_CONFIG.persona.noise_type,
+      volume: clampNoiseVolume(persona.volume),
     },
     prompts: {
       greeting: prompts.greeting ?? "",
@@ -234,6 +242,8 @@ export function agentToBackendPayload(
           ? normalizeVoiceSpeed(c.persona.tts.tts_speed)
           : null,
       },
+      noise_type: c.persona.noise_type || DEFAULT_SURVEY_CONFIG.persona.noise_type,
+      volume: clampNoiseVolume(c.persona.volume),
     },
     prompts: {
       greeting: c.prompts.greeting,

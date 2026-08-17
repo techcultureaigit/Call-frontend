@@ -31,8 +31,6 @@ export function ProviderTable({
       {
         id: "type",
         header: "Type",
-        headerClassName: "pl-5",
-        cellClassName: "pl-5",
         showAccent: true,
         cell: (row) => (
           <span className="inline-flex items-center rounded-md bg-muted px-2 py-1 text-[11px] font-semibold text-foreground">
@@ -130,6 +128,7 @@ export function ProviderTable({
 
   return (
     <DataTable
+      columnLayoutKey="providers"
       columns={columns}
       data={items}
       getRowId={(row) => row.id}

@@ -81,6 +81,7 @@ export function UsersTable({
     () => [
       {
         id: "name",
+        label: "User",
         header: (
           <DataTableSortHeader
             label="User"
@@ -88,8 +89,6 @@ export function UsersTable({
             onToggle={() => toggleSort(sorting, onSortingChange, "name")}
           />
         ),
-        headerClassName: "pl-5",
-        cellClassName: "pl-5",
         showAccent: true,
         cell: (user) => (
           <div className="flex items-center gap-3">
@@ -114,6 +113,7 @@ export function UsersTable({
       },
       {
         id: "role",
+        label: "Role",
         header: (
           <DataTableSortHeader
             label="Role"
@@ -151,6 +151,7 @@ export function UsersTable({
       },
       {
         id: "lastLoginAt",
+        label: "Last Login",
         header: (
           <DataTableSortHeader
             label="Last Login"
@@ -168,6 +169,7 @@ export function UsersTable({
       },
       {
         id: "createdAt",
+        label: "Joined",
         header: (
           <DataTableSortHeader
             label="Joined"
@@ -237,6 +239,7 @@ export function UsersTable({
 
   return (
     <DataTable
+      columnLayoutKey="users"
       columns={columns}
       data={users}
       getRowId={(user) => user.id}

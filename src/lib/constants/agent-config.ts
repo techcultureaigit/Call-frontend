@@ -92,6 +92,50 @@ export const AGENT_TOOLS = [
 
 export const DEFAULT_VOICE_SPEED = 1;
 
+export const DEFAULT_NOISE_TYPE = "off";
+export const DEFAULT_NOISE_VOLUME = 1;
+
+/** Background noise options — clips from `background voice/ambience` (served via /audio/noise) */
+export const NOISE_TYPE_OPTIONS = [
+  { label: "Off", value: "off", previewUrl: "" },
+  {
+    label: "City Ambience",
+    value: "city_ambience",
+    previewUrl: "/audio/noise/city_ambience.ogg",
+  },
+  {
+    label: "Crowded Room",
+    value: "crowded_room",
+    previewUrl: "/audio/noise/crowded_room.ogg",
+  },
+  {
+    label: "Forest Ambience",
+    value: "forest_ambience",
+    previewUrl: "/audio/noise/forest_ambience.wav",
+  },
+  {
+    label: "Office Ambience",
+    value: "office_ambience",
+    previewUrl: "/audio/noise/office_ambience.wav",
+  },
+  {
+    label: "Office Fan",
+    value: "office_fan_ambience",
+    previewUrl: "/audio/noise/office_fan_ambience.wav",
+  },
+  {
+    label: "Typing",
+    value: "typing_ambience",
+    previewUrl: "/audio/noise/typing_ambience.wav",
+  },
+] as const;
+
+export function getNoisePreviewUrl(noiseType: string): string {
+  return (
+    NOISE_TYPE_OPTIONS.find((o) => o.value === noiseType)?.previewUrl ?? ""
+  );
+}
+
 /** TTS rates supported by the survey voice configuration */
 export const VOICE_SPEED_OPTIONS = [
   { label: "0.7x", value: "0.7" },
@@ -185,7 +229,8 @@ export const DEFAULT_AGENT_CONFIG: AgentConfig = {
         pitch: 0,
       },
     },
-    backgroundNoise: "off",
+    noise_type: DEFAULT_NOISE_TYPE,
+    volume: DEFAULT_NOISE_VOLUME,
   },
   prompts: {
     greeting: "",

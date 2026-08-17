@@ -103,6 +103,8 @@ export interface SurveyResultsListParams {
   page?: number;
   limit?: number;
   search?: string;
+  /** Filter by call_recordings.call_status (e.g. answered, missed) */
+  callStatus?: string;
 }
 
 export type SurveyResultsExportFormat = "xlsx" | "csv";
@@ -110,6 +112,7 @@ export type SurveyResultsExportFormat = "xlsx" | "csv";
 export interface SurveyResultsExportParams {
   format?: SurveyResultsExportFormat;
   search?: string;
+  callStatus?: string;
 }
 
 export interface SaveSurveyInput {

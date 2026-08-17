@@ -9,16 +9,22 @@ import {
   type SortingState,
 } from "@tanstack/react-table";
 import {
-  ArrowDown,
-  ArrowUp,
-  ArrowUpDown,
   MessageSquareReply,
   Sparkles,
 } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/shared/empty-state";
-import { formatRelativeTime, getInitials } from "@/lib/utils";
+import {
+  TableColumnsBar,
+  TableColumnDnd,
+  SortableTanstackHeaderRow,
+  getColumnDefId,
+  TABLE_BODY_CELL_CLASS,
+  TABLE_BODY_ROW_CLASS,
+  useLaidOutColumnDefs,
+} from "@/components/shared/table-column-layout";
+import { formatRelativeTime, getInitials, cn } from "@/lib/utils";
 import { ResponseStatusBadge } from "./response-status-badge";
 import { SentimentBadge } from "./sentiment-badge";
 import type { SurveyResponse } from "@/types/response";
@@ -126,6 +132,7 @@ export function ResponsesTable({
       {
         id: "ai",
         header: "",
+        meta: { label: "AI" },
         cell: () => (
           <Sparkles className="size-4 text-violet-500/60" />
         ),
@@ -134,9 +141,19 @@ export function ResponsesTable({
     []
   );
 
+  const {
+    visibleColumns,
+    pickerItems,
+    hidden,
+    toggleHidden,
+    reorder,
+    reset,
+    lockedIds,
+  } = useLaidOutColumnDefs("responses", columns);
+
   const table = useReactTable({
     data: responses,
-    columns,
+    columns: visibleColumns,
     state: { sorting },
     onSortingChange: (updater) => {
       const next = typeof updater === "function" ? updater(sorting) : updater;
@@ -169,7 +186,7 @@ export function ResponsesTable({
 
   if (responses.length === 0) {
     return (
-      <div className="rounded-[6px] border border-border/60 bg-card shadow-card">
+      <div className="overflow-hidden rounded-[6px] border border-border/60 bg-card shadow-card">
         <EmptyState
           icon={MessageSquareReply}
           title="No responses found"
@@ -179,52 +196,32 @@ export function ResponsesTable({
     );
   }
 
+  const pickerBar = (
+    <TableColumnsBar
+      items={pickerItems}
+      hidden={hidden}
+      onToggle={toggleHidden}
+      onReorder={reorder}
+      onReset={reset}
+    />
+  );
+
   return (
     <div className="overflow-hidden rounded-[6px] border border-border/60 bg-card shadow-card">
+      {pickerBar}
       <div className="overflow-x-auto">
+        <TableColumnDnd
+          ids={visibleColumns.map(getColumnDefId)}
+          lockedIds={lockedIds}
+          onReorder={reorder}
+        >
         <table className="w-full min-w-[800px]">
           <thead>
             {table.getHeaderGroups().map((hg) => (
-              <tr
+              <SortableTanstackHeaderRow
                 key={hg.id}
-                className="border-b border-border/60 bg-muted/30"
-              >
-                {hg.headers.map((header) => {
-                  const canSort = header.column.getCanSort();
-                  const sorted = header.column.getIsSorted();
-                  return (
-                    <th
-                      key={header.id}
-                      className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-muted-foreground"
-                    >
-                      {canSort ? (
-                        <button
-                          type="button"
-                          onClick={header.column.getToggleSortingHandler()}
-                          className="inline-flex items-center gap-1.5 hover:text-foreground"
-                        >
-                          {flexRender(
-                            header.column.columnDef.header,
-                            header.getContext()
-                          )}
-                          {sorted === "asc" ? (
-                            <ArrowUp className="size-3.5" />
-                          ) : sorted === "desc" ? (
-                            <ArrowDown className="size-3.5" />
-                          ) : (
-                            <ArrowUpDown className="size-3.5 opacity-40" />
-                          )}
-                        </button>
-                      ) : (
-                        flexRender(
-                          header.column.columnDef.header,
-                          header.getContext()
-                        )
-                      )}
-                    </th>
-                  );
-                })}
-              </tr>
+                headerGroup={hg}
+              />
             ))}
           </thead>
           <tbody>
@@ -232,10 +229,10 @@ export function ResponsesTable({
               <tr
                 key={row.id}
                 onClick={() => onRowClick(row.original)}
-                className="cursor-pointer border-b border-border/30 transition-colors last:border-0 hover:bg-muted/20"
+                className={cn(TABLE_BODY_ROW_CLASS, "cursor-pointer")}
               >
                 {row.getVisibleCells().map((cell) => (
-                  <td key={cell.id} className="px-4 py-3.5">
+                  <td key={cell.id} className={TABLE_BODY_CELL_CLASS}>
                     {flexRender(cell.column.columnDef.cell, cell.getContext())}
                   </td>
                 ))}
@@ -243,6 +240,7 @@ export function ResponsesTable({
             ))}
           </tbody>
         </table>
+        </TableColumnDnd>
       </div>
     </div>
   );

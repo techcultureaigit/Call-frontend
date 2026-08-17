@@ -1,13 +1,27 @@
 
 "use client";
 
-import type { MouseEvent, ReactNode } from "react";
+import { useMemo, useState, type MouseEvent, type ReactNode } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { Inbox, ArrowUp, ArrowDown, ArrowUpDown, type LucideIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/shared/empty-state";
+import {
+  TableColumnsBar,
+  TableColumnDnd,
+  SortableColumnTh,
+  applyColumnLayout,
+  columnLabelFromHeader,
+  resolveColumnPin,
+  useTableColumnLayout,
+  TABLE_HEAD_ROW_CLASS,
+  TABLE_BODY_ROW_CLASS,
+  TABLE_BODY_CELL_CLASS,
+  TABLE_SELECT_CELL_CLASS,
+  type TableColumnLayoutItem,
+} from "@/components/shared/table-column-layout";
 import { cn } from "@/lib/utils";
 
 export interface DataTableColumn<T> {
@@ -17,6 +31,11 @@ export interface DataTableColumn<T> {
   headerClassName?: string;
   cellClassName?: string;
   align?: "left" | "right";
+  /** Label in the Columns picker (defaults to string header or id). */
+  label?: string;
+  /** Default true. Select / actions stay visible. */
+  hideable?: boolean;
+  pin?: "start" | "end";
   /** Show status accent bar on this column (usually first / select) */
   showAccent?: boolean;
 }
@@ -37,6 +56,8 @@ export interface DataTableProps<T> {
   getRowAccentClassName?: (row: T) => string | undefined;
   getRowClassName?: (row: T) => string | undefined;
   skeletonRows?: number;
+  /** Persist show/hide + reorder for this table (localStorage). */
+  columnLayoutKey?: string;
 }
 
 /** Shared table shell used by Surveys, Roles, Voices, etc. */
@@ -56,14 +77,65 @@ export function DataTable<T>({
   getRowAccentClassName,
   getRowClassName,
   skeletonRows = 5,
+  columnLayoutKey,
 }: DataTableProps<T>) {
+  const layoutItems = useMemo<TableColumnLayoutItem[]>(
+    () =>
+      columns.map((column) => ({
+        id: column.id,
+        label: columnLabelFromHeader(column.id, column.header, column.label),
+        hideable: column.hideable,
+        pin: column.pin,
+      })),
+    [columns]
+  );
+  const layoutEnabled = Boolean(columnLayoutKey);
+  const {
+    layout,
+    pickerItems,
+    hidden,
+    toggleHidden,
+    reorder,
+    reset,
+    lockedIds,
+  } = useTableColumnLayout(columnLayoutKey ?? "", layoutItems, layoutEnabled);
+
+  const visibleColumns = useMemo(
+    () =>
+      layoutEnabled
+        ? applyColumnLayout(
+            columns,
+            layout,
+            (column) => column.id,
+            (column) =>
+              resolveColumnPin(
+                column,
+                columns[0]?.id,
+                columns[0]?.id === "select" ? columns[1]?.id : undefined
+              )
+          )
+        : columns,
+    [columns, layout, layoutEnabled]
+  );
+
+  const pickerBar = layoutEnabled ? (
+    <TableColumnsBar
+      items={pickerItems}
+      hidden={hidden}
+      onToggle={toggleHidden}
+      onReorder={reorder}
+      onReset={reset}
+    />
+  ) : null;
+
   if (isLoading) {
     return <DataTableSkeleton columns={columns.length} rows={skeletonRows} />;
   }
 
   if (data.length === 0) {
     return (
-      <div className="rounded-[6px] border border-border/60 bg-card shadow-card">
+      <div className="overflow-hidden rounded-[6px] border border-border/60 bg-card shadow-card">
+        {pickerBar}
         <EmptyState
           icon={emptyIcon}
           title={emptyTitle}
@@ -80,26 +152,33 @@ export function DataTable<T>({
         aria-hidden
         className="pointer-events-none absolute inset-x-0 top-0 h-24 bg-[radial-gradient(ellipse_at_top_left,color-mix(in_oklch,var(--brand)_14%,transparent),transparent_55%)]"
       />
+      {pickerBar}
 
       <div className="relative overflow-x-auto">
-        <table className={cn("w-full border-collapse", minWidthClassName)}>
-          <thead>
-            <tr className="border-b border-border/50 bg-muted/40">
-              {columns.map((column) => (
-                <th
-                  key={column.id}
-                  className={cn(
-                    "px-4 py-3.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground",
-                    column.align === "right" ? "pr-5 text-right" : "text-left",
-                    column.id === "select" && "w-12 px-3.5",
-                    column.headerClassName
-                  )}
-                >
-                  {column.header}
-                </th>
-              ))}
-            </tr>
-          </thead>
+        <TableColumnDnd
+          ids={visibleColumns.map((column) => column.id)}
+          lockedIds={lockedIds}
+          onReorder={reorder}
+          disabled={!layoutEnabled}
+        >
+          <table className={cn("w-full border-collapse", minWidthClassName)}>
+            <thead>
+              <tr className={TABLE_HEAD_ROW_CLASS}>
+                {visibleColumns.map((column) => (
+                  <SortableColumnTh
+                    key={column.id}
+                    id={column.id}
+                    className={cn(
+                      column.align === "right" && "text-right",
+                      column.id === "select" && TABLE_SELECT_CELL_CLASS,
+                      column.headerClassName
+                    )}
+                  >
+                    {column.header}
+                  </SortableColumnTh>
+                ))}
+              </tr>
+            </thead>
           <tbody>
             {data.map((row, rowIndex) => {
               const selected = isRowSelected?.(row) ?? false;
@@ -128,20 +207,19 @@ export function DataTable<T>({
                   transition={{ delay: rowIndex * 0.03, duration: 0.22 }}
                   onClick={onRowClick ? handleRowClick : undefined}
                   className={cn(
-                    "group border-b border-border/30 transition-colors last:border-0",
+                    TABLE_BODY_ROW_CLASS,
                     onRowClick && "cursor-pointer",
-                    "hover:bg-muted/25",
                     selected && "bg-primary/5",
                     getRowClassName?.(row)
                   )}
                 >
-                  {columns.map((column) => (
+                  {visibleColumns.map((column) => (
                     <td
                       key={column.id}
                       className={cn(
-                        "relative px-4 py-3.5 align-middle",
-                        column.align === "right" && "pr-5 text-right",
-                        column.id === "select" && "w-12 px-3.5",
+                        TABLE_BODY_CELL_CLASS,
+                        column.align === "right" && "text-right",
+                        column.id === "select" && TABLE_SELECT_CELL_CLASS,
                         column.cellClassName
                       )}
                     >
@@ -162,6 +240,7 @@ export function DataTable<T>({
             })}
           </tbody>
         </table>
+        </TableColumnDnd>
       </div>
 
       {footerHint ? (
@@ -201,6 +280,47 @@ export function DataTableSkeleton({
           <Skeleton className="h-8 w-24 rounded-md" />
         </div>
       ))}
+    </div>
+  );
+}
+
+/** One-line cell text — expands only when the user clicks Read more. */
+export function TableReadMore({
+  text,
+  limit = 32,
+  className,
+}: {
+  text: string;
+  limit?: number;
+  className?: string;
+}) {
+  const [expanded, setExpanded] = useState(false);
+  const value = text.trim() || "—";
+  const needsMore = value.length > limit;
+
+  return (
+    <div className={cn("min-w-0 max-w-[14rem]", className)}>
+      <p
+        className={cn(
+          "text-sm leading-5 text-foreground",
+          !expanded && "truncate"
+        )}
+        title={!expanded ? value : undefined}
+      >
+        {expanded || !needsMore
+          ? value
+          : `${value.slice(0, limit).trimEnd()}…`}
+      </p>
+      {needsMore ? (
+        <button
+          type="button"
+          data-row-ignore-click
+          onClick={() => setExpanded((open) => !open)}
+          className="mt-0.5 text-[11px] font-semibold text-primary hover:underline"
+        >
+          {expanded ? "Read less" : "Read more"}
+        </button>
+      ) : null}
     </div>
   );
 }

@@ -9,15 +9,21 @@ import {
   type SortingState,
 } from "@tanstack/react-table";
 import {
-  ArrowDown,
-  ArrowUp,
-  ArrowUpDown,
   ScrollText,
 } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/shared/empty-state";
-import { formatRelativeTime, getInitials } from "@/lib/utils";
+import {
+  TableColumnsBar,
+  TableColumnDnd,
+  SortableTanstackHeaderRow,
+  getColumnDefId,
+  TABLE_BODY_CELL_CLASS,
+  TABLE_BODY_ROW_CLASS,
+  useLaidOutColumnDefs,
+} from "@/components/shared/table-column-layout";
+import { formatRelativeTime, getInitials, cn } from "@/lib/utils";
 import { ActivityLogActionBadge } from "./activity-log-action-badge";
 import { ActivityLogModuleBadge } from "./activity-log-module-badge";
 import type { ActivityLog } from "@/types/activity-log";
@@ -122,9 +128,19 @@ export function ActivityLogsTable({
     []
   );
 
+  const {
+    visibleColumns,
+    pickerItems,
+    hidden,
+    toggleHidden,
+    reorder,
+    reset,
+    lockedIds,
+  } = useLaidOutColumnDefs("activity-logs", columns);
+
   const table = useReactTable({
     data: logs,
-    columns,
+    columns: visibleColumns,
     state: { sorting },
     onSortingChange: (updater) => {
       const next =
@@ -165,56 +181,37 @@ export function ActivityLogsTable({
 
   return (
     <div className="overflow-hidden rounded-[6px] border border-border/60 bg-card shadow-card">
+      <TableColumnsBar
+        items={pickerItems}
+        hidden={hidden}
+        onToggle={toggleHidden}
+        onReorder={reorder}
+        onReset={reset}
+      />
       <div className="overflow-x-auto">
+        <TableColumnDnd
+          ids={visibleColumns.map(getColumnDefId)}
+          lockedIds={lockedIds}
+          onReorder={reorder}
+        >
         <table className="w-full min-w-[900px]">
           <thead>
             {table.getHeaderGroups().map((group) => (
-              <tr
+              <SortableTanstackHeaderRow
                 key={group.id}
-                className="border-b border-border/60 bg-muted/30"
-              >
-                {group.headers.map((header) => (
-                  <th
-                    key={header.id}
-                    className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-muted-foreground"
-                  >
-                    {header.isPlaceholder ? null : header.column.getCanSort() ? (
-                      <button
-                        type="button"
-                        className="inline-flex items-center gap-1 hover:text-foreground"
-                        onClick={header.column.getToggleSortingHandler()}
-                      >
-                        {flexRender(
-                          header.column.columnDef.header,
-                          header.getContext()
-                        )}
-                        {{
-                          asc: <ArrowUp className="size-3" />,
-                          desc: <ArrowDown className="size-3" />,
-                        }[header.column.getIsSorted() as string] ?? (
-                          <ArrowUpDown className="size-3 opacity-40" />
-                        )}
-                      </button>
-                    ) : (
-                      flexRender(
-                        header.column.columnDef.header,
-                        header.getContext()
-                      )
-                    )}
-                  </th>
-                ))}
-              </tr>
+                headerGroup={group}
+              />
             ))}
           </thead>
-          <tbody className="divide-y divide-border/50">
+          <tbody>
             {table.getRowModel().rows.map((row) => (
               <tr
                 key={row.id}
                 onClick={() => onRowClick(row.original)}
-                className="cursor-pointer transition-colors hover:bg-muted/30"
+                className={cn(TABLE_BODY_ROW_CLASS, "cursor-pointer")}
               >
                 {row.getVisibleCells().map((cell) => (
-                  <td key={cell.id} className="px-4 py-3.5">
+                  <td key={cell.id} className={TABLE_BODY_CELL_CLASS}>
                     {flexRender(cell.column.columnDef.cell, cell.getContext())}
                   </td>
                 ))}
@@ -222,6 +219,7 @@ export function ActivityLogsTable({
             ))}
           </tbody>
         </table>
+        </TableColumnDnd>
       </div>
     </div>
   );

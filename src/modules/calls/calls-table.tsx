@@ -9,9 +9,6 @@ import {
   type SortingState,
 } from "@tanstack/react-table";
 import {
-  ArrowDown,
-  ArrowUp,
-  ArrowUpDown,
   MoreHorizontal,
   Phone,
   RefreshCw,
@@ -27,8 +24,17 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/shared/empty-state";
+import {
+  TableColumnsBar,
+  TableColumnDnd,
+  SortableTanstackHeaderRow,
+  getColumnDefId,
+  TABLE_BODY_CELL_CLASS,
+  TABLE_BODY_ROW_CLASS,
+  useLaidOutColumnDefs,
+} from "@/components/shared/table-column-layout";
 import { formatCallDuration } from "@/modules/calls/calls-constants";
-import { formatRelativeTime, getInitials } from "@/lib/utils";
+import { formatRelativeTime, getInitials, cn } from "@/lib/utils";
 import { CallStatusBadge } from "./call-status-badge";
 import type { Call } from "@/types/call";
 
@@ -131,6 +137,7 @@ export function CallsTable({
       {
         id: "recording",
         header: "",
+        meta: { label: "Recording" },
         cell: ({ row }) =>
           row.original.recordingUrl ? (
             <span className="inline-flex size-6 items-center justify-center rounded-md bg-violet-500/10 text-violet-600">
@@ -141,6 +148,7 @@ export function CallsTable({
       {
         id: "actions",
         header: "",
+        meta: { label: "Actions", hideable: false, pin: "end" },
         cell: ({ row }) => {
           const call = row.original;
           return (
@@ -178,9 +186,19 @@ export function CallsTable({
     [onRowClick, onRetry, isRetryingId]
   );
 
+  const {
+    visibleColumns,
+    pickerItems,
+    hidden,
+    toggleHidden,
+    reorder,
+    reset,
+    lockedIds,
+  } = useLaidOutColumnDefs("calls", columns);
+
   const table = useReactTable({
     data: calls,
-    columns,
+    columns: visibleColumns,
     state: { sorting },
     onSortingChange: (updater) => {
       const next = typeof updater === "function" ? updater(sorting) : updater;
@@ -194,7 +212,7 @@ export function CallsTable({
 
   if (calls.length === 0) {
     return (
-      <div className="rounded-[6px] border border-border/60 bg-card shadow-card">
+      <div className="overflow-hidden rounded-[6px] border border-border/60 bg-card shadow-card">
         <EmptyState
           icon={Phone}
           title="No calls found"
@@ -206,50 +224,26 @@ export function CallsTable({
 
   return (
     <div className="overflow-hidden rounded-[6px] border border-border/60 bg-card shadow-card">
+      <TableColumnsBar
+        items={pickerItems}
+        hidden={hidden}
+        onToggle={toggleHidden}
+        onReorder={reorder}
+        onReset={reset}
+      />
       <div className="overflow-x-auto">
+        <TableColumnDnd
+          ids={visibleColumns.map(getColumnDefId)}
+          lockedIds={lockedIds}
+          onReorder={reorder}
+        >
         <table className="w-full min-w-[900px]">
           <thead>
             {table.getHeaderGroups().map((headerGroup) => (
-              <tr
+              <SortableTanstackHeaderRow
                 key={headerGroup.id}
-                className="border-b border-border/60 bg-muted/30"
-              >
-                {table.getHeaderGroups()[0].headers.map((header) => {
-                  const canSort = header.column.getCanSort();
-                  const sorted = header.column.getIsSorted();
-                  return (
-                    <th
-                      key={header.id}
-                      className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-muted-foreground"
-                    >
-                      {canSort ? (
-                        <button
-                          type="button"
-                          onClick={header.column.getToggleSortingHandler()}
-                          className="inline-flex items-center gap-1.5 transition-colors hover:text-foreground"
-                        >
-                          {flexRender(
-                            header.column.columnDef.header,
-                            header.getContext()
-                          )}
-                          {sorted === "asc" ? (
-                            <ArrowUp className="size-3.5" />
-                          ) : sorted === "desc" ? (
-                            <ArrowDown className="size-3.5" />
-                          ) : (
-                            <ArrowUpDown className="size-3.5 opacity-40" />
-                          )}
-                        </button>
-                      ) : (
-                        flexRender(
-                          header.column.columnDef.header,
-                          header.getContext()
-                        )
-                      )}
-                    </th>
-                  );
-                })}
-              </tr>
+                headerGroup={headerGroup}
+              />
             ))}
           </thead>
           <tbody>
@@ -257,10 +251,10 @@ export function CallsTable({
               <tr
                 key={row.id}
                 onClick={() => onRowClick(row.original)}
-                className="cursor-pointer border-b border-border/30 transition-colors last:border-0 hover:bg-muted/20"
+                className={cn(TABLE_BODY_ROW_CLASS, "cursor-pointer")}
               >
                 {row.getVisibleCells().map((cell) => (
-                  <td key={cell.id} className="px-4 py-3.5">
+                  <td key={cell.id} className={TABLE_BODY_CELL_CLASS}>
                     {flexRender(cell.column.columnDef.cell, cell.getContext())}
                   </td>
                 ))}
@@ -268,6 +262,7 @@ export function CallsTable({
             ))}
           </tbody>
         </table>
+        </TableColumnDnd>
       </div>
     </div>
   );

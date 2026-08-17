@@ -877,11 +877,11 @@ export function SurveyCreateEditView({
   }, [computedProgress, showValidationErrors]);
 
   const showBlockedStep = (key: StepRequirementKey) => {
-    setShowValidationErrors(true);
     setActiveTab(PROGRESS_TO_TAB[key]);
   };
 
   const handleBack = () => {
+    setShowValidationErrors(false);
     if (tabIndex > 0) setActiveTab(ENABLED_TAB_ORDER[tabIndex - 1]);
   };
 
@@ -907,7 +907,10 @@ export function SurveyCreateEditView({
         ] as StepRequirementKey[]).find(
           (key) => !computedProgress[key].complete
         );
-        if (blockedKey) showBlockedStep(blockedKey);
+        if (blockedKey) {
+          setShowValidationErrors(true);
+          showBlockedStep(blockedKey);
+        }
         return;
       }
     }
@@ -927,6 +930,7 @@ export function SurveyCreateEditView({
       const requiredKeys = TAB_REQUIRED_KEYS[activeTab] ?? [];
       const blockedKey = requiredKeys.find((key) => !computedProgress[key].complete);
       if (blockedKey) {
+        setShowValidationErrors(true);
         showBlockedStep(blockedKey);
         return;
       }
@@ -1005,6 +1009,7 @@ export function SurveyCreateEditView({
       if (blockedKey) showBlockedStep(blockedKey);
       return;
     }
+    setShowValidationErrors(false);
     setActiveTab(tab);
   };
 

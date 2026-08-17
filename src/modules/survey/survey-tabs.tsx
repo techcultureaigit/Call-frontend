@@ -25,7 +25,7 @@ import { SearchableSelect } from "@/components/ui/searchable-select";
 import { Select } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { DEFAULT_FAREWELL, AGENT_LANGUAGES as SURVEY_LANGUAGES, getSurveyQuestionTypeLabel, getVoiceSpeedLabel, DEFAULT_VOICE_SPEED, SURVEY_QUESTION_TYPES } from "@/lib/constants/agent-config";
+import { DEFAULT_FAREWELL, AGENT_LANGUAGES as SURVEY_LANGUAGES, getSurveyQuestionTypeLabel, getVoiceSpeedLabel, DEFAULT_VOICE_SPEED, DEFAULT_NOISE_TYPE, DEFAULT_NOISE_VOLUME, NOISE_TYPE_OPTIONS, getNoisePreviewUrl, SURVEY_QUESTION_TYPES } from "@/lib/constants/agent-config";
 import { listProviders } from "@/modules/providers/api";
 import {
   modelNameById,
@@ -46,7 +46,7 @@ import {
 import type { ClientContactRow } from "./survey-contacts";
 import { getContactFileOpenUrl } from "@/lib/utils/contact-file-url";
 import type { AgentPromptsConfig as SurveyPromptsConfig, AgentPersonaConfig as SurveyPersonaConfig, AgentStackConfig as SurveyStackConfig, AgentSurveyQuestion as SurveyQuestion, AgentSurveyQuestionOption as SurveyQuestionOption, AgentSurveyQuestionsConfig as SurveyQuestionsConfig, AgentClientContactConfig as SurveyClientContactConfig } from "@/types/agent";
-import { Users, Sparkles, History, BrainCircuit, ChevronDown, HelpCircle, Mic, Phone, Volume2, Download, ExternalLink, Plus, Trash2, Upload, X } from "lucide-react";
+import { Users, Sparkles, History, BrainCircuit, ChevronDown, HelpCircle, Mic, Pause, Phone, Play, Volume2, Download, ExternalLink, Plus, Trash2, Upload, X } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { useEffect, useMemo, useState, useRef } from "react";
 import type { ReactNode } from "react";
@@ -607,6 +607,53 @@ export function PersonaTab({
     val: SurveyPersonaConfig[K]
   ) => onChange({ ...values, [key]: val });
 
+  const noiseAudioRef = useRef<HTMLAudioElement | null>(null);
+  const [noisePlaying, setNoisePlaying] = useState(false);
+  const noiseType = values.noise_type || DEFAULT_NOISE_TYPE;
+  const noiseVolume =
+    typeof values.volume === "number" ? values.volume : DEFAULT_NOISE_VOLUME;
+  const noisePreviewUrl = getNoisePreviewUrl(noiseType);
+
+  useEffect(() => {
+    const audio = noiseAudioRef.current;
+    if (!audio) return;
+    audio.pause();
+    audio.removeAttribute("src");
+    audio.load();
+    setNoisePlaying(false);
+  }, [noisePreviewUrl]);
+
+  useEffect(() => {
+    const audio = noiseAudioRef.current;
+    if (audio) audio.volume = Math.min(1, Math.max(0, noiseVolume));
+  }, [noiseVolume]);
+
+  useEffect(() => {
+    return () => {
+      const audio = noiseAudioRef.current;
+      if (!audio) return;
+      audio.pause();
+      audio.removeAttribute("src");
+    };
+  }, []);
+
+  const toggleNoisePreview = () => {
+    const audio = noiseAudioRef.current;
+    if (!audio || !noisePreviewUrl) return;
+    if (!audio.paused) {
+      audio.pause();
+      setNoisePlaying(false);
+      return;
+    }
+    audio.volume = Math.min(1, Math.max(0, noiseVolume));
+    audio.loop = true;
+    audio.src = noisePreviewUrl;
+    void audio.play().then(
+      () => setNoisePlaying(true),
+      () => setNoisePlaying(false)
+    );
+  };
+
   useEffect(() => {
     let cancelled = false;
     void listProviders()
@@ -901,6 +948,79 @@ export function PersonaTab({
               />
             }
           />
+        </div>
+      </section>
+
+      <section className="space-y-4">
+        <div>
+          <h3 className="text-sm font-semibold tracking-tight">
+            Additional settings
+          </h3>
+          <p className="text-xs text-muted-foreground">
+            Add ambient sound to make calls feel more natural.
+          </p>
+        </div>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <div className="space-y-1.5 rounded-[6px] border border-border/50 bg-card p-3 shadow-card">
+            <FieldLabel>Noise type</FieldLabel>
+            <div className="flex items-center gap-2">
+              <div className="min-w-0 flex-1">
+                <Select
+                  value={noiseType}
+                  onChange={(e) => update("noise_type", e.target.value)}
+                  options={NOISE_TYPE_OPTIONS.map((o) => ({
+                    label: o.label,
+                    value: o.value,
+                  }))}
+                />
+              </div>
+              <button
+                type="button"
+                onClick={toggleNoisePreview}
+                disabled={!noisePreviewUrl}
+                className="inline-flex size-10 shrink-0 items-center justify-center rounded-[6px] border border-border/60 bg-muted/40 text-foreground transition-colors hover:border-brand/40 hover:bg-brand/10 hover:text-brand disabled:cursor-not-allowed disabled:opacity-40"
+                aria-label={noisePlaying ? "Pause noise preview" : "Play noise preview"}
+                title={noisePlaying ? "Pause preview" : "Play preview"}
+              >
+                {noisePlaying ? (
+                  <Pause className="size-4" />
+                ) : (
+                  <Play className="size-4" />
+                )}
+              </button>
+            </div>
+            <audio
+              ref={noiseAudioRef}
+              preload="none"
+              className="hidden"
+              onPlay={() => setNoisePlaying(true)}
+              onPause={() => setNoisePlaying(false)}
+              onEnded={() => setNoisePlaying(false)}
+            />
+            <p className="text-[11px] text-muted-foreground">
+              {noisePreviewUrl
+                ? "Click play to hear a preview. It stops when you leave this step."
+                : "Select a noise type, then click play to hear it."}
+            </p>
+          </div>
+          <div className="space-y-1.5 rounded-[6px] border border-border/50 bg-card p-3 shadow-card">
+            <div className="flex items-center justify-between gap-2">
+              <FieldLabel>Volume</FieldLabel>
+              <span className="rounded-full bg-brand/10 px-2 py-0.5 text-[11px] font-semibold tabular-nums text-brand">
+                {noiseVolume.toFixed(1)}
+              </span>
+            </div>
+            <input
+              type="range"
+              min={0}
+              max={1}
+              step={0.1}
+              value={noiseVolume}
+              onChange={(e) => update("volume", Number(e.target.value))}
+              className="w-full accent-primary"
+              disabled={noiseType === "off"}
+            />
+          </div>
         </div>
       </section>
 

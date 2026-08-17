@@ -202,6 +202,7 @@ export async function listSurveyResults(
     page: params.page ?? 1,
     limit: params.limit ?? 20,
     search: params.search || undefined,
+    callStatus: params.callStatus || undefined,
   };
   return surveyCall("listSurveyResults", "GET", url, async () => {
     const res = await apiGet<SurveyResultsResponse>(url, query);
@@ -234,6 +235,7 @@ export async function exportSurveyResults(
   const query = createQueryString({
     format,
     search: params.search || undefined,
+    callStatus: params.callStatus || undefined,
   });
   const url = `/api/surveys/${id}/results/export${query}`;
   return surveyCall("exportSurveyResults", "GET", url, async () => {

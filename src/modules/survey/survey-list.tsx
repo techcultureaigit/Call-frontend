@@ -111,6 +111,9 @@ export function SurveysTable({
     () => [
       {
         id: "select",
+        label: "Select",
+        hideable: false,
+        pin: "start",
         showAccent: true,
         header: (
           <Checkbox
@@ -133,8 +136,8 @@ export function SurveysTable({
       {
         id: "name",
         header: "Survey",
-        cellClassName: "pl-5",
-        headerClassName: "pl-5",
+        hideable: false,
+        pin: "start",
         cell: (survey) => (
           <div className="min-w-0">
             <p
@@ -217,6 +220,8 @@ export function SurveysTable({
         id: "actions",
         header: "Actions",
         align: "right",
+        hideable: false,
+        pin: "end",
         cell: (survey) => {
           const locked = isSurveyCompleted(survey);
           const canSchedule =
@@ -328,6 +333,7 @@ export function SurveysTable({
 
   return (
     <DataTable
+      columnLayoutKey="surveys"
       columns={columns}
       data={surveys}
       getRowId={(survey) => survey.id}
@@ -355,10 +361,19 @@ const LANGUAGE_FILTER_OPTIONS = [
   ...SURVEY_LANGUAGES,
 ];
 
+const SURVEY_STATUS_FILTER_OPTIONS = [
+  { label: "All statuses", value: "all" },
+  { label: "Draft", value: "draft" },
+  { label: "Scheduled", value: "scheduled" },
+  { label: "Processing", value: "processing" },
+  { label: "Completed", value: "completed" },
+];
+
 /* --- Page: /survey — list + bulk actions --- */
 
 export function SurveyListView() {
   const [language, setLanguage] = useState("all");
+  const [status, setStatus] = useState("all");
   const { isReady, canCreateSurvey, canExportSurvey } = usePermissions();
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [deleteOpen, setDeleteOpen] = useState(false);
@@ -386,12 +401,13 @@ export function SurveyListView() {
           limit,
           search: search || undefined,
           language: language !== "all" ? language : undefined,
+          status: status !== "all" ? status : undefined,
         });
       } catch (error) {
         throw error;
       }
     },
-    [language]
+    [language, status]
   );
 
   const {
@@ -408,7 +424,7 @@ export function SurveyListView() {
   } = usePaginatedList<Survey>({
     pageSize: PAGE_SIZE,
     fetchPage,
-    resetPageWhen: [language],
+    resetPageWhen: [language, status],
     onError: () => toast.error("Failed to load surveys"),
   });
 
@@ -424,7 +440,7 @@ export function SurveyListView() {
 
   useEffect(() => {
     setSelectedIds(new Set());
-  }, [page, debouncedSearch, language]);
+  }, [page, debouncedSearch, language, status]);
 
   const allSelected =
     surveys.length > 0 && surveys.every((survey) => selectedIds.has(survey.id));
@@ -455,6 +471,7 @@ export function SurveyListView() {
         limit: Math.min(Math.max(meta.total, PAGE_SIZE), EXPORT_MAX_ROWS),
         search: debouncedSearch.trim() || undefined,
         language: language !== "all" ? language : undefined,
+        status: status !== "all" ? status : undefined,
         includeQuestions: true,
       });
       if (result.data.length === 0) {
@@ -618,7 +635,8 @@ export function SurveyListView() {
 
   /** Same card loader for first load, search, and pagination refresh. */
   const showLoader = isLoading || isRefreshing;
-  const hasActiveFilters = Boolean(search.trim()) || language !== "all";
+  const hasActiveFilters =
+    Boolean(search.trim()) || language !== "all" || status !== "all";
 
   return (
     <div className="bg-linear-to-b from-brand/5 to-transparent">
@@ -649,15 +667,26 @@ export function SurveyListView() {
             searchAriaLabel="Search surveys"
             toolbarDisabled={showLoader && surveys.length === 0}
             filters={
-              <SearchableSelect
-                value={language}
-                onChange={setLanguage}
-                options={LANGUAGE_FILTER_OPTIONS}
-                searchPlaceholder="Search languages…"
-                className="h-11 w-full rounded-[6px] border-border/50 bg-background/80 shadow-subtle sm:w-52"
-                disabled={showLoader && surveys.length === 0}
-                aria-label="Filter by language"
-              />
+              <>
+                <SearchableSelect
+                  value={status}
+                  onChange={setStatus}
+                  options={SURVEY_STATUS_FILTER_OPTIONS}
+                  searchPlaceholder="Search statuses…"
+                  className="h-11 w-full rounded-[6px] border-border/50 bg-background/80 shadow-subtle sm:w-44"
+                  disabled={showLoader && surveys.length === 0}
+                  aria-label="Filter by status"
+                />
+                <SearchableSelect
+                  value={language}
+                  onChange={setLanguage}
+                  options={LANGUAGE_FILTER_OPTIONS}
+                  searchPlaceholder="Search languages…"
+                  className="h-11 w-full rounded-[6px] border-border/50 bg-background/80 shadow-subtle sm:w-52"
+                  disabled={showLoader && surveys.length === 0}
+                  aria-label="Filter by language"
+                />
+              </>
             }
             actions={
               <>
@@ -739,7 +768,7 @@ export function SurveyListView() {
               <h3 className="text-lg font-semibold">No surveys found</h3>
               <p className="mt-2 max-w-sm text-sm text-muted-foreground">
                 {hasActiveFilters
-                  ? "Try a different search term or language filter."
+                  ? "Try a different search, status, or language filter."
                   : "Create your first voice survey to get started."}
               </p>
               {!hasActiveFilters && isReady && canCreateSurvey && (
@@ -757,6 +786,7 @@ export function SurveyListView() {
                   onClick={() => {
                     setSearch("");
                     setLanguage("all");
+                    setStatus("all");
                   }}
                 >
                   Clear filters

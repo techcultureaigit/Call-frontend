@@ -46,8 +46,6 @@ export function RolesTable({
       {
         id: "role",
         header: "Role",
-        headerClassName: "pl-5",
-        cellClassName: "pl-5",
         showAccent: true,
         cell: (role) => {
           const superAdmin = isSuperAdminRole(role.name);
@@ -186,6 +184,7 @@ export function RolesTable({
 
   return (
     <DataTable
+      columnLayoutKey="roles"
       columns={columns}
       data={roles}
       getRowId={(role) => role.id}
