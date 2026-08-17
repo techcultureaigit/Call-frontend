@@ -2,7 +2,7 @@
 
 /**
  * Reusable table column visibility + reorder (DRY).
- * Pass a storageKey + column list; persist layout in localStorage.
+ * Layout is saved per logged-in user in the DB (not localStorage).
  */
 
 import {
@@ -37,6 +37,10 @@ import { ArrowDown, ArrowUp, ArrowUpDown, Columns3, GripVertical } from "lucide-
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
+import {
+  loadTableColumnPrefs,
+  saveTableColumnPref,
+} from "@/components/shared/table-column-prefs";
 
 export interface TableColumnLayoutItem {
   id: string;
@@ -123,34 +127,6 @@ function isHideable(item: TableColumnLayoutItem) {
   return true;
 }
 
-function storageKeyFor(key: string) {
-  return `table-columns:${key}`;
-}
-
-function readStored(key: string): TableColumnLayoutState | null {
-  if (typeof window === "undefined") return null;
-  try {
-    const raw = window.localStorage.getItem(storageKeyFor(key));
-    if (!raw) return null;
-    const parsed = JSON.parse(raw) as TableColumnLayoutState;
-    if (!Array.isArray(parsed?.order) || !Array.isArray(parsed?.hidden)) {
-      return null;
-    }
-    return parsed;
-  } catch {
-    return null;
-  }
-}
-
-function writeStored(key: string, state: TableColumnLayoutState) {
-  if (typeof window === "undefined") return;
-  try {
-    window.localStorage.setItem(storageKeyFor(key), JSON.stringify(state));
-  } catch {
-    /* ignore quota */
-  }
-}
-
 function mergeLayout(
   items: TableColumnLayoutItem[],
   stored: TableColumnLayoutState | null
@@ -221,7 +197,7 @@ export function useTableColumnLayout(
   const pinnedItems = useMemo(() => withLeadingColumnsPinned(items), [items]);
   const itemsKey = pinnedItems.map((item) => item.id).join("|");
   const [layout, setLayout] = useState<TableColumnLayoutState>(() =>
-    mergeLayout(pinnedItems, enabled && storageKey ? readStored(storageKey) : null)
+    mergeLayout(pinnedItems, null)
   );
 
   useEffect(() => {
@@ -229,14 +205,21 @@ export function useTableColumnLayout(
       setLayout(mergeLayout(pinnedItems, null));
       return;
     }
-    setLayout(mergeLayout(pinnedItems, readStored(storageKey)));
+    let cancelled = false;
+    void loadTableColumnPrefs().then((map) => {
+      if (cancelled) return;
+      setLayout(mergeLayout(pinnedItems, map[storageKey] ?? null));
+    });
+    return () => {
+      cancelled = true;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [storageKey, enabled, itemsKey]);
 
   const persist = useCallback(
     (next: TableColumnLayoutState) => {
       setLayout(next);
-      if (enabled && storageKey) writeStored(storageKey, next);
+      if (enabled && storageKey) saveTableColumnPref(storageKey, next);
     },
     [enabled, storageKey]
   );

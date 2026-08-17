@@ -70,6 +70,9 @@ export function shouldSkipGlobalLoader(path: string, method = "GET"): boolean {
   if (url.includes("/auth/me") || url.includes("/auth/refresh")) {
     return true;
   }
+  if (url.includes("/auth/table-columns")) {
+    return true;
+  }
   // List pages already show their own loading UI — skip full-screen overlay on GETs
   if (
     m === "GET" &&
