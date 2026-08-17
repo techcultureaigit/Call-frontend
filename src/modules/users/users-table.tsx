@@ -21,6 +21,7 @@ import { Switch } from "@/components/ui/switch";
 import {
   DataTable,
   DataTableSortHeader,
+  TABLE_ROW_ACCENT_CLASS,
   type DataTableColumn,
 } from "@/components/shared/data-table";
 import { formatDate, formatRelativeTime, getInitials } from "@/lib/utils";
@@ -252,7 +253,7 @@ export function UsersTable({
       emptyDescription="Try adjusting your search or filters, or create a new user."
       footerHint="Click a row to edit. Use the menu for more actions."
       minWidthClassName="min-w-200"
-      getRowAccentClassName={() => "bg-brand"}
+      getRowAccentClassName={() => TABLE_ROW_ACCENT_CLASS}
       skeletonRows={8}
     />
   );

@@ -1,10 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Search, SlidersHorizontal, UserPlus, X } from "lucide-react";
+import { UserPlus, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
+import { ListToolbar } from "@/components/shared/list-toolbar";
 import type { RoleListItem } from "@/types/role";
 import type { UserStatus } from "@/types/user";
 import { listRoles } from "@/modules/roles/api";
@@ -19,6 +19,9 @@ interface UsersToolbarProps {
   onCreateClick: () => void;
   totalCount?: number;
 }
+
+const filterSelectClass =
+  "h-11 w-full rounded-[6px] border-border/50 bg-background/80 shadow-subtle sm:w-44";
 
 export function UsersToolbar({
   search,
@@ -60,10 +63,10 @@ export function UsersToolbar({
     <div className="space-y-4">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h2 className="font-display text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
+          <h1 className="font-display text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
             Users
-          </h2>
-          <p className="mt-1 text-sm text-muted-foreground">
+          </h1>
+          <p className="mt-1.5 text-sm text-muted-foreground">
             Manage team members, roles, and access permissions.
             {totalCount !== undefined && (
               <span className="ml-1 font-medium text-foreground">
@@ -72,37 +75,34 @@ export function UsersToolbar({
             )}
           </p>
         </div>
-        <Button onClick={onCreateClick} className="shrink-0">
+        <Button
+          onClick={onCreateClick}
+          className="h-11 shrink-0 rounded-[6px] px-5 shadow-brand"
+        >
           <UserPlus className="size-4" />
           Create User
         </Button>
       </div>
 
-      <div className="flex flex-col gap-3 rounded-[6px] border border-border/60 bg-card p-4 shadow-card lg:flex-row lg:items-center">
-        <div className="relative flex-1">
-          <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            placeholder="Search by name or email..."
-            value={search}
-            onChange={(e) => onSearchChange(e.target.value)}
-            className="h-9 border-border/60 bg-muted/30 pl-9"
-          />
-        </div>
-
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-          <div className="flex items-center gap-2">
-            <SlidersHorizontal className="hidden size-4 text-muted-foreground sm:block" />
+      <ListToolbar
+        search={search}
+        onSearchChange={onSearchChange}
+        searchPlaceholder="Search by name or email..."
+        searchAriaLabel="Search users"
+        filters={
+          <>
             <Select
               value={role}
               onChange={(e) => onRoleChange(e.target.value)}
               options={[
-                { label: "All Roles", value: "all" },
+                { label: "All roles", value: "all" },
                 ...roles.map((r) => ({
                   label: r.name,
                   value: r.id,
                 })),
               ]}
-              className="w-full sm:w-[160px]"
+              className={filterSelectClass}
+              aria-label="Filter by role"
             />
             <Select
               value={status}
@@ -110,27 +110,28 @@ export function UsersToolbar({
                 onStatusChange(e.target.value as UserStatus | "all")
               }
               options={[
-                { label: "All Statuses", value: "all" },
+                { label: "All statuses", value: "all" },
                 { label: "Active", value: "active" },
                 { label: "Inactive", value: "inactive" },
               ]}
-              className="w-full sm:w-[160px]"
+              className={filterSelectClass}
+              aria-label="Filter by status"
             />
-          </div>
-
-          {hasFilters && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={clearFilters}
-              className="h-9 text-muted-foreground"
-            >
-              <X className="size-3.5" />
-              Clear
-            </Button>
-          )}
-        </div>
-      </div>
+            {hasFilters ? (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={clearFilters}
+                className="h-11 shrink-0 text-muted-foreground"
+              >
+                <X className="size-3.5" />
+                Clear
+              </Button>
+            ) : null}
+          </>
+        }
+      />
     </div>
   );
 }

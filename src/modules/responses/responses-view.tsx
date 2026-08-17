@@ -125,6 +125,7 @@ export function ResponsesView({ viewMode = "all" }: ResponsesViewProps) {
   ]);
 
   return (
+    <div className="bg-linear-to-b from-brand/5 to-transparent">
     <PageContainer size="wide">
       <motion.div
         initial={{ opacity: 0, y: 8 }}
@@ -184,5 +185,6 @@ export function ResponsesView({ viewMode = "all" }: ResponsesViewProps) {
         onOpenChange={setDrawerOpen}
       />
     </PageContainer>
+    </div>
   );
 }

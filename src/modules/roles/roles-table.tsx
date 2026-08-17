@@ -17,6 +17,7 @@ import {
   DataTableActionGroup,
   DataTableMetaChip,
   DataTablePrimaryCell,
+  TABLE_ROW_ACCENT_CLASS,
   type DataTableColumn,
 } from "@/components/shared/data-table";
 import { cn } from "@/lib/utils";
@@ -195,9 +196,7 @@ export function RolesTable({
       emptyDescription="Try a different search term or create a new role."
       footerHint="Click a role to open its permissions page."
       minWidthClassName="min-w-190"
-      getRowAccentClassName={(role) =>
-        cn(isSuperAdminRole(role.name) ? "bg-brand" : "bg-brand/70")
-      }
+      getRowAccentClassName={() => TABLE_ROW_ACCENT_CLASS}
       skeletonRows={4}
     />
   );

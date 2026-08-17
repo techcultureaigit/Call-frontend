@@ -52,6 +52,7 @@ interface BackendUser {
   avatarUrl?: string;
   permissions?: User["permissions"];
   timezone?: string;
+  lastLogin?: string;
   lastLoginAt?: string;
   createdAt?: string;
   updatedAt?: string;
@@ -118,7 +119,7 @@ function mapBackendUser(raw: BackendUser): User {
     permissions: raw.permissions ?? {},
     status: isActiveToStatus(raw.isActive, raw.status),
     timezone: raw.timezone,
-    lastLoginAt: raw.lastLoginAt,
+    lastLoginAt: raw.lastLoginAt ?? raw.lastLogin,
     createdAt: raw.createdAt ?? "",
     updatedAt: raw.updatedAt ?? "",
   };

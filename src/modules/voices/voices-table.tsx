@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { Volume2 } from "lucide-react";
 import {
   DataTable,
+  TABLE_ROW_ACCENT_CLASS,
   type DataTableColumn,
 } from "@/components/shared/data-table";
 import { Badge } from "@/components/ui/badge";
@@ -214,7 +215,7 @@ export function VoicesTable({
       emptyDescription="Try adjusting your filters or search term."
       footerHint="Play and compare voice samples directly in the table."
       minWidthClassName="min-w-320"
-      getRowAccentClassName={() => "bg-brand"}
+      getRowAccentClassName={() => TABLE_ROW_ACCENT_CLASS}
       skeletonRows={6}
     />
   );

@@ -32,6 +32,7 @@ import {
   DataTableActionButton,
   DataTableMetaChip,
   TableReadMore,
+  TABLE_ROW_ACCENT_CLASS,
 } from "@/components/shared/data-table";
 import {
   TableColumnsBar,
@@ -747,20 +748,9 @@ function ResultsInlineQaTable({
     [layoutItems, layout]
   );
 
-  const statusAccent = (status?: string) => {
-    const s = (status || "").toLowerCase();
-    if (s === "answered") return "bg-emerald-500";
-    if (s === "missed") return "bg-rose-500";
-    return "bg-slate-400";
-  };
-
   return (
     <>
-      <div className="relative overflow-hidden rounded-[6px] border border-border/60 bg-card/95 shadow-elevated backdrop-blur-sm">
-        <div
-          aria-hidden
-          className="pointer-events-none absolute inset-x-0 top-0 h-24 bg-[radial-gradient(ellipse_at_top_left,color-mix(in_oklch,var(--brand)_14%,transparent),transparent_55%)]"
-        />
+      <div className="overflow-hidden rounded-[6px] border border-border/60 bg-card shadow-card">
         <TableColumnsBar
           items={pickerItems}
           hidden={hidden}
@@ -769,7 +759,7 @@ function ResultsInlineQaTable({
           onReset={reset}
         />
 
-        <div className="relative overflow-x-auto">
+        <div className="overflow-x-auto">
           <TableColumnDnd
             ids={visibleItems.map((col) => col.id)}
             lockedIds={lockedIds}
@@ -896,7 +886,7 @@ function ResultsInlineQaTable({
                               aria-hidden
                               className={cn(
                                 "pointer-events-none absolute inset-y-2 left-0 w-1 rounded-r-full opacity-80 transition-opacity group-hover:opacity-100",
-                                statusAccent(row.call?.call_status)
+                                TABLE_ROW_ACCENT_CLASS
                               )}
                             />
                             <DataTableActionButton
@@ -1275,7 +1265,7 @@ export function SurveyResponseView({ surveyId }: SurveyResultsViewProps) {
                     <SurveyStatusBadge status={status} />
                   ) : null}
                 </div>
-                <p className="mt-1 flex flex-wrap items-center gap-1.5 text-sm text-muted-foreground">
+                <p className="mt-1.5 flex flex-wrap items-center gap-1.5 text-sm text-muted-foreground">
                   <Sparkles className="size-3.5 text-primary" />
                   {survey?.name ?? "Survey"}
                   {meta.total > 0
@@ -1284,44 +1274,6 @@ export function SurveyResponseView({ surveyId }: SurveyResultsViewProps) {
                 </p>
               </div>
             </div>
-
-            {canExportSurvey ? (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    className="h-9 shrink-0 rounded-[6px] gap-1.5 border-border/50 bg-card/80 shadow-sm hover:border-primary/30"
-                    disabled={exporting || meta.total === 0}
-                  >
-                    {exporting ? (
-                      <AppLoaderSpinner size="sm" />
-                    ) : (
-                      <Download className="size-4" />
-                    )}
-                    Export
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-48">
-                  <DropdownMenuItem
-                    disabled={exporting}
-                    onClick={() => void handleExport("xlsx")}
-                    className="gap-2"
-                  >
-                    <FileSpreadsheet className="size-4 text-primary" />
-                    Excel (.xlsx)
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    disabled={exporting}
-                    onClick={() => void handleExport("csv")}
-                    className="gap-2"
-                  >
-                    <FileText className="size-4 text-primary" />
-                    CSV (.csv)
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            ) : null}
           </div>
 
           <ListToolbar
@@ -1337,6 +1289,45 @@ export function SurveyResponseView({ surveyId }: SurveyResultsViewProps) {
                 className="h-11 w-full rounded-[6px] border-border/50 bg-background/80 shadow-subtle sm:w-44"
                 aria-label="Filter by call status"
               />
+            }
+            actions={
+              canExportSurvey ? (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="h-11 shrink-0 rounded-[6px] gap-1.5 border-border/50 bg-background/80 shadow-subtle hover:border-primary/30"
+                      disabled={exporting || meta.total === 0}
+                    >
+                      {exporting ? (
+                        <AppLoaderSpinner size="sm" />
+                      ) : (
+                        <Download className="size-4" />
+                      )}
+                      Export
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-48">
+                    <DropdownMenuItem
+                      disabled={exporting}
+                      onClick={() => void handleExport("xlsx")}
+                      className="gap-2"
+                    >
+                      <FileSpreadsheet className="size-4 text-primary" />
+                      Excel (.xlsx)
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      disabled={exporting}
+                      onClick={() => void handleExport("csv")}
+                      className="gap-2"
+                    >
+                      <FileText className="size-4 text-primary" />
+                      CSV (.csv)
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              ) : null
             }
           />
 

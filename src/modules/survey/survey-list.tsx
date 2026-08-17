@@ -32,7 +32,6 @@ import {
 import { exportSurveys } from "./survey-export";
 import type { SurveysExportFormat } from "./survey-export";
 import { getSurveySchedule, getSurveyDisplayStatus, isSurveyCompleted, isSurveyReadyToSchedule, isSurveyScheduled } from "./survey-lib";
-import type { SurveyDisplayStatus } from "./survey-lib";
 import { PageContainer } from "@/components/layout";
 import { DataTable, DataTableActionButton, DataTableActionDivider, DataTableActionGroup, DataTableMetaChip } from "@/components/shared/data-table";
 import type { DataTableColumn } from "@/components/shared/data-table";
@@ -66,20 +65,6 @@ interface SurveysTableProps {
   onUnschedule: (survey: Survey) => void;
   unschedulingId?: string | null;
 }
-
-const STATUS_ACCENT: Record<SurveyDisplayStatus, string> = {
-  draft: "bg-amber-500",
-  scheduled: "bg-emerald-500",
-  processing: "bg-sky-500",
-  completed: "bg-slate-400",
-};
-
-const STATUS_ROW_WASH: Record<SurveyDisplayStatus, string> = {
-  draft: "hover:bg-amber-500/[0.04]",
-  scheduled: "hover:bg-emerald-500/[0.04]",
-  processing: "hover:bg-sky-500/[0.04]",
-  completed: "hover:bg-slate-500/[0.04]",
-};
 
 /* --- Table: one row per survey (used only on list page) --- */
 
@@ -343,12 +328,6 @@ export function SurveysTable({
       emptyDescription="Create a survey or adjust your filters."
       minWidthClassName="min-w-245"
       isRowSelected={(survey) => selectedIds.has(survey.id)}
-      getRowAccentClassName={(survey) =>
-        STATUS_ACCENT[getSurveyDisplayStatus(survey)]
-      }
-      getRowClassName={(survey) =>
-        STATUS_ROW_WASH[getSurveyDisplayStatus(survey)]
-      }
     />
   );
 }

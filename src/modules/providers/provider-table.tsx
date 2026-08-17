@@ -32,6 +32,8 @@ export function ProviderTable({
         id: "type",
         header: "Type",
         showAccent: true,
+        hideable: false,
+        pin: "start",
         cell: (row) => (
           <span className="inline-flex items-center rounded-md bg-muted px-2 py-1 text-[11px] font-semibold text-foreground">
             {PROVIDER_TYPE_LABEL[row.type]}
@@ -102,6 +104,8 @@ export function ProviderTable({
         id: "actions",
         header: "Actions",
         align: "right",
+        hideable: false,
+        pin: "end",
         cell: (row) => (
           <DataTableActionGroup>
             <DataTableActionButton

@@ -1,9 +1,9 @@
 "use client";
 
-import { Download, MessageSquareReply, Search, X } from "lucide-react";
+import { Download, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
+import { ListToolbar } from "@/components/shared/list-toolbar";
 import {
   RESPONSE_STATUS_OPTIONS,
   SENTIMENT_OPTIONS,
@@ -31,7 +31,10 @@ interface ResponsesToolbarProps {
   totalCount?: number;
 }
 
-const titles: Record<ResponsesViewMode, { title: string; description: string }> = {
+const titles: Record<
+  ResponsesViewMode,
+  { title: string; description: string }
+> = {
   all: {
     title: "Survey Responses",
     description: "Review AI-extracted insights from survey and call responses.",
@@ -45,6 +48,9 @@ const titles: Record<ResponsesViewMode, { title: string; description: string }> 
     description: "Responses flagged by AI for attention or escalation.",
   },
 };
+
+const filterSelectClass =
+  "h-11 w-full rounded-[6px] border-border/50 bg-background/80 shadow-subtle sm:w-44";
 
 export function ResponsesToolbar({
   search,
@@ -84,13 +90,10 @@ export function ResponsesToolbar({
     <div className="space-y-4">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <div className="flex items-center gap-2">
-            <MessageSquareReply className="size-5 text-primary" />
-            <h2 className="font-display text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
-              {title}
-            </h2>
-          </div>
-          <p className="mt-1 text-sm text-muted-foreground">
+          <h1 className="font-display text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
+            {title}
+          </h1>
+          <p className="mt-1.5 text-sm text-muted-foreground">
             {description}
             {totalCount !== undefined && (
               <span className="ml-1 font-medium text-foreground">
@@ -100,85 +103,90 @@ export function ResponsesToolbar({
           </p>
         </div>
         <Button
+          type="button"
           variant="outline"
-          size="sm"
           onClick={onExport}
           disabled={isExporting}
-          className="shrink-0"
+          className="h-11 shrink-0 rounded-[6px] gap-1.5 border-border/50 bg-background/80 shadow-subtle hover:border-primary/30"
         >
           <Download className="size-4" />
           {isExporting ? "Exporting…" : "Export CSV"}
         </Button>
       </div>
 
-      <div className="space-y-3 rounded-[6px] border border-border/60 bg-card p-4 shadow-card">
-        <div className="relative">
-          <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            placeholder="Search customer, company, campaign, topics, or summary..."
-            value={search}
-            onChange={(e) => onSearchChange(e.target.value)}
-            className="h-9 border-border/60 bg-muted/30 pl-9"
-          />
-        </div>
-
-        <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5">
-          {viewMode === "all" && (
+      <ListToolbar
+        search={search}
+        onSearchChange={onSearchChange}
+        searchPlaceholder="Search customer, company, campaign, topics, or summary..."
+        searchAriaLabel="Search responses"
+        filters={
+          <>
+            {viewMode === "all" ? (
+              <Select
+                value={status}
+                onChange={(e) =>
+                  onStatusChange(e.target.value as ResponseStatus | "all")
+                }
+                options={[
+                  { label: "All statuses", value: "all" },
+                  ...RESPONSE_STATUS_OPTIONS,
+                ]}
+                className={filterSelectClass}
+                aria-label="Filter by status"
+              />
+            ) : null}
             <Select
-              value={status}
+              value={campaignId}
+              onChange={(e) => onCampaignChange(e.target.value)}
+              options={[
+                { label: "All campaigns", value: "all" },
+                ...campaigns.map((c) => ({ label: c.name, value: c.id })),
+              ]}
+              className={filterSelectClass}
+              aria-label="Filter by campaign"
+            />
+            <Select
+              value={surveyId}
+              onChange={(e) => onSurveyChange(e.target.value)}
+              options={[
+                { label: "All surveys", value: "all" },
+                ...surveys.map((s) => ({ label: s.name, value: s.id })),
+              ]}
+              className={filterSelectClass}
+              aria-label="Filter by survey"
+            />
+            <Select
+              value={sentiment}
               onChange={(e) =>
-                onStatusChange(e.target.value as ResponseStatus | "all")
+                onSentimentChange(
+                  e.target.value as "positive" | "neutral" | "negative" | "all"
+                )
               }
               options={[
-                { label: "All Statuses", value: "all" },
-                ...RESPONSE_STATUS_OPTIONS,
+                { label: "All sentiments", value: "all" },
+                ...SENTIMENT_OPTIONS.map((s) => ({
+                  label: s.label,
+                  value: s.value,
+                })),
               ]}
+              className={filterSelectClass}
+              aria-label="Filter by sentiment"
             />
-          )}
-          <Select
-            value={campaignId}
-            onChange={(e) => onCampaignChange(e.target.value)}
-            options={[
-              { label: "All Campaigns", value: "all" },
-              ...campaigns.map((c) => ({ label: c.name, value: c.id })),
-            ]}
-          />
-          <Select
-            value={surveyId}
-            onChange={(e) => onSurveyChange(e.target.value)}
-            options={[
-              { label: "All Surveys", value: "all" },
-              ...surveys.map((s) => ({ label: s.name, value: s.id })),
-            ]}
-          />
-          <Select
-            value={sentiment}
-            onChange={(e) =>
-              onSentimentChange(
-                e.target.value as "positive" | "neutral" | "negative" | "all"
-              )
-            }
-            options={[
-              { label: "All Sentiments", value: "all" },
-              ...SENTIMENT_OPTIONS.map((s) => ({
-                label: s.label,
-                value: s.value,
-              })),
-            ]}
-          />
-          {hasFilters && viewMode === "all" && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={clearAll}
-              className="h-9 justify-start text-muted-foreground sm:col-span-2 lg:col-span-1"
-            >
-              <X className="size-3.5" />
-              Clear filters
-            </Button>
-          )}
-        </div>
-      </div>
+            {hasFilters ? (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={clearAll}
+                className="h-11 shrink-0 text-muted-foreground"
+              >
+                <X className="size-3.5" />
+                Clear
+              </Button>
+            ) : null}
+          </>
+        }
+      />
     </div>
   );
 }

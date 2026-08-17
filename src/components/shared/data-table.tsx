@@ -40,6 +40,9 @@ export interface DataTableColumn<T> {
   showAccent?: boolean;
 }
 
+/** Same left-edge accent on every list table (Providers / Surveys / Users / …). */
+export const TABLE_ROW_ACCENT_CLASS = "bg-brand";
+
 export interface DataTableProps<T> {
   columns: DataTableColumn<T>[];
   data: T[];
@@ -182,7 +185,11 @@ export function DataTable<T>({
           <tbody>
             {data.map((row, rowIndex) => {
               const selected = isRowSelected?.(row) ?? false;
-              const accent = getRowAccentClassName?.(row);
+              const accent =
+                getRowAccentClassName?.(row) ??
+                (columns.some((column) => column.showAccent)
+                  ? TABLE_ROW_ACCENT_CLASS
+                  : undefined);
 
               const handleRowClick = (
                 event: MouseEvent<HTMLTableRowElement>

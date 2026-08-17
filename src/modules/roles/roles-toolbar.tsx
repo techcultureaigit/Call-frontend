@@ -1,8 +1,8 @@
 "use client";
 
-import { Search, ShieldPlus } from "lucide-react";
+import { ShieldPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { ListToolbar } from "@/components/shared/list-toolbar";
 
 interface RolesToolbarProps {
   search: string;
@@ -21,10 +21,10 @@ export function RolesToolbar({
     <div className="space-y-4">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h2 className="font-display text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
+          <h1 className="font-display text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
             Roles & Permissions
-          </h2>
-          <p className="mt-1 text-sm text-muted-foreground">
+          </h1>
+          <p className="mt-1.5 text-sm text-muted-foreground">
             Manage roles here — open any role to configure its permissions.
             {roleCount !== undefined && (
               <span className="ml-1 font-medium text-foreground">
@@ -33,21 +33,21 @@ export function RolesToolbar({
             )}
           </p>
         </div>
-        <Button onClick={onCreateClick} className="shrink-0 rounded-[6px] shadow-brand">
+        <Button
+          onClick={onCreateClick}
+          className="h-11 shrink-0 rounded-[6px] px-5 shadow-brand"
+        >
           <ShieldPlus className="size-4" />
           Create Role
         </Button>
       </div>
 
-      <div className="relative max-w-md">
-        <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-        <Input
-          placeholder="Search roles..."
-          value={search}
-          onChange={(e) => onSearchChange(e.target.value)}
-          className="h-9 rounded-[6px] border-border/60 bg-card pl-9 shadow-subtle"
-        />
-      </div>
+      <ListToolbar
+        search={search}
+        onSearchChange={onSearchChange}
+        searchPlaceholder="Search roles..."
+        searchAriaLabel="Search roles"
+      />
     </div>
   );
 }

@@ -164,6 +164,7 @@ export function UsersListView() {
   };
 
   return (
+    <div className="bg-linear-to-b from-brand/5 to-transparent">
     <PageContainer size="wide">
       <motion.div
         initial={{ opacity: 0, y: 8 }}
@@ -217,6 +218,7 @@ export function UsersListView() {
         isLoading={isDeleting}
       />
     </PageContainer>
+    </div>
   );
 }
 
