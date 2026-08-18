@@ -121,9 +121,6 @@ App runs at: [http://localhost:3000](http://localhost:3000)
 
 Open `/login`. Dev login defaults (same as backend seed):
 
-| Email         | Password  |
-|---------------|-----------|
-| admin@crm.com | Admin@123 |
 
 > Middleware protects dashboard routes via the auth cookie (`crm_auth_token`). Unauthenticated users are redirected to `/login`.
 

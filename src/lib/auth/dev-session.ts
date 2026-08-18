@@ -5,7 +5,7 @@ import { createFullPermissions } from "@/config/permission-modules";
 export const DEV_AUTH_SESSION: AuthSession = {
   user: {
     id: "usr_dev_001",
-    email: "admin@crm.com",
+    email: " ",
     firstName: "Admin",
     lastName: "User",
     roleId: "role_dev_admin",
