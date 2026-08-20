@@ -1079,8 +1079,16 @@ const SKIP_DISPLAY_KEYS = new Set([
   "type",
   "options",
   "question",
+  "instruction",
   "__v",
 ]);
+
+function getQuestionInstruction(q: SurveyQuestion): string {
+  if (typeof q.instruction === "string" && q.instruction.trim()) {
+    return q.instruction.trim();
+  }
+  return "";
+}
 
 function getQuestionDisplayText(q: SurveyQuestion): string {
   if (typeof q.question === "string" && q.question.trim())
@@ -1119,6 +1127,7 @@ export function SurveyQuestionsTab({
   const [formatErrors, setFormatErrors] = useState<string[]>([]);
   const [questionType, setQuestionType] = useState("text");
   const [questionText, setQuestionText] = useState("");
+  const [questionInstruction, setQuestionInstruction] = useState("");
   const [optionsPipe, setOptionsPipe] = useState("");
 
   const isMulti = questionType === "multi";
@@ -1150,10 +1159,12 @@ export function SurveyQuestionsTab({
         id: `sq-${Date.now()}`,
         type: questionType,
         question: questionText.trim(),
+        instruction: questionInstruction.trim(),
         ...(isMulti ? { options } : {}),
       },
     ]);
     setQuestionText("");
+    setQuestionInstruction("");
     setOptionsPipe("");
   };
 
@@ -1225,7 +1236,7 @@ export function SurveyQuestionsTab({
           <p className="mt-1 text-xs text-muted-foreground">
             Upload Excel/CSV with columns{" "}
             <span className="font-semibold text-foreground">
-              question, type, options
+              question, type, options, instruction
             </span>
             — or add questions manually.
           </p>
@@ -1259,8 +1270,12 @@ export function SurveyQuestionsTab({
             ,{" "}
             <span className="font-mono font-semibold text-foreground">
               options
-            </span>{" "}
-            (no other columns).
+            </span>
+            ,{" "}
+            <span className="font-mono font-semibold text-foreground">
+              instruction
+            </span>
+            .
           </li>
           <li>
             <span className="font-medium text-foreground">question</span> — full
@@ -1272,6 +1287,7 @@ export function SurveyQuestionsTab({
             <span className="font-mono text-foreground">text</span>,{" "}
             <span className="font-mono text-foreground">yes_no</span>,{" "}
             <span className="font-mono text-foreground">rating</span>,{" "}
+            <span className="font-mono text-foreground">number</span>,{" "}
             <span className="font-mono text-foreground">multi</span>.
           </li>
           <li>
@@ -1283,6 +1299,11 @@ export function SurveyQuestionsTab({
               Congress | BJP | Other
             </span>
             ). Leave blank for other types.
+          </li>
+          <li>
+            <span className="font-medium text-foreground">instruction</span> —
+            optional description / helper text for that question. Leave blank if
+            none.
           </li>
           <li>
             Do not split options into separate columns — that breaks the file
@@ -1327,9 +1348,11 @@ export function SurveyQuestionsTab({
             {uploading ? "Uploading…" : "Upload Excel or CSV"}
           </span>
           <span className="max-w-sm text-[11px] text-muted-foreground">
-            Only columns{" "}
-            <span className="font-semibold">question, type, options</span> are
-            accepted.
+            Columns{" "}
+            <span className="font-semibold">
+              question, type, options, instruction
+            </span>{" "}
+            are accepted.
           </span>
         </button>
 
@@ -1437,6 +1460,20 @@ export function SurveyQuestionsTab({
           </div>
         </div>
 
+        <div className="space-y-1.5">
+          <Label className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+            Instruction
+          </Label>
+          <textarea
+            value={questionInstruction}
+            onChange={(e) => setQuestionInstruction(e.target.value)}
+            rows={2}
+            maxLength={500}
+            className="w-full rounded-[6px] border border-input bg-transparent px-3 py-2 text-sm shadow-subtle focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            placeholder="Optional instruction for this question (e.g. Collect a whole number only)"
+          />
+        </div>
+
         {isMulti ? (
           <div className="space-y-1.5">
             <Label className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
@@ -1479,6 +1516,7 @@ export function SurveyQuestionsTab({
                 ? getSurveyQuestionTypeLabel(q.type) || q.type
                 : null;
             const options = Array.isArray(q.options) ? q.options : [];
+            const instruction = getQuestionInstruction(q);
 
             return (
               <li
@@ -1498,6 +1536,11 @@ export function SurveyQuestionsTab({
                     <p className="mt-1.5 text-sm font-medium leading-snug">
                       {getQuestionDisplayText(q)}
                     </p>
+                    {instruction ? (
+                      <p className="mt-1 text-[11px] leading-snug text-muted-foreground">
+                        {instruction}
+                      </p>
+                    ) : null}
                     {dynamicFields.length > 0 ? (
                       <div className="mt-2 space-y-1">
                         {dynamicFields.map(([key, value]) => (

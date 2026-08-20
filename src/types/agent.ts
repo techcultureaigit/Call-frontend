@@ -139,6 +139,8 @@ export interface AgentSurveyQuestion {
   id: string;
   type?: string;
   question?: string;
+  /** Helper text / instruction shown as the question description */
+  instruction?: string;
   options?: AgentSurveyQuestionOption[];
   [key: string]: unknown;
 }

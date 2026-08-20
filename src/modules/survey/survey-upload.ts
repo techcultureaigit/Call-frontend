@@ -14,6 +14,7 @@ export const ALLOWED_QUESTION_TYPES = [
   "text",
   "yes_no",
   "rating",
+  "number",
   "multi",
 ] as const;
 
@@ -43,6 +44,9 @@ function parseOptionsPipe(raw: string): SurveyQuestionOption[] {
 function normalizeType(raw: string): AllowedQuestionType | null {
   const t = raw.trim().toLowerCase().replace(/\s+/g, "_");
   if (t === "multiple_choice" || t === "multiple-choice") return "multi";
+  if (t === "numeric" || t === "integer" || t === "int" || t === "num") {
+    return "number";
+  }
   if ((ALLOWED_QUESTION_TYPES as readonly string[]).includes(t)) {
     return t as AllowedQuestionType;
   }
@@ -104,7 +108,7 @@ export async function parseSurveyQuestionsFromFile(
 }
 
 /**
- * Accept only columns: question, type, options.
+ * Accept columns: question, type, options, instruction (instruction optional).
  * Validate types and multi options.
  */
 export function validateSurveyQuestionRows(
@@ -135,6 +139,8 @@ export function validateSurveyQuestionRows(
   const questionHeader = lowerMap.get("question");
   const typeHeader = lowerMap.get("type");
   const optionsHeader = lowerMap.get("options");
+  const instructionHeader =
+    lowerMap.get("instruction") || lowerMap.get("description");
 
   if (!questionHeader || !typeHeader) {
     const missing = [
@@ -145,7 +151,7 @@ export function validateSurveyQuestionRows(
       ok: false,
       errors: [
         `Missing required column(s): ${missing.join(", ")}.`,
-        `Allowed columns only: question, type, options. Your file has: ${
+        `Allowed columns: question, type, options, instruction. Your file has: ${
           headers.length ? headers.join(", ") : "(no headers)"
         }.`,
         "Download the sample CSV and keep the same column names.",
@@ -153,7 +159,7 @@ export function validateSurveyQuestionRows(
     };
   }
 
-  const allowed = new Set(["question", "type", "options"]);
+  const allowed = new Set(["question", "type", "options", "instruction", "description"]);
   const extra = headers.filter(
     (h) => !allowed.has(h.toLowerCase().replace(/\s+/g, "_"))
   );
@@ -161,7 +167,7 @@ export function validateSurveyQuestionRows(
     return {
       ok: false,
       errors: [
-        `Only columns question, type, options are allowed. Remove: ${extra.join(", ")}.`,
+        `Only columns question, type, options, instruction are allowed. Remove: ${extra.join(", ")}.`,
         "For multiple-choice options, keep them in one cell under options, separated by | (example: A | B | C).",
       ],
     };
@@ -176,6 +182,9 @@ export function validateSurveyQuestionRows(
     const optionsRaw = optionsHeader
       ? String(row[optionsHeader] ?? "").trim()
       : "";
+    const instruction = instructionHeader
+      ? String(row[instructionHeader] ?? "").trim()
+      : "";
 
     if (!question) {
       errors.push(`Row ${line}: question is empty.`);
@@ -184,7 +193,7 @@ export function validateSurveyQuestionRows(
 
     if (!typeRaw) {
       errors.push(
-        `Row ${line}: type is empty. Use text, yes_no, rating, or multi.`
+        `Row ${line}: type is empty. Use text, yes_no, rating, number, or multi.`
       );
       return;
     }
@@ -192,7 +201,7 @@ export function validateSurveyQuestionRows(
     const type = normalizeType(typeRaw);
     if (!type) {
       errors.push(
-        `Row ${line}: invalid type "${typeRaw}". Allowed: text, yes_no, rating, multi.`
+        `Row ${line}: invalid type "${typeRaw}". Allowed: text, yes_no, rating, number, multi.`
       );
       return;
     }
@@ -209,6 +218,7 @@ export function validateSurveyQuestionRows(
         id: `sq-upload-${Date.now()}-${index}`,
         question,
         type,
+        instruction,
         options,
       });
       return;
@@ -225,6 +235,7 @@ export function validateSurveyQuestionRows(
       id: `sq-upload-${Date.now()}-${index}`,
       question,
       type,
+      instruction,
     });
   });
 
@@ -251,12 +262,13 @@ export async function parseAndValidateSurveyQuestionsFile(
 
 /** Sample CSV for Survey Questions upload */
 export const SURVEY_QUESTIONS_SAMPLE_CSV = [
-  "question,type,options",
-  '"How satisfied are you with our service?",text,',
-  '"Would you recommend us to a friend?",yes_no,',
-  '"Rate your overall experience from 1 to 5",rating,',
-  '"Which feature do you use most?",multi,"Dashboard | Reports | Calls | Support"',
-  '"Any additional feedback for us?",text,',
+  "question,type,options,instruction",
+  '"How satisfied are you with our service?",text,,"Ask them to answer in their own words"',
+  '"Would you recommend us to a friend?",yes_no,,"Accept yes or no only"',
+  '"Rate your overall experience from 1 to 5",rating,,"Collect a score from 1 to 5"',
+  '"How many people live in your household?",number,,"Collect a whole number only"',
+  '"Which feature do you use most?",multi,"Dashboard | Reports | Calls | Support","Read the options clearly"',
+  '"Any additional feedback for us?",text,,"Optional — skip if they have none"',
 ].join("\n");
 
 /** Sample CSV for Contact of Client — one column `contact` */

@@ -165,11 +165,13 @@ export const SURVEY_QUESTION_TYPES = [
   { label: "Normal Question", value: "text" },
   { label: "Yes / No", value: "yes_no" },
   { label: "Rating", value: "rating" },
+  { label: "Number", value: "number" },
   { label: "Multiple Choice", value: "multi" },
 ] as const;
 
 export function getSurveyQuestionTypeLabel(type: string): string {
   if (type === "multiple_choice") return "Multiple Choice";
+  if (type === "numeric" || type === "integer" || type === "int") return "Number";
   return (
     SURVEY_QUESTION_TYPES.find((t) => t.value === type)?.label ?? type
   );

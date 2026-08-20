@@ -211,6 +211,51 @@ function formatPlayerTime(seconds: number): string {
   return `${m}:${String(s).padStart(2, "0")}`;
 }
 
+function DownloadRecordingButton({ src }: { src: string }) {
+  const [downloading, setDownloading] = useState(false);
+
+  const handleDownload = async (e: MouseEvent<HTMLButtonElement>) => {
+    e.stopPropagation();
+    if (downloading) return;
+    setDownloading(true);
+    try {
+      const res = await fetch(src);
+      if (!res.ok) throw new Error("Failed to fetch recording");
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const ext = blob.type.includes("mpeg") || blob.type.includes("mp3") ? "mp3" : "wav";
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `recording.${ext}`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    } catch {
+      // fallback: open in new tab
+      window.open(src, "_blank", "noopener,noreferrer");
+    } finally {
+      setDownloading(false);
+    }
+  };
+
+  return (
+    <button
+      type="button"
+      onClick={handleDownload}
+      disabled={downloading}
+      className="flex size-7 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-50"
+      aria-label="Download recording"
+    >
+      {downloading ? (
+        <AppLoaderSpinner size="sm" />
+      ) : (
+        <Download className="size-3.5" />
+      )}
+    </button>
+  );
+}
+
 /** Compact audio player matching reference AUDIO column (image 2) */
 function InlineRecordingPlayer({
   src,
@@ -325,6 +370,7 @@ function InlineRecordingPlayer({
       <span className="shrink-0 text-[11px] tabular-nums text-muted-foreground">
         {formatPlayerTime(duration)}
       </span>
+      <DownloadRecordingButton src={src} />
     </div>
   );
 }

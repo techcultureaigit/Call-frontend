@@ -79,6 +79,7 @@ export interface SurveyResultQuestionMeta {
   id: string;
   question: string;
   type: string;
+  instruction?: string;
   options?: SurveyResultQuestionOption[];
 }
 

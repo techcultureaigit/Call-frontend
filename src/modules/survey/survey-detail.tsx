@@ -440,12 +440,23 @@ export function SurveyDetailView({ survey }: { survey: Survey }) {
                         Object.entries(q)
                           .filter(
                             ([k, v]) =>
-                              !["id", "_id", "type", "options", "__v"].includes(k) &&
+                              ![
+                                "id",
+                                "_id",
+                                "type",
+                                "options",
+                                "instruction",
+                                "__v",
+                              ].includes(k) &&
                               typeof v === "string" &&
                               v.trim()
                           )
                           .map(([, v]) => String(v))[0] ||
                         "Untitled row";
+                      const instruction =
+                        (typeof q.instruction === "string" &&
+                          q.instruction.trim()) ||
+                        "";
                       return (
                         <li key={q.id} className="text-sm">
                           <span className="font-medium text-muted-foreground">
@@ -456,6 +467,11 @@ export function SurveyDetailView({ survey }: { survey: Survey }) {
                             <span className="ml-1 text-xs text-muted-foreground">
                               ({String(q.type)})
                             </span>
+                          ) : null}
+                          {instruction ? (
+                            <p className="mt-0.5 pl-5 text-xs text-muted-foreground">
+                              {instruction}
+                            </p>
                           ) : null}
                         </li>
                       );

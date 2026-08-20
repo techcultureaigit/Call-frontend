@@ -30,6 +30,7 @@ const QUESTION_HEADERS = [
   "Question",
   "Type",
   "Options",
+  "Instruction",
 ] as const;
 
 function getQuestionText(q: SurveyQuestion): string {
@@ -37,8 +38,15 @@ function getQuestionText(q: SurveyQuestion): string {
     return q.question.trim();
   }
   for (const [key, value] of Object.entries(q)) {
-    if (["id", "_id", "type", "options", "__v"].includes(key)) continue;
+    if (["id", "_id", "type", "options", "instruction", "__v"].includes(key)) continue;
     if (typeof value === "string" && value.trim()) return value.trim();
+  }
+  return "";
+}
+
+function getQuestionInstruction(q: SurveyQuestion): string {
+  if (typeof q.instruction === "string" && q.instruction.trim()) {
+    return q.instruction.trim();
   }
   return "";
 }
@@ -61,9 +69,16 @@ function formatQuestionsSummary(questions: SurveyQuestion[]): string {
     .map((q, index) => {
       const text = getQuestionText(q) || "(empty)";
       const type = getSurveyQuestionTypeLabel(String(q.type || "text"));
+      const instruction = getQuestionInstruction(q);
       const options = getQuestionOptions(q);
-      return options
-        ? `${index + 1}. [${type}] ${text} (Options: ${options})`
+      const extra = [
+        options ? `Options: ${options}` : "",
+        instruction ? `Instruction: ${instruction}` : "",
+      ]
+        .filter(Boolean)
+        .join("; ");
+      return extra
+        ? `${index + 1}. [${type}] ${text} (${extra})`
         : `${index + 1}. [${type}] ${text}`;
     })
     .join("\n");
@@ -96,7 +111,7 @@ function questionsToRows(surveys: Survey[]): string[][] {
   for (const survey of surveys) {
     const questions = getSurveyQuestions(survey);
     if (questions.length === 0) {
-      rows.push([survey.name, "", "(no questions)", "", ""]);
+      rows.push([survey.name, "", "(no questions)", "", "", ""]);
       continue;
     }
     questions.forEach((q, index) => {
@@ -106,6 +121,7 @@ function questionsToRows(surveys: Survey[]): string[][] {
         getQuestionText(q),
         getSurveyQuestionTypeLabel(String(q.type || "text")),
         getQuestionOptions(q),
+        getQuestionInstruction(q),
       ]);
     });
   }
@@ -172,6 +188,7 @@ export function exportSurveysExcel(surveys: Survey[], filename?: string): void {
     { wch: 12 },
     { wch: 50 },
     { wch: 16 },
+    { wch: 40 },
     { wch: 40 },
   ];
 
