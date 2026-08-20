@@ -88,7 +88,7 @@ export function computeSurveyProgress(
   const questions = config.surveyQuestions.questions.filter((q) => {
     if (typeof q.question === "string" && q.question.trim()) return true;
     return Object.entries(q).some(([key, value]) => {
-      if (["id", "_id", "type", "options", "__v"].includes(key)) return false;
+      if (["id", "_id", "type", "options", "__v", "conditions"].includes(key)) return false;
       if (Array.isArray(value)) return value.length > 0;
       return typeof value === "string" && value.trim().length > 0;
     });

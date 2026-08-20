@@ -38,7 +38,7 @@ function getQuestionText(q: SurveyQuestion): string {
     return q.question.trim();
   }
   for (const [key, value] of Object.entries(q)) {
-    if (["id", "_id", "type", "options", "instruction", "__v"].includes(key)) continue;
+    if (["id", "_id", "type", "options", "instruction", "__v", "conditions"].includes(key)) continue;
     if (typeof value === "string" && value.trim()) return value.trim();
   }
   return "";

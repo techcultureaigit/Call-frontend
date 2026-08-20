@@ -25,7 +25,7 @@ import { SearchableSelect } from "@/components/ui/searchable-select";
 import { Select } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { DEFAULT_FAREWELL, AGENT_LANGUAGES as SURVEY_LANGUAGES, getSurveyQuestionTypeLabel, getVoiceSpeedLabel, DEFAULT_VOICE_SPEED, DEFAULT_NOISE_TYPE, DEFAULT_NOISE_VOLUME, NOISE_TYPE_OPTIONS, getNoisePreviewUrl, SURVEY_QUESTION_TYPES } from "@/lib/constants/agent-config";
+import { DEFAULT_FAREWELL, AGENT_LANGUAGES as SURVEY_LANGUAGES, getVoiceSpeedLabel, DEFAULT_VOICE_SPEED, DEFAULT_NOISE_TYPE, DEFAULT_NOISE_VOLUME, NOISE_TYPE_OPTIONS, getNoisePreviewUrl, SURVEY_QUESTION_TYPES } from "@/lib/constants/agent-config";
 import { listProviders } from "@/modules/providers/api";
 import {
   modelNameById,
@@ -46,7 +46,7 @@ import {
 import type { ClientContactRow } from "./survey-contacts";
 import { getContactFileOpenUrl } from "@/lib/utils/contact-file-url";
 import type { AgentPromptsConfig as SurveyPromptsConfig, AgentPersonaConfig as SurveyPersonaConfig, AgentStackConfig as SurveyStackConfig, AgentSurveyQuestion as SurveyQuestion, AgentSurveyQuestionOption as SurveyQuestionOption, AgentSurveyQuestionsConfig as SurveyQuestionsConfig, AgentClientContactConfig as SurveyClientContactConfig } from "@/types/agent";
-import { Users, Sparkles, History, BrainCircuit, ChevronDown, HelpCircle, Mic, Pause, Phone, Play, Volume2, Download, ExternalLink, Plus, Trash2, Upload, X } from "lucide-react";
+import { Users, Sparkles, History, BrainCircuit, ChevronDown, ChevronLeft, ChevronRight, HelpCircle, Mic, Pause, Phone, Play, Volume2, Download, ExternalLink, Plus, Trash2, Upload, X } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { useEffect, useMemo, useState, useRef } from "react";
 import type { ReactNode } from "react";
@@ -1073,6 +1073,73 @@ function parseOptionsPipe(raw: string): SurveyQuestionOption[] {
     .map(makeOption);
 }
 
+function splitChoiceLines(raw: string): string[] {
+  if (!raw) return [""];
+  return raw.split("|");
+}
+
+function joinChoiceLines(lines: string[]): string {
+  return lines.join("|");
+}
+
+function ChoiceLinesEditor({
+  value,
+  onChange,
+}: {
+  value: string;
+  onChange: (next: string) => void;
+}) {
+  const lines = splitChoiceLines(value);
+
+  const setLine = (index: number, text: string) => {
+    const next = [...lines];
+    next[index] = text;
+    onChange(joinChoiceLines(next));
+  };
+
+  return (
+    <div className="space-y-2">
+      <Label className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+        Choices
+      </Label>
+      {lines.map((line, index) => (
+        <div key={`choice-${index}`} className="flex items-center gap-2">
+          <Input
+            value={line}
+            onChange={(e) => setLine(index, e.target.value)}
+            placeholder={`Option ${index + 1}`}
+          />
+          {lines.length > 1 ? (
+            <button
+              type="button"
+              aria-label="Remove option"
+              onClick={() =>
+                onChange(
+                  joinChoiceLines(lines.filter((_, i) => i !== index))
+                )
+              }
+              className="shrink-0 text-muted-foreground hover:text-destructive"
+            >
+              <X className="size-3.5" />
+            </button>
+          ) : null}
+        </div>
+      ))}
+      <button
+        type="button"
+        onClick={() => onChange(joinChoiceLines([...lines, ""]))}
+        className="flex w-full items-center justify-center gap-1.5 rounded-[8px] border border-dashed border-border/70 px-3 py-2 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted/40 hover:text-foreground"
+      >
+        <Plus className="size-3.5" />
+        Add option
+      </button>
+      <p className="text-[11px] text-muted-foreground">
+        Multiple choice needs at least 2 options.
+      </p>
+    </div>
+  );
+}
+
 const SKIP_DISPLAY_KEYS = new Set([
   "id",
   "_id",
@@ -1080,35 +1147,410 @@ const SKIP_DISPLAY_KEYS = new Set([
   "options",
   "question",
   "instruction",
+  "conditions",
   "__v",
 ]);
+
+type ThenShowDraft = {
+  type: string;
+  question: string;
+  instruction: string;
+  optionsPipe: string;
+};
+
+type QuestionConditionRow = {
+  ifAnswer: string;
+  thenShowQuestions: ThenShowDraft[];
+};
+
+const EMPTY_THEN_SHOW: ThenShowDraft = {
+  type: "text",
+  question: "",
+  instruction: "",
+  optionsPipe: "",
+};
+
+function createEmptyCondition(): QuestionConditionRow {
+  return {
+    ifAnswer: "",
+    thenShowQuestions: [{ ...EMPTY_THEN_SHOW }],
+  };
+}
+
+const CONDITION_TYPE_OPTIONS = SURVEY_QUESTION_TYPES.map((t) => ({
+  label: t.label,
+  value: t.value,
+}));
+
+function optionsToPipe(options: SurveyQuestionOption[] | undefined): string {
+  if (!Array.isArray(options) || options.length === 0) return "";
+  return options.map((opt) => String(opt?.label ?? "")).join("|");
+}
+
+function readThenShowDrafts(row: Record<string, unknown>): ThenShowDraft[] {
+  if (Array.isArray(row.thenShowQuestions) && row.thenShowQuestions.length > 0) {
+    return row.thenShowQuestions.map((item) => {
+      const q = (item || {}) as {
+        type?: string;
+        question?: string;
+        instruction?: string;
+        options?: SurveyQuestionOption[];
+      };
+      return {
+        type: String(q.type || "text").trim() || "text",
+        question: String(q.question || "").trim(),
+        instruction: String(q.instruction || "").trim(),
+        optionsPipe: optionsToPipe(q.options),
+      };
+    });
+  }
+
+  const legacyQuestion = String(
+    row.thenShowQuestion || row.thenShowQuestionId || ""
+  ).trim();
+  if (!legacyQuestion) return [{ ...EMPTY_THEN_SHOW }];
+
+  return [
+    {
+      type: String(row.thenShowType || "text").trim() || "text",
+      question: legacyQuestion,
+      instruction: String(row.thenShowInstruction || "").trim(),
+      optionsPipe: optionsToPipe(
+        row.thenShowOptions as SurveyQuestionOption[] | undefined
+      ),
+    },
+  ];
+}
+
+function readConditions(q: SurveyQuestion): QuestionConditionRow[] {
+  if (!Array.isArray(q.conditions)) return [];
+  return q.conditions.map((row) => ({
+    ifAnswer: String(row?.ifAnswer || "").trim(),
+    thenShowQuestions: readThenShowDrafts(
+      row as unknown as Record<string, unknown>
+    ),
+  }));
+}
+
+function toDraftThenShow(draft: ThenShowDraft) {
+  const base = {
+    type: draft.type || "text",
+    question: draft.question,
+    instruction: draft.instruction,
+  };
+  if (draft.type === "multi") {
+    const parts = splitChoiceLines(draft.optionsPipe);
+    return {
+      ...base,
+      options: parts.map((label, i) => {
+        const trimmed = label.trim();
+        return {
+          id: `opt-${Date.now()}-${i}-${Math.random().toString(36).slice(2, 5)}`,
+          label,
+          value: trimmed.toLowerCase().replace(/\s+/g, "_") || `opt_${i + 1}`,
+        };
+      }),
+    };
+  }
+  return base;
+}
+
+function toDraftCondition(row: QuestionConditionRow) {
+  return {
+    ifAnswer: row.ifAnswer,
+    thenShowQuestions: (row.thenShowQuestions.length
+      ? row.thenShowQuestions
+      : [{ ...EMPTY_THEN_SHOW }]
+    ).map(toDraftThenShow),
+  };
+}
+
+function toSavedCondition(row: QuestionConditionRow) {
+  const ifAnswer = row.ifAnswer.trim();
+  if (!ifAnswer) return null;
+
+  const thenShowQuestions = (row.thenShowQuestions || [])
+    .map((draft) => {
+      const question = draft.question.trim();
+      if (!question) return null;
+      const type = draft.type || "text";
+      const instruction = draft.instruction.trim();
+      if (type === "multi") {
+        const options = parseOptionsPipe(draft.optionsPipe);
+        if (options.length < 2) return null;
+        return { type, question, instruction, options };
+      }
+      return { type, question, instruction };
+    })
+    .filter((item): item is NonNullable<typeof item> => item !== null);
+
+  if (thenShowQuestions.length === 0) return null;
+  return { ifAnswer, thenShowQuestions };
+}
+
+function ConditionsEditor({
+  enabled,
+  onEnabledChange,
+  conditions,
+  onConditionsChange,
+}: {
+  enabled: boolean;
+  onEnabledChange: (enabled: boolean) => void;
+  conditions: QuestionConditionRow[];
+  onConditionsChange: (next: QuestionConditionRow[]) => void;
+}) {
+  const rows = conditions.length > 0 ? conditions : [{ ...createEmptyCondition() }];
+  const [activeIndex, setActiveIndex] = useState(0);
+  const [activeThenIndex, setActiveThenIndex] = useState(0);
+  const safeIndex = Math.min(activeIndex, Math.max(0, rows.length - 1));
+  const row = rows[safeIndex] ?? createEmptyCondition();
+  const thenShows =
+    row.thenShowQuestions.length > 0
+      ? row.thenShowQuestions
+      : [{ ...EMPTY_THEN_SHOW }];
+  const safeThenIndex = Math.min(
+    activeThenIndex,
+    Math.max(0, thenShows.length - 1)
+  );
+  const thenShow = thenShows[safeThenIndex] ?? EMPTY_THEN_SHOW;
+  const isMultiFollowUp = thenShow.type === "multi";
+
+  useEffect(() => {
+    if (activeIndex > rows.length - 1) {
+      setActiveIndex(Math.max(0, rows.length - 1));
+    }
+  }, [activeIndex, rows.length]);
+
+  useEffect(() => {
+    if (activeThenIndex > thenShows.length - 1) {
+      setActiveThenIndex(Math.max(0, thenShows.length - 1));
+    }
+  }, [activeThenIndex, thenShows.length]);
+
+  const setRow = (patch: Partial<QuestionConditionRow>) => {
+    onConditionsChange(
+      rows.map((item, i) => (i === safeIndex ? { ...item, ...patch } : item))
+    );
+  };
+
+  const setThenShow = (patch: Partial<ThenShowDraft>) => {
+    const nextThen = thenShows.map((item, i) =>
+      i === safeThenIndex ? { ...item, ...patch } : item
+    );
+    setRow({ thenShowQuestions: nextThen });
+  };
+
+  return (
+    <div className="space-y-3 rounded-[8px] border border-border/50 bg-card/70 px-3 py-3">
+      <div className="flex items-center justify-between gap-3">
+        <Label className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+          Conditional logic (show question based on answer)
+        </Label>
+        <Switch checked={enabled} onCheckedChange={onEnabledChange} />
+      </div>
+
+      {enabled ? (
+        <>
+          <div className="flex flex-wrap items-center gap-2">
+            {rows.map((item, index) => {
+              const label =
+                item.ifAnswer.trim() || `Condition ${index + 1}`;
+              return (
+                <button
+                  key={`cond-tab-${index}`}
+                  type="button"
+                  onClick={() => {
+                    setActiveIndex(index);
+                    setActiveThenIndex(0);
+                  }}
+                  className={cn(
+                    "inline-flex max-w-[10rem] items-center truncate rounded-full border px-3 py-1 text-xs font-medium transition-colors",
+                    index === safeIndex
+                      ? "border-primary bg-primary/10 text-primary"
+                      : "border-border/60 bg-background text-muted-foreground hover:bg-muted/50"
+                  )}
+                  title={label}
+                >
+                  {label}
+                </button>
+              );
+            })}
+            <button
+              type="button"
+              onClick={() => {
+                onConditionsChange([...rows, { ...createEmptyCondition(), thenShowQuestions: [{ ...EMPTY_THEN_SHOW }] }]);
+                setActiveIndex(rows.length);
+                setActiveThenIndex(0);
+              }}
+              className="inline-flex items-center gap-1 rounded-full border border-dashed border-border/70 px-3 py-1 text-xs font-medium text-muted-foreground hover:bg-muted/40 hover:text-foreground"
+            >
+              <Plus className="size-3" />
+              Add condition
+            </button>
+          </div>
+
+          <div className="space-y-3 rounded-[8px] border border-border/40 bg-muted/20 p-3">
+            <div className="flex items-center justify-between gap-2">
+              <Label className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+                If answer is
+              </Label>
+              {rows.length > 1 ? (
+                <button
+                  type="button"
+                  aria-label="Remove condition"
+                  onClick={() => {
+                    const next = rows.filter((_, i) => i !== safeIndex);
+                    onConditionsChange(next);
+                    setActiveIndex(Math.max(0, safeIndex - 1));
+                    setActiveThenIndex(0);
+                  }}
+                  className="text-muted-foreground hover:text-destructive"
+                >
+                  <X className="size-3.5" />
+                </button>
+              ) : null}
+            </div>
+            <Input
+              value={row.ifAnswer}
+              onChange={(e) => setRow({ ifAnswer: e.target.value })}
+              placeholder="e.g. हाँ / Yes"
+            />
+
+            <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+                Then show questions
+              </p>
+              <span className="text-[11px] text-muted-foreground">
+                {safeThenIndex + 1} of {thenShows.length}
+              </span>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2">
+              {thenShows.map((item, index) => {
+                const label =
+                  item.question.trim() || `Question ${index + 1}`;
+                return (
+                  <button
+                    key={`then-tab-${index}`}
+                    type="button"
+                    onClick={() => setActiveThenIndex(index)}
+                    className={cn(
+                      "inline-flex max-w-[10rem] items-center truncate rounded-full border px-3 py-1 text-xs font-medium transition-colors",
+                      index === safeThenIndex
+                        ? "border-primary bg-primary/10 text-primary"
+                        : "border-border/60 bg-background text-muted-foreground hover:bg-muted/50"
+                    )}
+                    title={label}
+                  >
+                    {index + 1}. {label}
+                  </button>
+                );
+              })}
+              <button
+                type="button"
+                onClick={() => {
+                  setRow({
+                    thenShowQuestions: [
+                      ...thenShows,
+                      { ...EMPTY_THEN_SHOW },
+                    ],
+                  });
+                  setActiveThenIndex(thenShows.length);
+                }}
+                className="inline-flex items-center gap-1 rounded-full border border-dashed border-border/70 px-3 py-1 text-xs font-medium text-muted-foreground hover:bg-muted/40 hover:text-foreground"
+              >
+                <Plus className="size-3" />
+                Add question
+              </button>
+            </div>
+
+            <div className="space-y-3 rounded-[8px] border border-border/40 bg-card/80 p-3">
+              <div className="flex items-center justify-between gap-2">
+                <p className="text-[11px] font-semibold text-muted-foreground">
+                  Follow-up {safeThenIndex + 1}
+                </p>
+                {thenShows.length > 1 ? (
+                  <button
+                    type="button"
+                    aria-label="Remove follow-up question"
+                    onClick={() => {
+                      const next = thenShows.filter(
+                        (_, i) => i !== safeThenIndex
+                      );
+                      setRow({ thenShowQuestions: next });
+                      setActiveThenIndex(Math.max(0, safeThenIndex - 1));
+                    }}
+                    className="text-muted-foreground hover:text-destructive"
+                  >
+                    <X className="size-3.5" />
+                  </button>
+                ) : null}
+              </div>
+
+              <div className="grid gap-3 sm:grid-cols-[160px_1fr]">
+                <div className="space-y-1.5">
+                  <Label className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+                    Type
+                  </Label>
+                  <Select
+                    value={thenShow.type || "text"}
+                    onChange={(e) => {
+                      const nextType = e.target.value;
+                      setThenShow({
+                        type: nextType,
+                        ...(nextType !== "multi" ? { optionsPipe: "" } : {}),
+                      });
+                    }}
+                    options={CONDITION_TYPE_OPTIONS}
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+                    Question
+                  </Label>
+                  <Input
+                    value={thenShow.question}
+                    onChange={(e) => setThenShow({ question: e.target.value })}
+                    placeholder="e.g. How satisfied are you with our service?"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <Label className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+                  Instruction
+                </Label>
+                <textarea
+                  value={thenShow.instruction}
+                  onChange={(e) =>
+                    setThenShow({ instruction: e.target.value })
+                  }
+                  rows={2}
+                  maxLength={500}
+                  className="w-full rounded-[6px] border border-input bg-transparent px-3 py-2 text-sm shadow-subtle focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  placeholder="Optional instruction for this question (e.g. Collect a whole number only)"
+                />
+              </div>
+
+              {isMultiFollowUp ? (
+                <ChoiceLinesEditor
+                  value={thenShow.optionsPipe}
+                  onChange={(next) => setThenShow({ optionsPipe: next })}
+                />
+              ) : null}
+            </div>
+          </div>
+        </>
+      ) : null}
+    </div>
+  );
+}
 
 function getQuestionInstruction(q: SurveyQuestion): string {
   if (typeof q.instruction === "string" && q.instruction.trim()) {
     return q.instruction.trim();
   }
   return "";
-}
-
-function getQuestionDisplayText(q: SurveyQuestion): string {
-  if (typeof q.question === "string" && q.question.trim())
-    return q.question.trim();
-  for (const [key, value] of Object.entries(q)) {
-    if (SKIP_DISPLAY_KEYS.has(key)) continue;
-    if (typeof value === "string" && value.trim()) return value.trim();
-  }
-  return "Untitled row";
-}
-
-function getDynamicFieldEntries(
-  q: SurveyQuestion
-): Array<[string, string]> {
-  return Object.entries(q)
-    .filter(([key, value]) => {
-      if (SKIP_DISPLAY_KEYS.has(key)) return false;
-      return typeof value === "string" && value.trim().length > 0;
-    })
-    .map(([key, value]) => [key, String(value)]);
 }
 
 const TYPE_OPTIONS = SURVEY_QUESTION_TYPES.map((t) => ({
@@ -1125,13 +1567,22 @@ export function SurveyQuestionsTab({
   const fileRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
   const [formatErrors, setFormatErrors] = useState<string[]>([]);
-  const [questionType, setQuestionType] = useState("text");
-  const [questionText, setQuestionText] = useState("");
-  const [questionInstruction, setQuestionInstruction] = useState("");
-  const [optionsPipe, setOptionsPipe] = useState("");
+  const [activeQuestionIndex, setActiveQuestionIndex] = useState(0);
 
-  const isMulti = questionType === "multi";
   const fileUrl = getContactFileOpenUrl(values.questionsFileUrl || "");
+  const questionCount = values.questions.length;
+  const safeQuestionIndex = Math.min(
+    activeQuestionIndex,
+    Math.max(0, questionCount - 1)
+  );
+  const canGoPrevQuestion = safeQuestionIndex > 0;
+  const canGoNextQuestion = safeQuestionIndex < questionCount - 1;
+
+  useEffect(() => {
+    if (activeQuestionIndex > questionCount - 1) {
+      setActiveQuestionIndex(Math.max(0, questionCount - 1));
+    }
+  }, [activeQuestionIndex, questionCount]);
 
   const updateQuestions = (questions: SurveyQuestion[]) => {
     onChange({
@@ -1142,30 +1593,30 @@ export function SurveyQuestionsTab({
     });
   };
 
-  const addQuestion = () => {
-    if (!questionText.trim()) {
-      toast.error("Enter a question first");
-      return;
-    }
-    const options = isMulti ? parseOptionsPipe(optionsPipe) : [];
-    if (isMulti && options.length < 2) {
-      toast.error("Add at least 2 options, separated by |");
-      return;
-    }
+  const goToPrevQuestion = () => {
+    setActiveQuestionIndex(Math.max(0, safeQuestionIndex - 1));
+  };
 
-    updateQuestions([
+  const goToNextQuestion = () => {
+    setActiveQuestionIndex(
+      Math.min(questionCount - 1, safeQuestionIndex + 1)
+    );
+  };
+
+  const addQuestion = () => {
+    const nextQuestions = [
       ...values.questions,
       {
         id: `sq-${Date.now()}`,
-        type: questionType,
-        question: questionText.trim(),
-        instruction: questionInstruction.trim(),
-        ...(isMulti ? { options } : {}),
+        type: "text",
+        question: "",
+        instruction: "",
+        options: [],
+        conditions: [],
       },
-    ]);
-    setQuestionText("");
-    setQuestionInstruction("");
-    setOptionsPipe("");
+    ];
+    updateQuestions(nextQuestions);
+    setActiveQuestionIndex(nextQuestions.length - 1);
   };
 
   const handleUpload = async (file: File) => {
@@ -1419,177 +1870,296 @@ export function SurveyQuestionsTab({
 
       <div
         className={cn(
-          "space-y-3 rounded-[8px] border border-border/60 bg-muted/20 p-4",
-          showRequiredError &&
-            "border-destructive/60",
+          "space-y-3",
           !values.enabled && "pointer-events-none opacity-55"
         )}
       >
-        <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-          Add manually
-        </p>
-        <div className="grid gap-3 sm:grid-cols-[160px_1fr]">
-          <div className="space-y-1.5">
-            <Label className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
-              Type
-            </Label>
-            <Select
-              value={questionType}
-              onChange={(e) => {
-                setQuestionType(e.target.value);
-                if (e.target.value !== "multi") setOptionsPipe("");
-              }}
-              options={TYPE_OPTIONS}
-            />
-          </div>
-          <div className="space-y-1.5">
-            <Label className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
-              Question
-            </Label>
-            <Input
-              value={questionText}
-              onChange={(e) => setQuestionText(e.target.value)}
-              placeholder="e.g. How satisfied are you with our service?"
-              onKeyDown={(e) => {
-                if (e.key === "Enter" && !isMulti) {
-                  e.preventDefault();
-                  addQuestion();
-                }
-              }}
-            />
-          </div>
-        </div>
-
-        <div className="space-y-1.5">
-          <Label className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
-            Instruction
-          </Label>
-          <textarea
-            value={questionInstruction}
-            onChange={(e) => setQuestionInstruction(e.target.value)}
-            rows={2}
-            maxLength={500}
-            className="w-full rounded-[6px] border border-input bg-transparent px-3 py-2 text-sm shadow-subtle focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            placeholder="Optional instruction for this question (e.g. Collect a whole number only)"
-          />
-        </div>
-
-        {isMulti ? (
-          <div className="space-y-1.5">
-            <Label className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
-              Choices
-            </Label>
-            <Input
-              value={optionsPipe}
-              onChange={(e) => setOptionsPipe(e.target.value)}
-              placeholder="Option A | Option B | Option C"
-            />
-          </div>
-        ) : null}
-
-        <Button type="button" onClick={addQuestion} className="h-10 px-4">
-          <Plus className="size-4" />
-          Add question
-        </Button>
-        <p className="text-[11px] text-muted-foreground">
-          Manual questions are saved without a Cloudinary file URL.
-        </p>
-      </div>
-
-      {values.questions.length === 0 ? (
-        <div>
-          <p className="text-xs text-muted-foreground">
-            No questions yet. Upload a CSV or add one manually.
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            {questionCount > 0
+              ? `Questions · ${safeQuestionIndex + 1} of ${questionCount}`
+              : "Questions"}
           </p>
-          {showRequiredError ? (
-            <p className="mt-1 text-xs font-medium text-destructive">
-              At least one survey question is required.
-            </p>
-          ) : null}
+          <div className="flex items-center gap-2">
+            {questionCount > 0 ? (
+              <>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="h-8"
+                  disabled={!canGoPrevQuestion}
+                  onClick={goToPrevQuestion}
+                >
+                  <ChevronLeft className="size-3.5" />
+                  Prev
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="h-8"
+                  disabled={!canGoNextQuestion}
+                  onClick={goToNextQuestion}
+                >
+                  Next
+                  <ChevronRight className="size-3.5" />
+                </Button>
+              </>
+            ) : null}
+            <Button
+              type="button"
+              size="sm"
+              className="h-8"
+              onClick={addQuestion}
+            >
+              <Plus className="size-3.5" />
+              Add question
+            </Button>
+          </div>
         </div>
-      ) : (
-        <ul className="space-y-2">
-          {values.questions.map((q, index) => {
-            const dynamicFields = getDynamicFieldEntries(q);
-            const typeLabel =
-              typeof q.type === "string" && q.type
-                ? getSurveyQuestionTypeLabel(q.type) || q.type
-                : null;
-            const options = Array.isArray(q.options) ? q.options : [];
-            const instruction = getQuestionInstruction(q);
 
-            return (
-              <li
-                key={q.id}
-                className="rounded-[8px] border border-border/50 bg-card px-3.5 py-3"
-              >
-                <div className="flex items-start gap-3">
-                  <span className="mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-full bg-muted text-[11px] font-semibold text-muted-foreground">
-                    {index + 1}
-                  </span>
-                  <div className="min-w-0 flex-1">
-                    {typeLabel ? (
-                      <span className="inline-block rounded-[4px] bg-muted px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
-                        {typeLabel}
-                      </span>
-                    ) : null}
-                    <p className="mt-1.5 text-sm font-medium leading-snug">
-                      {getQuestionDisplayText(q)}
-                    </p>
-                    {instruction ? (
-                      <p className="mt-1 text-[11px] leading-snug text-muted-foreground">
-                        {instruction}
-                      </p>
-                    ) : null}
-                    {dynamicFields.length > 0 ? (
-                      <div className="mt-2 space-y-1">
-                        {dynamicFields.map(([key, value]) => (
-                          <p
-                            key={key}
-                            className="truncate text-[11px] text-muted-foreground"
-                            title={`${key}: ${value}`}
-                          >
-                            <span className="font-medium text-foreground/70">
-                              {key}:
-                            </span>{" "}
-                            {value}
-                          </p>
-                        ))}
-                      </div>
-                    ) : null}
-                    {options.length > 0 ? (
-                      <div className="mt-2 flex flex-wrap gap-1.5">
-                        {options.map((opt) => (
-                          <span
-                            key={opt.id}
-                            className="rounded-full border border-border/60 bg-muted/40 px-2 py-0.5 text-[11px] text-muted-foreground"
-                          >
-                            {opt.label}
-                          </span>
-                        ))}
-                      </div>
-                    ) : null}
-                  </div>
-                  <Button
+        {questionCount > 0 ? (
+          <div
+            className={cn(
+              "space-y-3 rounded-[8px] border border-border/60 bg-muted/20 p-4",
+              showRequiredError && "border-destructive/60"
+            )}
+          >
+            <div className="flex gap-2 overflow-x-auto pb-1">
+              {values.questions.map((item, index) => {
+                const label =
+                  (typeof item.question === "string" &&
+                    item.question.trim()) ||
+                  `Question ${index + 1}`;
+                return (
+                  <button
+                    key={item.id}
                     type="button"
-                    variant="ghost"
-                    size="icon-sm"
-                    onClick={() =>
-                      updateQuestions(
-                        values.questions.filter((item) => item.id !== q.id)
-                      )
-                    }
-                    aria-label="Remove question"
-                    className="shrink-0 text-muted-foreground hover:text-destructive"
+                    onClick={() => setActiveQuestionIndex(index)}
+                    className={cn(
+                      "inline-flex shrink-0 max-w-[11rem] items-center gap-1.5 truncate rounded-full border px-3 py-1.5 text-xs font-medium transition-colors",
+                      index === safeQuestionIndex
+                        ? "border-primary bg-primary/10 text-primary"
+                        : "border-border/60 bg-background text-muted-foreground hover:bg-muted/50"
+                    )}
+                    title={label}
                   >
-                    <Trash2 className="size-3.5" />
-                  </Button>
+                    <span className="font-semibold">{index + 1}</span>
+                    <span className="truncate">{label}</span>
+                  </button>
+                );
+              })}
+            </div>
+
+            {(() => {
+              const q = values.questions[safeQuestionIndex];
+              if (!q) return null;
+              const questionTypeValue =
+                typeof q.type === "string" && q.type ? q.type : "text";
+              const isMultiQuestion = questionTypeValue === "multi";
+              const options = Array.isArray(q.options) ? q.options : [];
+              const optionsPipeValue =
+                options.length > 0
+                  ? options.map((opt) => String(opt?.label ?? "")).join("|")
+                  : "";
+              const instruction = getQuestionInstruction(q);
+              const conditions = readConditions(q);
+              const logicOn = conditions.length > 0;
+
+              const patchQuestion = (patch: Partial<SurveyQuestion>) => {
+                updateQuestions(
+                  values.questions.map((item) =>
+                    item.id === q.id ? { ...item, ...patch } : item
+                  )
+                );
+              };
+
+              const patchChoiceLines = (next: string) => {
+                const parts = splitChoiceLines(next);
+                patchQuestion({
+                  options: parts.map((label, i) => {
+                    const trimmed = label.trim();
+                    const existing = options[i];
+                    return {
+                      id:
+                        existing?.id ||
+                        `opt-${Date.now()}-${i}-${Math.random().toString(36).slice(2, 5)}`,
+                      label,
+                      value:
+                        trimmed.toLowerCase().replace(/\s+/g, "_") ||
+                        existing?.value ||
+                        `opt_${i + 1}`,
+                    };
+                  }),
+                });
+              };
+
+              return (
+                <div className="rounded-[8px] border border-border/50 bg-card px-3.5 py-3">
+                  <div className="flex items-start gap-3">
+                    <div className="min-w-0 flex-1 space-y-3">
+                      <div className="grid gap-3 sm:grid-cols-[160px_1fr]">
+                        <div className="space-y-1.5">
+                          <Label className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+                            Type
+                          </Label>
+                          <Select
+                            value={questionTypeValue}
+                            onChange={(e) => {
+                              const nextType = e.target.value;
+                              patchQuestion({
+                                type: nextType,
+                                ...(nextType !== "multi"
+                                  ? { options: [] }
+                                  : {}),
+                              });
+                            }}
+                            options={TYPE_OPTIONS}
+                          />
+                        </div>
+                        <div className="space-y-1.5">
+                          <Label className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+                            Question
+                          </Label>
+                          <Input
+                            value={
+                              typeof q.question === "string" ? q.question : ""
+                            }
+                            onChange={(e) =>
+                              patchQuestion({ question: e.target.value })
+                            }
+                            placeholder="e.g. How satisfied are you with our service?"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <Label className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+                          Instruction
+                        </Label>
+                        <textarea
+                          value={instruction}
+                          onChange={(e) =>
+                            patchQuestion({ instruction: e.target.value })
+                          }
+                          rows={2}
+                          maxLength={500}
+                          className="w-full rounded-[6px] border border-input bg-transparent px-3 py-2 text-sm shadow-subtle focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                          placeholder="Optional instruction for this question (e.g. Collect a whole number only)"
+                        />
+                      </div>
+
+                      {isMultiQuestion ? (
+                        <ChoiceLinesEditor
+                          value={optionsPipeValue}
+                          onChange={patchChoiceLines}
+                        />
+                      ) : null}
+
+                      <ConditionsEditor
+                        enabled={logicOn}
+                        onEnabledChange={(on) => {
+                          const nextConditions = on
+                            ? conditions.length
+                              ? conditions.map(toDraftCondition)
+                              : [
+                                  toDraftCondition(
+                                    createEmptyCondition()
+                                  ),
+                                ]
+                            : [];
+                          patchQuestion({ conditions: nextConditions });
+                        }}
+                        conditions={conditions}
+                        onConditionsChange={(next) =>
+                          patchQuestion({
+                            conditions: next.map(toDraftCondition),
+                          })
+                        }
+                      />
+                    </div>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon-sm"
+                      onClick={() => {
+                        const remaining = values.questions.filter(
+                          (item) => item.id !== q.id
+                        );
+                        updateQuestions(remaining);
+                        setActiveQuestionIndex((prev) =>
+                          Math.min(prev, Math.max(0, remaining.length - 1))
+                        );
+                      }}
+                      aria-label="Remove question"
+                      className="shrink-0 text-muted-foreground hover:text-destructive"
+                    >
+                      <Trash2 className="size-3.5" />
+                    </Button>
+                  </div>
                 </div>
-              </li>
-            );
-          })}
-        </ul>
-      )}
+              );
+            })()}
+
+            <div className="flex flex-wrap items-center justify-between gap-2 border-t border-border/50 pt-3">
+              <p className="text-xs font-medium text-muted-foreground">
+                Question {safeQuestionIndex + 1} of {questionCount}
+              </p>
+              <div className="flex items-center gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="h-8"
+                  disabled={!canGoPrevQuestion}
+                  onClick={goToPrevQuestion}
+                >
+                  <ChevronLeft className="size-3.5" />
+                  Prev
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="h-8"
+                  disabled={!canGoNextQuestion}
+                  onClick={goToNextQuestion}
+                >
+                  Next
+                  <ChevronRight className="size-3.5" />
+                </Button>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div
+            className={cn(
+              "rounded-[8px] border border-dashed border-border/70 bg-muted/10 px-4 py-8 text-center",
+              showRequiredError && "border-destructive/60"
+            )}
+          >
+            <p className="text-sm text-muted-foreground">
+              No questions yet. Click{" "}
+              <span className="font-medium text-foreground">Add question</span>{" "}
+              — each question stays editable after you add it.
+            </p>
+            {showRequiredError ? (
+              <p className="mt-2 text-xs font-medium text-destructive">
+                At least one survey question is required.
+              </p>
+            ) : null}
+            <Button
+              type="button"
+              className="mt-4 h-10 px-4"
+              onClick={addQuestion}
+            >
+              <Plus className="size-4" />
+              Add question
+            </Button>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

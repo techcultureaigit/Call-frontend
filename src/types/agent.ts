@@ -134,6 +134,20 @@ export interface AgentSurveyQuestionOption {
   value: string;
 }
 
+/** Follow-up question shown when a condition matches */
+export interface AgentSurveyThenShowQuestion {
+  type?: string;
+  question: string;
+  instruction?: string;
+  options?: AgentSurveyQuestionOption[];
+}
+
+/** If this question's answer matches `ifAnswer`, ask these follow-ups next */
+export interface AgentSurveyQuestionCondition {
+  ifAnswer: string;
+  thenShowQuestions: AgentSurveyThenShowQuestion[];
+}
+
 /** Manual or uploaded — uploaded rows keep any spreadsheet columns */
 export interface AgentSurveyQuestion {
   id: string;
@@ -142,6 +156,7 @@ export interface AgentSurveyQuestion {
   /** Helper text / instruction shown as the question description */
   instruction?: string;
   options?: AgentSurveyQuestionOption[];
+  conditions?: AgentSurveyQuestionCondition[];
   [key: string]: unknown;
 }
 

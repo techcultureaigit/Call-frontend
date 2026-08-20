@@ -446,6 +446,7 @@ export function SurveyDetailView({ survey }: { survey: Survey }) {
                                 "type",
                                 "options",
                                 "instruction",
+                                "conditions",
                                 "__v",
                               ].includes(k) &&
                               typeof v === "string" &&
@@ -457,6 +458,27 @@ export function SurveyDetailView({ survey }: { survey: Survey }) {
                         (typeof q.instruction === "string" &&
                           q.instruction.trim()) ||
                         "";
+                      const conditions = Array.isArray(q.conditions)
+                        ? q.conditions.filter((row) => {
+                            if (!row || typeof row !== "object") return false;
+                            if (Array.isArray(row.thenShowQuestions)) {
+                              return row.thenShowQuestions.some((item) =>
+                                String(item?.question || "").trim()
+                              );
+                            }
+                            const legacy = row as {
+                              thenShowQuestion?: string;
+                              thenShowQuestionId?: string;
+                            };
+                            return Boolean(
+                              String(
+                                legacy.thenShowQuestion ||
+                                  legacy.thenShowQuestionId ||
+                                  ""
+                              ).trim()
+                            );
+                          })
+                        : [];
                       return (
                         <li key={q.id} className="text-sm">
                           <span className="font-medium text-muted-foreground">
@@ -471,6 +493,40 @@ export function SurveyDetailView({ survey }: { survey: Survey }) {
                           {instruction ? (
                             <p className="mt-0.5 pl-5 text-xs text-muted-foreground">
                               {instruction}
+                            </p>
+                          ) : null}
+                          {conditions.length > 0 ? (
+                            <p className="mt-0.5 pl-5 text-xs text-muted-foreground">
+                              {conditions
+                                .map((row) => {
+                                  const answer = String(row.ifAnswer || "").trim();
+                                  const followUps = Array.isArray(
+                                    row.thenShowQuestions
+                                  )
+                                    ? row.thenShowQuestions
+                                        .map((item) =>
+                                          String(item?.question || "").trim()
+                                        )
+                                        .filter(Boolean)
+                                    : [
+                                        String(
+                                          (
+                                            row as {
+                                              thenShowQuestion?: string;
+                                              thenShowQuestionId?: string;
+                                            }
+                                          ).thenShowQuestion ||
+                                            (
+                                              row as {
+                                                thenShowQuestionId?: string;
+                                              }
+                                            ).thenShowQuestionId ||
+                                            ""
+                                        ).trim(),
+                                      ].filter(Boolean);
+                                  return `If ${answer} → ${followUps.join(" | ")}`;
+                                })
+                                .join("; ")}
                             </p>
                           ) : null}
                         </li>

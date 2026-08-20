@@ -255,7 +255,86 @@ export function agentToBackendPayload(
       enabled: c.surveyQuestions.enabled,
       questionsFileUrl: c.surveyQuestions.questionsFileUrl ?? "",
       questionsFileName: c.surveyQuestions.questionsFileName ?? "",
-      questions: c.surveyQuestions.questions.map((q) => ({ ...q })),
+      questions: c.surveyQuestions.questions.map((q) => {
+        const conditions = Array.isArray(q.conditions)
+          ? q.conditions
+              .map((row) => {
+                const ifAnswer =
+                  typeof row?.ifAnswer === "string" ? row.ifAnswer.trim() : "";
+                if (!ifAnswer) return null;
+
+                let thenShowQuestions = Array.isArray(row.thenShowQuestions)
+                  ? row.thenShowQuestions
+                  : [];
+
+                // Migrate legacy single follow-up
+                if (
+                  thenShowQuestions.length === 0 &&
+                  typeof row.thenShowQuestion === "string" &&
+                  row.thenShowQuestion.trim()
+                ) {
+                  const thenShowType =
+                    String(row.thenShowType || "text").trim() || "text";
+                  const legacy: {
+                    type: string;
+                    question: string;
+                    instruction: string;
+                    options?: { id: string; label: string; value: string }[];
+                  } = {
+                    type: thenShowType,
+                    question: row.thenShowQuestion.trim(),
+                    instruction: String(row.thenShowInstruction || "").trim(),
+                  };
+                  if (
+                    thenShowType === "multi" &&
+                    Array.isArray(row.thenShowOptions)
+                  ) {
+                    legacy.options = row.thenShowOptions
+                      .map((opt) => ({
+                        id: String(opt.id || ""),
+                        label: String(opt.label || "").trim(),
+                        value: String(opt.value || "").trim(),
+                      }))
+                      .filter((opt) => opt.label);
+                  }
+                  thenShowQuestions = [legacy];
+                }
+
+                const cleaned = thenShowQuestions
+                  .map((item) => {
+                    const question = String(item?.question || "").trim();
+                    if (!question) return null;
+                    const type = String(item?.type || "text").trim() || "text";
+                    const instruction = String(item?.instruction || "").trim();
+                    const next: {
+                      type: string;
+                      question: string;
+                      instruction: string;
+                      options?: { id: string; label: string; value: string }[];
+                    } = { type, question, instruction };
+                    if (type === "multi" && Array.isArray(item?.options)) {
+                      next.options = item.options
+                        .map((opt) => ({
+                          id: String(opt.id || ""),
+                          label: String(opt.label || "").trim(),
+                          value: String(opt.value || "").trim(),
+                        }))
+                        .filter((opt) => opt.label);
+                    }
+                    return next;
+                  })
+                  .filter((item): item is NonNullable<typeof item> => item !== null);
+
+                if (cleaned.length === 0) return null;
+                return { ifAnswer, thenShowQuestions: cleaned };
+              })
+              .filter((row): row is NonNullable<typeof row> => row !== null)
+          : [];
+        const next = { ...q };
+        if (conditions.length) next.conditions = conditions;
+        else delete next.conditions;
+        return next;
+      }),
     },
     clientContact: {
       contactFileUrl: c.clientContact.contactFileUrl,
