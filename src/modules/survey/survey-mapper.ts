@@ -267,14 +267,24 @@ export function agentToBackendPayload(
                   ? row.thenShowQuestions
                   : [];
 
-                // Migrate legacy single follow-up
+                // Migrate legacy single follow-up (older saved surveys)
+                const legacyRow = row as typeof row & {
+                  thenShowQuestion?: string;
+                  thenShowType?: string;
+                  thenShowInstruction?: string;
+                  thenShowOptions?: {
+                    id?: string;
+                    label?: string;
+                    value?: string;
+                  }[];
+                };
                 if (
                   thenShowQuestions.length === 0 &&
-                  typeof row.thenShowQuestion === "string" &&
-                  row.thenShowQuestion.trim()
+                  typeof legacyRow.thenShowQuestion === "string" &&
+                  legacyRow.thenShowQuestion.trim()
                 ) {
                   const thenShowType =
-                    String(row.thenShowType || "text").trim() || "text";
+                    String(legacyRow.thenShowType || "text").trim() || "text";
                   const legacy: {
                     type: string;
                     question: string;
@@ -282,14 +292,16 @@ export function agentToBackendPayload(
                     options?: { id: string; label: string; value: string }[];
                   } = {
                     type: thenShowType,
-                    question: row.thenShowQuestion.trim(),
-                    instruction: String(row.thenShowInstruction || "").trim(),
+                    question: legacyRow.thenShowQuestion.trim(),
+                    instruction: String(
+                      legacyRow.thenShowInstruction || ""
+                    ).trim(),
                   };
                   if (
                     thenShowType === "multi" &&
-                    Array.isArray(row.thenShowOptions)
+                    Array.isArray(legacyRow.thenShowOptions)
                   ) {
-                    legacy.options = row.thenShowOptions
+                    legacy.options = legacyRow.thenShowOptions
                       .map((opt) => ({
                         id: String(opt.id || ""),
                         label: String(opt.label || "").trim(),
