@@ -123,13 +123,18 @@ export async function getSurvey(id: string): Promise<Survey> {
 /** saveSurvey() → POST /api/surveys */
 export async function saveSurvey(
   input: SaveSurveyInput,
-  schedule?: ScheduleSurveyInput | null
+  schedule?: ScheduleSurveyInput | null,
+  options?: { quiet?: boolean }
 ): Promise<Survey> {
   const payload = agentToBackendPayload(input, schedule);
   return surveyCall("saveSurvey", "POST", "/api/surveys", async () => {
-    const res = await apiPost<ApiResponse<BackendSurvey>>("/api/surveys", payload);
+    const res = await apiPost<ApiResponse<BackendSurvey>>(
+      "/api/surveys",
+      payload,
+      { skipLoader: options?.quiet }
+    );
     return backendSurveyToAgent(res.data);
-  }, { id: input.id, step: input.step, schedule });
+  }, { id: input.id, step: input.step, schedule, quiet: options?.quiet });
 }
 
 /** duplicateSurvey() → POST /api/surveys/:id/duplicate */
@@ -202,7 +207,7 @@ export async function listSurveyResults(
     page: params.page ?? 1,
     limit: params.limit ?? 20,
     search: params.search || undefined,
-    callStatus: params.callStatus || undefined,
+    status: params.status || undefined,
   };
   return surveyCall("listSurveyResults", "GET", url, async () => {
     const res = await apiGet<SurveyResultsResponse>(url, query);
@@ -235,7 +240,7 @@ export async function exportSurveyResults(
   const query = createQueryString({
     format,
     search: params.search || undefined,
-    callStatus: params.callStatus || undefined,
+    status: params.status || undefined,
   });
   const url = `/api/surveys/${id}/results/export${query}`;
   return surveyCall("exportSurveyResults", "GET", url, async () => {

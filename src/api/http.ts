@@ -79,13 +79,16 @@ async function parseJson<T>(response: Response): Promise<T> {
   return response.json() as Promise<T>;
 }
 
+type ApiRequestInit = RequestInit & { skipLoader?: boolean };
+
 /** Shared fetch — real CRM APIs hit Express (:8000); mock BFF stays on Next (:3000) */
 export async function apiRequest<T>(
   path: string,
-  init: RequestInit = {}
+  init: ApiRequestInit = {}
 ): Promise<T> {
+  const { skipLoader = false, ...requestInit } = init;
   const url = resolveApiUrl(path);
-  const headers = new Headers(init.headers);
+  const headers = new Headers(requestInit.headers);
   if (!headers.has("Accept")) headers.set("Accept", "application/json");
 
   const token = getClientAccessToken();
@@ -93,16 +96,18 @@ export async function apiRequest<T>(
     headers.set("Authorization", `Bearer ${token}`);
   }
 
-  const track = !shouldSkipGlobalLoader(path, init.method ?? "GET");
+  const track =
+    !skipLoader &&
+    !shouldSkipGlobalLoader(path, requestInit.method ?? "GET");
   if (track) {
     useApiLoadingStore
       .getState()
-      .start(inferLoaderMessage(init.method ?? "GET", path));
+      .start(inferLoaderMessage(requestInit.method ?? "GET", path));
   }
 
   try {
     const response = await fetch(url, {
-      ...init,
+      ...requestInit,
       headers,
       cache: "no-store",
       credentials: "include",
@@ -118,11 +123,16 @@ export function apiGet<T>(path: string, params?: object): Promise<T> {
   return apiRequest<T>(`${path}${query}`);
 }
 
-export function apiPost<T>(path: string, body?: unknown): Promise<T> {
+export function apiPost<T>(
+  path: string,
+  body?: unknown,
+  options?: { skipLoader?: boolean }
+): Promise<T> {
   return apiRequest<T>(path, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: body === undefined ? undefined : JSON.stringify(body),
+    skipLoader: options?.skipLoader,
   });
 }
 

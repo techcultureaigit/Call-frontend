@@ -34,8 +34,9 @@ export function PaginatedListShell({
   children,
 }: PaginatedListShellProps) {
   return (
-    <div className="space-y-4">
+    <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-4 overflow-hidden">
       <ListToolbar
+        className="shrink-0"
         search={search}
         onSearchChange={onSearchChange}
         searchPlaceholder={searchPlaceholder}
@@ -44,11 +45,15 @@ export function PaginatedListShell({
         actions={actions}
         disabled={toolbarDisabled}
       />
-      {children}
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
+        {children}
+      </div>
       <DataPagination
         meta={meta}
         onPageChange={onPageChange}
         itemLabel={itemLabel}
+        variant="inline"
+        className="shrink-0"
       />
     </div>
   );

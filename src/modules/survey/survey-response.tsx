@@ -61,7 +61,7 @@ import { usePageMeta, usePermissions, usePaginatedList } from "@/hooks";
 import { cn } from "@/lib/utils";
 import { formatAgentCreatedAt as formatSurveyCreatedAt } from "@/lib/utils/date";
 import { motion } from "framer-motion";
-import { ArrowLeft, CalendarClock, Clock3, Download, Eye, FileSpreadsheet, FileText, HelpCircle, MessageSquareText, Phone, Sparkles, Users, MessageCircle, Pause, Play, UserRound, PhoneCall, Radio, MapPin } from "lucide-react";
+import { ArrowLeft, CalendarClock, Clock3, Download, Eye, FileSpreadsheet, FileText, HelpCircle, MessageSquareText, Phone, Sparkles, Users, MessageCircle, Pause, Play, Radio } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState, type MouseEvent } from "react";
 import { toast } from "sonner";
@@ -79,49 +79,30 @@ const QA_MODAL = {
   badgeBg: "#0f172a",
 } as const;
 
-/** Exact call_recordings field names (shown as column headers) */
+/** Call fields shown in the results table (exact API names). */
 const CALL_EXACT_FIELDS = [
-  "direction",
-  "call_connected",
-  "billing_circle.operator",
-  "billing_circle.circle",
   "start_stamp",
   "answer_stamp",
   "end_stamp",
-  "agent_number",
-  "agent_ring_time",
-  "agent_transfer_ring_time",
-  "customer_ring_time",
-  "outbound_sec",
   "caller_id_number",
-  "call_to_number",
-  "customer_no_with_prefix",
   "hangup_cause_description",
   "reason_key",
-  "campaign_name",
-  "custom_identifier",
-  "answered_agent_name",
-  "answered_agent_number",
-  "missed_agent",
-  "digits_dialed",
-  "broadcast_lead_fields",
-  "received_at",
 ] as const;
 
-/** Status / duration shown in dedicated columns — skip as extra call cols */
-const CALL_CORE_SKIP = new Set(["call_status", "duration", "billsec"]);
+const CALL_FIELD_LABELS: Record<string, string> = {
+  start_stamp: "Start stamp",
+  answer_stamp: "Answer stamp",
+  end_stamp: "End stamp",
+  caller_id_number: "Caller ID number",
+  hangup_cause_description: "Hangup cause description",
+  reason_key: "Reason key",
+};
 
 function getCallFieldValue(
   call: SurveyResultRow["call"],
   key: string
 ): string {
   if (!call) return "";
-  if (key === "billing_circle.operator") {
-    return call.billing_circle?.operator?.trim() || "";
-  }
-  if (key === "billing_circle.circle") {
-    return call.billing_circle?.circle?.trim() || "";
-  }
   const record = call as unknown as Record<string, unknown>;
   const raw = record[key];
   if (raw == null || raw === "") return "";
@@ -135,8 +116,20 @@ function getCallDisplayFields(
   if (!call) return [];
   return CALL_EXACT_FIELDS.map((key) => {
     const value = getCallFieldValue(call, key);
-    return { key, label: key, value };
-  }).filter((f) => f.value && !CALL_CORE_SKIP.has(f.key));
+    return { key, label: CALL_FIELD_LABELS[key] || key, value };
+  }).filter((f) => f.value);
+}
+
+function resolveRowStatus(row: SurveyResultRow | null | undefined): string {
+  const status = row?.status?.trim();
+  return status || "missed";
+}
+
+function formatDurationLabel(value?: string) {
+  const raw = String(value || "").trim();
+  if (!raw) return "---";
+  if (/^\d+(\.\d+)?$/.test(raw)) return `${raw}s`;
+  return raw;
 }
 
 interface SurveyResultsViewProps {
@@ -541,46 +534,13 @@ function ResponseDetailsModal({
       chips.push({ label, value, icon });
     };
 
-    push("call_status", call.call_status, Radio);
-    push("duration", call.duration, Clock3);
-    push("billsec", call.billsec, Clock3);
-    push("direction", call.direction, PhoneCall);
-    push(
-      "call_connected",
-      call.call_connected === "1"
-        ? "Yes"
-        : call.call_connected === "0"
-          ? "No"
-          : call.call_connected,
-      Radio
-    );
-    push(
-      "billing_circle.operator",
-      call.billing_circle?.operator,
-      MapPin
-    );
-    push("billing_circle.circle", call.billing_circle?.circle, MapPin);
-    push("start_stamp", call.start_stamp, CalendarClock);
-    push("answer_stamp", call.answer_stamp, CalendarClock);
-    push("end_stamp", call.end_stamp, CalendarClock);
-    push("agent_number", call.agent_number, UserRound);
-    push("agent_ring_time", call.agent_ring_time);
-    push("agent_transfer_ring_time", call.agent_transfer_ring_time);
-    push("customer_ring_time", call.customer_ring_time);
-    push("outbound_sec", call.outbound_sec);
-    push("caller_id_number", call.caller_id_number, Phone);
-    push("call_to_number", call.call_to_number, Phone);
-    push("customer_no_with_prefix", call.customer_no_with_prefix, Phone);
-    push("hangup_cause_description", call.hangup_cause_description);
-    push("reason_key", call.reason_key);
-    push("campaign_name", call.campaign_name);
-    push("custom_identifier", call.custom_identifier);
-    push("answered_agent_name", call.answered_agent_name, UserRound);
-    push("answered_agent_number", call.answered_agent_number, Phone);
-    push("missed_agent", call.missed_agent);
-    push("digits_dialed", call.digits_dialed);
-    push("broadcast_lead_fields", call.broadcast_lead_fields);
-    push("received_at", call.received_at, CalendarClock);
+    push("Duration", call.duration, Clock3);
+    push("Start stamp", call.start_stamp, CalendarClock);
+    push("Answer stamp", call.answer_stamp, CalendarClock);
+    push("End stamp", call.end_stamp, CalendarClock);
+    push("Caller ID number", call.caller_id_number, Phone);
+    push("Hangup cause description", call.hangup_cause_description);
+    push("Reason key", call.reason_key);
     return chips;
   }, [call]);
 
@@ -604,12 +564,7 @@ function ResponseDetailsModal({
                       <Phone className="size-3.5 text-primary" />
                       {row?.customer_number || "—"}
                     </span>
-                    {row?.customer_name ? (
-                      <span className="text-xs text-muted-foreground">
-                        {row.customer_name}
-                      </span>
-                    ) : null}
-                    <CallStatusPill status={call?.call_status} />
+                    <CallStatusPill status={resolveRowStatus(row)} />
                     {answers.length ? (
                       <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-primary ring-1 ring-primary/20">
                         <MessageCircle className="size-3" />
@@ -693,34 +648,37 @@ function ResponseDetailsModal({
 }
 
 function CallStatusPill({ status }: { status?: string }) {
-  if (!status) {
-    return <span className="text-xs text-muted-foreground">---</span>;
-  }
-  const normalized = status.trim().toLowerCase();
-  const answered = normalized === "answered";
+  const resolved = status?.trim() || "missed";
+  const normalized = resolved.toLowerCase();
+  const completed = normalized === "completed";
   const missed = normalized === "missed";
+  const partial =
+    normalized === "partially completed" || normalized === "partially_completed";
 
   return (
     <span
       className={cn(
         "inline-flex shrink-0 items-center gap-1.5 rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide",
-        answered &&
+        completed &&
           "border-emerald-500/25 bg-emerald-500/10 text-emerald-700",
         missed && "border-rose-500/25 bg-rose-500/10 text-rose-700",
-        !answered &&
+        partial && "border-amber-500/25 bg-amber-500/10 text-amber-700",
+        !completed &&
           !missed &&
+          !partial &&
           "border-border/60 bg-muted/50 text-muted-foreground"
       )}
     >
       <span
         className={cn(
           "size-1.5 rounded-full",
-          answered && "bg-emerald-500",
+          completed && "bg-emerald-500",
           missed && "bg-rose-500",
-          !answered && !missed && "bg-muted-foreground/50"
+          partial && "bg-amber-500",
+          !completed && !missed && !partial && "bg-muted-foreground/50"
         )}
       />
-      {status}
+      {resolved}
     </span>
   );
 }
@@ -741,11 +699,10 @@ function ResultsInlineQaTable({
   } | null>(null);
   const [detailsRow, setDetailsRow] = useState<SurveyResultRow | null>(null);
 
-  const callColumns = useMemo(() => {
-    return CALL_EXACT_FIELDS.filter((key) =>
-      rows.some((row) => Boolean(getCallFieldValue(row.call, key)))
-    ).map((key) => ({ key, label: key }));
-  }, [rows]);
+  const callColumns = useMemo(
+    () => CALL_EXACT_FIELDS.map((key) => ({ key, label: CALL_FIELD_LABELS[key] || key })),
+    []
+  );
 
   const layoutItems = useMemo(
     () => [
@@ -756,13 +713,12 @@ function ResultsInlineQaTable({
         pin: "start" as const,
       },
       { id: "phone", label: "Phone" },
-      { id: "contact", label: "Contact" },
       { id: "date", label: "Date" },
       { id: "status", label: "Status" },
       { id: "duration", label: "Duration" },
       ...callColumns.map((col) => ({
         id: `call:${col.key}`,
-        label: col.label,
+        label: CALL_FIELD_LABELS[col.key] || col.label,
       })),
       ...questionColumns.map((col, index) => ({
         id: `q:${col.id}`,
@@ -796,31 +752,33 @@ function ResultsInlineQaTable({
 
   return (
     <>
-      <div className="overflow-hidden rounded-[6px] border border-border/60 bg-card shadow-card">
-        <TableColumnsBar
-          items={pickerItems}
-          hidden={hidden}
-          onToggle={toggleHidden}
-          onReorder={reorder}
-          onReset={reset}
-        />
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-[6px] border border-border/60 bg-card shadow-card">
+        <div className="shrink-0">
+          <TableColumnsBar
+            items={pickerItems}
+            hidden={hidden}
+            onToggle={toggleHidden}
+            onReorder={reorder}
+            onReset={reset}
+          />
+        </div>
 
-        <div className="overflow-x-auto">
+        <div className="min-h-0 min-w-0 flex-1 overflow-auto overscroll-contain">
           <TableColumnDnd
             ids={visibleItems.map((col) => col.id)}
             lockedIds={lockedIds}
             onReorder={reorder}
           >
-          <table className="w-full min-w-[720px] border-collapse">
+          <table className={cn("w-full border-collapse", "min-w-[720px]")}>
             <thead>
-                <tr className={TABLE_HEAD_ROW_CLASS}>
+                <tr className={cn(TABLE_HEAD_ROW_CLASS, "[&_th]:sticky [&_th]:top-0 [&_th]:z-20 [&_th]:bg-card")}>
                   {visibleItems.map((col) => {
                     if (col.id === "actions") {
                       return (
                         <SortableColumnTh
                           key={col.id}
                           id={col.id}
-                          className="min-w-[5.5rem] py-2"
+                          className="min-w-[5.5rem]"
                         >
                           Action
                         </SortableColumnTh>
@@ -842,7 +800,7 @@ function ResultsInlineQaTable({
                         <SortableColumnTh
                           key={col.id}
                           id={col.id}
-                          className="min-w-[8rem] max-w-[12rem] py-2 text-center"
+                          className="min-w-[8rem] max-w-[12rem] text-center"
                         >
                           <div className="flex max-w-[11rem] items-center justify-center gap-1.5 normal-case tracking-normal">
                             <button
@@ -887,10 +845,7 @@ function ResultsInlineQaTable({
                       <SortableColumnTh
                         key={col.id}
                         id={col.id}
-                        className={cn(
-                          "py-2",
-                          col.id === "audio" && "text-center"
-                        )}
+                        className={cn(col.id === "audio" && "text-center")}
                       >
                         {col.label}
                       </SortableColumnTh>
@@ -959,18 +914,6 @@ function ResultsInlineQaTable({
                           </td>
                         );
                       }
-                      if (col.id === "contact") {
-                        return (
-                          <td
-                            key={col.id}
-                            className={cn(TABLE_BODY_CELL_CLASS, "max-w-[14rem]")}
-                          >
-                            <TableReadMore
-                              text={row.customer_name || "Unknown contact"}
-                            />
-                          </td>
-                        );
-                      }
                       if (col.id === "date") {
                         return (
                           <td
@@ -994,7 +937,7 @@ function ResultsInlineQaTable({
                             key={col.id}
                             className="whitespace-nowrap px-4 py-3.5 align-middle"
                           >
-                            <CallStatusPill status={row.call?.call_status} />
+                            <CallStatusPill status={resolveRowStatus(row)} />
                           </td>
                         );
                       }
@@ -1006,11 +949,7 @@ function ResultsInlineQaTable({
                           >
                             <DataTableMetaChip
                               icon={Clock3}
-                              label={
-                                row.call?.billsec || row.call?.duration
-                                  ? `${row.call?.billsec || row.call?.duration}s`
-                                  : "---"
-                              }
+                              label={formatDurationLabel(row.call?.duration)}
                               tabular
                             />
                           </td>
@@ -1019,14 +958,7 @@ function ResultsInlineQaTable({
                       if (col.id.startsWith("call:")) {
                         const key = col.id.slice(5);
                         const value = getCallFieldValue(row.call, key);
-                        const display =
-                          key === "call_connected"
-                            ? value === "1"
-                              ? "Yes"
-                              : value === "0"
-                                ? "No"
-                                : value || "---"
-                            : value || "---";
+                        const display = value || "---";
                         return (
                           <td
                             key={col.id}
@@ -1084,10 +1016,9 @@ function ResultsInlineQaTable({
           </TableColumnDnd>
         </div>
 
-        <div className="border-t border-border/40 bg-muted/20 px-5 py-2.5">
+        <div className="shrink-0 border-t border-border/40 bg-muted/20 px-5 py-2.5">
           <p className="text-[11px] text-muted-foreground">
-            Eye icon opens Q&amp;A popup · question numbers open full text · call
-            fields shown without IDs/tracking
+            Eye icon opens Q&amp;A popup · question numbers open full text
           </p>
         </div>
       </div>
@@ -1147,10 +1078,11 @@ function StatCard({
   );
 }
 
-const RESULTS_CALL_STATUS_OPTIONS = [
+const RESULTS_STATUS_OPTIONS = [
   { label: "All statuses", value: "all" },
-  { label: "Answered", value: "answered" },
   { label: "Missed", value: "missed" },
+  { label: "Completed", value: "completed" },
+  { label: "Partially completed", value: "partially completed" },
 ];
 
 export function SurveyResponseView({ surveyId }: SurveyResultsViewProps) {
@@ -1159,7 +1091,7 @@ export function SurveyResponseView({ surveyId }: SurveyResultsViewProps) {
   const [survey, setSurvey] = useState<SurveyResultsSurveyMeta | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [exporting, setExporting] = useState(false);
-  const [callStatus, setCallStatus] = useState("all");
+  const [responseStatus, setResponseStatus] = useState("all");
 
   const fetchPage = useCallback(
     async ({
@@ -1177,7 +1109,7 @@ export function SurveyResponseView({ surveyId }: SurveyResultsViewProps) {
           page,
           limit,
           search: search || undefined,
-          callStatus: callStatus !== "all" ? callStatus : undefined,
+          status: responseStatus !== "all" ? responseStatus : undefined,
         });
         setSurvey(res.survey);
         return { data: res.data, meta: res.meta };
@@ -1186,7 +1118,7 @@ export function SurveyResponseView({ surveyId }: SurveyResultsViewProps) {
         throw error;
       }
     },
-    [surveyId, callStatus]
+    [surveyId, responseStatus]
   );
 
   const {
@@ -1201,7 +1133,7 @@ export function SurveyResponseView({ surveyId }: SurveyResultsViewProps) {
     reload,
   } = usePaginatedList<SurveyResultRow>({
     fetchPage,
-    resetPageWhen: [callStatus],
+    resetPageWhen: [responseStatus],
     onError: (err) =>
       setError(err instanceof Error ? err.message : "Failed to load results"),
   });
@@ -1261,7 +1193,7 @@ export function SurveyResponseView({ surveyId }: SurveyResultsViewProps) {
         {
           format,
           search: debouncedSearch || undefined,
-          callStatus: callStatus !== "all" ? callStatus : undefined,
+          status: responseStatus !== "all" ? responseStatus : undefined,
         }
       );
       const url = URL.createObjectURL(blob);
@@ -1287,10 +1219,13 @@ export function SurveyResponseView({ surveyId }: SurveyResultsViewProps) {
   const status = (survey?.scheduling_status ?? "completed") as SurveyDisplayStatus;
 
   return (
-    <div className="bg-linear-to-b from-brand/5 to-transparent">
-      <PageContainer size="full">
-        <div className="space-y-6">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+    <div className="flex h-[calc(100svh-3.5rem)] min-h-0 min-w-0 flex-col overflow-hidden bg-linear-to-b from-brand/5 to-transparent">
+      <PageContainer
+        size="full"
+        className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden"
+      >
+        <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-4 overflow-hidden">
+          <div className="flex shrink-0 flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex min-w-0 items-start gap-3">
               <Button
                 type="button"
@@ -1323,17 +1258,18 @@ export function SurveyResponseView({ surveyId }: SurveyResultsViewProps) {
           </div>
 
           <ListToolbar
+            className="shrink-0"
             search={search}
             onSearchChange={setSearch}
             searchPlaceholder="Search phone, session, or call sid…"
             searchAriaLabel="Search responses"
             filters={
               <Select
-                value={callStatus}
-                onChange={(e) => setCallStatus(e.target.value)}
-                options={RESULTS_CALL_STATUS_OPTIONS}
-                className="h-11 w-full rounded-[6px] border-border/50 bg-background/80 shadow-subtle sm:w-44"
-                aria-label="Filter by call status"
+                value={responseStatus}
+                onChange={(e) => setResponseStatus(e.target.value)}
+                options={RESULTS_STATUS_OPTIONS}
+                className="h-11 w-full rounded-[6px] border-border/50 bg-background/80 shadow-subtle sm:w-52"
+                aria-label="Filter by response status"
               />
             }
             actions={
@@ -1378,7 +1314,7 @@ export function SurveyResponseView({ surveyId }: SurveyResultsViewProps) {
           />
 
           {!error && meta.total > 0 ? (
-            <div className="grid gap-3 sm:grid-cols-3">
+            <div className="grid shrink-0 gap-3 sm:grid-cols-3">
               <StatCard
                 label="Responses"
                 value={meta.total}
@@ -1400,39 +1336,43 @@ export function SurveyResponseView({ surveyId }: SurveyResultsViewProps) {
             </div>
           ) : null}
 
-          {loading ? (
-            <SurveyFetchLoader label="Loading results" />
-          ) : error ? (
-            <div className="rounded-[10px] border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive">
-              {error}
-            </div>
-          ) : enrichedRows.length === 0 ? (
-            <div className="rounded-[12px] border border-dashed border-border/60 bg-card/80 px-6 py-14 text-center">
-              <div className="mx-auto flex size-14 items-center justify-center rounded-full bg-primary/10">
-                <Users className="size-7 text-primary" />
+          <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
+            {loading ? (
+              <SurveyFetchLoader label="Loading results" />
+            ) : error ? (
+              <div className="rounded-[10px] border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive">
+                {error}
               </div>
-              <p className="mt-4 text-base font-semibold text-foreground">
-                No responses found
-              </p>
-              <p className="mt-1 text-sm text-muted-foreground">
-                {debouncedSearch || callStatus !== "all"
-                  ? "Try a different phone, session id, or status filter."
-                  : "Results will appear after calls complete."}
-              </p>
-            </div>
-          ) : (
-            <ResultsInlineQaTable
-              rows={enrichedRows}
-              questionColumns={questionColumns}
-              layoutKey={`survey-results:${surveyId}`}
-            />
-          )}
+            ) : enrichedRows.length === 0 ? (
+              <div className="rounded-[12px] border border-dashed border-border/60 bg-card/80 px-6 py-14 text-center">
+                <div className="mx-auto flex size-14 items-center justify-center rounded-full bg-primary/10">
+                  <Users className="size-7 text-primary" />
+                </div>
+                <p className="mt-4 text-base font-semibold text-foreground">
+                  No responses found
+                </p>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  {debouncedSearch || responseStatus !== "all"
+                    ? "Try a different phone, session id, or status filter."
+                    : "Results will appear after calls complete."}
+                </p>
+              </div>
+            ) : (
+              <ResultsInlineQaTable
+                rows={enrichedRows}
+                questionColumns={questionColumns}
+                layoutKey={`survey-results:${surveyId}`}
+              />
+            )}
+          </div>
 
           {!error && meta.total > 0 ? (
             <DataPagination
               meta={meta}
               onPageChange={setPage}
               itemLabel="responses"
+              variant="inline"
+              className="shrink-0"
             />
           ) : null}
         </div>
@@ -1471,26 +1411,20 @@ function ResponseQaTable({
   const metaRows: { question: string; response: string }[] = [];
 
   if (layout === "classic") {
-    if (callMeta?.call?.call_status) {
+    metaRows.push({
+      question: "Status",
+      response: resolveRowStatus(callMeta),
+    });
+    if (callMeta?.call?.duration) {
       metaRows.push({
-        question: "Status",
-        response: callMeta.call.call_status,
-      });
-    }
-    if (callMeta?.call?.billsec || callMeta?.call?.duration) {
-      metaRows.push({
-        question: "Duration (sec)",
-        response: callMeta.call.billsec || callMeta.call.duration || "---",
+        question: "Duration",
+        response: formatDurationLabel(callMeta.call.duration),
       });
     }
 
     for (const field of getCallDisplayFields(callMeta?.call)) {
-      let value = field.value;
-      if (field.key === "call_connected") {
-        value = value === "1" ? "Yes" : value === "0" ? "No" : value;
-      }
-      if (!value) continue;
-      metaRows.push({ question: field.label, response: value });
+      if (!field.value) continue;
+      metaRows.push({ question: field.label, response: field.value });
     }
   }
 
@@ -1718,7 +1652,7 @@ export function SurveyResponseDetailView({
   return (
     <div className="bg-linear-to-b from-brand/5 to-transparent">
       <PageContainer size="full">
-        <div className="space-y-6">
+        <div className="min-w-0 space-y-6">
           <div className="flex items-start gap-3">
             <Button
               type="button"
@@ -1767,29 +1701,11 @@ export function SurveyResponseDetailView({
                       {formatSurveyCreatedAt(result.extracted_at)}
                     </span>
                   ) : null}
+                  <CallStatusPill status={resolveRowStatus(result)} />
                   <span className="inline-flex items-center gap-1.5 rounded-[6px] bg-background/80 px-2.5 py-1 text-xs text-muted-foreground shadow-sm">
                     <MessageCircle className="size-3.5" />
                     {answers.length} answers
                   </span>
-                </div>
-
-                <div className="mt-4 grid gap-3 text-sm sm:grid-cols-2 lg:grid-cols-4">
-                  <div>
-                    <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                      Customer
-                    </p>
-                    <p className="mt-1 font-medium text-foreground">
-                      {result.customer_name || "Unknown contact"}
-                    </p>
-                  </div>
-                  <div className="min-w-0 sm:col-span-2 lg:col-span-3">
-                    <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                      Session
-                    </p>
-                    <p className="mt-1 break-all font-mono text-[11px] text-foreground">
-                      {result.session_id || "—"}
-                    </p>
-                  </div>
                 </div>
               </header>
 

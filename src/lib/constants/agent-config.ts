@@ -163,15 +163,79 @@ export function getVoiceSpeedLabel(value: unknown): string {
 
 export const SURVEY_QUESTION_TYPES = [
   { label: "Normal Question", value: "text" },
+  { label: "Long", value: "long" },
   { label: "Yes / No", value: "yes_no" },
   { label: "Rating", value: "rating" },
   { label: "Number", value: "number" },
   { label: "Multiple Choice", value: "multi" },
 ] as const;
 
+export const SURVEY_QUESTION_TYPE_HINTS: Record<
+  string,
+  { placeholder: string; defaultInstruction: string }
+> = {
+  text: {
+    placeholder:
+      "Optional instruction for this question (e.g. Collect a free-form spoken answer)",
+    defaultInstruction: "",
+  },
+  long: {
+    placeholder:
+      "Optional instruction for this question (e.g. Collect a detailed spoken description)",
+    defaultInstruction: "Collect a detailed spoken description",
+  },
+  yes_no: {
+    placeholder:
+      "Optional instruction for this question (e.g. Collect a yes or no answer only)",
+    defaultInstruction: "Collect a yes or no answer only",
+  },
+  rating: {
+    placeholder:
+      "Optional instruction for this question (e.g. Collect a rating from 1 to 5)",
+    defaultInstruction: "Collect a rating from 1 to 5",
+  },
+  number: {
+    placeholder:
+      "Optional instruction for this question (e.g. Collect a whole number only)",
+    defaultInstruction: "Collect a whole number only",
+  },
+  multi: {
+    placeholder:
+      "Optional instruction for this question (e.g. Collect one of the listed options)",
+    defaultInstruction: "Collect one of the listed options",
+  },
+};
+
+export function getSurveyQuestionTypeHint(type: string) {
+  return SURVEY_QUESTION_TYPE_HINTS[type] ?? SURVEY_QUESTION_TYPE_HINTS.text;
+}
+
+export function instructionAfterTypeChange(
+  current: string,
+  nextType: string
+): string {
+  const trimmed = current.trim();
+  const isKnownDefault = Object.values(SURVEY_QUESTION_TYPE_HINTS).some(
+    (hint) => hint.defaultInstruction && hint.defaultInstruction === trimmed
+  );
+  if (!trimmed || isKnownDefault) {
+    return getSurveyQuestionTypeHint(nextType).defaultInstruction;
+  }
+  return current;
+}
+
 export function getSurveyQuestionTypeLabel(type: string): string {
   if (type === "multiple_choice") return "Multiple Choice";
   if (type === "numeric" || type === "integer" || type === "int") return "Number";
+  if (
+    type === "description" ||
+    type === "long_text" ||
+    type === "longtext" ||
+    type === "paragraph" ||
+    type === "desc"
+  ) {
+    return "Long";
+  }
   return (
     SURVEY_QUESTION_TYPES.find((t) => t.value === type)?.label ?? type
   );

@@ -586,16 +586,18 @@ export function SurveyDetailView({ survey }: { survey: Survey }) {
                 <DetailField label="Status">
                   {isSurveyScheduled(currentSurvey) ? "Scheduled" : "Not scheduled"}
                 </DetailField>
-                <DetailField label="Recurrence">
-                  {getSurveySchedule(currentSurvey).recurrence}
+                <DetailField label="Timing limit">
+                  {`${getSurveySchedule(currentSurvey).callWindowStart || "09:00"} – ${getSurveySchedule(currentSurvey).callWindowEnd || "18:00"}`}
                 </DetailField>
                 <DetailField label="Start">
                   {getSurveySchedule(currentSurvey).startAt
                     ? formatSurveyCreatedAt(getSurveySchedule(currentSurvey).startAt!)
                     : "—"}
                 </DetailField>
-                <DetailField label="Timezone">
-                  {getSurveySchedule(currentSurvey).timezone || "—"}
+                <DetailField label="End">
+                  {getSurveySchedule(currentSurvey).endAt
+                    ? formatSurveyCreatedAt(getSurveySchedule(currentSurvey).endAt!)
+                    : "—"}
                 </DetailField>
               </div>
             </StepSection>

@@ -11,8 +11,8 @@ export const DEFAULT_SURVEY_SCHEDULE: SurveySchedule = {
   enabled: false,
   startAt: null,
   endAt: null,
-  timezone: "Asia/Kolkata",
-  recurrence: "once",
+  callWindowStart: "09:00",
+  callWindowEnd: "18:00",
   lastScheduledAt: null,
 };
 

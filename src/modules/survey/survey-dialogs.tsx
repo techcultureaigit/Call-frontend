@@ -13,10 +13,9 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
-import type { AgentSchedule as SurveySchedule, AgentScheduleRecurrence as SurveyScheduleRecurrence, Agent as Survey } from "@/types/agent";
+import type { AgentSchedule as SurveySchedule, Agent as Survey } from "@/types/agent";
 import { CalendarClock, CalendarX, AlertTriangle, Ban, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
 
@@ -86,26 +85,15 @@ export function SurveyStatusBadge({
 }
 
 
-const RECURRENCE_OPTIONS = [
-  { label: "Once", value: "once" },
-  { label: "Daily", value: "daily" },
-  { label: "Weekly", value: "weekly" },
-  { label: "Monthly", value: "monthly" },
-];
-
-const TIMEZONE_OPTIONS = [
-  { label: "Asia/Kolkata (IST)", value: "Asia/Kolkata" },
-  { label: "UTC", value: "UTC" },
-  { label: "America/New_York (ET)", value: "America/New_York" },
-  { label: "Europe/London (GMT)", value: "Europe/London" },
-];
+const CALL_WINDOW_MIN = "09:00";
+const CALL_WINDOW_MAX = "18:00";
 
 export interface ScheduleFormValues {
   enabled: boolean;
   startAt: string;
   endAt: string;
-  timezone: string;
-  recurrence: SurveyScheduleRecurrence;
+  callWindowStart: string;
+  callWindowEnd: string;
 }
 
 function toLocalInputValue(iso: string | null | undefined): string {
@@ -123,13 +111,55 @@ function defaultStartLocal(): string {
   return toLocalInputValue(d.toISOString());
 }
 
+function timeToMinutes(value: string): number | null {
+  const match = /^([01]\d|2[0-3]):([0-5]\d)$/.exec(String(value || "").trim());
+  if (!match) return null;
+  return Number(match[1]) * 60 + Number(match[2]);
+}
+
+function normalizeCallWindow(start: string, end: string): {
+  callWindowStart: string;
+  callWindowEnd: string;
+  error?: string;
+} {
+  const callWindowStart = String(start || "").trim() || CALL_WINDOW_MIN;
+  const callWindowEnd = String(end || "").trim() || CALL_WINDOW_MAX;
+  const startMins = timeToMinutes(callWindowStart);
+  const endMins = timeToMinutes(callWindowEnd);
+  const minMins = timeToMinutes(CALL_WINDOW_MIN)!;
+  const maxMins = timeToMinutes(CALL_WINDOW_MAX)!;
+
+  if (startMins == null || endMins == null) {
+    return {
+      callWindowStart,
+      callWindowEnd,
+      error: "Timing limit must use HH:mm (e.g. 09:00)",
+    };
+  }
+  if (startMins < minMins || endMins > maxMins) {
+    return {
+      callWindowStart,
+      callWindowEnd,
+      error: "Timing limit must stay between 09:00 and 18:00",
+    };
+  }
+  if (startMins >= endMins) {
+    return {
+      callWindowStart,
+      callWindowEnd,
+      error: "Timing limit start must be before end",
+    };
+  }
+  return { callWindowStart, callWindowEnd };
+}
+
 export function createEmptyScheduleForm(): ScheduleFormValues {
   return {
     enabled: false,
     startAt: defaultStartLocal(),
     endAt: "",
-    timezone: "Asia/Kolkata",
-    recurrence: "once",
+    callWindowStart: CALL_WINDOW_MIN,
+    callWindowEnd: CALL_WINDOW_MAX,
   };
 }
 
@@ -143,8 +173,8 @@ export function scheduleToFormValues(
     enabled: hasStart ? Boolean(s.enabled) : false,
     startAt: toLocalInputValue(s.startAt) || defaultStartLocal(),
     endAt: toLocalInputValue(s.endAt),
-    timezone: s.timezone || "Asia/Kolkata",
-    recurrence: s.recurrence || "once",
+    callWindowStart: s.callWindowStart || CALL_WINDOW_MIN,
+    callWindowEnd: s.callWindowEnd || CALL_WINDOW_MAX,
   };
 }
 
@@ -153,7 +183,16 @@ export function parseScheduleForm(
   values: ScheduleFormValues
 ):
   | { ok: true; payload: { enabled: false } }
-  | { ok: true; payload: { enabled: true; startAt: string; endAt: string | null; timezone: string; recurrence: SurveyScheduleRecurrence } }
+  | {
+      ok: true;
+      payload: {
+        enabled: true;
+        startAt: string;
+        endAt: string | null;
+        callWindowStart: string;
+        callWindowEnd: string;
+      };
+    }
   | { ok: false; error: string }
 {
   if (!values.enabled) return { ok: true, payload: { enabled: false } };
@@ -179,14 +218,22 @@ export function parseScheduleForm(
     endIso = endDate.toISOString();
   }
 
+  const window = normalizeCallWindow(
+    values.callWindowStart,
+    values.callWindowEnd
+  );
+  if (window.error) {
+    return { ok: false, error: window.error };
+  }
+
   return {
     ok: true,
     payload: {
       enabled: true,
       startAt: startDate.toISOString(),
       endAt: endIso,
-      timezone: values.timezone || "Asia/Kolkata",
-      recurrence: values.recurrence || "once",
+      callWindowStart: window.callWindowStart,
+      callWindowEnd: window.callWindowEnd,
     },
   };
 }
@@ -288,34 +335,47 @@ export function SurveyScheduleFields({
             />
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div className="space-y-2">
-              <Label htmlFor="inline-schedule-recurrence">Recurrence</Label>
-              <Select
-                id="inline-schedule-recurrence"
-                options={RECURRENCE_OPTIONS}
-                value={values.recurrence}
-                onChange={(e) =>
-                  update("recurrence", e.target.value as SurveyScheduleRecurrence)
-                }
-                disabled={readOnly}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="inline-schedule-timezone">Timezone</Label>
-              <Select
-                id="inline-schedule-timezone"
-                options={TIMEZONE_OPTIONS}
-                value={values.timezone}
-                onChange={(e) => update("timezone", e.target.value)}
-                disabled={readOnly}
-              />
+          <div className="space-y-2">
+            <Label>Timing limit (call window)</Label>
+            <p className="text-[11px] text-muted-foreground">
+              Calls run only between these times. Default 09:00–18:00; customize
+              within that range.
+            </p>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="inline-schedule-window-start">From</Label>
+                <Input
+                  id="inline-schedule-window-start"
+                  type="time"
+                  min={CALL_WINDOW_MIN}
+                  max={CALL_WINDOW_MAX}
+                  step={60}
+                  value={values.callWindowStart}
+                  onChange={(e) => update("callWindowStart", e.target.value)}
+                  className="rounded-[6px]"
+                  disabled={readOnly}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="inline-schedule-window-end">To</Label>
+                <Input
+                  id="inline-schedule-window-end"
+                  type="time"
+                  min={CALL_WINDOW_MIN}
+                  max={CALL_WINDOW_MAX}
+                  step={60}
+                  value={values.callWindowEnd}
+                  onChange={(e) => update("callWindowEnd", e.target.value)}
+                  className="rounded-[6px]"
+                  disabled={readOnly}
+                />
+              </div>
             </div>
           </div>
         </div>
       ) : (
         <p className="text-xs text-muted-foreground">
-          Turn on to set start time, recurrence, and timezone.
+          Turn on to set start time and daily timing limit (default 9 AM–6 PM).
         </p>
       )}
     </div>
@@ -325,8 +385,8 @@ export function SurveyScheduleFields({
 export interface ScheduleSurveyPayload {
   startAt: string;
   endAt: string | null;
-  timezone: string;
-  recurrence: SurveyScheduleRecurrence;
+  callWindowStart: string;
+  callWindowEnd: string;
 }
 
 interface ScheduleSurveyDialogProps {
@@ -349,9 +409,8 @@ export function ScheduleSurveyDialog({
 }: ScheduleSurveyDialogProps) {
   const [startAt, setStartAt] = useState(defaultStartLocal);
   const [endAt, setEndAt] = useState("");
-  const [timezone, setTimezone] = useState("Asia/Kolkata");
-  const [recurrence, setRecurrence] =
-    useState<SurveyScheduleRecurrence>("once");
+  const [callWindowStart, setCallWindowStart] = useState(CALL_WINDOW_MIN);
+  const [callWindowEnd, setCallWindowEnd] = useState(CALL_WINDOW_MAX);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState("");
 
@@ -360,8 +419,8 @@ export function ScheduleSurveyDialog({
     const schedule = getSurveySchedule(survey);
     setStartAt(toLocalInputValue(schedule.startAt) || defaultStartLocal());
     setEndAt(toLocalInputValue(schedule.endAt));
-    setTimezone(schedule.timezone || "Asia/Kolkata");
-    setRecurrence(schedule.recurrence || "once");
+    setCallWindowStart(schedule.callWindowStart || CALL_WINDOW_MIN);
+    setCallWindowEnd(schedule.callWindowEnd || CALL_WINDOW_MAX);
     setError("");
     setIsSaving(false);
   }, [open, survey]);
@@ -394,14 +453,20 @@ export function ScheduleSurveyDialog({
       endIso = endDate.toISOString();
     }
 
+    const window = normalizeCallWindow(callWindowStart, callWindowEnd);
+    if (window.error) {
+      setError(window.error);
+      return;
+    }
+
     setError("");
     setIsSaving(true);
     try {
       await onConfirm({
         startAt: startDate.toISOString(),
         endAt: endIso,
-        timezone,
-        recurrence,
+        callWindowStart: window.callWindowStart,
+        callWindowEnd: window.callWindowEnd,
       });
     } finally {
       setIsSaving(false);
@@ -446,26 +511,38 @@ export function ScheduleSurveyDialog({
             />
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div className="space-y-2">
-              <Label htmlFor="schedule-recurrence">Recurrence</Label>
-              <Select
-                id="schedule-recurrence"
-                options={RECURRENCE_OPTIONS}
-                value={recurrence}
-                onChange={(e) =>
-                  setRecurrence(e.target.value as SurveyScheduleRecurrence)
-                }
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="schedule-timezone">Timezone</Label>
-              <Select
-                id="schedule-timezone"
-                options={TIMEZONE_OPTIONS}
-                value={timezone}
-                onChange={(e) => setTimezone(e.target.value)}
-              />
+          <div className="space-y-2">
+            <Label>Timing limit (call window)</Label>
+            <p className="text-[11px] text-muted-foreground">
+              Default 09:00–18:00. Customize only within that range.
+            </p>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="schedule-window-start">From</Label>
+                <Input
+                  id="schedule-window-start"
+                  type="time"
+                  min={CALL_WINDOW_MIN}
+                  max={CALL_WINDOW_MAX}
+                  step={60}
+                  value={callWindowStart}
+                  onChange={(e) => setCallWindowStart(e.target.value)}
+                  className="rounded-[6px]"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="schedule-window-end">To</Label>
+                <Input
+                  id="schedule-window-end"
+                  type="time"
+                  min={CALL_WINDOW_MIN}
+                  max={CALL_WINDOW_MAX}
+                  step={60}
+                  value={callWindowEnd}
+                  onChange={(e) => setCallWindowEnd(e.target.value)}
+                  className="rounded-[6px]"
+                />
+              </div>
             </div>
           </div>
 

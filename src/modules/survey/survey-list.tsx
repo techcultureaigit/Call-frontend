@@ -328,6 +328,7 @@ export function SurveysTable({
       emptyDescription="Create a survey or adjust your filters."
       minWidthClassName="min-w-245"
       isRowSelected={(survey) => selectedIds.has(survey.id)}
+      fillHeight
     />
   );
 }
@@ -618,10 +619,13 @@ export function SurveyListView() {
     Boolean(search.trim()) || language !== "all" || status !== "all";
 
   return (
-    <div className="bg-linear-to-b from-brand/5 to-transparent">
-      <PageContainer size="full">
-        <div className="space-y-6">
-          <div className="flex items-start justify-between gap-4">
+    <div className="flex h-[calc(100svh-3.5rem)] min-h-0 min-w-0 flex-col overflow-hidden bg-linear-to-b from-brand/5 to-transparent">
+      <PageContainer
+        size="full"
+        className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden"
+      >
+        <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-4 overflow-hidden">
+          <div className="flex shrink-0 items-start justify-between gap-4">
             <div>
               <h1 className="font-display text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
                 My Surveys
@@ -727,10 +731,7 @@ export function SurveyListView() {
             }
             meta={meta}
             itemLabel="surveys"
-            onPageChange={(nextPage) => {
-              setPage(nextPage);
-              document.querySelector("main")?.scrollTo({ top: 0, behavior: "smooth" });
-            }}
+            onPageChange={setPage}
           >
           {showLoader ? (
             <AppLoader

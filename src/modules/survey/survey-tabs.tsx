@@ -25,7 +25,7 @@ import { SearchableSelect } from "@/components/ui/searchable-select";
 import { Select } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { DEFAULT_FAREWELL, AGENT_LANGUAGES as SURVEY_LANGUAGES, getVoiceSpeedLabel, DEFAULT_VOICE_SPEED, DEFAULT_NOISE_TYPE, DEFAULT_NOISE_VOLUME, NOISE_TYPE_OPTIONS, getNoisePreviewUrl, SURVEY_QUESTION_TYPES } from "@/lib/constants/agent-config";
+import { DEFAULT_FAREWELL, AGENT_LANGUAGES as SURVEY_LANGUAGES, getVoiceSpeedLabel, DEFAULT_VOICE_SPEED, DEFAULT_NOISE_TYPE, DEFAULT_NOISE_VOLUME, NOISE_TYPE_OPTIONS, getNoisePreviewUrl, SURVEY_QUESTION_TYPES, getSurveyQuestionTypeHint, instructionAfterTypeChange } from "@/lib/constants/agent-config";
 import { listProviders } from "@/modules/providers/api";
 import {
   modelNameById,
@@ -46,11 +46,26 @@ import {
 import type { ClientContactRow } from "./survey-contacts";
 import { getContactFileOpenUrl } from "@/lib/utils/contact-file-url";
 import type { AgentPromptsConfig as SurveyPromptsConfig, AgentPersonaConfig as SurveyPersonaConfig, AgentStackConfig as SurveyStackConfig, AgentSurveyQuestion as SurveyQuestion, AgentSurveyQuestionOption as SurveyQuestionOption, AgentSurveyQuestionsConfig as SurveyQuestionsConfig, AgentClientContactConfig as SurveyClientContactConfig } from "@/types/agent";
-import { Users, Sparkles, History, BrainCircuit, ChevronDown, ChevronLeft, ChevronRight, HelpCircle, Mic, Pause, Phone, Play, Volume2, Download, ExternalLink, Plus, Trash2, Upload, X } from "lucide-react";
+import { Users, Sparkles, History, BrainCircuit, ChevronDown, ChevronLeft, ChevronRight, GripVertical, HelpCircle, Mic, Pause, Phone, Play, Volume2, Download, ExternalLink, Plus, Trash2, Upload, X } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { useEffect, useMemo, useState, useRef } from "react";
 import type { ReactNode } from "react";
 import { toast } from "sonner";
+import {
+  DndContext,
+  PointerSensor,
+  closestCenter,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  SortableContext,
+  arrayMove,
+  horizontalListSortingStrategy,
+  useSortable,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 
 interface ClientContactsPreviewProps {
   /** File URL — used to fetch rows dynamically */
@@ -1053,6 +1068,7 @@ interface SurveyQuestionsTabProps {
   surveyId?: string;
   values: SurveyQuestionsConfig;
   onChange: (values: SurveyQuestionsConfig) => void;
+  onPersist?: (values: SurveyQuestionsConfig) => void;
   showRequiredError?: boolean;
 }
 
@@ -1152,6 +1168,7 @@ const SKIP_DISPLAY_KEYS = new Set([
 ]);
 
 type ThenShowDraft = {
+  id: string;
   type: string;
   question: string;
   instruction: string;
@@ -1159,21 +1176,35 @@ type ThenShowDraft = {
 };
 
 type QuestionConditionRow = {
+  id: string;
   ifAnswer: string;
   thenShowQuestions: ThenShowDraft[];
 };
 
-const EMPTY_THEN_SHOW: ThenShowDraft = {
+function createSurveyQuestionId() {
+  return `sq-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+}
+
+function createConditionId() {
+  return `cond-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+}
+
+const EMPTY_THEN_SHOW_BASE = {
   type: "text",
   question: "",
   instruction: "",
   optionsPipe: "",
 };
 
+function createEmptyThenShow(): ThenShowDraft {
+  return { ...EMPTY_THEN_SHOW_BASE, id: createSurveyQuestionId() };
+}
+
 function createEmptyCondition(): QuestionConditionRow {
   return {
+    id: createConditionId(),
     ifAnswer: "",
-    thenShowQuestions: [{ ...EMPTY_THEN_SHOW }],
+    thenShowQuestions: [createEmptyThenShow()],
   };
 }
 
@@ -1189,14 +1220,18 @@ function optionsToPipe(options: SurveyQuestionOption[] | undefined): string {
 
 function readThenShowDrafts(row: Record<string, unknown>): ThenShowDraft[] {
   if (Array.isArray(row.thenShowQuestions) && row.thenShowQuestions.length > 0) {
-    return row.thenShowQuestions.map((item) => {
+    return row.thenShowQuestions.map((item, index) => {
       const q = (item || {}) as {
+        id?: string;
         type?: string;
         question?: string;
         instruction?: string;
         options?: SurveyQuestionOption[];
       };
       return {
+        id:
+          String(q.id || "").trim() ||
+          `sq-${Date.now()}-${index}-${Math.random().toString(36).slice(2, 7)}`,
         type: String(q.type || "text").trim() || "text",
         question: String(q.question || "").trim(),
         instruction: String(q.instruction || "").trim(),
@@ -1208,10 +1243,11 @@ function readThenShowDrafts(row: Record<string, unknown>): ThenShowDraft[] {
   const legacyQuestion = String(
     row.thenShowQuestion || row.thenShowQuestionId || ""
   ).trim();
-  if (!legacyQuestion) return [{ ...EMPTY_THEN_SHOW }];
+  if (!legacyQuestion) return [createEmptyThenShow()];
 
   return [
     {
+      id: createSurveyQuestionId(),
       type: String(row.thenShowType || "text").trim() || "text",
       question: legacyQuestion,
       instruction: String(row.thenShowInstruction || "").trim(),
@@ -1224,7 +1260,10 @@ function readThenShowDrafts(row: Record<string, unknown>): ThenShowDraft[] {
 
 function readConditions(q: SurveyQuestion): QuestionConditionRow[] {
   if (!Array.isArray(q.conditions)) return [];
-  return q.conditions.map((row) => ({
+  return q.conditions.map((row, index) => ({
+    id:
+      String((row as { id?: string })?.id || "").trim() ||
+      `cond-${Date.now()}-${index}-${Math.random().toString(36).slice(2, 7)}`,
     ifAnswer: String(row?.ifAnswer || "").trim(),
     thenShowQuestions: readThenShowDrafts(
       row as unknown as Record<string, unknown>
@@ -1234,6 +1273,7 @@ function readConditions(q: SurveyQuestion): QuestionConditionRow[] {
 
 function toDraftThenShow(draft: ThenShowDraft) {
   const base = {
+    id: String(draft.id || "").trim() || createSurveyQuestionId(),
     type: draft.type || "text",
     question: draft.question,
     instruction: draft.instruction,
@@ -1252,15 +1292,16 @@ function toDraftThenShow(draft: ThenShowDraft) {
       }),
     };
   }
-  return base;
+  return { ...base, options: [] as SurveyQuestionOption[] };
 }
 
 function toDraftCondition(row: QuestionConditionRow) {
   return {
+    id: String(row.id || "").trim() || createConditionId(),
     ifAnswer: row.ifAnswer,
     thenShowQuestions: (row.thenShowQuestions.length
       ? row.thenShowQuestions
-      : [{ ...EMPTY_THEN_SHOW }]
+      : [createEmptyThenShow()]
     ).map(toDraftThenShow),
   };
 }
@@ -1275,12 +1316,13 @@ function toSavedCondition(row: QuestionConditionRow) {
       if (!question) return null;
       const type = draft.type || "text";
       const instruction = draft.instruction.trim();
+      const id = String(draft.id || "").trim() || createSurveyQuestionId();
       if (type === "multi") {
         const options = parseOptionsPipe(draft.optionsPipe);
         if (options.length < 2) return null;
-        return { type, question, instruction, options };
+        return { id, type, question, instruction, options };
       }
-      return { type, question, instruction };
+      return { id, type, question, instruction, options: [] as SurveyQuestionOption[] };
     })
     .filter((item): item is NonNullable<typeof item> => item !== null);
 
@@ -1293,11 +1335,17 @@ function ConditionsEditor({
   onEnabledChange,
   conditions,
   onConditionsChange,
+  parentQuestionId,
+  allQuestions,
+  onPersistCurrent,
 }: {
   enabled: boolean;
   onEnabledChange: (enabled: boolean) => void;
   conditions: QuestionConditionRow[];
   onConditionsChange: (next: QuestionConditionRow[]) => void;
+  parentQuestionId: string;
+  allQuestions: SurveyQuestion[];
+  onPersistCurrent?: () => void;
 }) {
   const rows = conditions.length > 0 ? conditions : [{ ...createEmptyCondition() }];
   const [activeIndex, setActiveIndex] = useState(0);
@@ -1307,13 +1355,38 @@ function ConditionsEditor({
   const thenShows =
     row.thenShowQuestions.length > 0
       ? row.thenShowQuestions
-      : [{ ...EMPTY_THEN_SHOW }];
+      : [createEmptyThenShow()];
   const safeThenIndex = Math.min(
     activeThenIndex,
     Math.max(0, thenShows.length - 1)
   );
-  const thenShow = thenShows[safeThenIndex] ?? EMPTY_THEN_SHOW;
+  const thenShow = thenShows[safeThenIndex] ?? createEmptyThenShow();
   const isMultiFollowUp = thenShow.type === "multi";
+  const thenTypeHint = getSurveyQuestionTypeHint(thenShow.type || "text");
+  const nestedDuplicate = isDuplicateQuestionText(
+    thenShow.question,
+    allQuestions,
+    {
+      kind: "nested",
+      parentId: parentQuestionId,
+      condIndex: safeIndex,
+      thenIndex: safeThenIndex,
+    }
+  );
+  const thenShowIds = useMemo(
+    () => thenShows.map((item, index) => item.id || `then-${index}`),
+    [thenShows]
+  );
+  const conditionIds = useMemo(
+    () => rows.map((item, index) => item.id || `cond-${index}`),
+    [rows]
+  );
+  const thenSensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } })
+  );
+  const conditionSensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } })
+  );
 
   useEffect(() => {
     if (activeIndex > rows.length - 1) {
@@ -1340,6 +1413,30 @@ function ConditionsEditor({
     setRow({ thenShowQuestions: nextThen });
   };
 
+  const reorderThenShows = (event: DragEndEvent) => {
+    const activeId = String(event.active.id);
+    const overId = event.over ? String(event.over.id) : "";
+    if (!overId || activeId === overId) return;
+    const oldIndex = thenShowIds.indexOf(activeId);
+    const newIndex = thenShowIds.indexOf(overId);
+    if (oldIndex < 0 || newIndex < 0) return;
+    const nextThen = arrayMove(thenShows, oldIndex, newIndex);
+    setRow({ thenShowQuestions: nextThen });
+    setActiveThenIndex(newIndex);
+  };
+
+  const reorderConditions = (event: DragEndEvent) => {
+    const activeId = String(event.active.id);
+    const overId = event.over ? String(event.over.id) : "";
+    if (!overId || activeId === overId) return;
+    const oldIndex = conditionIds.indexOf(activeId);
+    const newIndex = conditionIds.indexOf(overId);
+    if (oldIndex < 0 || newIndex < 0) return;
+    onConditionsChange(arrayMove(rows, oldIndex, newIndex));
+    setActiveIndex(newIndex);
+    setActiveThenIndex(0);
+  };
+
   return (
     <div className="space-y-3 rounded-[8px] border border-border/50 bg-card/70 px-3 py-3">
       <div className="flex items-center justify-between gap-3">
@@ -1352,33 +1449,38 @@ function ConditionsEditor({
       {enabled ? (
         <>
           <div className="flex flex-wrap items-center gap-2">
-            {rows.map((item, index) => {
-              const label =
-                item.ifAnswer.trim() || `Condition ${index + 1}`;
-              return (
-                <button
-                  key={`cond-tab-${index}`}
-                  type="button"
-                  onClick={() => {
-                    setActiveIndex(index);
-                    setActiveThenIndex(0);
-                  }}
-                  className={cn(
-                    "inline-flex max-w-[10rem] items-center truncate rounded-full border px-3 py-1 text-xs font-medium transition-colors",
-                    index === safeIndex
-                      ? "border-primary bg-primary/10 text-primary"
-                      : "border-border/60 bg-background text-muted-foreground hover:bg-muted/50"
-                  )}
-                  title={label}
-                >
-                  {label}
-                </button>
-              );
-            })}
+            <DndContext
+              sensors={conditionSensors}
+              collisionDetection={closestCenter}
+              onDragEnd={reorderConditions}
+            >
+              <SortableContext
+                items={conditionIds}
+                strategy={horizontalListSortingStrategy}
+              >
+                {rows.map((item, index) => {
+                  const label =
+                    item.ifAnswer.trim() || `Condition ${index + 1}`;
+                  return (
+                    <SortableQuestionTab
+                      key={item.id || `cond-${index}`}
+                      id={item.id || `cond-${index}`}
+                      index={index}
+                      label={label}
+                      active={index === safeIndex}
+                      onSelect={() => {
+                        setActiveIndex(index);
+                        setActiveThenIndex(0);
+                      }}
+                    />
+                  );
+                })}
+              </SortableContext>
+            </DndContext>
             <button
               type="button"
               onClick={() => {
-                onConditionsChange([...rows, { ...createEmptyCondition(), thenShowQuestions: [{ ...EMPTY_THEN_SHOW }] }]);
+                onConditionsChange([...rows, createEmptyCondition()]);
                 setActiveIndex(rows.length);
                 setActiveThenIndex(0);
               }}
@@ -1426,33 +1528,38 @@ function ConditionsEditor({
             </div>
 
             <div className="flex flex-wrap items-center gap-2">
-              {thenShows.map((item, index) => {
-                const label =
-                  item.question.trim() || `Question ${index + 1}`;
-                return (
-                  <button
-                    key={`then-tab-${index}`}
-                    type="button"
-                    onClick={() => setActiveThenIndex(index)}
-                    className={cn(
-                      "inline-flex max-w-[10rem] items-center truncate rounded-full border px-3 py-1 text-xs font-medium transition-colors",
-                      index === safeThenIndex
-                        ? "border-primary bg-primary/10 text-primary"
-                        : "border-border/60 bg-background text-muted-foreground hover:bg-muted/50"
-                    )}
-                    title={label}
-                  >
-                    {index + 1}. {label}
-                  </button>
-                );
-              })}
+              <DndContext
+                sensors={thenSensors}
+                collisionDetection={closestCenter}
+                onDragEnd={reorderThenShows}
+              >
+                <SortableContext
+                  items={thenShowIds}
+                  strategy={horizontalListSortingStrategy}
+                >
+                  {thenShows.map((item, index) => {
+                    const label =
+                      item.question.trim() || `Question ${index + 1}`;
+                    return (
+                      <SortableQuestionTab
+                        key={item.id || `then-${index}`}
+                        id={item.id || `then-${index}`}
+                        index={index}
+                        label={label}
+                        active={index === safeThenIndex}
+                        onSelect={() => setActiveThenIndex(index)}
+                      />
+                    );
+                  })}
+                </SortableContext>
+              </DndContext>
               <button
                 type="button"
                 onClick={() => {
                   setRow({
                     thenShowQuestions: [
                       ...thenShows,
-                      { ...EMPTY_THEN_SHOW },
+                      createEmptyThenShow(),
                     ],
                   });
                   setActiveThenIndex(thenShows.length);
@@ -1498,6 +1605,10 @@ function ConditionsEditor({
                       const nextType = e.target.value;
                       setThenShow({
                         type: nextType,
+                        instruction: instructionAfterTypeChange(
+                          thenShow.instruction,
+                          nextType
+                        ),
                         ...(nextType !== "multi" ? { optionsPipe: "" } : {}),
                       });
                     }}
@@ -1511,8 +1622,16 @@ function ConditionsEditor({
                   <Input
                     value={thenShow.question}
                     onChange={(e) => setThenShow({ question: e.target.value })}
+                    onBlur={onPersistCurrent}
                     placeholder="e.g. How satisfied are you with our service?"
+                    aria-invalid={nestedDuplicate}
+                    className={nestedDuplicate ? "border-destructive" : undefined}
                   />
+                  {nestedDuplicate ? (
+                    <p className="text-[11px] font-medium text-destructive">
+                      This question is already used as a normal or nested question.
+                    </p>
+                  ) : null}
                 </div>
               </div>
 
@@ -1525,10 +1644,11 @@ function ConditionsEditor({
                   onChange={(e) =>
                     setThenShow({ instruction: e.target.value })
                   }
+                  onBlur={onPersistCurrent}
                   rows={2}
                   maxLength={500}
                   className="w-full rounded-[6px] border border-input bg-transparent px-3 py-2 text-sm shadow-subtle focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                  placeholder="Optional instruction for this question (e.g. Collect a whole number only)"
+                  placeholder={thenTypeHint.placeholder}
                 />
               </div>
 
@@ -1553,15 +1673,145 @@ function getQuestionInstruction(q: SurveyQuestion): string {
   return "";
 }
 
+function normalizeQuestionKey(text: string): string {
+  return text.trim().toLowerCase().replace(/\s+/g, " ");
+}
+
+type QuestionSkip =
+  | { kind: "normal"; id: string }
+  | {
+      kind: "nested";
+      parentId: string;
+      condIndex: number;
+      thenIndex: number;
+    };
+
+function collectUsedQuestionKeys(
+  questions: SurveyQuestion[],
+  skip?: QuestionSkip
+): Set<string> {
+  const keys = new Set<string>();
+  questions.forEach((q) => {
+    const skipNormal = skip?.kind === "normal" && skip.id === q.id;
+    const mainText = String(q.question || "").trim();
+    if (!skipNormal && mainText) keys.add(normalizeQuestionKey(mainText));
+
+    (Array.isArray(q.conditions) ? q.conditions : []).forEach((row, condIndex) => {
+      (Array.isArray(row.thenShowQuestions) ? row.thenShowQuestions : []).forEach(
+        (item, thenIndex) => {
+          const skipNested =
+            skip?.kind === "nested" &&
+            skip.parentId === q.id &&
+            skip.condIndex === condIndex &&
+            skip.thenIndex === thenIndex;
+          const nestedText = String(item?.question || "").trim();
+          if (!skipNested && nestedText) {
+            keys.add(normalizeQuestionKey(nestedText));
+          }
+        }
+      );
+    });
+  });
+  return keys;
+}
+
+function isDuplicateQuestionText(
+  text: string,
+  questions: SurveyQuestion[],
+  skip?: QuestionSkip
+): boolean {
+  const key = normalizeQuestionKey(text);
+  if (!key) return false;
+  return collectUsedQuestionKeys(questions, skip).has(key);
+}
+
+export function findDuplicateQuestionText(
+  questions: SurveyQuestion[]
+): string | null {
+  const seen = new Set<string>();
+  const visit = (raw: string) => {
+    const text = raw.trim();
+    const key = normalizeQuestionKey(text);
+    if (!key) return null;
+    if (seen.has(key)) return text;
+    seen.add(key);
+    return null;
+  };
+
+  for (const q of questions) {
+    const dup = visit(String(q.question || ""));
+    if (dup) return dup;
+    for (const row of Array.isArray(q.conditions) ? q.conditions : []) {
+      for (const item of Array.isArray(row.thenShowQuestions)
+        ? row.thenShowQuestions
+        : []) {
+        const nestedDup = visit(String(item?.question || ""));
+        if (nestedDup) return nestedDup;
+      }
+    }
+  }
+  return null;
+}
+
 const TYPE_OPTIONS = SURVEY_QUESTION_TYPES.map((t) => ({
   label: t.label,
   value: t.value,
 }));
 
+function SortableQuestionTab({
+  id,
+  index,
+  label,
+  active,
+  onSelect,
+}: {
+  id: string;
+  index: number;
+  label: string;
+  active: boolean;
+  onSelect: () => void;
+}) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id });
+
+  return (
+    <button
+      ref={setNodeRef}
+      type="button"
+      style={{
+        transform: CSS.Transform.toString(transform),
+        transition,
+      }}
+      onClick={onSelect}
+      className={cn(
+        "inline-flex shrink-0 max-w-[12rem] items-center gap-1.5 truncate rounded-full border px-2.5 py-1.5 text-xs font-medium transition-colors",
+        active
+          ? "border-primary bg-primary/10 text-primary"
+          : "border-border/60 bg-background text-muted-foreground hover:bg-muted/50",
+        isDragging && "z-10 cursor-grabbing opacity-80 shadow-elevated"
+      )}
+      title={`${label} — drag to reorder`}
+      {...attributes}
+      {...listeners}
+    >
+      <GripVertical className="size-3 shrink-0 opacity-70" />
+      <span className="font-semibold">{index + 1}</span>
+      <span className="truncate">{label}</span>
+    </button>
+  );
+}
+
 export function SurveyQuestionsTab({
   surveyId,
   values,
   onChange,
+  onPersist,
   showRequiredError = false,
 }: SurveyQuestionsTabProps) {
   const fileRef = useRef<HTMLInputElement>(null);
@@ -1577,6 +1827,13 @@ export function SurveyQuestionsTab({
   );
   const canGoPrevQuestion = safeQuestionIndex > 0;
   const canGoNextQuestion = safeQuestionIndex < questionCount - 1;
+  const questionIds = useMemo(
+    () => values.questions.map((item, index) => item.id || `q-${index}`),
+    [values.questions]
+  );
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } })
+  );
 
   useEffect(() => {
     if (activeQuestionIndex > questionCount - 1) {
@@ -1584,23 +1841,39 @@ export function SurveyQuestionsTab({
     }
   }, [activeQuestionIndex, questionCount]);
 
-  const updateQuestions = (questions: SurveyQuestion[]) => {
-    onChange({
+  const updateQuestions = (
+    questions: SurveyQuestion[],
+    persist = false
+  ) => {
+    const next = {
       ...values,
       questionsFileUrl: "",
       questionsFileName: "",
       questions,
-    });
+    };
+    onChange(next);
+    if (persist) onPersist?.(next);
+  };
+
+  const persistCurrent = () => {
+    onPersist?.(values);
   };
 
   const goToPrevQuestion = () => {
+    persistCurrent();
     setActiveQuestionIndex(Math.max(0, safeQuestionIndex - 1));
   };
 
   const goToNextQuestion = () => {
+    persistCurrent();
     setActiveQuestionIndex(
       Math.min(questionCount - 1, safeQuestionIndex + 1)
     );
+  };
+
+  const selectQuestion = (index: number) => {
+    if (index !== safeQuestionIndex) persistCurrent();
+    setActiveQuestionIndex(index);
   };
 
   const addQuestion = () => {
@@ -1615,8 +1888,20 @@ export function SurveyQuestionsTab({
         conditions: [],
       },
     ];
-    updateQuestions(nextQuestions);
+    updateQuestions(nextQuestions, true);
     setActiveQuestionIndex(nextQuestions.length - 1);
+  };
+
+  const reorderQuestions = (event: DragEndEvent) => {
+    const activeId = String(event.active.id);
+    const overId = event.over ? String(event.over.id) : "";
+    if (!overId || activeId === overId) return;
+    const oldIndex = questionIds.indexOf(activeId);
+    const newIndex = questionIds.indexOf(overId);
+    if (oldIndex < 0 || newIndex < 0) return;
+    const nextQuestions = arrayMove(values.questions, oldIndex, newIndex);
+    updateQuestions(nextQuestions, true);
+    setActiveQuestionIndex(newIndex);
   };
 
   const handleUpload = async (file: File) => {
@@ -1648,12 +1933,14 @@ export function SurveyQuestionsTab({
         file
       );
       const sq = uploaded.config.surveyQuestions;
-      onChange({
+      const nextValues = {
         enabled: sq.enabled,
         questionsFileUrl: sq.questionsFileUrl || "",
         questionsFileName: sq.questionsFileName || file.name,
         questions: sq.questions?.length ? sq.questions : validated.questions,
-      });
+      };
+      onChange(nextValues);
+      onPersist?.(nextValues);
       setFormatErrors([]);
       toast.success(`Uploaded ${validated.questions.length} question(s)`);
     } catch (error) {
@@ -1669,12 +1956,14 @@ export function SurveyQuestionsTab({
 
   const clearUpload = () => {
     setFormatErrors([]);
-    onChange({
+    const next = {
       ...values,
       questionsFileUrl: "",
       questionsFileName: "",
       questions: [],
-    });
+    };
+    onChange(next);
+    onPersist?.(next);
   };
 
   return (
@@ -1687,7 +1976,7 @@ export function SurveyQuestionsTab({
           <p className="mt-1 text-xs text-muted-foreground">
             Upload Excel/CSV with columns{" "}
             <span className="font-semibold text-foreground">
-              question, type, options, instruction
+              question, type, options, instruction, parent_question, if_answer
             </span>
             — or add questions manually.
           </p>
@@ -1726,16 +2015,25 @@ export function SurveyQuestionsTab({
             <span className="font-mono font-semibold text-foreground">
               instruction
             </span>
+            ,{" "}
+            <span className="font-mono font-semibold text-foreground">
+              parent_question
+            </span>
+            ,{" "}
+            <span className="font-mono font-semibold text-foreground">
+              if_answer
+            </span>
             .
           </li>
           <li>
             <span className="font-medium text-foreground">question</span> — full
-            question text in one cell.
+            question text in one cell. Every question text must be unique.
           </li>
           <li>
             <span className="font-medium text-foreground">type</span> — only one
             of:{" "}
             <span className="font-mono text-foreground">text</span>,{" "}
+            <span className="font-mono text-foreground">long</span>,{" "}
             <span className="font-mono text-foreground">yes_no</span>,{" "}
             <span className="font-mono text-foreground">rating</span>,{" "}
             <span className="font-mono text-foreground">number</span>,{" "}
@@ -1755,6 +2053,26 @@ export function SurveyQuestionsTab({
             <span className="font-medium text-foreground">instruction</span> —
             optional description / helper text for that question. Leave blank if
             none.
+          </li>
+          <li>
+            <span className="font-medium text-foreground">parent_question</span>{" "}
+            +{" "}
+            <span className="font-medium text-foreground">if_answer</span> —
+            for conditional follow-ups only. Leave both blank for a normal
+            top-level question. For a follow-up, put the exact parent question
+            text in{" "}
+            <span className="font-mono text-foreground">parent_question</span>{" "}
+            and the trigger answer in{" "}
+            <span className="font-mono text-foreground">if_answer</span>{" "}
+            (example: <span className="font-mono text-foreground">Yes</span>).
+            Same{" "}
+            <span className="font-mono text-foreground">if_answer</span> can
+            have multiple follow-up rows.
+          </li>
+          <li>
+            Do not nest a follow-up under another follow-up —{" "}
+            <span className="font-mono text-foreground">parent_question</span>{" "}
+            must be a top-level question.
           </li>
           <li>
             Do not split options into separate columns — that breaks the file
@@ -1801,7 +2119,7 @@ export function SurveyQuestionsTab({
           <span className="max-w-sm text-[11px] text-muted-foreground">
             Columns{" "}
             <span className="font-semibold">
-              question, type, options, instruction
+              question, type, options, instruction, parent_question, if_answer
             </span>{" "}
             are accepted.
           </span>
@@ -1880,43 +2198,15 @@ export function SurveyQuestionsTab({
               ? `Questions · ${safeQuestionIndex + 1} of ${questionCount}`
               : "Questions"}
           </p>
-          <div className="flex items-center gap-2">
-            {questionCount > 0 ? (
-              <>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  className="h-8"
-                  disabled={!canGoPrevQuestion}
-                  onClick={goToPrevQuestion}
-                >
-                  <ChevronLeft className="size-3.5" />
-                  Prev
-                </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  className="h-8"
-                  disabled={!canGoNextQuestion}
-                  onClick={goToNextQuestion}
-                >
-                  Next
-                  <ChevronRight className="size-3.5" />
-                </Button>
-              </>
-            ) : null}
-            <Button
-              type="button"
-              size="sm"
-              className="h-8"
-              onClick={addQuestion}
-            >
-              <Plus className="size-3.5" />
-              Add question
-            </Button>
-          </div>
+          <Button
+            type="button"
+            size="sm"
+            className="h-8"
+            onClick={addQuestion}
+          >
+            <Plus className="size-3.5" />
+            Add question
+          </Button>
         </div>
 
         {questionCount > 0 ? (
@@ -1926,31 +2216,35 @@ export function SurveyQuestionsTab({
               showRequiredError && "border-destructive/60"
             )}
           >
-            <div className="flex gap-2 overflow-x-auto pb-1">
-              {values.questions.map((item, index) => {
-                const label =
-                  (typeof item.question === "string" &&
-                    item.question.trim()) ||
-                  `Question ${index + 1}`;
-                return (
-                  <button
-                    key={item.id}
-                    type="button"
-                    onClick={() => setActiveQuestionIndex(index)}
-                    className={cn(
-                      "inline-flex shrink-0 max-w-[11rem] items-center gap-1.5 truncate rounded-full border px-3 py-1.5 text-xs font-medium transition-colors",
-                      index === safeQuestionIndex
-                        ? "border-primary bg-primary/10 text-primary"
-                        : "border-border/60 bg-background text-muted-foreground hover:bg-muted/50"
-                    )}
-                    title={label}
-                  >
-                    <span className="font-semibold">{index + 1}</span>
-                    <span className="truncate">{label}</span>
-                  </button>
-                );
-              })}
-            </div>
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              onDragEnd={reorderQuestions}
+            >
+              <SortableContext
+                items={questionIds}
+                strategy={horizontalListSortingStrategy}
+              >
+                <div className="flex gap-2 overflow-x-auto pb-1">
+                  {values.questions.map((item, index) => {
+                    const label =
+                      (typeof item.question === "string" &&
+                        item.question.trim()) ||
+                      `Question ${index + 1}`;
+                    return (
+                      <SortableQuestionTab
+                        key={item.id || questionIds[index]}
+                        id={item.id || questionIds[index]}
+                        index={index}
+                        label={label}
+                        active={index === safeQuestionIndex}
+                        onSelect={() => selectQuestion(index)}
+                      />
+                    );
+                  })}
+                </div>
+              </SortableContext>
+            </DndContext>
 
             {(() => {
               const q = values.questions[safeQuestionIndex];
@@ -1966,6 +2260,12 @@ export function SurveyQuestionsTab({
               const instruction = getQuestionInstruction(q);
               const conditions = readConditions(q);
               const logicOn = conditions.length > 0;
+              const typeHint = getSurveyQuestionTypeHint(questionTypeValue);
+              const mainDuplicate = isDuplicateQuestionText(
+                typeof q.question === "string" ? q.question : "",
+                values.questions,
+                { kind: "normal", id: q.id }
+              );
 
               const patchQuestion = (patch: Partial<SurveyQuestion>) => {
                 updateQuestions(
@@ -2010,11 +2310,16 @@ export function SurveyQuestionsTab({
                               const nextType = e.target.value;
                               patchQuestion({
                                 type: nextType,
+                                instruction: instructionAfterTypeChange(
+                                  instruction,
+                                  nextType
+                                ),
                                 ...(nextType !== "multi"
                                   ? { options: [] }
                                   : {}),
                               });
                             }}
+                            onBlur={persistCurrent}
                             options={TYPE_OPTIONS}
                           />
                         </div>
@@ -2029,8 +2334,16 @@ export function SurveyQuestionsTab({
                             onChange={(e) =>
                               patchQuestion({ question: e.target.value })
                             }
+                            onBlur={persistCurrent}
                             placeholder="e.g. How satisfied are you with our service?"
+                            aria-invalid={mainDuplicate}
+                            className={mainDuplicate ? "border-destructive" : undefined}
                           />
+                          {mainDuplicate ? (
+                            <p className="text-[11px] font-medium text-destructive">
+                              This question is already used as a nested or normal question.
+                            </p>
+                          ) : null}
                         </div>
                       </div>
 
@@ -2043,10 +2356,11 @@ export function SurveyQuestionsTab({
                           onChange={(e) =>
                             patchQuestion({ instruction: e.target.value })
                           }
+                          onBlur={persistCurrent}
                           rows={2}
                           maxLength={500}
                           className="w-full rounded-[6px] border border-input bg-transparent px-3 py-2 text-sm shadow-subtle focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                          placeholder="Optional instruction for this question (e.g. Collect a whole number only)"
+                          placeholder={typeHint.placeholder}
                         />
                       </div>
 
@@ -2077,6 +2391,9 @@ export function SurveyQuestionsTab({
                             conditions: next.map(toDraftCondition),
                           })
                         }
+                        parentQuestionId={q.id}
+                        allQuestions={values.questions}
+                        onPersistCurrent={persistCurrent}
                       />
                     </div>
                     <Button
@@ -2087,7 +2404,7 @@ export function SurveyQuestionsTab({
                         const remaining = values.questions.filter(
                           (item) => item.id !== q.id
                         );
-                        updateQuestions(remaining);
+                        updateQuestions(remaining, true);
                         setActiveQuestionIndex((prev) =>
                           Math.min(prev, Math.max(0, remaining.length - 1))
                         );
@@ -2128,6 +2445,15 @@ export function SurveyQuestionsTab({
                 >
                   Next
                   <ChevronRight className="size-3.5" />
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  className="h-8"
+                  onClick={addQuestion}
+                >
+                  <Plus className="size-3.5" />
+                  Add question
                 </Button>
               </div>
             </div>

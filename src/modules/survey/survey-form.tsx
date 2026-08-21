@@ -20,7 +20,7 @@ import {
   scheduleToFormValues,
 } from "./survey-dialogs";
 import type { ScheduleFormValues } from "./survey-dialogs";
-import { PersonaTab, PromptsTab, SurveyQuestionsTab, FarewellTab, ClientContactTab, ScheduleTab } from "./survey-tabs";
+import { PersonaTab, PromptsTab, SurveyQuestionsTab, FarewellTab, ClientContactTab, ScheduleTab, findDuplicateQuestionText } from "./survey-tabs";
 import { PageContainer } from "@/components/layout";
 import { AppLoaderSpinner, AppLoader } from "@/components/shared/app-loader";
 import { Button } from "@/components/ui/button";
@@ -790,6 +790,71 @@ export function SurveyCreateEditView({
       : createEmptyScheduleForm()
   );
 
+  const configRef = useRef(config);
+  configRef.current = config;
+  const surveyIdRef = useRef(surveyId);
+  surveyIdRef.current = surveyId;
+  const persistChainRef = useRef(Promise.resolve());
+  const skipQuestionsPersistRef = useRef(true);
+  const isSavingRef = useRef(false);
+
+  const persistDraft = useCallback(
+    (nextConfig?: SurveyConfig) => {
+      if (nextConfig) configRef.current = nextConfig;
+      persistChainRef.current = persistChainRef.current
+        .catch(() => undefined)
+        .then(async () => {
+          if (isSavingRef.current) return;
+          const id = surveyIdRef.current;
+          if (!id) return;
+          const snapshot = configRef.current;
+          const duplicate = findDuplicateQuestionText(
+            snapshot.surveyQuestions.questions
+          );
+          if (duplicate) return;
+          try {
+            await saveSurvey(
+              { id, config: snapshot },
+              null,
+              { quiet: true }
+            );
+          } catch (error) {
+            toast.error(
+              error instanceof Error
+                ? error.message
+                : "Could not save questions"
+            );
+          }
+        });
+    },
+    []
+  );
+
+  const persistSurveyQuestions = useCallback(
+    (nextQuestions: SurveyConfig["surveyQuestions"]) => {
+      const merged = {
+        ...configRef.current,
+        surveyQuestions: nextQuestions,
+      };
+      configRef.current = merged;
+      persistDraft(merged);
+    },
+    [persistDraft]
+  );
+
+  useEffect(() => {
+    if (activeTab !== "survey-questions") {
+      skipQuestionsPersistRef.current = true;
+      return;
+    }
+    if (skipQuestionsPersistRef.current) {
+      skipQuestionsPersistRef.current = false;
+      return;
+    }
+    const timer = window.setTimeout(() => persistDraft(), 1200);
+    return () => window.clearTimeout(timer);
+  }, [activeTab, config.surveyQuestions, persistDraft]);
+
   const { applyMeta, resetPageMeta } = usePageMeta({
     title: isNew ? "Create Survey" : "Configure Survey",
     breadcrumbs: [
@@ -832,8 +897,8 @@ export function SurveyCreateEditView({
         enabled: scheduleForm.enabled,
         startAt: scheduleForm.startAt || null,
         endAt: scheduleForm.endAt || null,
-        timezone: scheduleForm.timezone || "Asia/Kolkata",
-        recurrence: scheduleForm.recurrence,
+        callWindowStart: scheduleForm.callWindowStart || "09:00",
+        callWindowEnd: scheduleForm.callWindowEnd || "18:00",
         lastScheduledAt: null,
       }),
     [config, scheduleForm]
@@ -881,6 +946,7 @@ export function SurveyCreateEditView({
   };
 
   const handleBack = () => {
+    if (activeTab === "survey-questions") persistDraft();
     setShowValidationErrors(false);
     if (tabIndex > 0) setActiveTab(ENABLED_TAB_ORDER[tabIndex - 1]);
   };
@@ -916,6 +982,7 @@ export function SurveyCreateEditView({
     }
 
     setIsSaving(true);
+    isSavingRef.current = true;
     try {
       const needsCreate = !surveyId;
       if (needsCreate && !canCreateSurvey) {
@@ -935,6 +1002,19 @@ export function SurveyCreateEditView({
         return;
       }
 
+      if (activeTab === "survey-questions") {
+        const duplicate = findDuplicateQuestionText(
+          config.surveyQuestions.questions
+        );
+        if (duplicate) {
+          setShowValidationErrors(true);
+          toast.error(
+            `Duplicate question cannot be used in both nested and normal questions: "${duplicate}"`
+          );
+          return;
+        }
+      }
+
       const alreadyScheduled =
         schedulingStatus === "scheduled" ||
         schedulingStatus === "processing";
@@ -949,11 +1029,13 @@ export function SurveyCreateEditView({
         schedulePayload = parsed.payload;
       }
 
+      await persistChainRef.current.catch(() => undefined);
+
       // API: saveSurvey() → POST /api/surveys
       const saved = await saveSurvey(
         {
           id: surveyId,
-          config,
+          config: configRef.current,
           step: Math.max(tabIndex, 0) + 1,
         },
         schedulePayload
@@ -986,6 +1068,7 @@ export function SurveyCreateEditView({
         error instanceof Error ? error.message : "Failed to save survey"
       );
     } finally {
+      isSavingRef.current = false;
       setIsSaving(false);
     }
   };
@@ -1008,6 +1091,9 @@ export function SurveyCreateEditView({
         );
       if (blockedKey) showBlockedStep(blockedKey);
       return;
+    }
+    if (activeTab === "survey-questions" && tab !== "survey-questions") {
+      persistDraft();
     }
     setShowValidationErrors(false);
     setActiveTab(tab);
@@ -1037,6 +1123,7 @@ export function SurveyCreateEditView({
             surveyId={surveyId}
             values={config.surveyQuestions}
             onChange={(v) => updateConfig("surveyQuestions", v)}
+            onPersist={persistSurveyQuestions}
             showRequiredError={activeMissing.includes("questions")}
           />
         );

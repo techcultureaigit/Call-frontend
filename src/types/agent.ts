@@ -136,6 +136,8 @@ export interface AgentSurveyQuestionOption {
 
 /** Follow-up question shown when a condition matches */
 export interface AgentSurveyThenShowQuestion {
+  /** Present on new/saved follow-ups; older rows may omit until next save */
+  id?: string;
   type?: string;
   question: string;
   instruction?: string;
@@ -178,14 +180,14 @@ export interface AgentClientContactConfig {
   contacts?: AgentClientContactRow[];
 }
 
-export type AgentScheduleRecurrence = "once" | "daily" | "weekly" | "monthly";
-
 export interface AgentSchedule {
   enabled: boolean;
   startAt: string | null;
   endAt: string | null;
-  timezone: string;
-  recurrence: AgentScheduleRecurrence;
+  /** Daily call window start (HH:mm), default 09:00 */
+  callWindowStart?: string;
+  /** Daily call window end (HH:mm), default 18:00 */
+  callWindowEnd?: string;
   lastScheduledAt: string | null;
 }
 

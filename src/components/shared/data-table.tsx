@@ -61,6 +61,8 @@ export interface DataTableProps<T> {
   skeletonRows?: number;
   /** Persist show/hide + reorder for this table (localStorage). */
   columnLayoutKey?: string;
+  /** Fill parent height and scroll inside the table (sticky header). */
+  fillHeight?: boolean;
 }
 
 /** Shared table shell used by Surveys, Roles, Voices, etc. */
@@ -81,6 +83,7 @@ export function DataTable<T>({
   getRowClassName,
   skeletonRows = 5,
   columnLayoutKey,
+  fillHeight = false,
 }: DataTableProps<T>) {
   const layoutItems = useMemo<TableColumnLayoutItem[]>(
     () =>
@@ -137,7 +140,12 @@ export function DataTable<T>({
 
   if (data.length === 0) {
     return (
-      <div className="overflow-hidden rounded-[6px] border border-border/60 bg-card shadow-card">
+      <div
+        className={cn(
+          "overflow-hidden rounded-[6px] border border-border/60 bg-card shadow-card",
+          fillHeight && "flex min-h-0 flex-1 flex-col"
+        )}
+      >
         {pickerBar}
         <EmptyState
           icon={emptyIcon}
@@ -150,23 +158,43 @@ export function DataTable<T>({
   }
 
   return (
-    <div className="relative overflow-hidden rounded-[6px] border border-border/60 bg-card/95 shadow-elevated backdrop-blur-sm">
+    <div
+      className={cn(
+        "relative min-w-0 overflow-hidden rounded-[6px] border border-border/60 bg-card/95 shadow-elevated backdrop-blur-sm",
+        fillHeight && "flex min-h-0 flex-1 flex-col"
+      )}
+    >
       <div
         aria-hidden
         className="pointer-events-none absolute inset-x-0 top-0 h-24 bg-[radial-gradient(ellipse_at_top_left,color-mix(in_oklch,var(--brand)_14%,transparent),transparent_55%)]"
       />
-      {pickerBar}
+      {pickerBar ? <div className="relative shrink-0">{pickerBar}</div> : null}
 
-      <div className="relative overflow-x-auto">
+      <div
+        className={cn(
+          "relative min-w-0",
+          fillHeight
+            ? "min-h-0 flex-1 overflow-auto overscroll-contain"
+            : "overflow-x-auto"
+        )}
+      >
         <TableColumnDnd
           ids={visibleColumns.map((column) => column.id)}
           lockedIds={lockedIds}
           onReorder={reorder}
           disabled={!layoutEnabled}
         >
-          <table className={cn("w-full border-collapse", minWidthClassName)}>
+          <table
+            className={cn("w-full border-collapse", minWidthClassName)}
+          >
             <thead>
-              <tr className={TABLE_HEAD_ROW_CLASS}>
+              <tr
+                className={cn(
+                  TABLE_HEAD_ROW_CLASS,
+                  fillHeight &&
+                    "[&_th]:sticky [&_th]:top-0 [&_th]:z-20 [&_th]:bg-card"
+                )}
+              >
                 {visibleColumns.map((column) => (
                   <SortableColumnTh
                     key={column.id}
@@ -251,7 +279,7 @@ export function DataTable<T>({
       </div>
 
       {footerHint ? (
-        <div className="border-t border-border/40 bg-muted/20 px-5 py-2.5">
+        <div className="relative shrink-0 border-t border-border/40 bg-muted/20 px-5 py-2.5">
           <p className="text-[11px] text-muted-foreground">{footerHint}</p>
         </div>
       ) : null}

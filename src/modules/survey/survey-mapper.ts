@@ -12,7 +12,6 @@ import type {
   AgentConfig as SurveyConfig,
   AgentProgress as SurveyProgress,
   AgentSchedule as SurveySchedule,
-  AgentScheduleRecurrence as SurveyScheduleRecurrence,
   AgentSchedulingStatus as SurveySchedulingStatus,
 } from "@/types/agent";
 
@@ -174,8 +173,8 @@ export function backendSurveyToAgent(s: BackendSurvey): Survey {
           enabled: sch.enabled ?? false,
           startAt: sch.startAt ?? null,
           endAt: sch.endAt ?? null,
-          timezone: sch.timezone ?? "Asia/Kolkata",
-          recurrence: (sch.recurrence ?? "once") as SurveyScheduleRecurrence,
+          callWindowStart: sch.callWindowStart ?? "09:00",
+          callWindowEnd: sch.callWindowEnd ?? "18:00",
           lastScheduledAt: sch.lastScheduledAt ?? null,
         };
 
@@ -215,8 +214,8 @@ export function agentToBackendPayload(
     enabled?: boolean;
     startAt?: string;
     endAt?: string | null;
-    timezone?: string;
-    recurrence?: string;
+    callWindowStart?: string;
+    callWindowEnd?: string;
   } | null
 ) {
   const c = survey.config;
@@ -286,11 +285,13 @@ export function agentToBackendPayload(
                   const thenShowType =
                     String(legacyRow.thenShowType || "text").trim() || "text";
                   const legacy: {
+                    id: string;
                     type: string;
                     question: string;
                     instruction: string;
                     options?: { id: string; label: string; value: string }[];
                   } = {
+                    id: `sq-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
                     type: thenShowType,
                     question: legacyRow.thenShowQuestion.trim(),
                     instruction: String(
@@ -313,17 +314,28 @@ export function agentToBackendPayload(
                 }
 
                 const cleaned = thenShowQuestions
-                  .map((item) => {
+                  .map((item, index) => {
                     const question = String(item?.question || "").trim();
                     if (!question) return null;
                     const type = String(item?.type || "text").trim() || "text";
                     const instruction = String(item?.instruction || "").trim();
+                    const existingId = String(
+                      (item as { id?: string })?.id || ""
+                    ).trim();
                     const next: {
+                      id: string;
                       type: string;
                       question: string;
                       instruction: string;
                       options?: { id: string; label: string; value: string }[];
-                    } = { type, question, instruction };
+                    } = {
+                      id:
+                        existingId ||
+                        `sq-${Date.now()}-${index}-${Math.random().toString(36).slice(2, 7)}`,
+                      type,
+                      question,
+                      instruction,
+                    };
                     if (type === "multi" && Array.isArray(item?.options)) {
                       next.options = item.options
                         .map((opt) => ({
@@ -338,7 +350,14 @@ export function agentToBackendPayload(
                   .filter((item): item is NonNullable<typeof item> => item !== null);
 
                 if (cleaned.length === 0) return null;
-                return { ifAnswer, thenShowQuestions: cleaned };
+                const conditionId = String(
+                  (row as { id?: string })?.id || ""
+                ).trim();
+                return {
+                  ...(conditionId ? { id: conditionId } : {}),
+                  ifAnswer,
+                  thenShowQuestions: cleaned,
+                };
               })
               .filter((row): row is NonNullable<typeof row> => row !== null)
           : [];
@@ -361,8 +380,8 @@ export function agentToBackendPayload(
       enabled: schedule.enabled ?? true,
       startAt: schedule.startAt ?? null,
       endAt: schedule.endAt ?? null,
-      timezone: schedule.timezone ?? "Asia/Kolkata",
-      recurrence: schedule.recurrence ?? "once",
+      callWindowStart: schedule.callWindowStart ?? "09:00",
+      callWindowEnd: schedule.callWindowEnd ?? "18:00",
     };
   }
   return payload;

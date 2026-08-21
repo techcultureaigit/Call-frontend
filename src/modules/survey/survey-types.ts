@@ -21,44 +21,30 @@ export interface SurveyResultAnswer {
 }
 
 export interface SurveyResultCallData {
-  call_status?: string;
-  direction?: string;
-  call_connected?: string;
+
+
+
+
   duration?: string;
-  billsec?: string;
   start_stamp?: string;
   answer_stamp?: string;
   end_stamp?: string;
-  agent_number?: string;
-  agent_ring_time?: string;
-  agent_transfer_ring_time?: string;
-  customer_ring_time?: string;
-  outbound_sec?: string;
   caller_id_number?: string;
-  call_to_number?: string;
-  customer_no_with_prefix?: string;
-  answered_agent_name?: string;
-  answered_agent_number?: string;
-  missed_agent?: string;
-  campaign_name?: string;
-  custom_identifier?: string;
-  digits_dialed?: string;
-  broadcast_lead_fields?: string;
   hangup_cause_description?: string;
   reason_key?: string;
-  received_at?: string;
-  billing_circle?: { operator?: string; circle?: string } | null;
 }
+
+export type SurveyResultStatus =
+  | "missed"
+  | "completed"
+  | "partially completed";
 
 export interface SurveyResultRow {
   id: string;
-  session_id: string;
-  call_sid?: string;
   customer_number: string;
-  customer_name: string;
-  customer_email: string;
-  customer_company: string;
   extracted_at: string | null;
+  /** missed | completed | partially completed — empty treated as missed */
+  status?: SurveyResultStatus | string;
   /** Optional raw map — prefer `answers` when present */
   extracted_data?: Record<string, unknown>;
   answers: SurveyResultAnswer[];
@@ -104,8 +90,8 @@ export interface SurveyResultsListParams {
   page?: number;
   limit?: number;
   search?: string;
-  /** Filter by call_recordings.call_status (e.g. answered, missed) */
-  callStatus?: string;
+  /** Filter by computed status: missed | completed | partially completed */
+  status?: string;
 }
 
 export type SurveyResultsExportFormat = "xlsx" | "csv";
@@ -113,7 +99,7 @@ export type SurveyResultsExportFormat = "xlsx" | "csv";
 export interface SurveyResultsExportParams {
   format?: SurveyResultsExportFormat;
   search?: string;
-  callStatus?: string;
+  status?: string;
 }
 
 export interface SaveSurveyInput {
@@ -126,8 +112,8 @@ export interface ScheduleSurveyInput {
   enabled?: boolean;
   startAt?: string;
   endAt?: string | null;
-  timezone?: string;
-  recurrence?: SurveySchedule["recurrence"];
+  callWindowStart?: string;
+  callWindowEnd?: string;
 }
 
 export interface SurveysListResult {
