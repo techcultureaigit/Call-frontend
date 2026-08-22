@@ -25,14 +25,14 @@ export function ReportAreaChart({
 
   if (isLoading) {
     return (
-      <DashboardCard title="Success Rate Trend" description="Call success rate over time">
+      <DashboardCard title="Completion Rate Trend" description="Daily survey completion %">
         <ChartSkeleton height={280} />
       </DashboardCard>
     );
   }
 
   return (
-    <DashboardCard title="Success Rate Trend" description="Weekly performance — Area chart">
+    <DashboardCard title="Completion Rate Trend" description="Complete surveys over time">
       <div className="h-[280px] w-full">
         {mounted && (
           <ResponsiveContainer width="100%" height="100%">

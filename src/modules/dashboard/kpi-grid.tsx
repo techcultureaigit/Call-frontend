@@ -14,6 +14,7 @@ interface KpiModuleProps {
   isLoading?: boolean;
   className?: string;
   variant?: "voice" | "studio";
+  compact?: boolean;
 }
 
 export function KpiModule({
@@ -24,32 +25,45 @@ export function KpiModule({
   isLoading,
   className,
   variant = "voice",
+  compact = false,
 }: KpiModuleProps) {
   const isStudio = variant === "studio";
 
   return (
     <section
       className={cn(
-        "rounded-[6px] border border-border/60 bg-card p-4 shadow-card sm:p-5",
+        "rounded-[6px] border border-border/60 bg-card shadow-card",
+        compact ? "p-2.5 sm:p-3" : "p-4 sm:p-5",
         className
       )}
     >
-      <div className="mb-4 flex items-center gap-2.5">
+      <div
+        className={cn(
+          "flex items-center gap-2",
+          compact ? "mb-2" : "mb-4 gap-2.5"
+        )}
+      >
         <span
           className={cn(
-            "flex size-9 items-center justify-center rounded-[6px] text-white",
+            "flex items-center justify-center rounded-[6px] text-white",
+            compact ? "size-7" : "size-9",
             isStudio
               ? "bg-violet-500"
               : "bg-gradient-to-br from-brand to-brand-blue"
           )}
         >
-          <Icon className="size-4" />
+          <Icon className={compact ? "size-3.5" : "size-4"} />
         </span>
         <div className="min-w-0">
-          <h3 className="text-sm font-semibold tracking-tight text-foreground">
+          <h3
+            className={cn(
+              "font-semibold tracking-tight text-foreground",
+              compact ? "text-xs" : "text-sm"
+            )}
+          >
             {title}
           </h3>
-          {description && (
+          {description && !compact && (
             <p className="text-[12px] text-muted-foreground">{description}</p>
           )}
         </div>
@@ -58,9 +72,19 @@ export function KpiModule({
       {isLoading ? (
         <KpiGridSkeleton count={6} />
       ) : (
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+        <div
+          className={cn(
+            "grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6",
+            compact ? "gap-2" : "grid-cols-1 gap-3"
+          )}
+        >
           {kpis.map((kpi, index) => (
-            <MetricBox key={kpi.id} kpi={kpi} index={index} />
+            <MetricBox
+              key={kpi.id}
+              kpi={kpi}
+              index={index}
+              compact={compact}
+            />
           ))}
         </div>
       )}

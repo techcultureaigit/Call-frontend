@@ -26,10 +26,6 @@ Pairs with the backend at `calling-crm-backend` (`/api/v1`).
 - **Voices / Audio Buffer** — voice library and audio assets
 - **Survey Data** — customer / contact data for campaigns
 
-### Operations
-- **Calls** — live calls, history, recordings
-- **Responses** — all, pending, and flagged replies
-
 ### Insights
 - **Reports** — campaign and call analytics
 
@@ -147,8 +143,6 @@ Open `/login`. Dev login defaults (same as backend seed):
 | `/library/voices`            | Voices                           |
 | `/library/audio-buffer`      | Audio buffer                     |
 | `/customers`                 | Survey / contact data            |
-| `/calls`, `/calls/live`, …   | Call operations                  |
-| `/responses`, `/pending`, …  | Response inbox                   |
 | `/reports`                   | Reports                          |
 | `/users`, `/roles`           | Users & roles                    |
 | `/notifications`             | Notifications                    |

@@ -80,9 +80,8 @@ export function shouldSkipGlobalLoader(path: string, method = "GET"): boolean {
       url.includes("/users") ||
       url.includes("/roles") ||
       url.includes("/voices") ||
-      url.includes("/calls") ||
-      url.includes("/responses") ||
       url.includes("/dashboard") ||
+      url.includes("/analytics") ||
       url.includes("/reports") ||
       url.includes("/activity-logs") ||
       url.includes("/notifications")) &&
@@ -158,12 +157,8 @@ export function inferLoaderMessage(
     return { label: "Loading roles", hint: "Fetching latest data" };
   }
 
-  if (u.includes("/responses")) {
-    return { label: "Loading responses", hint: "Fetching latest data" };
-  }
-
-  if (u.includes("/reports")) {
-    return { label: "Loading reports", hint: "Fetching latest data" };
+  if (u.includes("/analytics") || u.includes("/reports")) {
+    return { label: "Loading analytics", hint: "Fetching latest data" };
   }
 
   return { label: "Loading", hint: "Fetching latest data" };

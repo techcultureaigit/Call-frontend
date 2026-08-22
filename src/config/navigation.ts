@@ -33,18 +33,9 @@ export const routePaths = {
   },
   users: "/users",
   roles: "/roles",
-  calls: {
-    root: "/calls",
-    live: "/calls/live",
-    history: "/calls/history",
-    recordings: "/calls/recordings",
-  },
-  responses: {
-    root: "/responses",
-    pending: "/responses/pending",
-    flagged: "/responses/flagged",
-  },
-  reports: "/reports",
+  analytics: "/analytics",
+  /** @deprecated use analytics — kept for legacy links */
+  reports: "/analytics",
   callIntel: "/call-intel",
   usage: "/usage",
   billing: "/billing",

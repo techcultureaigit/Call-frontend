@@ -11,14 +11,6 @@ export type NavModule =
   | "my_surveys"
   | "voices"
   | "providers"
-  | "calls"
-  | "calls_live"
-  | "calls_history"
-  | "calls_recordings"
-  | "responses"
-  | "responses_all"
-  | "responses_pending"
-  | "responses_flagged"
   | "reports"
   | "users"
   | "roles"
@@ -32,14 +24,6 @@ export const SIDEBAR_MODULES: readonly NavModule[] = [
   "my_surveys",
   "voices",
   "providers",
-  "calls",
-  "calls_live",
-  "calls_history",
-  "calls_recordings",
-  "responses",
-  "responses_all",
-  "responses_pending",
-  "responses_flagged",
   "reports",
   "users",
   "roles",
@@ -60,7 +44,7 @@ export function can(
 
 /**
  * Sidebar / route access.
- * Indicators (survey/calls/responses): any child with `read` counts as access.
+ * Indicators (survey): any child with `read` counts as access.
  * Leaf modules: require `read` on that key.
  */
 export function hasModuleAccess(

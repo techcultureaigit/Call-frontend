@@ -8,9 +8,11 @@ import {
   Database,
   FilePlus2,
   Loader,
+  Mic,
   Phone,
   PhoneIncoming,
   PhoneMissed,
+  PhoneOutgoing,
   type LucideIcon,
 } from "lucide-react";
 import { motion } from "framer-motion";
@@ -19,8 +21,11 @@ import type { DashboardKpi } from "@/types/dashboard";
 
 export const kpiIconMap: Record<string, LucideIcon> = {
   phone: Phone,
+  connected: PhoneOutgoing,
   "phone-incoming": PhoneIncoming,
   "phone-missed": PhoneMissed,
+  missed: PhoneMissed,
+  check: CheckCircle2,
   "check-circle": CheckCircle2,
   clipboard: ClipboardList,
   clock: Clock,
@@ -28,6 +33,7 @@ export const kpiIconMap: Record<string, LucideIcon> = {
   "file-plus": FilePlus2,
   loader: Loader,
   bot: Bot,
+  mic: Mic,
 };
 
 type TileTone =
@@ -109,9 +115,11 @@ const accentToTone: Record<string, TileTone> = {
 export function MetricBox({
   kpi,
   index = 0,
+  compact = false,
 }: {
   kpi: DashboardKpi;
   index?: number;
+  compact?: boolean;
 }) {
   const Icon = kpiIconMap[kpi.icon] ?? ClipboardList;
   const tone = accentToTone[kpi.accent ?? "violet"] ?? "violet";
@@ -123,7 +131,8 @@ export function MetricBox({
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.04, duration: 0.25 }}
       className={cn(
-        "relative flex flex-col overflow-hidden rounded-[6px] border p-4 shadow-subtle",
+        "relative flex flex-col overflow-hidden rounded-[6px] border shadow-subtle",
+        compact ? "p-2.5" : "p-4",
         styles.box
       )}
     >
@@ -131,7 +140,8 @@ export function MetricBox({
         aria-hidden
         strokeWidth={1.15}
         className={cn(
-          "pointer-events-none absolute -bottom-1 -right-1 size-12 rotate-[-10deg]",
+          "pointer-events-none absolute -bottom-1 -right-1 rotate-[-10deg]",
+          compact ? "size-8" : "size-12",
           styles.wash
         )}
       />
@@ -139,18 +149,33 @@ export function MetricBox({
       <div className="relative z-[1]">
         <div
           className={cn(
-            "flex size-9 items-center justify-center rounded-[6px]",
+            "flex items-center justify-center rounded-[6px]",
+            compact ? "size-7" : "size-9",
             styles.icon
           )}
         >
-          <Icon className="size-4" strokeWidth={2.25} />
+          <Icon
+            className={compact ? "size-3.5" : "size-4"}
+            strokeWidth={2.25}
+          />
         </div>
       </div>
 
-      <p className="relative z-[1] mt-4 text-2xl font-semibold tabular-nums tracking-tight text-foreground">
+      <p
+        className={cn(
+          "relative z-[1] font-semibold tabular-nums tracking-tight text-foreground",
+          compact ? "mt-1.5 text-lg leading-none" : "mt-4 text-2xl"
+        )}
+      >
         {kpi.value}
       </p>
-      <p className={cn("relative z-[1] mt-1 text-[12px] font-medium", styles.label)}>
+      <p
+        className={cn(
+          "relative z-[1] font-medium leading-tight",
+          compact ? "mt-0.5 text-[10px]" : "mt-1 text-[12px]",
+          styles.label
+        )}
+      >
         {kpi.label}
       </p>
     </motion.div>

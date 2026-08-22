@@ -1,20 +1,10 @@
 "use client";
 
-/**
- * reports-view.tsx
- * Analytics reports page.
- * Route: /reports
- *
- * API calls in this file:
- *   getReports()         → GET /api/reports              (via useReports hook)
- *   getReportCampaigns() → GET /api/reports?campaigns=true
- *
- * Export (no API): exportReportsPdf(), exportReportsExcel() — client-side
- */
-
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
+import { useSearchParams } from "next/navigation";
+import { X } from "lucide-react";
 import { PageContainer } from "@/components/layout";
 import { usePageMeta } from "@/hooks";
 import { useReports, useReportCampaigns } from "@/modules/reports/use-reports";
@@ -22,12 +12,22 @@ import {
   exportReportsExcel,
   exportReportsPdf,
 } from "@/modules/reports/reports-export";
+import { AnalyticsKpiGrid } from "@/modules/reports/analytics-kpi-grid";
+import {
+  applyKpiFilter,
+  KPI_FILTER_LABELS,
+  type AnalyticsKpiFilterId,
+} from "@/modules/reports/analytics-kpi-filter";
 import { ReportsToolbar } from "./reports-toolbar";
-import { ReportsKpiGrid } from "./reports-kpi-grid";
-import { ReportLineChart } from "./report-line-chart";
-import { ReportBarChart } from "./report-bar-chart";
-import { ReportAreaChart } from "./report-area-chart";
-import { ReportPieChart } from "./report-pie-chart";
+import { ReportCallPerformanceBars } from "./report-call-performance-bars";
+import { ReportDashboardDonut } from "./report-dashboard-donut";
+import { ReportHeroChart } from "./report-hero-chart";
+import { ReportHeatmap } from "./report-heatmap";
+import { ReportHangupBars } from "./report-hangup-bars";
+import { ReportInsights } from "./report-insights";
+import { ReportQuestionBars } from "./report-question-bars";
+import { Button } from "@/components/ui/button";
+import { AnalyticsKpiDetailsSheet } from "@/modules/reports/analytics-kpi-details-sheet";
 
 function defaultDates() {
   const to = new Date();
@@ -40,23 +40,31 @@ function defaultDates() {
 }
 
 export function ReportsView() {
+  const searchParams = useSearchParams();
   const defaults = defaultDates();
-  const [dateFrom, setDateFrom] = useState(defaults.from);
-  const [dateTo, setDateTo] = useState(defaults.to);
-  const [campaignId, setCampaignId] = useState("all");
+  const [dateFrom, setDateFrom] = useState(
+    searchParams.get("from") || defaults.from
+  );
+  const [dateTo, setDateTo] = useState(searchParams.get("to") || defaults.to);
+  const [surveyId, setSurveyId] = useState(
+    searchParams.get("surveyId") || "all"
+  );
+  const [kpiFilter, setKpiFilter] = useState<AnalyticsKpiFilterId>("total_calls");
+  const [detailsOpen, setDetailsOpen] = useState(false);
+  const [detailsPage, setDetailsPage] = useState(1);
 
-  const { data, isLoading, isFetching } = useReports({
+  const { data, isLoading, isFetching, isError, error } = useReports({
     from: dateFrom,
     to: dateTo,
-    campaignId: campaignId === "all" ? undefined : campaignId,
+    surveyId: surveyId === "all" ? undefined : surveyId,
   });
 
-  const { data: campaigns = [] } = useReportCampaigns();
+  const { data: surveys = [] } = useReportCampaigns();
 
   const { applyMeta, resetPageMeta } = usePageMeta({
-    title: "Reports",
+    title: "Analytics",
     breadcrumbs: [
-      { label: "Insights", href: "/reports" },
+      { label: "Insights", href: "/analytics" },
       { label: "Analytics" },
     ],
   });
@@ -65,6 +73,37 @@ export function ReportsView() {
     applyMeta();
     return () => resetPageMeta();
   }, [applyMeta, resetPageMeta]);
+
+  useEffect(() => {
+    if (isError) {
+      toast.error(
+        error instanceof Error ? error.message : "Failed to load analytics"
+      );
+    }
+  }, [isError, error]);
+
+  useEffect(() => {
+    setKpiFilter("total_calls");
+    setDetailsOpen(false);
+    setDetailsPage(1);
+  }, [dateFrom, dateTo, surveyId]);
+
+  const filteredView = useMemo(
+    () => (data ? applyKpiFilter(data, kpiFilter) : null),
+    [data, kpiFilter]
+  );
+
+  const handleKpiSelect = useCallback((id: AnalyticsKpiFilterId) => {
+    if (kpiFilter === id && detailsOpen) {
+      setKpiFilter("total_calls");
+      setDetailsOpen(false);
+      setDetailsPage(1);
+      return;
+    }
+    setKpiFilter(id);
+    setDetailsOpen(true);
+    setDetailsPage(1);
+  }, [kpiFilter, detailsOpen]);
 
   const handlePreset = (days: number) => {
     const to = new Date();
@@ -78,7 +117,7 @@ export function ReportsView() {
     if (!data) return;
     try {
       await exportReportsPdf(data);
-      toast.success("PDF export opened — use Save as PDF in print dialog");
+      toast.success("PDF downloaded");
     } catch {
       toast.error("Failed to export PDF");
     }
@@ -88,19 +127,19 @@ export function ReportsView() {
     if (!data) return;
     try {
       await exportReportsExcel(data);
-      toast.success("Excel file downloaded");
+      toast.success("Excel downloaded");
     } catch {
-      toast.error("Failed to export Excel file");
+      toast.error("Failed to export Excel");
     }
   }, [data]);
 
   return (
-    <PageContainer size="wide">
+    <PageContainer size="full" className="pb-5 pt-4 lg:px-8">
       <motion.div
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3 }}
-        className="space-y-6"
+        transition={{ duration: 0.35, ease: "easeOut" }}
+        className="space-y-4"
         id="reports-export-root"
       >
         <ReportsToolbar
@@ -109,55 +148,118 @@ export function ReportsView() {
           onDateFromChange={setDateFrom}
           onDateToChange={setDateTo}
           onPreset={handlePreset}
-          campaignId={campaignId}
-          onCampaignChange={setCampaignId}
-          campaigns={campaigns}
+          surveyId={surveyId}
+          surveyName={data?.surveyName}
+          onSurveyChange={setSurveyId}
+          surveys={surveys}
           onExportPdf={handleExportPdf}
           onExportExcel={handleExportExcel}
         />
 
-        <ReportsKpiGrid kpis={data?.kpis ?? []} isLoading={isLoading} />
+        <AnalyticsKpiGrid
+          kpis={data?.kpis ?? []}
+          isLoading={isLoading}
+          selectedId={kpiFilter}
+          onSelect={handleKpiSelect}
+        />
 
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-          <ReportLineChart
-            data={data?.callsOverTime ?? []}
-            isLoading={isLoading}
-          />
-          <ReportAreaChart
-            data={data?.successRateTrend ?? []}
-            isLoading={isLoading}
-          />
-        </div>
+        {kpiFilter !== "total_calls" && (
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="rounded-full border border-brand/30 bg-brand/8 px-3 py-1 text-xs font-medium text-brand">
+              Filter: {KPI_FILTER_LABELS[kpiFilter]}
+            </span>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="h-7 px-2.5 text-xs"
+              onClick={() => {
+                setDetailsOpen(true);
+                setDetailsPage(1);
+              }}
+            >
+              View client details
+            </Button>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="h-7 gap-1 px-2 text-xs text-muted-foreground"
+              onClick={() => {
+                setKpiFilter("total_calls");
+                setDetailsOpen(false);
+                setDetailsPage(1);
+              }}
+            >
+              <X className="size-3.5" />
+              Clear
+            </Button>
+          </div>
+        )}
 
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-          <div className="lg:col-span-2">
-            <ReportBarChart
-              data={data?.responsesByCampaign ?? []}
+        <div className="grid grid-cols-1 items-stretch gap-4 xl:grid-cols-12">
+          <div className="xl:col-span-8">
+            <ReportCallPerformanceBars
+              data={filteredView?.callsOverTime ?? data?.callsOverTime ?? []}
               isLoading={isLoading}
+              description={filteredView?.barDescription}
+              metricLabel={filteredView?.barMetricLabel ?? "calls"}
             />
           </div>
-          <ReportPieChart
-            data={data?.campaignBreakdown ?? []}
-            title="Campaign Mix"
-            description="Distribution by type — Pie chart"
-            isLoading={isLoading}
-          />
+          <div className="xl:col-span-4">
+            <ReportDashboardDonut
+              data={data?.callOutcomeBreakdown ?? []}
+              isLoading={isLoading}
+              variant="call"
+            />
+          </div>
+          <div className="xl:col-span-8">
+            <ReportHeroChart
+              data={filteredView?.trendData ?? data?.callsOverTime ?? []}
+              isLoading={isLoading}
+              trendMode={filteredView?.trendMode ?? "all"}
+              description={filteredView?.trendDescription}
+            />
+          </div>
+          <div className="xl:col-span-4">
+            <ReportDashboardDonut
+              data={data?.surveyStatusBreakdown ?? []}
+              isLoading={isLoading}
+              variant="survey"
+            />
+          </div>
         </div>
 
-        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          <ReportPieChart
-            data={data?.sentimentBreakdown ?? []}
-            title="Sentiment Analysis"
-            description="AI-classified response sentiment"
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-3 lg:items-stretch">
+          <ReportHeatmap data={data?.heatmap} isLoading={isLoading} />
+          <ReportHangupBars
+            data={data?.hangupBreakdown ?? []}
             isLoading={isLoading}
           />
+          <ReportInsights insights={data?.insights} isLoading={isLoading} />
         </div>
+
+        <ReportQuestionBars
+          data={data?.questionBars ?? []}
+          isLoading={isLoading}
+        />
 
         {isFetching && !isLoading && (
           <div className="flex justify-center">
-            <div className="size-1.5 animate-pulse rounded-full bg-primary" />
+            <div className="size-1.5 animate-pulse rounded-full bg-brand" />
           </div>
         )}
+
+        <AnalyticsKpiDetailsSheet
+          open={detailsOpen}
+          onOpenChange={setDetailsOpen}
+          metric={kpiFilter}
+          dateFrom={dateFrom}
+          dateTo={dateTo}
+          surveyId={surveyId}
+          page={detailsPage}
+          onPageChange={setDetailsPage}
+        />
       </motion.div>
     </PageContainer>
   );

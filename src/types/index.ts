@@ -49,21 +49,6 @@ export type {
   CustomerSource,
   CustomerImportRow,
 } from "./customer";
-export type {
-  Call,
-  CallStatus,
-  CallDirection,
-  CallTranscriptLine,
-  CallTimelineEvent,
-  CallCustomerSnapshot,
-} from "./call";
-export type {
-  SurveyResponse,
-  ResponseStatus,
-  AiExtractedData,
-  SurveyResponseAnswer,
-  ResponseCustomerSnapshot,
-} from "./response";
 export type { ReportsData, ReportKpi, ReportPieSlice, ReportsQueryParams } from "./reports";
 export type {
   ActivityLog,

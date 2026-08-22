@@ -1087,7 +1087,7 @@ const RESULTS_STATUS_OPTIONS = [
 
 export function SurveyResponseView({ surveyId }: SurveyResultsViewProps) {
   const router = useRouter();
-  const { canExportSurvey } = usePermissions();
+  const { canExportSurvey, canReadReports } = usePermissions();
   const [survey, setSurvey] = useState<SurveyResultsSurveyMeta | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [exporting, setExporting] = useState(false);
@@ -1254,6 +1254,23 @@ export function SurveyResponseView({ surveyId }: SurveyResultsViewProps) {
                     : null}
                 </p>
               </div>
+            </div>
+            <div className="flex shrink-0 flex-wrap items-center gap-2">
+              {canReadReports ? (
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="h-11 shrink-0 rounded-[6px] gap-1.5 border-border/50 bg-background/80 shadow-subtle hover:border-primary/30"
+                  onClick={() =>
+                    router.push(
+                      `/analytics?surveyId=${encodeURIComponent(surveyId)}`
+                    )
+                  }
+                >
+                  <Sparkles className="size-4" />
+                  Analytics
+                </Button>
+              ) : null}
             </div>
           </div>
 

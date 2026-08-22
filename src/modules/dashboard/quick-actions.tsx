@@ -7,7 +7,6 @@ import {
   BarChart3,
   Bot,
   ClipboardList,
-  PhoneCall,
   UserPlus,
   type LucideIcon,
 } from "lucide-react";
@@ -40,14 +39,6 @@ const actions: QuickAction[] = [
     ring: "group-hover:ring-violet-500/30",
   },
   {
-    title: "Live Calls",
-    description: "Monitor active calls",
-    href: "/calls/live",
-    icon: PhoneCall,
-    tile: "bg-gradient-to-br from-emerald-500/20 to-emerald-500/5 text-emerald-600 dark:text-emerald-400",
-    ring: "group-hover:ring-emerald-500/30",
-  },
-  {
     title: "Users",
     description: "Manage team access",
     href: "/users",
@@ -58,7 +49,7 @@ const actions: QuickAction[] = [
   {
     title: "Reports",
     description: "Performance insights",
-    href: "/reports",
+    href: "/analytics",
     icon: BarChart3,
     tile: "bg-gradient-to-br from-indigo-500/20 to-indigo-500/5 text-indigo-600 dark:text-indigo-400",
     ring: "group-hover:ring-indigo-500/30",
@@ -67,7 +58,7 @@ const actions: QuickAction[] = [
 
 export function QuickActions() {
   return (
-    <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 xl:grid-cols-5">
+    <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-2 xl:grid-cols-4">
       {actions.map((action, index) => (
         <motion.div
           key={action.href}

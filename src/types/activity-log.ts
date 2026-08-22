@@ -19,8 +19,6 @@ export type AuditModule =
   | "agents"
   | "voices"
   | "my_surveys"
-  | "calls"
-  | "responses"
   | "users"
   | "roles"
   | "reports"

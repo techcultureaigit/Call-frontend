@@ -18,6 +18,7 @@ interface DashboardCardProps {
   className?: string;
   contentClassName?: string;
   noPadding?: boolean;
+  compact?: boolean;
 }
 
 export function DashboardCard({
@@ -29,6 +30,7 @@ export function DashboardCard({
   className,
   contentClassName,
   noPadding = false,
+  compact = false,
 }: DashboardCardProps) {
   return (
     <Card
@@ -38,17 +40,43 @@ export function DashboardCard({
         className
       )}
     >
-      <CardHeader className="flex-row items-start justify-between gap-3 space-y-0 border-b border-border/50 pb-4">
-        <div className="flex min-w-0 items-start gap-3">
+      <CardHeader
+        className={cn(
+          "flex-row items-start justify-between space-y-0 border-b border-border/50",
+          compact ? "gap-2 p-3 pb-2" : "gap-3 pb-4"
+        )}
+      >
+        <div
+          className={cn(
+            "flex min-w-0 items-start",
+            compact ? "gap-2" : "gap-3"
+          )}
+        >
           {Icon && (
-            <div className="flex size-9 shrink-0 items-center justify-center rounded-[6px] bg-brand/10 text-brand">
-              <Icon className="size-[18px]" />
+            <div
+              className={cn(
+                "flex shrink-0 items-center justify-center rounded-[6px] bg-brand/10 text-brand",
+                compact ? "size-7" : "size-9"
+              )}
+            >
+              <Icon className={compact ? "size-3.5" : "size-[18px]"} />
             </div>
           )}
-          <div className="min-w-0 space-y-1">
-            <CardTitle className="text-[15px] tracking-tight">{title}</CardTitle>
+          <div className="min-w-0 space-y-0.5">
+            <CardTitle
+              className={cn(
+                "tracking-tight",
+                compact ? "text-[13px] leading-tight" : "text-[15px]"
+              )}
+            >
+              {title}
+            </CardTitle>
             {description && (
-              <CardDescription className="text-xs">{description}</CardDescription>
+              <CardDescription
+                className={compact ? "text-[10px] leading-snug" : "text-xs"}
+              >
+                {description}
+              </CardDescription>
             )}
           </div>
         </div>
@@ -56,7 +84,8 @@ export function DashboardCard({
       </CardHeader>
       <CardContent
         className={cn(
-          "flex flex-1 flex-col pt-5",
+          "flex flex-1 flex-col",
+          compact ? "p-3 pt-2" : "pt-5",
           noPadding && "p-0 pt-0",
           contentClassName
         )}

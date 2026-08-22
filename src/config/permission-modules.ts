@@ -46,7 +46,7 @@ const CRUD: PermissionAction[] = ["create", "read", "update", "delete"];
 
 /**
  * Permission matrix UI — indicator (no CRUD) → leaf modules (CRUD).
- * Storage is FLAT leaf keys only. survey/calls/responses are labels for cascade UI.
+ * Storage is FLAT leaf keys only. survey is a label for cascade UI.
  */
 export const PERMISSION_MODULE_GROUPS: PermissionModuleGroup[] = [
   {
@@ -86,68 +86,12 @@ export const PERMISSION_MODULE_GROUPS: PermissionModuleGroup[] = [
     ],
   },
   {
-    id: "operations",
-    label: "Operations",
-    modules: [
-      {
-        id: "calls",
-        label: "Calls",
-        actions: [],
-        children: [
-          {
-            id: "calls_live",
-            label: "Live Calls",
-            description: "Active calls",
-            actions: [...CRUD, "download"],
-          },
-          {
-            id: "calls_history",
-            label: "History",
-            description: "Past calls",
-            actions: [...CRUD, "download"],
-          },
-          {
-            id: "calls_recordings",
-            label: "Recordings",
-            description: "Call audio",
-            actions: [...CRUD, "download"],
-          },
-        ],
-      },
-      {
-        id: "responses",
-        label: "Responses",
-        actions: [],
-        children: [
-          {
-            id: "responses_all",
-            label: "All Responses",
-            description: "Full inbox",
-            actions: ["read", "update", "delete", "download"],
-          },
-          {
-            id: "responses_pending",
-            label: "Pending",
-            description: "Awaiting follow-up",
-            actions: ["read", "update", "delete"],
-          },
-          {
-            id: "responses_flagged",
-            label: "Flagged",
-            description: "Marked for review",
-            actions: ["read", "update", "delete"],
-          },
-        ],
-      },
-    ],
-  },
-  {
     id: "insights",
     label: "Insights",
     modules: [
       {
         id: "reports",
-        label: "Reports",
+        label: "Analytics",
         description: "Analytics",
         actions: ["read", "download"],
       },
@@ -320,7 +264,7 @@ function pickActions(
 
 /**
  * Any shape → flat RolePermissions (supports legacy nested docs).
- * DB/API store flat leaf keys only (my_surveys, voices, calls_live, …).
+ * DB/API store flat leaf keys only (my_surveys, voices, …).
  */
 export function flattenPermissions(
   incoming:

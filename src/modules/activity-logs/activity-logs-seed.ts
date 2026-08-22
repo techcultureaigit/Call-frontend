@@ -73,11 +73,11 @@ export const MOCK_ACTIVITY_LOGS: ActivityLog[] = [
   {
     id: "log-3",
     action: "export",
-    module: "responses",
+    module: "reports",
     resourceType: "Export",
     resourceId: "export-44",
-    resourceName: "Responses CSV Export",
-    summary: "Exported 248 survey responses",
+    resourceName: "Survey Results CSV Export",
+    summary: "Exported 248 survey results",
     performedBy: actors.rep,
     ipAddress: "172.16.0.5",
     changes: [],
@@ -173,7 +173,7 @@ export const MOCK_ACTIVITY_LOGS: ActivityLog[] = [
   {
     id: "log-9",
     action: "retry",
-    module: "calls",
+    module: "my_surveys",
     resourceType: "Call",
     resourceId: "call-4412",
     resourceName: "Call to John Davis",
@@ -215,7 +215,6 @@ export const MOCK_ACTIVITY_LOGS: ActivityLog[] = [
     performedBy: actors.admin,
     changes: [
       { field: "reports.read", before: "false", after: "true" },
-      { field: "responses.read", before: "false", after: "true" },
     ],
     occurredAt: ago(540),
     createdAt: ago(540),
@@ -240,11 +239,11 @@ export const MOCK_ACTIVITY_LOGS: ActivityLog[] = [
   {
     id: "log-13",
     action: "update",
-    module: "responses",
-    resourceType: "Response",
-    resourceId: "resp-88",
-    resourceName: "Response from Lisa Thompson",
-    summary: "Response status updated",
+    module: "my_surveys",
+    resourceType: "Call",
+    resourceId: "call-88",
+    resourceName: "Call with Lisa Thompson",
+    summary: "Call outcome updated",
     performedBy: actors.rep,
     changes: [
       { field: "status", before: "pending_review", after: "completed" },
@@ -390,7 +389,7 @@ export const MOCK_ACTIVITY_LOGS: ActivityLog[] = [
   {
     id: "log-22",
     action: "update",
-    module: "calls",
+    module: "my_surveys",
     resourceType: "Call",
     resourceId: "call-2201",
     resourceName: "Call to Sarah Miller",

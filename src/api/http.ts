@@ -20,6 +20,7 @@ const BACKEND_RESOURCES = new Set([
   "voices",
   "audio",
   "providers",
+  "analytics",
 ]);
 
 export class ApiError extends Error {

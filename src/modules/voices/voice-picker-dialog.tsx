@@ -1,35 +1,39 @@
 "use client";
 
-import { useEffect, useRef, useState, type MouseEvent } from "react";
-import { motion } from "framer-motion";
+import { useEffect, useMemo, useRef, useState, type MouseEvent } from "react";
 import {
+  AudioLines,
   Check,
-  Gauge,
+  ChevronDown,
   Pause,
   Play,
   RotateCcw,
   Search,
-  Sparkles,
+  Users,
   Volume2,
   VolumeX,
 } from "lucide-react";
 import { GenderIcon } from "@/modules/voices/gender-icons";
 import { Button } from "@/components/ui/button";
 import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  Sheet,
+  SheetContent,
+  SheetFooter,
+  SheetHeader,
+} from "@/components/ui/sheet";
 import { Input } from "@/components/ui/input";
-import { Select } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useDebounce } from "@/hooks";
 import {
   DEFAULT_VOICE_SPEED,
   getAgentLanguageLabel,
-  getVoiceSpeedLabel,
   normalizeVoiceSpeed,
   VOICE_SPEED_OPTIONS,
 } from "@/lib/constants/agent-config";
@@ -43,11 +47,18 @@ import {
 } from "@/modules/voices/voice-playback";
 import { filtersToVoicesParams, listVoices } from "@/modules/voices/api";
 import { VoicesPagination } from "@/modules/voices/voices-pagination";
+import {
+  TABLE_BODY_CELL_CLASS,
+  TABLE_BODY_ROW_CLASS,
+  TABLE_HEAD_CELL_CLASS,
+  TABLE_HEAD_ROW_CLASS,
+} from "@/components/shared/table-column-layout";
 import { cn } from "@/lib/utils";
 import type { VoiceGenderFilter, VoiceProfile } from "@/types/voice";
 import type { PaginatedMeta } from "@/types";
 
-const PAGE_SIZE = 8;
+const PAGE_SIZE = 10;
+const WAVEFORM_BARS = 32;
 
 const GENDER_FILTERS: { value: VoiceGenderFilter; label: string }[] = [
   { value: "all", label: "All" },
@@ -58,7 +69,6 @@ const GENDER_FILTERS: { value: VoiceGenderFilter; label: string }[] = [
 
 const PREVIEW_SELECTOR = "audio[data-voice-picker-preview]";
 
-/** Only one preview should ever be audible — also silences the shared player. */
 function pauseAllPickerAudio(except?: HTMLAudioElement) {
   if (typeof document === "undefined") return;
   document
@@ -75,16 +85,33 @@ function formatAudioTime(value: number) {
   return `${minutes}:${String(seconds).padStart(2, "0")}`;
 }
 
+function formatSpeedLabel(speed: number) {
+  return `${speed.toFixed(1)}x`;
+}
+
+function voiceWaveform(seed: string, count = WAVEFORM_BARS): number[] {
+  let n = 2166136261;
+  for (let i = 0; i < seed.length; i += 1) {
+    n ^= seed.charCodeAt(i);
+    n = Math.imul(n, 16777619);
+  }
+  const bars: number[] = [];
+  for (let i = 0; i < count; i += 1) {
+    n = Math.imul(n ^ (n >>> 13), 1274126177);
+    bars.push(5 + (Math.abs(n) % 19));
+  }
+  return bars;
+}
+
 interface VoicePickerDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   language: string;
   provider: string;
   selectedVoice?: string;
-  /** Speaking rate saved on the survey — also used for the previews here */
   speed?: number;
   onSpeedChange?: (speed: number) => void;
-  onSelect: (voice: VoiceProfile | null) => void;
+  onSelect: (voice: VoiceProfile | null, speed?: number) => void;
 }
 
 export function VoicePickerDialog({
@@ -136,7 +163,6 @@ export function VoicePickerDialog({
 
     (async () => {
       try {
-        // API: listVoices() → GET /api/voices
         const result = await listVoices(
           filtersToVoicesParams(
             {
@@ -189,6 +215,11 @@ export function VoicePickerDialog({
     setPage(1);
   };
 
+  const handleClose = () => {
+    stopVoiceRingtone();
+    onOpenChange(false);
+  };
+
   const providerLabel =
     provider === "elevenlabs"
       ? "ElevenLabs"
@@ -197,291 +228,325 @@ export function VoicePickerDialog({
         : provider;
 
   const langLabel = getAgentLanguageLabel(language) || language || "—";
+  const filtersDirty = search.trim() !== "" || gender !== "all";
 
   return (
-    <Dialog
+    <Sheet
       open={open}
       onOpenChange={(next) => {
         if (!next) stopVoiceRingtone();
         onOpenChange(next);
       }}
+      className="sm:max-w-3xl md:max-w-5xl lg:max-w-6xl"
     >
-      <DialogContent className="flex max-h-[90vh] w-full max-w-4xl flex-col gap-0 overflow-hidden border-0 p-0 shadow-2xl sm:rounded-[14px] [&>button]:text-white [&>button]:hover:text-white">
-        {/* Hero header */}
-        <DialogHeader className="relative isolate shrink-0 px-6 pb-6 pt-6 text-left text-white sm:rounded-t-[14px]">
-          <div
-            aria-hidden
-            className="absolute inset-0 overflow-hidden brand-gradient sm:rounded-t-[14px]"
-          />
-          <div
-            aria-hidden
-            className="absolute inset-0 overflow-hidden opacity-30 sm:rounded-t-[14px]"
-            style={{
-              backgroundImage:
-                "radial-gradient(circle at 12% 20%, rgba(255,255,255,0.35), transparent 42%), radial-gradient(circle at 88% 10%, rgba(255,255,255,0.2), transparent 36%)",
-            }}
-          />
-          <WaveformDecor />
-          <div className="relative z-10 flex items-start justify-between gap-4 pr-10">
-            <div className="min-w-0 space-y-2.5">
-              <div className="inline-flex items-center gap-1.5 rounded-full bg-white/15 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-white/90 backdrop-blur-sm">
-                <Sparkles className="size-3" />
-                Voice library
+      <SheetHeader
+        onClose={handleClose}
+        className="relative overflow-hidden border-b border-border/50 bg-card py-5"
+      >
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-0 bg-mesh opacity-50"
+        />
+        <div className="relative flex items-start gap-3.5 pr-2">
+          <span className="mt-0.5 flex size-10 shrink-0 items-center justify-center rounded-[6px] brand-gradient text-brand-foreground shadow-brand">
+            <AudioLines className="size-5" />
+          </span>
+          <div className="min-w-0 flex-1">
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div className="min-w-0">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-primary">
+                  Agent voice
+                </p>
+                <h2 className="mt-0.5 text-xl font-semibold tracking-tight text-foreground">
+                  Voice library
+                </h2>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Preview a sample, set speed on the row, then choose a voice.
+                </p>
               </div>
-              <DialogTitle className="font-display text-2xl font-semibold leading-tight tracking-tight text-white sm:text-[1.7rem]">
-                Find your agent voice
-              </DialogTitle>
-              <p className="max-w-lg text-sm leading-relaxed text-white/80">
-                Listening first? Tap preview. Ready? Choose — filtered for{" "}
-                <span className="font-semibold text-white">{langLabel}</span> on{" "}
-                <span className="font-semibold text-white">{providerLabel}</span>.
-              </p>
-            </div>
-            <div className="hidden shrink-0 rounded-[10px] border border-white/20 bg-white/10 px-3 py-2 text-right backdrop-blur-sm sm:block">
-              <p className="text-[10px] font-semibold uppercase tracking-wide text-white/70">
-                Matching
-              </p>
-              <p className="text-lg font-semibold tabular-nums text-white">
-                {meta?.total ?? "—"}
-              </p>
+              <div className="flex flex-wrap items-center gap-1.5">
+                <span className="inline-flex items-center gap-1.5 rounded-[6px] border border-border/70 bg-background/90 px-2.5 py-1 text-[11px] font-medium text-foreground">
+                  <span className="size-1.5 rounded-full bg-primary" />
+                  {langLabel}
+                </span>
+                <span className="inline-flex items-center rounded-[6px] border border-border/70 bg-background/90 px-2.5 py-1 text-[11px] font-medium text-foreground">
+                  {providerLabel}
+                </span>
+                <span className="inline-flex items-center rounded-[6px] border border-primary/20 bg-primary/10 px-2.5 py-1 text-[11px] font-semibold tabular-nums text-primary">
+                  {meta?.total ?? "—"} voices
+                </span>
+              </div>
             </div>
           </div>
-        </DialogHeader>
+        </div>
+      </SheetHeader>
 
-        {/* Filters */}
-        <div className="shrink-0 space-y-3 border-b border-border/50 bg-card px-6 py-4">
-          <div className="relative">
+      <div className="shrink-0 border-b border-border/50 bg-card px-6 py-3.5">
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
+          <div className="relative min-w-0 flex-1">
             <Search className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
             <Input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search by name, accent, tone…"
-              className="h-11 rounded-[10px] border-border/60 bg-muted/30 pl-10 text-sm shadow-none focus-visible:bg-card"
+              placeholder="Search by name, tone, or style…"
+              className="h-10 rounded-[6px] border-border/60 bg-background pl-10 shadow-subtle"
               aria-label="Search voices"
             />
           </div>
+
           <div className="flex flex-wrap items-center gap-2">
-            <div className="flex flex-wrap items-center gap-1 rounded-[10px] border border-border/50 bg-muted/25 p-1">
-              {GENDER_FILTERS.map((g) => (
-                <button
-                  key={g.value}
-                  type="button"
-                  onClick={() => setGender(g.value)}
-                  className={cn(
-                    "inline-flex h-8 items-center gap-1.5 rounded-[8px] px-2.5 text-xs font-medium transition-all",
-                    gender === g.value
-                      ? "brand-gradient text-brand-foreground shadow-sm"
-                      : "text-muted-foreground hover:bg-background hover:text-foreground"
-                  )}
-                >
-                  {g.value !== "all" && (
-                    <GenderIcon gender={g.value} className="size-3.5" />
-                  )}
-                  {g.label}
-                </button>
-              ))}
-            </div>
-            <Button
-              type="button"
-              variant="ghost"
-              className="h-8 gap-1.5 rounded-[8px] text-xs text-muted-foreground"
-              onClick={handleReset}
-            >
-              <RotateCcw className="size-3.5" />
-              Reset
-            </Button>
-
-            <span className="inline-flex h-8 items-center gap-1.5 rounded-[10px] border border-border/50 bg-muted/25 px-2.5 text-[11px] font-semibold text-muted-foreground sm:ml-auto">
-              <Gauge className="size-3.5 text-brand" />
-              Speed
-              <span className="tabular-nums text-brand">
-                {getVoiceSpeedLabel(activeSpeed)}
-              </span>
-            </span>
-          </div>
-          <p className="text-[11px] text-muted-foreground">
-            Select a speed from 0.7x to 1.2x on any voice card. The selected
-            speed is used for previews and saved with the survey.
-          </p>
-        </div>
-
-        {/* Grid */}
-        <div
-          className={cn(
-            "min-h-0 flex-1 overflow-y-auto px-6 py-5 pb-6",
-            "bg-[radial-gradient(ellipse_at_top,color-mix(in_oklch,var(--brand)_7%,transparent),transparent_55%)]",
-            isFetching && "opacity-75"
-          )}
-        >
-          {!sourceOk ? (
-            <EmptyState message="Choose Google or ElevenLabs as the TTS provider." />
-          ) : isLoading ? (
-            <div className="grid items-start gap-4 sm:grid-cols-2">
-              {Array.from({ length: 6 }).map((_, i) => (
-                <Skeleton key={i} className="h-44 rounded-[12px]" />
-              ))}
-            </div>
-          ) : voices.length === 0 ? (
-            <EmptyState message="No voices for this language and provider. Try another filter." />
-          ) : (
-            <div className="grid items-start gap-4 sm:grid-cols-2">
-              {voices.map((voice, i) => {
-                const isSelected =
-                  voice.id === selectedVoice ||
-                  voice.name === selectedVoice ||
-                  voice.voiceId === selectedVoice;
-
+            <div className="inline-flex h-10 items-center rounded-[6px] border border-border/60 bg-muted/35 p-1">
+              {GENDER_FILTERS.map((g) => {
+                const active = gender === g.value;
                 return (
-                  <PickerVoiceCard
-                    key={voice.id}
-                    voice={voice}
-                    index={i}
-                    selected={isSelected}
-                    speed={activeSpeed}
-                    onSpeedChange={onSpeedChange}
-                    onSelect={() => {
-                      if (isSelected) {
-                        onSelect(null);
-                        return;
-                      }
-                      pauseAllPickerAudio();
-                      onSelect(voice);
-                    }}
-                  />
+                  <button
+                    key={g.value}
+                    type="button"
+                    onClick={() => setGender(g.value)}
+                    className={cn(
+                      "inline-flex h-8 items-center gap-1.5 rounded-[5px] px-3 text-xs font-medium transition-all",
+                      active
+                        ? "bg-card text-foreground shadow-subtle"
+                        : "text-muted-foreground hover:text-foreground"
+                    )}
+                  >
+                    {g.value === "all" ? (
+                      <Users className="size-3.5" />
+                    ) : (
+                      <GenderIcon gender={g.value} className="size-3.5" />
+                    )}
+                    {g.label}
+                  </button>
                 );
               })}
             </div>
-          )}
+
+            {filtersDirty && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="h-10 gap-1.5 rounded-[6px] px-2.5 text-xs text-muted-foreground"
+                onClick={handleReset}
+              >
+                <RotateCcw className="size-3.5" />
+                Reset
+              </Button>
+            )}
+          </div>
         </div>
+      </div>
 
-        <DialogFooter className="shrink-0 flex-col gap-3 border-t border-border/50 bg-card px-6 py-3.5 sm:flex-row sm:items-center sm:justify-between">
-          {meta && meta.total > 0 ? (
-            <VoicesPagination
-              meta={meta}
-              onPageChange={setPage}
-            />
-          ) : (
-            <div />
-          )}
-          <Button
-            type="button"
-            variant="outline"
-            className="rounded-[10px] sm:ml-auto"
-            onClick={() => {
-              stopVoiceRingtone();
-              onOpenChange(false);
-            }}
-          >
-            Close
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
-}
+      <SheetContent
+        className={cn(
+          "min-h-0 bg-muted/20 px-0 py-0",
+          isFetching && "opacity-70"
+        )}
+      >
+        {!sourceOk ? (
+          <EmptyState message="Choose Google or ElevenLabs as the TTS provider." />
+        ) : isLoading ? (
+          <div className="space-y-2 px-5 py-5 sm:px-6">
+            {Array.from({ length: 8 }).map((_, i) => (
+              <Skeleton key={i} className="h-14 w-full rounded-[6px]" />
+            ))}
+          </div>
+        ) : voices.length === 0 ? (
+          <EmptyState message="No voices for this language and provider. Try another filter." />
+        ) : (
+          <div className="h-full overflow-auto px-4 py-4 scrollbar-thin sm:px-6">
+            <div className="overflow-hidden rounded-[6px] border border-border/60 bg-card shadow-card">
+              <table className="w-full border-collapse text-left text-sm">
+                <thead className="sticky top-0 z-10">
+                  <tr
+                    className={cn(
+                      TABLE_HEAD_ROW_CLASS,
+                      "bg-card/95 backdrop-blur-sm"
+                    )}
+                  >
+                    <th className={cn(TABLE_HEAD_CELL_CLASS, "w-[26%] pl-4")}>
+                      Voice
+                    </th>
+                    <th className={cn(TABLE_HEAD_CELL_CLASS, "w-[12%]")}>
+                      Gender
+                    </th>
+                    <th className={cn(TABLE_HEAD_CELL_CLASS, "w-[46%]")}>
+                      Preview
+                    </th>
+                    <th
+                      className={cn(
+                        TABLE_HEAD_CELL_CLASS,
+                        "w-[16%] pr-4 text-right"
+                      )}
+                    >
+                      Action
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {voices.map((voice) => {
+                    const isSelected =
+                      voice.id === selectedVoice ||
+                      voice.name === selectedVoice ||
+                      voice.voiceId === selectedVoice;
 
-function WaveformDecor() {
-  return (
-    <svg
-      aria-hidden
-      className="pointer-events-none absolute bottom-0 right-0 h-24 w-64 translate-x-4 opacity-25"
-      viewBox="0 0 240 80"
-      fill="none"
-    >
-      {Array.from({ length: 28 }).map((_, i) => {
-        const h = 10 + ((i * 17) % 48);
-        return (
-          <rect
-            key={i}
-            x={i * 8.5}
-            y={40 - h / 2}
-            width="3.5"
-            height={h}
-            rx="1.75"
-            fill="white"
-          />
-        );
-      })}
-    </svg>
+                    return (
+                      <PickerVoiceRow
+                        key={voice.id}
+                        voice={voice}
+                        selected={isSelected}
+                        initialSpeed={
+                          isSelected ? activeSpeed : DEFAULT_VOICE_SPEED
+                        }
+                        onSpeedChange={onSpeedChange}
+                        onSelect={(rowSpeed) => {
+                          if (isSelected) {
+                            onSelect(null);
+                            return;
+                          }
+                          pauseAllPickerAudio();
+                          onSelect(voice, rowSpeed);
+                        }}
+                      />
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+      </SheetContent>
+
+      <SheetFooter className="flex flex-col gap-3 border-t border-border/50 bg-card sm:flex-row sm:items-center sm:justify-between">
+        {meta && meta.total > 0 ? (
+          <VoicesPagination meta={meta} onPageChange={setPage} />
+        ) : (
+          <div />
+        )}
+        <Button
+          type="button"
+          className="min-w-28 rounded-[6px] sm:ml-auto"
+          onClick={handleClose}
+        >
+          Done
+        </Button>
+      </SheetFooter>
+    </Sheet>
   );
 }
 
 function EmptyState({ message }: { message: string }) {
   return (
-    <div className="flex flex-col items-center justify-center rounded-[14px] border border-dashed border-border/70 bg-card/80 py-20 text-center shadow-sm">
-      <span className="mb-4 flex size-14 items-center justify-center rounded-full brand-gradient text-brand-foreground shadow-brand">
-        <Volume2 className="size-6" />
+    <div className="relative flex h-full min-h-72 flex-col items-center justify-center overflow-hidden px-6 py-20 text-center">
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 bg-mesh opacity-50"
+      />
+      <span className="relative mb-4 flex size-14 items-center justify-center rounded-[6px] border border-border/60 bg-card text-primary shadow-elevated">
+        <AudioLines className="size-6" />
       </span>
-      <p className="max-w-sm text-sm text-muted-foreground">{message}</p>
+      <p className="relative max-w-xs text-sm leading-relaxed text-muted-foreground">
+        {message}
+      </p>
     </div>
   );
 }
 
-function AvatarTone({
-  name,
-  gender,
-  playing,
+function SpeedDropdown({
+  speed,
+  voiceName,
+  onChange,
 }: {
-  name: string;
-  gender: VoiceProfile["gender"];
-  playing: boolean;
+  speed: number;
+  voiceName: string;
+  onChange: (speed: number) => void;
 }) {
-  const initial = (name.trim()[0] || "?").toUpperCase();
-  const tone =
-    gender === "feminine"
-      ? "from-pink-400/90 to-rose-500/80"
-      : gender === "masculine"
-        ? "from-sky-400/90 to-brand"
-        : "from-slate-400/90 to-slate-600/80";
-
   return (
-    <span className="relative flex size-12 shrink-0 items-center justify-center">
-      {playing && (
-        <span className="absolute inset-0 animate-ping rounded-full bg-brand/30" />
-      )}
-      <span
-        className={cn(
-          "relative flex size-12 items-center justify-center rounded-full bg-linear-to-br text-sm font-bold text-white shadow-md ring-2 ring-white/80 dark:ring-background",
-          tone
-        )}
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <button
+          type="button"
+          className="inline-flex h-7 shrink-0 items-center gap-1 rounded-[6px] border border-border/60 bg-background px-2 text-[11px] font-semibold tabular-nums text-foreground shadow-subtle transition-colors hover:border-primary/35 hover:bg-muted/50"
+          aria-label={`Playback speed for ${voiceName}`}
+        >
+          {formatSpeedLabel(speed)}
+          <ChevronDown className="size-3 text-muted-foreground" />
+        </button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent
+        align="end"
+        sideOffset={6}
+        className="z-80 min-w-28 p-1"
       >
-        {playing ? <Pause className="size-4" /> : initial}
-      </span>
-    </span>
+        <DropdownMenuLabel className="px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.12em]">
+          Speed
+        </DropdownMenuLabel>
+        {VOICE_SPEED_OPTIONS.map((option) => {
+          const value = Number(option.value);
+          const active = speed === value;
+          return (
+            <DropdownMenuItem
+              key={option.value}
+              onSelect={() => onChange(normalizeVoiceSpeed(value))}
+              className={cn(
+                "cursor-pointer justify-between rounded-[5px] text-xs font-medium",
+                active && "bg-primary/10 text-primary focus:bg-primary/12 focus:text-primary"
+              )}
+            >
+              {formatSpeedLabel(value)}
+              {active ? <Check className="size-3.5" strokeWidth={2.5} /> : null}
+            </DropdownMenuItem>
+          );
+        })}
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }
 
-function PickerVoiceCard({
+function PickerVoiceRow({
   voice,
-  index,
   selected,
-  speed,
+  initialSpeed,
   onSpeedChange,
   onSelect,
 }: {
   voice: VoiceProfile;
-  index: number;
   selected: boolean;
-  speed: number;
+  initialSpeed: number;
   onSpeedChange?: (speed: number) => void;
-  onSelect: () => void;
+  onSelect: (speed: number) => void;
 }) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [isMuted, setIsMuted] = useState(false);
-  const providerStyle = VOICE_PROVIDER_STYLES[voice.provider];
+  const [rowSpeed, setRowSpeed] = useState(() =>
+    normalizeVoiceSpeed(initialSpeed)
+  );
   const genderStyle = VOICE_GENDER_STYLES[voice.gender];
+  const providerStyle = VOICE_PROVIDER_STYLES[voice.provider];
+  const initial = (voice.name.trim()[0] || "?").toUpperCase();
+  const bars = useMemo(
+    () => voiceWaveform(voice.id || voice.name),
+    [voice.id, voice.name]
+  );
+  const progress = duration > 0 ? (currentTime / duration) * 100 : 0;
 
   useEffect(() => {
     const el = audioRef.current;
-    if (el && el.playbackRate !== speed) el.playbackRate = speed;
-  }, [speed]);
+    if (el && el.playbackRate !== rowSpeed) el.playbackRate = rowSpeed;
+  }, [rowSpeed]);
 
-  const handleListen = (e: MouseEvent) => {
-    e.stopPropagation();
-    e.preventDefault();
+  const applySpeed = (next: number) => {
+    const rate = normalizeVoiceSpeed(next);
+    setRowSpeed(rate);
+    if (audioRef.current) audioRef.current.playbackRate = rate;
+    if (selected) onSpeedChange?.(rate);
+  };
+
+  const togglePlay = (e?: MouseEvent) => {
+    e?.stopPropagation();
     const el = audioRef.current;
     if (!el) return;
     if (el.paused) void el.play();
@@ -489,98 +554,74 @@ function PickerVoiceCard({
   };
 
   return (
-    <motion.article
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: Math.min(index, 6) * 0.04, duration: 0.28 }}
+    <tr
       className={cn(
-        "group relative flex flex-col rounded-[12px] border bg-card p-4 shadow-sm transition-[border-color,box-shadow,transform] duration-200 hover:-translate-y-0.5 hover:shadow-md",
-        selected
-          ? "border-brand/55 shadow-brand ring-1 ring-brand/25"
-          : "border-border/45 hover:border-brand/30"
+        TABLE_BODY_ROW_CLASS,
+        selected && "bg-primary/5 hover:bg-primary/8",
+        isPlaying && !selected && "bg-primary/4"
       )}
     >
-      <div
-        aria-hidden
-        className={cn(
-          "pointer-events-none absolute -right-6 -top-8 size-28 rounded-full blur-2xl transition-opacity",
-          selected || isPlaying ? "opacity-100" : "opacity-0 group-hover:opacity-70",
-          voice.gender === "feminine"
-            ? "bg-pink-400/25"
-            : voice.gender === "masculine"
-              ? "bg-sky-400/25"
-              : "bg-slate-400/20"
-        )}
-      />
-
-      <div className="relative flex gap-3">
-        <button
-          type="button"
-          onClick={handleListen}
-          className="shrink-0 self-start"
-          aria-label={
-            isPlaying ? `Pause ${voice.name}` : `Listen to ${voice.name}`
-          }
-          title="Listen"
-        >
-          <AvatarTone
-            name={voice.name}
-            gender={voice.gender}
-            playing={isPlaying}
+      <td className={cn(TABLE_BODY_CELL_CLASS, "relative max-w-0 py-3 pl-4")}>
+        {selected && (
+          <span
+            aria-hidden
+            className="absolute inset-y-2.5 left-0 w-0.75 rounded-r-full brand-gradient"
           />
-        </button>
-
-        <div className="min-w-0 flex-1">
-          <div className="flex items-start gap-2">
-            <h3 className="line-clamp-2 flex-1 text-[15px] font-semibold leading-snug tracking-tight text-foreground">
-              {voice.name}
-            </h3>
-            <span
-              className={cn(
-                "mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full transition-all",
-                selected
-                  ? "bg-brand text-brand-foreground"
-                  : "border border-border/60 bg-transparent text-transparent"
-              )}
-              aria-hidden
-            >
-              <Check className="size-3" strokeWidth={3} />
-            </span>
-          </div>
-
-          <div className="mt-2 flex flex-wrap items-center gap-1.5">
-            <span
-              className={cn(
-                "inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-medium",
-                genderStyle.className
-              )}
-            >
-              <GenderIcon gender={voice.gender} className="size-3" />
-              {genderStyle.label}
-            </span>
-            <span
-              className={cn(
-                "inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-medium",
-                providerStyle.className
-              )}
-            >
-              {providerStyle.label}
-            </span>
-            <span className="text-[11px] text-muted-foreground">
-              {voice.languageLabel || voice.language}
-            </span>
-          </div>
-
-          <p
-            className="mt-2.5 line-clamp-3 text-xs leading-relaxed text-muted-foreground"
-            title={voice.description || `${voice.name} voice sample`}
+        )}
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={togglePlay}
+            className={cn(
+              "relative flex size-9 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white shadow-subtle",
+              voice.gender === "feminine" &&
+                "bg-linear-to-br from-pink-400 to-rose-500",
+              voice.gender === "masculine" &&
+                "bg-linear-to-br from-sky-400 to-primary",
+              voice.gender === "neutral" &&
+                "bg-linear-to-br from-slate-400 to-slate-600"
+            )}
+            aria-label={
+              isPlaying ? `Pause ${voice.name}` : `Play ${voice.name}`
+            }
           >
-            {voice.description || `${voice.name} voice sample`}
-          </p>
+            {isPlaying ? <Pause className="size-3.5 fill-current" /> : initial}
+          </button>
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-1.5">
+              <p
+                className="truncate font-semibold tracking-tight text-foreground"
+                title={voice.name}
+              >
+                {voice.name}
+              </p>
+              {selected && (
+                <Check
+                  className="size-3.5 shrink-0 text-primary"
+                  strokeWidth={2.5}
+                />
+              )}
+            </div>
+            <p className="mt-0.5 truncate text-xs text-muted-foreground">
+              {voice.languageLabel || voice.language} · {providerStyle.label}
+            </p>
+          </div>
         </div>
-      </div>
+      </td>
 
-      <div className="relative mt-4 flex shrink-0 flex-col gap-2">
+      <td className={cn(TABLE_BODY_CELL_CLASS, "py-3")}>
+        <span
+          className={cn(
+            "inline-flex items-center gap-1 rounded-[6px] border px-2 py-0.5 text-[11px] font-medium",
+            genderStyle.className
+          )}
+        >
+          <GenderIcon gender={voice.gender} className="size-3" />
+          {genderStyle.label}
+        </span>
+      </td>
+
+      <td className={cn(TABLE_BODY_CELL_CLASS, "py-3")}>
         <audio
           ref={audioRef}
           preload="metadata"
@@ -590,7 +631,7 @@ function PickerVoiceCard({
           onPlay={(e) => {
             stopVoiceRingtone();
             pauseAllPickerAudio(e.currentTarget);
-            e.currentTarget.playbackRate = speed;
+            e.currentTarget.playbackRate = rowSpeed;
             setIsPlaying(true);
           }}
           onPause={() => setIsPlaying(false)}
@@ -605,25 +646,58 @@ function PickerVoiceCard({
           Your browser does not support audio playback.
         </audio>
 
-        <div className="space-y-2 rounded-[12px] border border-border/60 bg-muted/35 p-2.5 shadow-inner">
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={handleListen}
-              className="flex size-8 shrink-0 items-center justify-center rounded-full bg-foreground text-background transition-opacity hover:opacity-80"
-              aria-label={isPlaying ? `Pause ${voice.name}` : `Play ${voice.name}`}
-            >
-              {isPlaying ? (
-                <Pause className="size-3.5 fill-current" />
-              ) : (
-                <Play className="ml-0.5 size-3.5 fill-current" />
-              )}
-            </button>
+        <div
+          className={cn(
+            "flex items-center gap-2 rounded-[6px] border px-2 py-1.5",
+            isPlaying
+              ? "border-primary/30 bg-primary/5"
+              : "border-border/50 bg-muted/25"
+          )}
+        >
+          <button
+            type="button"
+            onClick={togglePlay}
+            className={cn(
+              "flex size-7 shrink-0 items-center justify-center rounded-full transition-all",
+              isPlaying
+                ? "brand-gradient text-brand-foreground shadow-brand"
+                : "bg-foreground text-background hover:opacity-90"
+            )}
+            aria-label={
+              isPlaying ? `Pause ${voice.name}` : `Play ${voice.name}`
+            }
+          >
+            {isPlaying ? (
+              <Pause className="size-3 fill-current" />
+            ) : (
+              <Play className="ml-px size-3 fill-current" />
+            )}
+          </button>
 
-            <span className="w-17.5 shrink-0 text-[11px] font-medium tabular-nums text-muted-foreground">
-              {formatAudioTime(currentTime)} / {formatAudioTime(duration)}
-            </span>
-
+          <div className="relative flex h-6 min-w-0 flex-1 items-center">
+            <div className="flex h-full w-full items-center gap-px">
+              {bars.map((height, i) => {
+                const filled =
+                  i <= Math.round((progress / 100) * (bars.length - 1));
+                return (
+                  <span
+                    key={i}
+                    aria-hidden
+                    className={cn(
+                      "w-0.75 min-w-px flex-1 rounded-full",
+                      isPlaying && filled && "voice-eq-bar bg-primary",
+                      isPlaying && !filled && "bg-primary/25",
+                      !isPlaying && filled && "bg-primary/80",
+                      !isPlaying && !filled && "bg-foreground/18"
+                    )}
+                    style={{
+                      height: `${Math.max(4, height - 4)}px`,
+                      animationDelay: `${(i % 8) * 0.07}s`,
+                    }}
+                  />
+                );
+              })}
+            </div>
             <input
               type="range"
               min={0}
@@ -635,63 +709,62 @@ function PickerVoiceCard({
                 if (audioRef.current) audioRef.current.currentTime = next;
                 setCurrentTime(next);
               }}
-              className="h-1.5 min-w-0 flex-1 cursor-pointer accent-foreground"
+              className="voice-seek-overlay absolute inset-0 h-full w-full cursor-pointer"
               aria-label={`Seek ${voice.name} preview`}
             />
-
-            <button
-              type="button"
-              onClick={() => {
-                const next = !isMuted;
-                if (audioRef.current) audioRef.current.muted = next;
-                setIsMuted(next);
-              }}
-              className="flex size-8 shrink-0 items-center justify-center rounded-full text-foreground hover:bg-background/70"
-              aria-label={isMuted ? "Unmute preview" : "Mute preview"}
-            >
-              {isMuted ? (
-                <VolumeX className="size-4" />
-              ) : (
-                <Volume2 className="size-4" />
-              )}
-            </button>
           </div>
 
-          <div className="flex items-center gap-2 border-t border-border/50 pt-2">
-            <span className="inline-flex shrink-0 items-center gap-1 text-[11px] font-semibold text-muted-foreground">
-              <Gauge className="size-3.5 text-brand" />
-              Playback speed
-            </span>
-            <div className="min-w-0 flex-1">
-              <Select
-                value={String(speed)}
-                options={[...VOICE_SPEED_OPTIONS]}
-                onChange={(e) => {
-                  const rate = normalizeVoiceSpeed(e.target.value);
-                  if (audioRef.current) audioRef.current.playbackRate = rate;
-                  onSpeedChange?.(rate);
-                }}
-                className="h-8 rounded-[8px] bg-card text-xs"
-                aria-label={`Playback speed for ${voice.name}`}
-              />
-            </div>
-          </div>
-        </div>
+          <span className="hidden w-16 shrink-0 text-right text-[10px] font-medium tabular-nums text-muted-foreground sm:block">
+            {formatAudioTime(currentTime)} / {formatAudioTime(duration)}
+          </span>
 
-        <Button
+          <SpeedDropdown
+            speed={rowSpeed}
+            voiceName={voice.name}
+            onChange={applySpeed}
+          />
+
+          <button
             type="button"
-            size="sm"
-            variant={selected ? "outline" : "default"}
-            className={cn(
-              "h-9 w-full rounded-[10px] text-xs font-medium",
-              selected &&
-                "border-brand/45 bg-brand/10 text-brand hover:bg-brand/15 hover:text-brand"
-            )}
-            onClick={onSelect}
+            onClick={() => {
+              const next = !isMuted;
+              if (audioRef.current) audioRef.current.muted = next;
+              setIsMuted(next);
+            }}
+            className="flex size-7 shrink-0 items-center justify-center rounded-[6px] text-muted-foreground transition-colors hover:bg-background hover:text-foreground"
+            aria-label={isMuted ? "Unmute preview" : "Mute preview"}
           >
-            {selected ? "Unselect" : "Choose"}
+            {isMuted ? (
+              <VolumeX className="size-3.5" />
+            ) : (
+              <Volume2 className="size-3.5" />
+            )}
+          </button>
+        </div>
+      </td>
+
+      <td className={cn(TABLE_BODY_CELL_CLASS, "py-3 pr-4 text-right")}>
+        <Button
+          type="button"
+          size="sm"
+          variant={selected ? "outline" : "default"}
+          className={cn(
+            "h-8 min-w-20 rounded-[6px]",
+            selected &&
+              "border-primary/40 bg-primary/10 text-primary hover:bg-primary/15 hover:text-primary"
+          )}
+          onClick={() => onSelect(rowSpeed)}
+        >
+          {selected ? (
+            <span className="inline-flex items-center gap-1">
+              <Check className="size-3.5" strokeWidth={2.5} />
+              Selected
+            </span>
+          ) : (
+            "Choose"
+          )}
         </Button>
-      </div>
-    </motion.article>
+      </td>
+    </tr>
   );
 }

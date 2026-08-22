@@ -1049,13 +1049,13 @@ export function PersonaTab({
         onSpeedChange={(tts_speed) =>
           update("tts", { ...values.tts, tts_speed })
         }
-        onSelect={(voice) =>
+        onSelect={(voice, speed) =>
           update("tts", {
             ...values.tts,
             voice: voice?.id ?? "",
             voiceName: voice?.name ?? "",
             tts_speed: voice
-              ? (values.tts.tts_speed ?? DEFAULT_VOICE_SPEED)
+              ? (speed ?? values.tts.tts_speed ?? DEFAULT_VOICE_SPEED)
               : DEFAULT_VOICE_SPEED,
           })
         }
