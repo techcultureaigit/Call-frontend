@@ -1,4 +1,4 @@
-import { UserFormView } from "@/components/users/user-form-view";
+import { UsersCreateEditLoader } from "@/modules/users/users-by-id";
 
 export default async function EditUserPage({
   params,
@@ -6,5 +6,5 @@ export default async function EditUserPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  return <UserFormView userId={id} />;
+  return <UsersCreateEditLoader id={id} />;
 }

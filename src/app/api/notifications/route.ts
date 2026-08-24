@@ -5,7 +5,7 @@ import {
   markAllNotificationsRead,
   markNotificationRead,
   queryNotifications,
-} from "@/lib/data/notifications-repository";
+} from "@/modules/notifications/notifications-repository";
 import type { NotificationType } from "@/types/notification";
 
 export async function GET(request: Request) {

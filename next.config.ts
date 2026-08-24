@@ -3,6 +3,20 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
+  async redirects() {
+    return [
+      {
+        source: "/reports",
+        destination: "/analytics",
+        permanent: true,
+      },
+      {
+        source: "/favicon.ico",
+        destination: "/favicon.svg",
+        permanent: false,
+      },
+    ];
+  },
   experimental: {
     optimizePackageImports: [
       "lucide-react",

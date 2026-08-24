@@ -6,6 +6,7 @@ import {
   getAuthTokensFromCookies,
   setAuthCookies,
 } from "@/lib/auth/session";
+import { clearTableColumnPrefsCache } from "@/components/shared/table-column-prefs";
 import type { AuthSession, AuthTokens } from "@/types/auth";
 import type { User } from "@/types/user";
 
@@ -47,6 +48,7 @@ export const useAuthStore = create<AuthStore>()((set) => ({
   clearSession: () => {
     clearAuthCookies();
     clearLegacyAuthLocalStorage();
+    clearTableColumnPrefsCache();
     set({
       user: null,
       tokens: null,

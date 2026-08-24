@@ -73,7 +73,9 @@ export function selectIsGroupExpanded(
   groupId: string,
   activeGroupIds: string[] = []
 ): boolean {
-  // Current route lives in this group — always expand so the active page is visible
-  if (activeGroupIds.includes(groupId)) return true;
-  return expandedGroups[groupId] === true;
+  // User toggle wins over auto-expand on active route
+  if (groupId in expandedGroups) {
+    return expandedGroups[groupId];
+  }
+  return activeGroupIds.includes(groupId);
 }

@@ -26,10 +26,6 @@ Pairs with the backend at `calling-crm-backend` (`/api/v1`).
 - **Voices / Audio Buffer** — voice library and audio assets
 - **Survey Data** — customer / contact data for campaigns
 
-### Operations
-- **Calls** — live calls, history, recordings
-- **Responses** — all, pending, and flagged replies
-
 ### Insights
 - **Reports** — campaign and call analytics
 
@@ -89,10 +85,6 @@ cp .env.example .env
 ```
 
 ```env
-# App
-NEXT_PUBLIC_APP_URL=http://localhost:3000
-NEXT_PUBLIC_APP_NAME="CRM Admin"
-
 # API (calling-crm-backend)
 NEXT_PUBLIC_API_URL=http://localhost:8000/api/v1
 NEXT_PUBLIC_API_TIMEOUT=30000
@@ -125,9 +117,6 @@ App runs at: [http://localhost:3000](http://localhost:3000)
 
 Open `/login`. Dev login defaults (same as backend seed):
 
-| Email         | Password  |
-|---------------|-----------|
-| admin@crm.com | Admin@123 |
 
 > Middleware protects dashboard routes via the auth cookie (`crm_auth_token`). Unauthenticated users are redirected to `/login`.
 
@@ -154,8 +143,6 @@ Open `/login`. Dev login defaults (same as backend seed):
 | `/library/voices`            | Voices                           |
 | `/library/audio-buffer`      | Audio buffer                     |
 | `/customers`                 | Survey / contact data            |
-| `/calls`, `/calls/live`, …   | Call operations                  |
-| `/responses`, `/pending`, …  | Response inbox                   |
 | `/reports`                   | Reports                          |
 | `/users`, `/roles`           | Users & roles                    |
 | `/notifications`             | Notifications                    |

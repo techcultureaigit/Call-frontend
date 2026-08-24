@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getActivityLogById } from "@/lib/data/activity-logs-repository";
+import { getActivityLogById } from "@/modules/activity-logs/activity-logs-repository";
 
 export async function GET(
   _request: Request,

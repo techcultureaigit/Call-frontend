@@ -1,41 +1,62 @@
 import { NextResponse } from "next/server";
-import { deleteUser, getUserById, updateUser } from "@/lib/data/users-repository";
+import { proxyToBackend } from "@/lib/server/backend-proxy";
+
+export const dynamic = "force-dynamic";
 
 interface RouteParams {
   params: Promise<{ id: string }>;
 }
 
-export async function GET(_request: Request, { params }: RouteParams) {
+/** GET /api/users/:id → GET /api/v1/users/:id */
+export async function GET(request: Request, { params }: RouteParams) {
   const { id } = await params;
-  const user = getUserById(id);
-
-  if (!user) {
-    return NextResponse.json({ message: "User not found" }, { status: 404 });
-  }
-
-  return NextResponse.json({ success: true, data: user });
+  return proxyToBackend(request, "users", `/${id}`);
 }
 
+/**
+ * PATCH /api/users/:id
+ * - { status | isActive } → PATCH /api/v1/users/:id/status
+ * - otherwise → PUT /api/v1/users/:id
+ */
 export async function PATCH(request: Request, { params }: RouteParams) {
   const { id } = await params;
-  const body = await request.json();
-
-  const user = updateUser(id, body);
-
-  if (!user) {
-    return NextResponse.json({ message: "User not found" }, { status: 404 });
+  const raw = await request.text();
+  let body: Record<string, unknown> = {};
+  try {
+    body = raw ? JSON.parse(raw) : {};
+  } catch {
+    return NextResponse.json(
+      { success: false, data: null, message: "Invalid JSON body" },
+      { status: 400 }
+    );
   }
 
-  return NextResponse.json({ success: true, data: user });
+  const keys = Object.keys(body);
+  const isStatusOnly =
+    keys.length > 0 &&
+    keys.every((k) => k === "status" || k === "isActive");
+
+  if (isStatusOnly) {
+    const isActive =
+      typeof body.isActive === "boolean"
+        ? body.isActive
+        : body.status === "active" || body.status === "invited";
+    return proxyToBackend(request, "users", `/${id}/status`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ isActive }),
+    });
+  }
+
+  return proxyToBackend(request, "users", `/${id}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: raw,
+  });
 }
 
-export async function DELETE(_request: Request, { params }: RouteParams) {
+/** DELETE /api/users/:id → DELETE /api/v1/users/:id */
+export async function DELETE(request: Request, { params }: RouteParams) {
   const { id } = await params;
-  const deleted = deleteUser(id);
-
-  if (!deleted) {
-    return NextResponse.json({ message: "User not found" }, { status: 404 });
-  }
-
-  return NextResponse.json({ success: true, data: null });
+  return proxyToBackend(request, "users", `/${id}`, { method: "DELETE" });
 }

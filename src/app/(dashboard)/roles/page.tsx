@@ -1,5 +1,5 @@
-import { RolesView } from "@/components/roles";
+import { RolesListView } from "@/modules/roles";
 
 export default function RolesPage() {
-  return <RolesView />;
+  return <RolesListView />;
 }

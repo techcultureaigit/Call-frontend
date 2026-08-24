@@ -41,12 +41,12 @@ export const PERMISSION_ACTION_LABELS: Record<PermissionAction, string> = {
   publish: "Publish",
 };
 
-/** Full CRUD — My Surveys, Voices, Audio Buffer, Users, Roles, Settings */
+/** Full CRUD — My Surveys, Voices, Users, Roles, Settings */
 const CRUD: PermissionAction[] = ["create", "read", "update", "delete"];
 
 /**
  * Permission matrix UI — indicator (no CRUD) → leaf modules (CRUD).
- * Storage is FLAT leaf keys only. survey/calls/responses are labels for cascade UI.
+ * Storage is FLAT leaf keys only. survey is a label for cascade UI.
  */
 export const PERMISSION_MODULE_GROUPS: PermissionModuleGroup[] = [
   {
@@ -61,84 +61,25 @@ export const PERMISSION_MODULE_GROUPS: PermissionModuleGroup[] = [
       {
         id: "survey",
         label: "Survey",
-        description: "Indicator — set CRUD on submodules below",
         actions: [],
         children: [
           {
             id: "my_surveys",
             label: "My Surveys",
-            description: "Create, read, update, delete surveys",
-            actions: [...CRUD],
+            description: "Survey campaigns",
+            actions: [...CRUD, "export"],
           },
           {
             id: "voices",
             label: "Voices",
-            description: "Create, read, update, delete voices",
+            description: "Voice library",
             actions: [...CRUD, "download"],
           },
           {
-            id: "audio_buffer",
-            label: "Audio Buffer",
-            description: "Create, read, update, delete cached audio",
+            id: "providers",
+            label: "Providers",
+            description: "STT / LLM / TTS providers and models",
             actions: [...CRUD],
-          },
-          {
-            id: "survey_data",
-            label: "Survey Data",
-            description: "Create, read, update, delete contacts",
-            actions: [...CRUD, "export", "import", "download"],
-          },
-        ],
-      },
-    ],
-  },
-  {
-    id: "operations",
-    label: "Operations",
-    modules: [
-      {
-        id: "calls",
-        label: "Calls",
-        description: "Indicator — set CRUD on Live / History / Recordings",
-        actions: [],
-        children: [
-          {
-            id: "calls_live",
-            label: "Live Calls",
-            actions: [...CRUD, "download"],
-          },
-          {
-            id: "calls_history",
-            label: "History",
-            actions: [...CRUD, "download"],
-          },
-          {
-            id: "calls_recordings",
-            label: "Recordings",
-            actions: [...CRUD, "download"],
-          },
-        ],
-      },
-      {
-        id: "responses",
-        label: "Responses",
-        description: "Indicator — set permissions on All / Pending / Flagged",
-        actions: [],
-        children: [
-          {
-            id: "responses_all",
-            label: "All Responses",
-            actions: ["read", "update", "delete", "download"],
-          },
-          {
-            id: "responses_pending",
-            label: "Pending",
-            actions: ["read", "update", "delete"],
-          },
-          {
-            id: "responses_flagged",
-            label: "Flagged",
-            actions: ["read", "update", "delete"],
           },
         ],
       },
@@ -150,7 +91,8 @@ export const PERMISSION_MODULE_GROUPS: PermissionModuleGroup[] = [
     modules: [
       {
         id: "reports",
-        label: "Reports",
+        label: "Analytics",
+        description: "Analytics",
         actions: ["read", "download"],
       },
     ],
@@ -162,11 +104,13 @@ export const PERMISSION_MODULE_GROUPS: PermissionModuleGroup[] = [
       {
         id: "users",
         label: "Users",
+        description: "Team accounts",
         actions: [...CRUD, "export"],
       },
       {
         id: "roles",
         label: "Roles",
+        description: "Access control",
         actions: [...CRUD],
       },
     ],
@@ -178,16 +122,19 @@ export const PERMISSION_MODULE_GROUPS: PermissionModuleGroup[] = [
       {
         id: "notifications",
         label: "Notifications",
+        description: "Alerts",
         actions: ["read", "update"],
       },
       {
         id: "activity_logs",
         label: "Activity Logs",
+        description: "Audit trail",
         actions: ["read", "export", "download"],
       },
       {
         id: "settings",
         label: "Settings",
+        description: "App config",
         actions: [...CRUD],
       },
     ],
@@ -293,7 +240,6 @@ export function slugifyRole(name: string): string {
 
 const MODULE_ALIASES: Record<string, string> = {
   library: "voices",
-  customers: "survey_data",
   surveys: "my_surveys",
 };
 
@@ -318,7 +264,7 @@ function pickActions(
 
 /**
  * Any shape → flat RolePermissions (supports legacy nested docs).
- * DB/API store flat leaf keys only (my_surveys, voices, calls_live, …).
+ * DB/API store flat leaf keys only (my_surveys, voices, …).
  */
 export function flattenPermissions(
   incoming:

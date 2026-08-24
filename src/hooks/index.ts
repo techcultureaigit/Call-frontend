@@ -12,26 +12,23 @@ export { useAuth } from "./use-auth";
 export { usePermissions } from "./use-permissions";
 export { useKeyboardShortcut } from "./use-keyboard-shortcut";
 export { useNavigation } from "./use-navigation";
-export { useDashboard } from "./use-dashboard";
-export { useUsers, useUserMutations, useUserDetail } from "./use-users";
-export { useRoles, useRoleMutations, useRoleDetail } from "./use-roles";
-export { useCustomers, useCustomerMutations } from "./use-customers";
-export {
-  useSurveyTemplates,
-  useSurveyTemplateDetail,
-} from "./use-survey-templates";
-export { useCalls, useCallStats, useCallDetail, useCallMutations } from "./use-calls";
-export { useResponses, useResponseStats, useResponseFilterOptions, useResponseDetail, useResponseMutations } from "./use-responses";
-export { useReports, useReportCampaigns } from "./use-reports";
+export { usePaginatedList, EMPTY_PAGE_META } from "./use-paginated-list";
+
+/** Feature hooks — live in modules/ */
+export { useDashboard } from "@/modules/dashboard/use-dashboard";
+export { useUsers, useUserMutations, useUserDetail } from "@/modules/users/use-users";
+export { useRoles, useRoleMutations, useRoleDetail } from "@/modules/roles/use-roles";
+export { useReports, useReportCampaigns } from "@/modules/reports/use-reports";
 export {
   useNotifications,
   useNotificationFeed,
   useNotificationStats,
   useNotificationMutations,
-} from "./use-notifications";
+} from "@/modules/notifications/use-notifications";
 export {
   useActivityLogs,
   useActivityLogStats,
   useActivityLogFilterOptions,
   useActivityLogDetail,
-} from "./use-activity-logs";
+} from "@/modules/activity-logs/use-activity-logs";
+export { useVoices, useVoiceOptions, useVoiceDetail } from "@/modules/voices/use-voices";

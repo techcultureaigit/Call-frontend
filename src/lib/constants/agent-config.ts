@@ -1,4 +1,4 @@
-import type { AgentConfig } from "@/types/agent";
+import type { AgentConfig, AgentConfigTab } from "@/types/agent";
 
 export const DEFAULT_FAREWELL =
   "Thank you very much for your valuable time. We sincerely appreciate your participation in this survey. Have a wonderful day!";
@@ -18,16 +18,17 @@ export const AGENT_CONFIG_TABS = [
   { id: "farewell", label: "Farewell" },
   { id: "client-contact", label: "Contact of Client" },
   { id: "schedule", label: "Schedule" },
-  { id: "wisdom", label: "Knowledge" },
-  { id: "post-call", label: "Wrap-up" },
-  { id: "functions", label: "Tools" },
+  // Upcoming steps — keep commented (do not delete). Re-enable when ready.
+  // { id: "wisdom", label: "Knowledge" },
+  // { id: "post-call", label: "Wrap-up" },
+  // { id: "functions", label: "Tools" },
 ] as const;
 
-/** Steps kept in the stepper but not navigable yet */
+/** Upcoming / disabled steps — kept for reference; currently not in AGENT_CONFIG_TABS */
 export const DISABLED_AGENT_CONFIG_TABS = [
-  "wisdom",
-  "post-call",
-  "functions",
+  // "wisdom",
+  // "post-call",
+  // "functions",
 ] as const;
 
 export type DisabledAgentConfigTab =
@@ -35,53 +36,49 @@ export type DisabledAgentConfigTab =
 
 export const ENABLED_AGENT_CONFIG_TABS = AGENT_CONFIG_TABS.filter(
   (tab) =>
-    !DISABLED_AGENT_CONFIG_TABS.includes(
-      tab.id as DisabledAgentConfigTab
-    )
+    !(DISABLED_AGENT_CONFIG_TABS as readonly string[]).includes(tab.id)
 );
 
-export function isAgentConfigTabDisabled(
-  tab: (typeof AGENT_CONFIG_TABS)[number]["id"]
-): boolean {
-  return DISABLED_AGENT_CONFIG_TABS.includes(tab as DisabledAgentConfigTab);
+/** Tabs currently in the stepper (excludes commented upcoming steps). */
+const ACTIVE_AGENT_CONFIG_TAB_IDS = new Set<string>(
+  AGENT_CONFIG_TABS.map((tab) => tab.id)
+);
+
+export function isAgentConfigTabDisabled(tab: AgentConfigTab): boolean {
+  if (!ACTIVE_AGENT_CONFIG_TAB_IDS.has(tab)) return true;
+  return (DISABLED_AGENT_CONFIG_TABS as readonly string[]).includes(tab);
 }
 
+/** India languages — English + all 22 Eighth Schedule languages (ISO 639 codes). */
 export const AGENT_LANGUAGES = [
   { label: "English", value: "en" },
   { label: "Hindi", value: "hi" },
-  { label: "Chinese", value: "zh" },
-  { label: "Spanish", value: "es" },
-  { label: "French", value: "fr" },
+  { label: "Assamese", value: "as" },
+  { label: "Bengali", value: "bn" },
+  { label: "Bodo", value: "brx" },
+  { label: "Dogri", value: "doi" },
+  { label: "Gujarati", value: "gu" },
+  { label: "Kannada", value: "kn" },
+  { label: "Kashmiri", value: "ks" },
+  { label: "Konkani", value: "kok" },
+  { label: "Maithili", value: "mai" },
+  { label: "Malayalam", value: "ml" },
+  { label: "Manipuri (Meitei)", value: "mni" },
+  { label: "Marathi", value: "mr" },
+  { label: "Nepali", value: "ne" },
+  { label: "Odia", value: "or" },
+  { label: "Punjabi", value: "pa" },
+  { label: "Sanskrit", value: "sa" },
+  { label: "Santali", value: "sat" },
+  { label: "Sindhi", value: "sd" },
+  { label: "Tamil", value: "ta" },
+  { label: "Telugu", value: "te" },
+  { label: "Urdu", value: "ur" },
 ];
 
 export function getAgentLanguageLabel(code: string): string {
   return AGENT_LANGUAGES.find((l) => l.value === code)?.label ?? code;
 }
-
-export const STT_PROVIDERS = [
-  { label: "Sarvam AI", value: "sarvam" },
-  { label: "Deepgram", value: "deepgram" },
-  { label: "OpenAI Whisper", value: "whisper" },
-];
-
-export const LLM_PROVIDERS = [
-  { label: "OpenAI", value: "openai" },
-  { label: "Anthropic", value: "anthropic" },
-  { label: "Google", value: "google" },
-];
-
-export const TTS_PROVIDERS = [
-  { label: "Google", value: "google" },
-  { label: "ElevenLabs", value: "elevenlabs" },
-  { label: "Azure", value: "azure" },
-];
-
-export const BACKGROUND_NOISE = [
-  { label: "Off", value: "off" },
-  { label: "Office", value: "office" },
-  { label: "Cafe", value: "cafe" },
-  { label: "Call Center", value: "call-center" },
-];
 
 export const AGENT_TOOLS = [
   { id: "end-call", name: "End Call", description: "Gracefully end the conversation" },
@@ -93,22 +90,152 @@ export const AGENT_TOOLS = [
   { id: "external-transfer", name: "External Call Transfer", description: "Transfer to external number" },
 ];
 
-export const QUESTION_TYPES = [
-  { label: "Text Input", value: "text" },
-  { label: "Yes / No", value: "yes_no" },
-  { label: "Rating", value: "rating" },
-  { label: "Multiple Choice", value: "multiple_choice" },
-];
+export const DEFAULT_VOICE_SPEED = 1;
+
+export const DEFAULT_NOISE_TYPE = "off";
+export const DEFAULT_NOISE_VOLUME = 1;
+
+/** Background noise options — clips from `background voice/ambience` (served via /audio/noise) */
+export const NOISE_TYPE_OPTIONS = [
+  { label: "Off", value: "off", previewUrl: "" },
+  {
+    label: "City Ambience",
+    value: "city_ambience",
+    previewUrl: "/audio/noise/city_ambience.ogg",
+  },
+  {
+    label: "Crowded Room",
+    value: "crowded_room",
+    previewUrl: "/audio/noise/crowded_room.ogg",
+  },
+  {
+    label: "Forest Ambience",
+    value: "forest_ambience",
+    previewUrl: "/audio/noise/forest_ambience.wav",
+  },
+  {
+    label: "Office Ambience",
+    value: "office_ambience",
+    previewUrl: "/audio/noise/office_ambience.wav",
+  },
+  {
+    label: "Office Fan",
+    value: "office_fan_ambience",
+    previewUrl: "/audio/noise/office_fan_ambience.wav",
+  },
+  {
+    label: "Typing",
+    value: "typing_ambience",
+    previewUrl: "/audio/noise/typing_ambience.wav",
+  },
+] as const;
+
+export function getNoisePreviewUrl(noiseType: string): string {
+  return (
+    NOISE_TYPE_OPTIONS.find((o) => o.value === noiseType)?.previewUrl ?? ""
+  );
+}
+
+/** TTS rates supported by the survey voice configuration */
+export const VOICE_SPEED_OPTIONS = [
+  { label: "0.7x", value: "0.7" },
+  { label: "0.8x", value: "0.8" },
+  { label: "0.9x", value: "0.9" },
+  { label: "Normal (1.0x)", value: "1" },
+  { label: "1.1x", value: "1.1" },
+  { label: "1.2x", value: "1.2" },
+] as const;
+
+export function normalizeVoiceSpeed(value: unknown): number {
+  const num = Number(value);
+  return VOICE_SPEED_OPTIONS.some((o) => Number(o.value) === num)
+    ? num
+    : DEFAULT_VOICE_SPEED;
+}
+
+export function getVoiceSpeedLabel(value: unknown): string {
+  const speed = normalizeVoiceSpeed(value);
+  return (
+    VOICE_SPEED_OPTIONS.find((o) => Number(o.value) === speed)?.label ??
+    `${speed}x`
+  );
+}
 
 export const SURVEY_QUESTION_TYPES = [
   { label: "Normal Question", value: "text" },
+  { label: "Long", value: "long" },
   { label: "Yes / No", value: "yes_no" },
   { label: "Rating", value: "rating" },
+  { label: "Number", value: "number" },
   { label: "Multiple Choice", value: "multi" },
 ] as const;
 
+export const SURVEY_QUESTION_TYPE_HINTS: Record<
+  string,
+  { placeholder: string; defaultInstruction: string }
+> = {
+  text: {
+    placeholder:
+      "Optional instruction for this question (e.g. Collect a free-form spoken answer)",
+    defaultInstruction: "",
+  },
+  long: {
+    placeholder:
+      "Optional instruction for this question (e.g. Collect a detailed spoken description)",
+    defaultInstruction: "Collect a detailed spoken description",
+  },
+  yes_no: {
+    placeholder:
+      "Optional instruction for this question (e.g. Collect a yes or no answer only)",
+    defaultInstruction: "Collect a yes or no answer only",
+  },
+  rating: {
+    placeholder:
+      "Optional instruction for this question (e.g. Collect a rating from 1 to 5)",
+    defaultInstruction: "Collect a rating from 1 to 5",
+  },
+  number: {
+    placeholder:
+      "Optional instruction for this question (e.g. Collect a whole number only)",
+    defaultInstruction: "Collect a whole number only",
+  },
+  multi: {
+    placeholder:
+      "Optional instruction for this question (e.g. Collect one of the listed options)",
+    defaultInstruction: "Collect one of the listed options",
+  },
+};
+
+export function getSurveyQuestionTypeHint(type: string) {
+  return SURVEY_QUESTION_TYPE_HINTS[type] ?? SURVEY_QUESTION_TYPE_HINTS.text;
+}
+
+export function instructionAfterTypeChange(
+  current: string,
+  nextType: string
+): string {
+  const trimmed = current.trim();
+  const isKnownDefault = Object.values(SURVEY_QUESTION_TYPE_HINTS).some(
+    (hint) => hint.defaultInstruction && hint.defaultInstruction === trimmed
+  );
+  if (!trimmed || isKnownDefault) {
+    return getSurveyQuestionTypeHint(nextType).defaultInstruction;
+  }
+  return current;
+}
+
 export function getSurveyQuestionTypeLabel(type: string): string {
   if (type === "multiple_choice") return "Multiple Choice";
+  if (type === "numeric" || type === "integer" || type === "int") return "Number";
+  if (
+    type === "description" ||
+    type === "long_text" ||
+    type === "longtext" ||
+    type === "paragraph" ||
+    type === "desc"
+  ) {
+    return "Long";
+  }
   return (
     SURVEY_QUESTION_TYPES.find((t) => t.value === type)?.label ?? type
   );
@@ -119,7 +246,7 @@ export const DEFAULT_AGENT_CONFIG: AgentConfig = {
     name: "",
     avatarId: "aria",
     modelMode: "pipeline",
-    language: "en",
+    language: "hi",
     audioCacheEnabled: false,
     livekitInferenceEnabled: false,
     maxCallDurationMinutes: 15,
@@ -134,7 +261,7 @@ export const DEFAULT_AGENT_CONFIG: AgentConfig = {
       fallback: { provider: "deepgram", model: "nova-2" },
       advanced: {
         highVadSensitivity: false,
-        languageCode: "en-IN",
+        languageCode: "hi-IN",
         transcribeMode: "transcribe",
         interruptionSensitivity: 0.5,
         endpointingMs: 300,
@@ -154,22 +281,28 @@ export const DEFAULT_AGENT_CONFIG: AgentConfig = {
     tts: {
       provider: "google",
       model: "Google",
-      voice: "Aakash",
-      fallback: { provider: "elevenlabs", model: "multilingual-v2", voice: "Rachel" },
+      /** Set from Identity → Speak Voice Explorer (language + provider) */
+      voice: "",
+      tts_speed: 1,
+      fallback: {
+        provider: "elevenlabs",
+        model: "Eleven_flash_v2_5",
+        voice: "",
+      },
       advanced: {
         speakingRate: 1,
         stability: 0.6,
         pitch: 0,
       },
     },
-    backgroundNoise: "off",
+    noise_type: DEFAULT_NOISE_TYPE,
+    volume: DEFAULT_NOISE_VOLUME,
   },
   prompts: {
-    greeting: "Hello! Thank you for taking our call today. How are you doing?",
+    greeting: "",
     greetsFirst: true,
-    systemPrompt:
-      "You are a professional voice AI agent for enterprise customer outreach. Conduct surveys naturally, handle objections gracefully, and maintain a warm professional tone throughout the conversation.",
-    farewell: DEFAULT_FAREWELL,
+    systemPrompt: "",
+    farewell: "",
   },
   wisdom: {
     websiteUrls: [],

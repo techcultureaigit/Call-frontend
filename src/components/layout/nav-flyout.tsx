@@ -75,7 +75,7 @@ export function NavFlyout({
 
   const scheduleClose = () => {
     if (closeTimerRef.current) clearTimeout(closeTimerRef.current);
-    closeTimerRef.current = setTimeout(() => setIsOpen(false), 120);
+    closeTimerRef.current = setTimeout(() => setIsOpen(false), 220);
   };
 
   useEffect(() => {
@@ -104,16 +104,10 @@ export function NavFlyout({
       )}
       aria-label={item.title}
       aria-expanded={hasChildren ? isOpen : undefined}
-      onClick={(event) => {
-        if (hasChildren) {
-          event.preventDefault();
-          if (isOpen) setIsOpen(false);
-          else openFlyout();
-        }
-      }}
+      onClick={() => onNavigate?.()}
     >
       {isActive && (
-        <span className="absolute inset-0 rounded-[6px] bg-white" />
+        <span className="pointer-events-none absolute inset-0 rounded-[6px] bg-white" />
       )}
       <Icon
         className={cn(

@@ -49,22 +49,6 @@ export type {
   CustomerSource,
   CustomerImportRow,
 } from "./customer";
-export type { Survey, SurveyStatus, SurveyDetail, SurveyQuestion, QuestionType, ConditionalRule, SaveSurveyPayload } from "./survey";
-export type {
-  Call,
-  CallStatus,
-  CallDirection,
-  CallTranscriptLine,
-  CallTimelineEvent,
-  CallCustomerSnapshot,
-} from "./call";
-export type {
-  SurveyResponse,
-  ResponseStatus,
-  AiExtractedData,
-  SurveyResponseAnswer,
-  ResponseCustomerSnapshot,
-} from "./response";
 export type { ReportsData, ReportKpi, ReportPieSlice, ReportsQueryParams } from "./reports";
 export type {
   ActivityLog,
@@ -108,13 +92,6 @@ export type {
   HttpMethod,
 } from "./agent-action";
 export type {
-  TelephonyTab,
-  PurchasedNumber,
-  SipTrunk,
-  BuyNumberFormValues,
-  SipTrunkFormValues,
-} from "./telephony";
-export type {
   VoiceProfile,
   VoiceGender,
   VoiceProvider,
@@ -122,8 +99,3 @@ export type {
   VoiceTypeFilter,
   VoiceGenderFilter,
 } from "./voice";
-export type {
-  CachedVoice,
-  AudioBufferEntry,
-  AudioBufferCacheData,
-} from "./audio-buffer";

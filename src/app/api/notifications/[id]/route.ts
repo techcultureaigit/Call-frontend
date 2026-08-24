@@ -3,7 +3,7 @@ import {
   deleteNotification,
   getNotificationById,
   markNotificationRead,
-} from "@/lib/data/notifications-repository";
+} from "@/modules/notifications/notifications-repository";
 
 export async function GET(
   _request: Request,

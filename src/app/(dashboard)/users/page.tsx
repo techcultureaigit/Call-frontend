@@ -1,5 +1,5 @@
-import { UsersView } from "@/components/users";
+import { UsersListView } from "@/modules/users";
 
 export default function UsersPage() {
-  return <UsersView />;
+  return <UsersListView />;
 }

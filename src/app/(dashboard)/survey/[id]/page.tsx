@@ -1,4 +1,4 @@
-import { SurveyDetailLoader } from "@/components/survey";
+import { SurveyDetailLoader } from "@/modules/survey";
 
 interface PageProps {
   params: Promise<{ id: string }>;

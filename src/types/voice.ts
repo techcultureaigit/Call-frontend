@@ -16,6 +16,10 @@ export interface VoiceProfile {
   languageLabel: string;
   description: string;
   isCloned: boolean;
+  /** Cloudinary / provider preview audio URL */
+  previewUrl?: string;
+  voiceId?: string;
+  source?: string;
 }
 
 export interface VoiceFilters {
@@ -23,6 +27,8 @@ export interface VoiceFilters {
   voiceType: VoiceTypeFilter;
   gender: VoiceGenderFilter;
   language: string;
+  /** Backend `source` — google | elevenlabs */
+  source?: string;
 }
 
 export interface VoicesQueryResult {

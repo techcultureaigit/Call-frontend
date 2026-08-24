@@ -64,7 +64,7 @@ export function NavItem({
       {isActive && !nested && (
         <motion.span
           layoutId="sidebar-active-bg"
-          className="absolute inset-0 rounded-[6px] bg-white"
+          className="pointer-events-none absolute inset-0 rounded-[6px] bg-white"
           transition={{ type: "spring", stiffness: 380, damping: 34 }}
         />
       )}
@@ -129,16 +129,7 @@ export function NavItem({
     </Link>
   );
 
-  const animatedLink = (
-    <motion.div
-      custom={index}
-      initial={{ opacity: 0, x: -8 }}
-      animate={{ opacity: 1, x: 0 }}
-      transition={{ delay: index * 0.02, duration: 0.22, ease: [0.25, 0.1, 0.25, 1] }}
-    >
-      {linkElement}
-    </motion.div>
-  );
+  const animatedLink = linkElement;
 
   if (collapsed && !nested) {
     return (

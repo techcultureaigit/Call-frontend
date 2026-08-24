@@ -7,16 +7,34 @@ import {
   filterNavigationByPermissions,
   getActiveNavGroupIds,
 } from "@/lib/navigation";
+import { useAuth } from "@/hooks/use-auth";
 import { useAuthStore } from "@/stores";
+
+/** Only Super Admin sees the full sidebar; other roles follow the permission matrix. */
+function isSuperAdmin(roleName?: string | null): boolean {
+  return roleName?.trim().toLowerCase() === "super admin";
+}
 
 export function useNavigation() {
   const pathname = usePathname();
-  const permissions = useAuthStore((state) => state.user?.permissions);
+  const user = useAuthStore((state) => state.user);
+  const { isLoading } = useAuth();
 
-  const navigation = useMemo(
-    () => filterNavigationByPermissions(dashboardNavigation, permissions),
-    [permissions]
-  );
+  const navigation = useMemo(() => {
+    // Keep full sidebar while session loads — avoids blank nav flash
+    if (isLoading || !user) {
+      return dashboardNavigation;
+    }
+
+    if (isSuperAdmin(user.roleName ?? user.role)) {
+      return dashboardNavigation;
+    }
+
+    return filterNavigationByPermissions(
+      dashboardNavigation,
+      user.permissions
+    );
+  }, [user, isLoading]);
 
   const activeGroupIds = useMemo(
     () => getActiveNavGroupIds(pathname, navigation),

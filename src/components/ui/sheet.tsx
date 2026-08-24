@@ -1,5 +1,7 @@
 "use client";
 
+import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import { X } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -12,33 +14,55 @@ interface SheetProps {
 }
 
 export function Sheet({ open, onOpenChange, children, className }: SheetProps) {
-  return (
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (!open) return;
+    const previous = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = previous;
+    };
+  }, [open]);
+
+  if (!mounted) return null;
+
+  return createPortal(
     <AnimatePresence>
       {open && (
         <>
           <motion.div
+            key="sheet-backdrop"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            className="fixed inset-0 z-50 bg-background/60 backdrop-blur-sm"
+            transition={{ duration: 0.18 }}
+            className="fixed inset-0 z-50 bg-foreground/40 backdrop-blur-[10px]"
             onClick={() => onOpenChange(false)}
           />
-          <motion.div
+          <motion.aside
+            key="sheet-panel"
+            role="dialog"
+            aria-modal="true"
             initial={{ x: "100%" }}
             animate={{ x: 0 }}
             exit={{ x: "100%" }}
-            transition={{ type: "spring", stiffness: 400, damping: 35 }}
+            transition={{ type: "tween", ease: [0.22, 1, 0.36, 1], duration: 0.28 }}
             className={cn(
-              "fixed inset-y-0 right-0 z-50 flex w-full flex-col border-l border-border bg-background shadow-elevated sm:max-w-md md:max-w-lg",
+              "fixed top-0 right-0 bottom-0 z-50 m-0 flex h-dvh max-h-dvh w-full flex-col overflow-hidden rounded-none border-0 border-l border-border/80 bg-background shadow-[-24px_0_64px_-18px_rgba(15,23,42,0.38)] sm:max-w-md sm:rounded-l-[6px] md:max-w-lg",
               className
             )}
           >
             {children}
-          </motion.div>
+          </motion.aside>
         </>
       )}
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body
   );
 }
 
@@ -54,7 +78,7 @@ export function SheetHeader({
   return (
     <div
       className={cn(
-        "flex items-start justify-between border-b border-border/60 px-6 py-5",
+        "flex shrink-0 items-start justify-between border-b border-border/60 px-6 py-5",
         className
       )}
     >
@@ -62,7 +86,7 @@ export function SheetHeader({
       <button
         type="button"
         onClick={onClose}
-        className="ml-4 inline-flex size-8 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+        className="ml-4 inline-flex size-8 shrink-0 items-center justify-center rounded-[6px] border border-border/60 bg-background text-muted-foreground shadow-subtle transition-colors hover:border-border hover:bg-muted hover:text-foreground"
         aria-label="Close"
       >
         <X className="size-4" />
@@ -79,7 +103,7 @@ export function SheetContent({
   className?: string;
 }) {
   return (
-    <div className={cn("flex-1 overflow-y-auto px-6 py-5", className)}>
+    <div className={cn("min-h-0 flex-1 overflow-y-auto px-6 py-5", className)}>
       {children}
     </div>
   );
@@ -94,10 +118,7 @@ export function SheetFooter({
 }) {
   return (
     <div
-      className={cn(
-        "border-t border-border/60 px-6 py-4",
-        className
-      )}
+      className={cn("shrink-0 border-t border-border/60 px-6 py-4", className)}
     >
       {children}
     </div>

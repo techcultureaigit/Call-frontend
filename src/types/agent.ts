@@ -42,7 +42,18 @@ export interface AgentStackFallback {
 export interface AgentStackConfig {
   provider: string;
   model: string;
+  /** Providers collection document id */
+  providerId?: string;
+  /** Model subdocument id on the provider */
+  modelId?: string;
+  /** Voice collection document id */
   voice?: string;
+  /** Display name from the populated voice response */
+  voiceName?: string;
+  /** Provider/Cloudinary audio preview from the populated voice response */
+  voicePreviewUrl?: string;
+  /** Speaking rate for the selected voice — 1 is normal */
+  tts_speed?: number;
   fallback?: AgentStackFallback;
   advanced?: AgentStackAdvanced;
 }
@@ -63,7 +74,8 @@ export interface AgentPersonaConfig {
   stt: AgentStackConfig;
   llm: AgentStackConfig;
   tts: AgentStackConfig;
-  backgroundNoise: string;
+  noise_type: string;
+  volume: number;
 }
 
 export interface AgentPromptsConfig {
@@ -122,12 +134,31 @@ export interface AgentSurveyQuestionOption {
   value: string;
 }
 
+/** Follow-up question shown when a condition matches */
+export interface AgentSurveyThenShowQuestion {
+  /** Present on new/saved follow-ups; older rows may omit until next save */
+  id?: string;
+  type?: string;
+  question: string;
+  instruction?: string;
+  options?: AgentSurveyQuestionOption[];
+}
+
+/** If this question's answer matches `ifAnswer`, ask these follow-ups next */
+export interface AgentSurveyQuestionCondition {
+  ifAnswer: string;
+  thenShowQuestions: AgentSurveyThenShowQuestion[];
+}
+
 /** Manual or uploaded — uploaded rows keep any spreadsheet columns */
 export interface AgentSurveyQuestion {
   id: string;
   type?: string;
   question?: string;
+  /** Helper text / instruction shown as the question description */
+  instruction?: string;
   options?: AgentSurveyQuestionOption[];
+  conditions?: AgentSurveyQuestionCondition[];
   [key: string]: unknown;
 }
 
@@ -139,32 +170,24 @@ export interface AgentSurveyQuestionsConfig {
   questions: AgentSurveyQuestion[];
 }
 
-/** Contact rows keep whatever columns were in the uploaded file */
-export type AgentClientContactRow = Record<string, string>;
+/** Contact row — single `contact` phone number column */
+export type AgentClientContactRow = { contact: string };
 
 export interface AgentClientContactConfig {
   contactFileUrl: string;
   contactFileName: string;
-  /** Parsed rows cached after upload; view can also reload from contactFileUrl */
+  /** Parsed contact numbers cached after upload */
   contacts?: AgentClientContactRow[];
 }
-
-export type AgentScheduleRecurrence = "once" | "daily" | "weekly" | "monthly";
-
-export type AgentScheduleStatus =
-  | "idle"
-  | "scheduled"
-  | "running"
-  | "completed"
-  | "cancelled";
 
 export interface AgentSchedule {
   enabled: boolean;
   startAt: string | null;
   endAt: string | null;
-  timezone: string;
-  recurrence: AgentScheduleRecurrence;
-  status: AgentScheduleStatus;
+  /** Daily call window start (HH:mm), default 09:00 */
+  callWindowStart?: string;
+  /** Daily call window end (HH:mm), default 18:00 */
+  callWindowEnd?: string;
   lastScheduledAt: string | null;
 }
 
@@ -196,10 +219,17 @@ export interface AgentConfig {
   postCall: AgentPostCallConfig;
 }
 
+export type AgentSchedulingStatus =
+  | "draft"
+  | "scheduled"
+  | "completed"
+  | "processing";
+
 export interface Agent extends Timestamps {
   id: ID;
   name: string;
-  status: "draft" | "active" | "paused";
+  /** Replaces legacy status — draft by default; scheduled on schedule action */
+  scheduling_status: AgentSchedulingStatus;
   language: string;
   modelMode: AgentModelMode;
   phone?: string | null;

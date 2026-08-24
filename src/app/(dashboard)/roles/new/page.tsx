@@ -1,5 +1,5 @@
-import { RoleFormView } from "@/components/roles/role-form-view";
+import { RolesCreateView } from "@/modules/roles/roles-form";
 
 export default function CreateRolePage() {
-  return <RoleFormView />;
+  return <RolesCreateView />;
 }

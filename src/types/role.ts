@@ -39,6 +39,8 @@ export interface Role extends Timestamps {
   isSuperAdmin?: boolean;
   canDelete?: boolean;
   canRename?: boolean;
+  /** False for Super Admin — full access is locked (view-only). */
+  canEditPermissions?: boolean;
 }
 
 export interface RoleListItem extends Role {
@@ -57,9 +59,27 @@ export function isProtectedRole(name: string): boolean {
   );
 }
 
-/** Super Admin — permissions editable; cannot delete/rename */
+/** Super Admin — view-only permissions (full access locked); cannot delete/rename */
 export function isSuperAdminRole(name: string): boolean {
-  return name.trim().toLowerCase() === SUPER_ADMIN_ROLE_NAME.toLowerCase();
+  const normalized = String(name ?? "")
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, " ");
+  return (
+    normalized === SUPER_ADMIN_ROLE_NAME.toLowerCase() ||
+    normalized.replace(/\s/g, "") === "superadmin"
+  );
+}
+
+/** Whether the permission matrix can be edited for this role */
+export function canEditRolePermissions(role: {
+  name: string;
+  canEditPermissions?: boolean;
+}): boolean {
+  if (typeof role.canEditPermissions === "boolean") {
+    return role.canEditPermissions;
+  }
+  return !isSuperAdminRole(role.name);
 }
 
 /** @deprecated use isProtectedRole — system roles cannot be deleted/renamed */

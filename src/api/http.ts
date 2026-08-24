@@ -1,9 +1,27 @@
+import { apiConfig } from "@/config/api";
 import { createQueryString } from "@/lib/utils";
 import { getAccessTokenFromCookie } from "@/lib/auth/session";
+import {
+  inferLoaderMessage,
+  shouldSkipGlobalLoader,
+  useApiLoadingStore,
+} from "@/components/shared/api-loading.store";
 import type { ApiResponse } from "@/types/api";
 
 type QueryValue = string | number | boolean | undefined | null;
 type QueryParams = Record<string, QueryValue>;
+
+/** Express resources mounted under NEXT_PUBLIC_API_URL (port 8000). */
+const BACKEND_RESOURCES = new Set([
+  "auth",
+  "roles",
+  "users",
+  "surveys",
+  "voices",
+  "audio",
+  "providers",
+  "analytics",
+]);
 
 export class ApiError extends Error {
   status: number;
@@ -19,6 +37,25 @@ export class ApiError extends Error {
 
 function getClientAccessToken(): string | null {
   return getAccessTokenFromCookie();
+}
+
+/**
+ * Map browser paths to the real backend.
+ * `/api/surveys/...` → `http://localhost:8000/api/v1/surveys/...`
+ * Mock BFF-only routes (dashboard, notifications, …) stay on :3000.
+ */
+export function resolveApiUrl(path: string): string {
+  if (/^https?:\/\//i.test(path)) return path;
+
+  const match = /^\/api\/([^/?#]+)(.*)$/.exec(path);
+  if (!match) return path;
+
+  const resource = match[1];
+  if (!BACKEND_RESOURCES.has(resource)) return path;
+
+  const rest = match[2] ?? "";
+  const base = apiConfig.baseUrl.replace(/\/$/, "");
+  return `${base}/${resource}${rest}`;
 }
 
 async function parseErrorBody(response: Response): Promise<{
@@ -43,12 +80,16 @@ async function parseJson<T>(response: Response): Promise<T> {
   return response.json() as Promise<T>;
 }
 
-/** Shared fetch for Next.js `/api/*` BFF routes — attaches Bearer token when present */
+type ApiRequestInit = RequestInit & { skipLoader?: boolean };
+
+/** Shared fetch — real CRM APIs hit Express (:8000); mock BFF stays on Next (:3000) */
 export async function apiRequest<T>(
   path: string,
-  init: RequestInit = {}
+  init: ApiRequestInit = {}
 ): Promise<T> {
-  const headers = new Headers(init.headers);
+  const { skipLoader = false, ...requestInit } = init;
+  const url = resolveApiUrl(path);
+  const headers = new Headers(requestInit.headers);
   if (!headers.has("Accept")) headers.set("Accept", "application/json");
 
   const token = getClientAccessToken();
@@ -56,13 +97,26 @@ export async function apiRequest<T>(
     headers.set("Authorization", `Bearer ${token}`);
   }
 
-  const response = await fetch(path, {
-    ...init,
-    headers,
-    cache: "no-store",
-  });
+  const track =
+    !skipLoader &&
+    !shouldSkipGlobalLoader(path, requestInit.method ?? "GET");
+  if (track) {
+    useApiLoadingStore
+      .getState()
+      .start(inferLoaderMessage(requestInit.method ?? "GET", path));
+  }
 
-  return parseJson<T>(response);
+  try {
+    const response = await fetch(url, {
+      ...requestInit,
+      headers,
+      cache: "no-store",
+      credentials: "include",
+    });
+    return await parseJson<T>(response);
+  } finally {
+    if (track) useApiLoadingStore.getState().stop();
+  }
 }
 
 export function apiGet<T>(path: string, params?: object): Promise<T> {
@@ -70,17 +124,30 @@ export function apiGet<T>(path: string, params?: object): Promise<T> {
   return apiRequest<T>(`${path}${query}`);
 }
 
-export function apiPost<T>(path: string, body?: unknown): Promise<T> {
+export function apiPost<T>(
+  path: string,
+  body?: unknown,
+  options?: { skipLoader?: boolean }
+): Promise<T> {
   return apiRequest<T>(path, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: body === undefined ? undefined : JSON.stringify(body),
+    skipLoader: options?.skipLoader,
   });
 }
 
 export function apiPatch<T>(path: string, body?: unknown): Promise<T> {
   return apiRequest<T>(path, {
     method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: body === undefined ? undefined : JSON.stringify(body),
+  });
+}
+
+export function apiPut<T>(path: string, body?: unknown): Promise<T> {
+  return apiRequest<T>(path, {
+    method: "PUT",
     headers: { "Content-Type": "application/json" },
     body: body === undefined ? undefined : JSON.stringify(body),
   });
