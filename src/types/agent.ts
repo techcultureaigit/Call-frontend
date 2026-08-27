@@ -64,7 +64,7 @@ export interface AgentPersonaConfig {
   modelMode: AgentModelMode;
   language: string;
   audioCacheEnabled: boolean;
-  livekitInferenceEnabled: boolean;
+  callBargeInEnabled: boolean;
   maxCallDurationMinutes: number;
   analyticsEnabled: boolean;
   aiComprehendEnabled: boolean;
@@ -81,7 +81,6 @@ export interface AgentPersonaConfig {
 export interface AgentPromptsConfig {
   greeting: string;
   greetsFirst: boolean;
-  systemPrompt: string;
   farewell: string;
 }
 

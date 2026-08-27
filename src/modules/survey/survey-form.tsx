@@ -1041,6 +1041,11 @@ export function SurveyCreateEditView({
         schedulePayload
       );
 
+      // Keep local form in sync with what the API actually saved
+      setConfig(structuredClone(saved.config));
+      configRef.current = saved.config;
+      setSchedulingStatus(saved.scheduling_status ?? "draft");
+
       if (!surveyId) {
         setSurveyId(saved.id);
       }
@@ -1114,7 +1119,7 @@ export function SurveyCreateEditView({
           <PromptsTab
             values={config.prompts}
             onChange={(v) => updateConfig("prompts", v)}
-            showRequiredError={activeMissing.includes("greeting_or_systemPrompt")}
+            showRequiredError={activeMissing.includes("greeting")}
           />
         );
       case "survey-questions":

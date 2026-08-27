@@ -28,14 +28,13 @@ export function isSurveyReadyToSchedule(
       : config.persona.name
     )?.trim() || config.persona.name.trim();
   const greeting = config.prompts.greeting?.trim() || "";
-  const systemPrompt = config.prompts.systemPrompt?.trim() || "";
   const questions = config.surveyQuestions.questions ?? [];
   const contactUrl = config.clientContact.contactFileUrl?.trim() || "";
   const contactName = config.clientContact.contactFileName?.trim() || "";
 
   return Boolean(
     name &&
-      (greeting || systemPrompt) &&
+      greeting &&
       questions.length > 0 &&
       (contactUrl || contactName)
   );
@@ -77,11 +76,8 @@ export function computeSurveyProgress(
   if (!config.persona.name.trim()) identityMissing.push("name");
 
   const promptsMissing: string[] = [];
-  if (
-    !config.prompts.greeting.trim() &&
-    !config.prompts.systemPrompt.trim()
-  ) {
-    promptsMissing.push("greeting_or_systemPrompt");
+  if (!config.prompts.greeting.trim()) {
+    promptsMissing.push("greeting");
   }
 
   const questionMissing: string[] = [];

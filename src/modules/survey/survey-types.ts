@@ -20,6 +20,12 @@ export interface SurveyResultAnswer {
   recording_url?: string | null;
 }
 
+export interface SurveyResultTranscription {
+  speaker: string;
+  text_content: string;
+  timestamp: string | null;
+}
+
 export interface SurveyResultCallData {
 
 
@@ -53,6 +59,10 @@ export interface SurveyResultRow {
   recording_url?: string | null;
   recording_duration_seconds?: number | null;
   call?: SurveyResultCallData | null;
+  /** True when this response has chat turns (list + detail) */
+  has_transcription?: boolean;
+  /** Present on GET /results/:resultId only (not list) */
+  transcriptions?: SurveyResultTranscription[];
 }
 
 export interface SurveyResultQuestionOption {

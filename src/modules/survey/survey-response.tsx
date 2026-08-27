@@ -9,18 +9,21 @@
  *   listSurveyResults()    → GET /api/surveys/:id/results
  *   exportSurveyResults()  → GET /api/surveys/:id/results/export
  *   getSurveyResult()      → GET /api/surveys/:id/results/:resultId
+ *   getSurveyResultTranscriptions() → GET /api/surveys/:id/results/:resultId/transcriptions
  */
 
 import {
   listSurveyResults,
   exportSurveyResults,
   getSurveyResult,
+  getSurveyResultTranscriptions,
 } from "./api";
 import type {
   SurveyResultsExportFormat,
   SurveyResultAnswer,
   SurveyResultQuestionMeta,
   SurveyResultRow,
+  SurveyResultTranscription,
   SurveyResultsSurveyMeta,
 } from "./survey-types";
 import { SurveyFetchLoader } from "./survey-by-id";
@@ -61,7 +64,7 @@ import { usePageMeta, usePermissions, usePaginatedList } from "@/hooks";
 import { cn } from "@/lib/utils";
 import { formatAgentCreatedAt as formatSurveyCreatedAt } from "@/lib/utils/date";
 import { motion } from "framer-motion";
-import { ArrowLeft, CalendarClock, Clock3, Download, Eye, FileSpreadsheet, FileText, HelpCircle, MessageSquareText, Phone, Sparkles, Users, MessageCircle, Pause, Play, Radio } from "lucide-react";
+import { ArrowLeft, Bot, CalendarClock, Clock3, Download, Eye, FileSpreadsheet, FileText, HelpCircle, MessageSquareText, Phone, Sparkles, UserRound, Users, MessageCircle, Pause, Play, Radio } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState, type MouseEvent } from "react";
 import { toast } from "sonner";
@@ -506,7 +509,137 @@ function CallInfoChip({
   );
 }
 
-/** Eye-icon popup — wider, sectioned layout */
+/** Message-icon popup — chat transcription only (dedicated API) */
+function TranscriptionChatModal({
+  open,
+  onOpenChange,
+  surveyId,
+  row,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  surveyId: string;
+  row: SurveyResultRow | null;
+}) {
+  const [customerNumber, setCustomerNumber] = useState("");
+  const [transcriptions, setTranscriptions] = useState<
+    SurveyResultTranscription[]
+  >([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!open || !row?.id || !surveyId) {
+      setCustomerNumber("");
+      setTranscriptions([]);
+      setError(null);
+      setLoading(false);
+      return;
+    }
+
+    const resultId = row.id;
+    let cancelled = false;
+    setLoading(true);
+    setError(null);
+    setTranscriptions([]);
+    setCustomerNumber(row.customer_number || "");
+
+    void (async () => {
+      try {
+        const res = await getSurveyResultTranscriptions(surveyId, resultId);
+        if (cancelled) return;
+        setCustomerNumber(res.customer_number || row.customer_number || "");
+        setTranscriptions(res.transcriptions ?? []);
+      } catch (err) {
+        if (cancelled) return;
+        setError(
+          err instanceof Error ? err.message : "Failed to load transcription"
+        );
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [open, surveyId, row]);
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="flex max-h-[90vh] w-[min(96vw,560px)] max-w-none flex-col gap-0 overflow-hidden border border-border/40 bg-card p-0 shadow-elevated sm:rounded-[16px]">
+        <div className="relative shrink-0 overflow-hidden border-b border-border/40">
+          <div
+            aria-hidden
+            className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,color-mix(in_oklch,var(--brand)_22%,transparent),transparent_58%)]"
+          />
+          <div
+            aria-hidden
+            className="pointer-events-none absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-brand/35 to-transparent"
+          />
+          <DialogHeader className="relative px-5 py-4 sm:px-6">
+            <div className="flex flex-wrap items-start justify-between gap-3 pr-8">
+              <div className="min-w-0 space-y-2.5">
+                <div className="flex items-center gap-2.5">
+                  <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-brand/12 text-brand ring-1 ring-brand/20">
+                    <MessageSquareText className="size-4" />
+                  </span>
+                  <div className="min-w-0">
+                    <DialogTitle className="font-display text-lg font-semibold tracking-tight text-foreground">
+                      Chat transcription
+                    </DialogTitle>
+                    <p className="text-[11px] text-muted-foreground">
+                      Live call conversation replay
+                    </p>
+                  </div>
+                </div>
+                <DialogDescription asChild>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-background/80 px-2.5 py-1 text-xs font-medium text-foreground shadow-sm ring-1 ring-border/60">
+                      <Phone className="size-3.5 text-brand" />
+                      {customerNumber || "—"}
+                    </span>
+                    {transcriptions.length ? (
+                      <span className="inline-flex items-center gap-1 rounded-full bg-brand/10 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-brand ring-1 ring-brand/20">
+                        <MessageCircle className="size-3" />
+                        {transcriptions.length} messages
+                      </span>
+                    ) : null}
+                  </div>
+                </DialogDescription>
+              </div>
+            </div>
+          </DialogHeader>
+        </div>
+
+        <div className="relative min-h-0 flex-1 overflow-hidden">
+          <div
+            aria-hidden
+            className="pointer-events-none absolute inset-0 bg-[linear-gradient(165deg,color-mix(in_oklch,var(--brand)_6%,transparent)_0%,transparent_42%),radial-gradient(circle_at_1px_1px,color-mix(in_oklch,var(--foreground)_6%,transparent)_1px,transparent_0)] bg-[length:100%_100%,14px_14px]"
+          />
+          <div className="relative min-h-0 flex-1 overflow-y-auto px-3 py-4 sm:px-4">
+            {loading ? (
+              <div className="flex items-center justify-center py-16">
+                <SurveyFetchLoader label="Loading transcription" />
+              </div>
+            ) : (
+              <>
+                {error ? (
+                  <div className="mb-3 rounded-xl border border-amber-500/30 bg-amber-500/5 px-3 py-2 text-xs text-amber-800">
+                    {error}
+                  </div>
+                ) : null}
+                <TranscriptionChat transcriptions={transcriptions} fillHeight />
+              </>
+            )}
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+/** Eye-icon popup — recording, call overview, Q&A (no chat) */
 function ResponseDetailsModal({
   open,
   onOpenChange,
@@ -518,8 +651,7 @@ function ResponseDetailsModal({
 }) {
   const answers = row?.answers ?? [];
   const rowRecording = row?.recording_url ?? null;
-  const durationSeconds =
-    row?.recording_duration_seconds ?? null;
+  const durationSeconds = row?.recording_duration_seconds ?? null;
   const call = row?.call ?? null;
 
   const callChips = useMemo(() => {
@@ -579,6 +711,26 @@ function ResponseDetailsModal({
         </div>
 
         <div className="min-h-0 flex-1 space-y-4 overflow-y-auto px-5 py-4 sm:px-6">
+          {rowRecording ? (
+            <section className="flex flex-wrap items-center gap-2.5 rounded-[8px] border border-border/50 bg-muted/15 px-3 py-2">
+              <div className="flex shrink-0 items-center gap-2">
+                <span className="flex size-7 items-center justify-center rounded-[6px] border border-primary/20 bg-primary/10 text-primary">
+                  <Radio className="size-3.5" />
+                </span>
+                <p className="text-sm font-semibold text-foreground">
+                  Recording
+                </p>
+              </div>
+              <div className="w-full max-w-[280px] sm:w-[280px]">
+                <InlineRecordingPlayer
+                  src={rowRecording}
+                  durationSeconds={durationSeconds}
+                  fullWidth
+                />
+              </div>
+            </section>
+          ) : null}
+
           {callChips.length ? (
             <section className="space-y-2.5">
               <div className="flex items-center justify-between gap-2">
@@ -621,29 +773,132 @@ function ResponseDetailsModal({
               layout="detail"
             />
           </section>
-
-          {rowRecording ? (
-            <section className="flex flex-wrap items-center gap-2.5 rounded-[8px] border border-border/50 bg-muted/15 px-3 py-2">
-              <div className="flex shrink-0 items-center gap-2">
-                <span className="flex size-7 items-center justify-center rounded-[6px] border border-primary/20 bg-primary/10 text-primary">
-                  <Radio className="size-3.5" />
-                </span>
-                <p className="text-sm font-semibold text-foreground">
-                  Recording
-                </p>
-              </div>
-              <div className="w-full max-w-[280px] sm:w-[280px]">
-                <InlineRecordingPlayer
-                  src={rowRecording}
-                  durationSeconds={durationSeconds}
-                  fullWidth
-                />
-              </div>
-            </section>
-          ) : null}
         </div>
       </DialogContent>
     </Dialog>
+  );
+}
+
+function formatTranscriptionTime(value: string | null | undefined): string {
+  if (!value) return "";
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return "";
+  return d.toLocaleTimeString(undefined, {
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+  });
+}
+
+function TranscriptionChat({
+  transcriptions,
+  fillHeight = false,
+}: {
+  transcriptions: SurveyResultTranscription[];
+  fillHeight?: boolean;
+}) {
+  if (!transcriptions.length) {
+    return (
+      <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-border/70 bg-background/70 px-4 py-14 text-center shadow-sm">
+        <span className="mb-3 flex size-12 items-center justify-center rounded-2xl bg-muted/70 text-muted-foreground ring-1 ring-border/60">
+          <MessageSquareText className="size-5" />
+        </span>
+        <p className="text-sm font-medium text-foreground">
+          No chat transcription
+        </p>
+        <p className="mt-1 max-w-[240px] text-xs text-muted-foreground">
+          Conversation turns will appear here when the call recording is transcribed.
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div
+      className={cn(
+        "space-y-3.5 overflow-y-auto px-0.5 py-0.5",
+        fillHeight ? "max-h-[min(70vh,560px)]" : "max-h-[min(52vh,420px)]"
+      )}
+    >
+      <div className="flex justify-center pb-1">
+        <span className="inline-flex items-center gap-1.5 rounded-full bg-background/85 px-3 py-1 text-[10px] font-medium text-muted-foreground shadow-sm ring-1 ring-border/50 backdrop-blur-sm">
+          <Sparkles className="size-3 text-brand" />
+          {transcriptions.length} turns · call transcript
+        </span>
+      </div>
+
+      {transcriptions.map((turn, index) => {
+        const isCustomer = turn.speaker === "CUSTOMER";
+        const time = formatTranscriptionTime(turn.timestamp);
+        return (
+          <motion.div
+            key={`${turn.speaker}-${turn.timestamp ?? index}-${index}`}
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.22, delay: Math.min(index * 0.02, 0.28) }}
+            className={cn(
+              "flex w-full gap-2.5",
+              isCustomer ? "flex-row-reverse" : "flex-row"
+            )}
+          >
+            <div
+              className={cn(
+                "mt-auto mb-0.5 flex size-8 shrink-0 items-center justify-center rounded-full shadow-sm ring-2 ring-background",
+                isCustomer
+                  ? "bg-brand text-brand-foreground"
+                  : "bg-slate-800 text-white dark:bg-slate-200 dark:text-slate-900"
+              )}
+              aria-hidden
+            >
+              {isCustomer ? (
+                <UserRound className="size-3.5" />
+              ) : (
+                <Bot className="size-3.5" />
+              )}
+            </div>
+
+            <div
+              className={cn(
+                "flex min-w-0 max-w-[min(100%,24rem)] flex-1 flex-col gap-1",
+                isCustomer ? "items-end" : "items-start"
+              )}
+            >
+              <div
+                className={cn(
+                  "flex items-center gap-1.5 px-1",
+                  isCustomer ? "flex-row-reverse" : "flex-row"
+                )}
+              >
+                <span
+                  className={cn(
+                    "text-[10px] font-semibold uppercase tracking-[0.1em]",
+                    isCustomer ? "text-brand" : "text-muted-foreground"
+                  )}
+                >
+                  {isCustomer ? "Customer" : "System"}
+                </span>
+                {time ? (
+                  <span className="text-[10px] tabular-nums text-muted-foreground/80">
+                    {time}
+                  </span>
+                ) : null}
+              </div>
+
+              <div
+                className={cn(
+                  "relative px-3.5 py-2.5 text-[13px] leading-relaxed shadow-sm",
+                  isCustomer
+                    ? "rounded-2xl rounded-br-md bg-brand text-brand-foreground shadow-[0_8px_20px_-12px_color-mix(in_oklch,var(--brand)_70%,transparent)]"
+                    : "rounded-2xl rounded-bl-md border border-border/50 bg-background/95 text-foreground shadow-[0_6px_16px_-12px_rgba(15,23,42,0.35)]"
+                )}
+              >
+                <p className="whitespace-pre-wrap break-words">{turn.text_content}</p>
+              </div>
+            </div>
+          </motion.div>
+        );
+      })}
+    </div>
   );
 }
 
@@ -688,16 +943,19 @@ function ResultsInlineQaTable({
   rows,
   questionColumns,
   layoutKey,
+  surveyId,
 }: {
   rows: SurveyResultRow[];
   questionColumns: { id: string; question: string }[];
   layoutKey: string;
+  surveyId: string;
 }) {
   const [questionPopup, setQuestionPopup] = useState<{
     number: number;
     question: string;
   } | null>(null);
   const [detailsRow, setDetailsRow] = useState<SurveyResultRow | null>(null);
+  const [chatRow, setChatRow] = useState<SurveyResultRow | null>(null);
 
   const callColumns = useMemo(
     () => CALL_EXACT_FIELDS.map((key) => ({ key, label: CALL_FIELD_LABELS[key] || key })),
@@ -778,7 +1036,7 @@ function ResultsInlineQaTable({
                         <SortableColumnTh
                           key={col.id}
                           id={col.id}
-                          className="min-w-[5.5rem]"
+                          className="sticky left-0 z-30 min-w-28 bg-card shadow-[2px_0_6px_-2px_rgba(15,23,42,0.12)]"
                         >
                           Action
                         </SortableColumnTh>
@@ -880,7 +1138,7 @@ function ResultsInlineQaTable({
                             key={col.id}
                             className={cn(
                               TABLE_BODY_CELL_CLASS,
-                              "relative min-w-[5.5rem]"
+                              "relative sticky left-0 z-10 min-w-28 bg-card shadow-[2px_0_6px_-2px_rgba(15,23,42,0.08)]"
                             )}
                           >
                             <span
@@ -890,12 +1148,27 @@ function ResultsInlineQaTable({
                                 TABLE_ROW_ACCENT_CLASS
                               )}
                             />
-                            <DataTableActionButton
-                              label="View questions & answers"
-                              onClick={() => setDetailsRow(row)}
-                            >
-                              <Eye className="size-3.5" />
-                            </DataTableActionButton>
+                            <div className="flex items-center gap-1">
+                              <DataTableActionButton
+                                label="View response details"
+                                onClick={() => setDetailsRow(row)}
+                              >
+                                <Eye className="size-3.5" />
+                              </DataTableActionButton>
+                              <DataTableActionButton
+                                label={
+                                  row.has_transcription
+                                    ? "View chat transcription"
+                                    : "Open chat transcription"
+                                }
+                                onClick={() => setChatRow(row)}
+                                tone={
+                                  row.has_transcription ? "emerald" : "sky"
+                                }
+                              >
+                                <MessageSquareText className="size-3.5" />
+                              </DataTableActionButton>
+                            </div>
                           </td>
                         );
                       }
@@ -989,20 +1262,40 @@ function ResultsInlineQaTable({
                         return (
                           <td
                             key={col.id}
-                            className="min-w-[220px] px-4 py-3.5 align-middle"
+                            className="min-w-55 px-4 py-3.5 align-middle"
                           >
-                            {rowRecording ? (
-                              <InlineRecordingPlayer
-                                src={rowRecording}
-                                durationSeconds={
-                                  row.recording_duration_seconds ?? null
+                            <div className="flex items-center gap-2">
+                              {rowRecording ? (
+                                <InlineRecordingPlayer
+                                  src={rowRecording}
+                                  durationSeconds={
+                                    row.recording_duration_seconds ?? null
+                                  }
+                                />
+                              ) : (
+                                <span className="block text-center text-xs text-muted-foreground">
+                                  ---
+                                </span>
+                              )}
+                              <button
+                                type="button"
+                                onClick={() => setChatRow(row)}
+                                className={cn(
+                                  "inline-flex size-8 shrink-0 items-center justify-center rounded-md border transition-colors",
+                                  row.has_transcription
+                                    ? "border-sky-500/30 bg-sky-500/10 text-sky-700 hover:bg-sky-500/15"
+                                    : "border-border/60 bg-muted/40 text-muted-foreground hover:bg-muted hover:text-foreground"
+                                )}
+                                aria-label="View chat transcription"
+                                title={
+                                  row.has_transcription
+                                    ? "View chat transcription"
+                                    : "Open chat (no transcript yet)"
                                 }
-                              />
-                            ) : (
-                              <span className="block text-center text-xs text-muted-foreground">
-                                ---
-                              </span>
-                            )}
+                              >
+                                <MessageSquareText className="size-3.5" />
+                              </button>
+                            </div>
                           </td>
                         );
                       }
@@ -1018,7 +1311,7 @@ function ResultsInlineQaTable({
 
         <div className="shrink-0 border-t border-border/40 bg-muted/20 px-5 py-2.5">
           <p className="text-[11px] text-muted-foreground">
-            Eye icon opens Q&amp;A popup · question numbers open full text
+            Chat icon opens transcription only · eye icon opens recording &amp; Q&amp;A
           </p>
         </div>
       </div>
@@ -1036,6 +1329,15 @@ function ResultsInlineQaTable({
           if (!open) setDetailsRow(null);
         }}
         row={detailsRow}
+      />
+
+      <TranscriptionChatModal
+        open={Boolean(chatRow)}
+        onOpenChange={(open) => {
+          if (!open) setChatRow(null);
+        }}
+        surveyId={surveyId}
+        row={chatRow}
       />
     </>
   );
@@ -1379,6 +1681,7 @@ export function SurveyResponseView({ surveyId }: SurveyResultsViewProps) {
                 rows={enrichedRows}
                 questionColumns={questionColumns}
                 layoutKey={`survey-results:${surveyId}`}
+                surveyId={surveyId}
               />
             )}
           </div>
@@ -1726,24 +2029,64 @@ export function SurveyResponseDetailView({
                 </div>
               </header>
 
-              <div className="px-5 py-4 sm:px-6">
-                <div className="mb-3 flex items-center justify-between gap-3">
-                  <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                    Questions &amp; answers
-                  </p>
-                  <span className="text-[11px] text-muted-foreground">
-                    {answers.length} recorded
-                  </span>
-                </div>
+              <div className="space-y-5 px-5 py-4 sm:px-6">
+                {result.recording_url ? (
+                  <section className="flex flex-wrap items-center gap-2.5 rounded-[8px] border border-border/50 bg-muted/15 px-3 py-2">
+                    <div className="flex shrink-0 items-center gap-2">
+                      <span className="flex size-7 items-center justify-center rounded-[6px] border border-primary/20 bg-primary/10 text-primary">
+                        <Radio className="size-3.5" />
+                      </span>
+                      <p className="text-sm font-semibold text-foreground">
+                        Recording
+                      </p>
+                    </div>
+                    <div className="w-full max-w-[280px] sm:w-[280px]">
+                      <InlineRecordingPlayer
+                        src={result.recording_url}
+                        durationSeconds={
+                          result.recording_duration_seconds ?? null
+                        }
+                        fullWidth
+                      />
+                    </div>
+                  </section>
+                ) : null}
 
-                <ResponseQaTable
-                  answers={answers}
-                  rowRecording={result.recording_url}
-                  recordingDurationSeconds={
-                    result.recording_duration_seconds ?? null
-                  }
-                  callMeta={result}
-                />
+                <section className="space-y-2.5">
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                      Call transcription
+                    </p>
+                    <span className="text-[11px] text-muted-foreground">
+                      {result.transcriptions?.length
+                        ? `${result.transcriptions.length} messages`
+                        : "No transcript"}
+                    </span>
+                  </div>
+                  <TranscriptionChat
+                    transcriptions={result.transcriptions ?? []}
+                  />
+                </section>
+
+                <div>
+                  <div className="mb-3 flex items-center justify-between gap-3">
+                    <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                      Questions &amp; answers
+                    </p>
+                    <span className="text-[11px] text-muted-foreground">
+                      {answers.length} recorded
+                    </span>
+                  </div>
+
+                  <ResponseQaTable
+                    answers={answers}
+                    rowRecording={null}
+                    recordingDurationSeconds={
+                      result.recording_duration_seconds ?? null
+                    }
+                    callMeta={result}
+                  />
+                </div>
               </div>
             </motion.div>
           ) : (

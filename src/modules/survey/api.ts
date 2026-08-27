@@ -13,6 +13,7 @@
  * bulkDeleteSurveys    DELETE /api/surveys/:id (multiple)
  * listSurveyResults    GET    /api/surveys/:id/results
  * getSurveyResult      GET    /api/surveys/:id/results/:resultId
+ * getSurveyResultTranscriptions GET /api/surveys/:id/results/:resultId/transcriptions
  * exportSurveyResults  GET    /api/surveys/:id/results/export
  * uploadSurveyContactFile   POST /api/surveys/:id/contact-file
  * uploadSurveyQuestionsFile POST /api/surveys/:id/questions-file
@@ -47,6 +48,7 @@ import type {
   SaveSurveyInput,
   ScheduleSurveyInput,
   SurveyResultRow,
+  SurveyResultTranscription,
   SurveyResultsExportParams,
   SurveyResultsListParams,
   SurveyResultsListResult,
@@ -229,6 +231,24 @@ export async function getSurveyResult(surveyId: string, resultId: string) {
   }, { surveyId, resultId });
 }
 
+/** getSurveyResultTranscriptions() → GET /api/surveys/:id/results/:resultId/transcriptions */
+export async function getSurveyResultTranscriptions(
+  surveyId: string,
+  resultId: string
+) {
+  const url = `/api/surveys/${surveyId}/results/${resultId}/transcriptions`;
+  return surveyCall("getSurveyResultTranscriptions", "GET", url, async () => {
+    const res = await apiGet<
+      ApiResponse<{
+        id: string;
+        customer_number: string;
+        transcriptions: SurveyResultTranscription[];
+      }>
+    >(url);
+    return res.data;
+  }, { surveyId, resultId });
+}
+
 /* ========== EXPORT — GET /api/surveys/:id/results/export ========== */
 
 /** exportSurveyResults() → GET /api/surveys/:id/results/export */
@@ -325,6 +345,7 @@ export const surveysApi = {
   unschedule: unscheduleSurvey,
   listResults: listSurveyResults,
   getResult: getSurveyResult,
+  getResultTranscriptions: getSurveyResultTranscriptions,
   exportResults: exportSurveyResults,
   uploadContactFile: uploadSurveyContactFile,
   uploadQuestionsFile: uploadSurveyQuestionsFile,

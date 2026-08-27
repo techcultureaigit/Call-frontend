@@ -46,7 +46,7 @@ import {
 import type { ClientContactRow } from "./survey-contacts";
 import { getContactFileOpenUrl } from "@/lib/utils/contact-file-url";
 import type { AgentPromptsConfig as SurveyPromptsConfig, AgentPersonaConfig as SurveyPersonaConfig, AgentStackConfig as SurveyStackConfig, AgentSurveyQuestion as SurveyQuestion, AgentSurveyQuestionOption as SurveyQuestionOption, AgentSurveyQuestionsConfig as SurveyQuestionsConfig, AgentClientContactConfig as SurveyClientContactConfig } from "@/types/agent";
-import { Users, Sparkles, History, BrainCircuit, ChevronDown, ChevronLeft, ChevronRight, GripVertical, HelpCircle, Mic, Pause, Phone, Play, Volume2, Download, ExternalLink, Plus, Trash2, Upload, X } from "lucide-react";
+import { Users, BrainCircuit, ChevronDown, ChevronLeft, ChevronRight, GripVertical, HelpCircle, Mic, Pause, Phone, Play, Volume2, Download, ExternalLink, Plus, Trash2, Upload, X } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { useEffect, useMemo, useState, useRef } from "react";
 import type { ReactNode } from "react";
@@ -284,34 +284,16 @@ export function PromptsTab({
   onChange,
   showRequiredError = false,
 }: PromptsTabProps) {
-  const [loadingPrompt, setLoadingPrompt] = useState(false);
   const [greetingTouched, setGreetingTouched] = useState(false);
-  const [promptTouched, setPromptTouched] = useState(false);
 
   const update = <K extends keyof SurveyPromptsConfig>(
     key: K,
     val: SurveyPromptsConfig[K]
   ) => onChange({ ...values, [key]: val });
 
-  const handleEditWithAi = () => {
-    setLoadingPrompt(true);
-    setTimeout(() => {
-      update(
-        "systemPrompt",
-        values.systemPrompt +
-          "\n\n[AI-enhanced] Added empathy cues and objection handling patterns."
-      );
-      setLoadingPrompt(false);
-    }, 1500);
-  };
-
   const greetingLeft = 250 - values.greeting.length;
-  const bothPromptFieldsEmpty =
-    !values.greeting.trim() && !values.systemPrompt.trim();
   const greetingError =
-    bothPromptFieldsEmpty && (showRequiredError || greetingTouched);
-  const promptError =
-    bothPromptFieldsEmpty && (showRequiredError || promptTouched);
+    !values.greeting.trim() && (showRequiredError || greetingTouched);
 
   return (
     <div className="space-y-6">
@@ -342,7 +324,7 @@ export function PromptsTab({
         </p>
         {greetingError ? (
           <p className="text-xs font-medium text-destructive">
-            Greeting or Survey Prompt is required.
+            Greeting is required.
           </p>
         ) : null}
       </div>
@@ -358,52 +340,6 @@ export function PromptsTab({
           ]}
           className="rounded-[6px]"
         />
-      </div>
-
-      <div className="space-y-3">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <Label>Survey Prompt</Label>
-          <div className="flex gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleEditWithAi}
-              disabled={loadingPrompt}
-              className="rounded-[6px] bg-gradient-to-r from-violet-500/10 to-fuchsia-500/10"
-            >
-              <Sparkles className="size-3.5 text-violet-600" />
-              Edit with AI
-            </Button>
-            <Button variant="outline" size="sm" className="rounded-[6px]">
-              <History className="size-3.5" />
-              Prompt History
-            </Button>
-          </div>
-        </div>
-        <div className="relative">
-          {loadingPrompt ? (
-            <AppLoader variant="compact" label="Loading" className="h-48" />
-          ) : (
-            <textarea
-              value={values.systemPrompt}
-              onChange={(e) => update("systemPrompt", e.target.value)}
-              onBlur={() => setPromptTouched(true)}
-              rows={10}
-              aria-invalid={promptError}
-              className={cn(
-                "w-full rounded-[6px] border border-input bg-transparent px-4 py-3 text-sm leading-relaxed shadow-subtle focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-                promptError &&
-                  "border-destructive focus-visible:border-destructive focus-visible:ring-destructive/20"
-              )}
-              placeholder="You are a professional voice AI survey for enterprise customer outreach. Conduct surveys naturally, handle objections gracefully, and maintain a warm professional tone throughout the conversation."
-            />
-          )}
-        </div>
-        {promptError ? (
-          <p className="text-xs font-medium text-destructive">
-            Survey Prompt or Greeting is required.
-          </p>
-        ) : null}
       </div>
     </div>
   );
@@ -885,15 +821,15 @@ export function PersonaTab({
           <div className="flex items-center justify-between gap-3 rounded-[6px] border border-border/50 bg-card px-3 py-2.5 shadow-card">
             <div className="min-w-0">
               <p className="text-sm font-medium text-foreground">
-                Realtime audio
+                Call barge in
               </p>
               <p className="text-[11px] text-muted-foreground">
-                Stream audio live on the call
+                User interruption will stop the AI
               </p>
             </div>
             <Switch
-              checked={values.livekitInferenceEnabled}
-              onCheckedChange={(v) => update("livekitInferenceEnabled", v)}
+              checked={values.callBargeInEnabled}
+              onCheckedChange={(v) => update("callBargeInEnabled", v)}
             />
           </div>
         </div>

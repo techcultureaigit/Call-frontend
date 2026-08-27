@@ -248,7 +248,7 @@ export const DEFAULT_AGENT_CONFIG: AgentConfig = {
     modelMode: "pipeline",
     language: "hi",
     audioCacheEnabled: false,
-    livekitInferenceEnabled: false,
+    callBargeInEnabled: false,
     maxCallDurationMinutes: 15,
     analyticsEnabled: true,
     aiComprehendEnabled: false,
@@ -301,7 +301,6 @@ export const DEFAULT_AGENT_CONFIG: AgentConfig = {
   prompts: {
     greeting: "",
     greetsFirst: true,
-    systemPrompt: "",
     farewell: "",
   },
   wisdom: {

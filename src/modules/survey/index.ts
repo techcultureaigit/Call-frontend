@@ -12,6 +12,7 @@
  *   bulkDeleteSurveys()        DELETE /api/surveys/:id  (per id)
  *   listSurveyResults()        GET    /api/surveys/:id/results
  *   getSurveyResult()          GET    /api/surveys/:id/results/:resultId
+ *   getSurveyResultTranscriptions() GET /api/surveys/:id/results/:resultId/transcriptions
  *   exportSurveyResults()      GET    /api/surveys/:id/results/export
  *   uploadSurveyContactFile()  POST   /api/surveys/:id/contact-file
  *   uploadSurveyQuestionsFile() POST  /api/surveys/:id/questions-file
@@ -60,6 +61,7 @@ export {
   unscheduleSurvey,
   listSurveyResults,
   getSurveyResult,
+  getSurveyResultTranscriptions,
   exportSurveyResults,
   uploadSurveyContactFile,
   uploadSurveyQuestionsFile,
@@ -71,6 +73,7 @@ export type {
   SurveyResultsExportFormat,
   SurveyResultAnswer,
   SurveyResultQuestionMeta,
+  SurveyResultTranscription,
   SurveyResultsSurveyMeta,
   SurveysListParams,
   SurveyResultsListParams,

@@ -23,7 +23,7 @@ export type BackendSurvey = Record<string, any>;
 
 const DEFAULT_PROGRESS: SurveyProgress = {
   identity: { complete: false, missing: ["name"] },
-  prompts: { complete: false, missing: ["greeting_or_systemPrompt"] },
+  prompts: { complete: false, missing: ["greeting"] },
   "survey-questions": { complete: false, missing: ["questions"] },
   farewell: { complete: false, optional: true, missing: ["farewell"] },
   "client-contact": { complete: false, missing: ["contact_file"] },
@@ -123,8 +123,8 @@ export function backendSurveyToAgent(s: BackendSurvey): Survey {
       name: s.name ?? "",
       language: persona.language ?? "hi",
       maxCallDurationMinutes: persona.maxCallDurationMinutes ?? 15,
-      audioCacheEnabled: persona.audioCacheEnabled ?? false,
-      livekitInferenceEnabled: persona.livekitInferenceEnabled ?? false,
+      audioCacheEnabled: Boolean(persona.audioCacheEnabled),
+      callBargeInEnabled: Boolean(persona.callBargeInEnabled),
       stt: mapStack(persona.stt),
       llm: mapStack(persona.llm),
       tts: {
@@ -142,7 +142,6 @@ export function backendSurveyToAgent(s: BackendSurvey): Survey {
     prompts: {
       greeting: prompts.greeting ?? "",
       greetsFirst: prompts.greetsFirst ?? true,
-      systemPrompt: prompts.systemPrompt ?? "",
       farewell: prompts.farewell ?? "",
     },
     surveyQuestions: {
@@ -225,8 +224,8 @@ export function agentToBackendPayload(
     persona: {
       language: c.persona.language,
       maxCallDurationMinutes: c.persona.maxCallDurationMinutes,
-      audioCacheEnabled: c.persona.audioCacheEnabled,
-      livekitInferenceEnabled: c.persona.livekitInferenceEnabled,
+      audioCacheEnabled: Boolean(c.persona.audioCacheEnabled),
+      callBargeInEnabled: Boolean(c.persona.callBargeInEnabled),
       stt: {
         modelId: c.persona.stt.modelId || null,
       },
@@ -247,7 +246,6 @@ export function agentToBackendPayload(
     prompts: {
       greeting: c.prompts.greeting,
       greetsFirst: c.prompts.greetsFirst,
-      systemPrompt: c.prompts.systemPrompt,
       farewell: c.prompts.farewell ?? "",
     },
     surveyQuestions: {

@@ -166,7 +166,6 @@ export function SurveyDetailView({ survey }: { survey: Survey }) {
   const voicePreviewUrl = persona.tts.voicePreviewUrl?.trim() || "";
   const language = getSurveyLanguageLabel(persona.language || currentSurvey.language);
   const greeting = currentSurvey.config.prompts.greeting?.trim() || "—";
-  const systemPrompt = currentSurvey.config.prompts.systemPrompt?.trim() || "—";
   const farewell = currentSurvey.config.prompts.farewell?.trim() || "—";
   const greetsFirst = currentSurvey.config.prompts.greetsFirst;
   const questions = currentSurvey.config.surveyQuestions.questions ?? [];
@@ -326,8 +325,8 @@ export function SurveyDetailView({ survey }: { survey: Survey }) {
                   <DetailField label="Audio cache">
                     {onOff(persona.audioCacheEnabled)}
                   </DetailField>
-                  <DetailField label="Realtime audio">
-                    {onOff(persona.livekitInferenceEnabled)}
+                  <DetailField label="Call barge in">
+                    {onOff(persona.callBargeInEnabled)}
                   </DetailField>
                   <DetailField label="Updated">
                     <span className="inline-flex items-center gap-1.5">
@@ -386,11 +385,6 @@ export function SurveyDetailView({ survey }: { survey: Survey }) {
                 </DetailField>
                 <DetailField label="Greets first">
                   {onOff(greetsFirst)}
-                </DetailField>
-                <DetailField label="System prompt">
-                  <p className="whitespace-pre-wrap rounded-[6px] border border-border/40 bg-background/80 p-3 text-xs leading-relaxed text-muted-foreground">
-                    {systemPrompt}
-                  </p>
                 </DetailField>
               </div>
             </StepSection>
