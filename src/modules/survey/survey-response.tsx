@@ -628,8 +628,8 @@ function TranscriptionChatModal({
             </DialogHeader>
           </div>
 
-          <div className="relative min-h-0 flex-1 overflow-hidden bg-[#e8eef3]">
-            <div className="relative min-h-0 flex-1 overflow-y-auto p-3 sm:p-4">
+          <div className="relative flex min-h-0 flex-1 flex-col overflow-hidden bg-[#e8eef3]">
+            <div className="min-h-0 max-h-[calc(92vh-7.5rem)] flex-1 overflow-y-auto overscroll-contain p-3 sm:p-4">
               {loading ? (
                 <div className="flex items-center justify-center py-16">
                   <SurveyFetchLoader label="Loading conversation" />
@@ -830,7 +830,9 @@ function TranscriptionChat({
     <div
       className={cn(
         "flex flex-col rounded-[18px] bg-[#e8eef3] px-3 py-4 sm:px-4",
-        fillHeight ? "min-h-[min(62vh,520px)]" : "max-h-[min(52vh,420px)] overflow-y-auto"
+        fillHeight
+          ? "min-h-0"
+          : "max-h-[min(52vh,420px)] overflow-y-auto"
       )}
     >
       <div className="mb-4 flex justify-center">
@@ -1340,20 +1342,20 @@ function ResultsInlineQaTable({
                                 type="button"
                                 onClick={() => setChatRow(row)}
                                 className={cn(
-                                  "inline-flex size-8 shrink-0 items-center justify-center rounded-full transition-all",
-                                  "hover:scale-105 active:scale-95",
+                                  "inline-flex h-8 shrink-0 items-center justify-center rounded-full px-3 text-[11px] font-semibold tracking-wide transition-all",
+                                  "hover:scale-[1.02] active:scale-[0.98]",
                                   row.has_transcription
                                     ? "bg-brand text-white shadow-[0_6px_14px_-8px_#2983ad] hover:bg-[#247399]"
                                     : "bg-brand/15 text-brand ring-1 ring-brand/25 hover:bg-brand/25"
                                 )}
-                                aria-label="View call conversation"
+                                aria-label="View transcription"
                                 title={
                                   row.has_transcription
-                                    ? "View call conversation"
-                                    : "Open conversation (no transcript yet)"
+                                    ? "View transcription"
+                                    : "Open transcription (no transcript yet)"
                                 }
                               >
-                                <ChatBubbleIcon className="size-4" />
+                                Transcription
                               </button>
                             </div>
                           </td>

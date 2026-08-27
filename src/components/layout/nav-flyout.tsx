@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type RefObject } from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -35,7 +35,7 @@ export function NavFlyout({
   index,
 }: NavFlyoutProps) {
   const pathname = usePathname();
-  const triggerRef = useRef<HTMLAnchorElement>(null);
+  const triggerRef = useRef<HTMLAnchorElement | HTMLButtonElement>(null);
   const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [isOpen, setIsOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
@@ -90,22 +90,17 @@ export function NavFlyout({
     };
   }, [isOpen]);
 
-  const trigger = (
-    <Link
-      ref={triggerRef}
-      href={item.href}
-      className={cn(
-        "group relative flex items-center justify-center rounded-[7px] px-2 py-2",
-        "transition-colors duration-200 ease-out",
-        isActive
-          ? "bg-white text-neutral-900 shadow-[0_4px_14px_-6px_rgb(0_0_0/0.4)]"
-          : "text-sidebar-foreground/80 hover:bg-white/[0.06] hover:text-sidebar-foreground",
-        isOpen && !isActive && "bg-white/[0.06]"
-      )}
-      aria-label={item.title}
-      aria-expanded={hasChildren ? isOpen : undefined}
-      onClick={() => onNavigate?.()}
-    >
+  const triggerClassName = cn(
+    "group relative flex items-center justify-center rounded-[7px] px-2 py-2",
+    "transition-colors duration-200 ease-out",
+    isActive
+      ? "bg-white text-neutral-900 shadow-[0_4px_14px_-6px_rgb(0_0_0/0.4)]"
+      : "text-sidebar-foreground/80 hover:bg-white/[0.06] hover:text-sidebar-foreground",
+    isOpen && !isActive && "bg-white/[0.06]"
+  );
+
+  const triggerIcon = (
+    <>
       {isActive && (
         <span className="pointer-events-none absolute inset-0 rounded-[7px] bg-white" />
       )}
@@ -116,6 +111,37 @@ export function NavFlyout({
         )}
         strokeWidth={isActive ? 2.2 : 1.85}
       />
+    </>
+  );
+
+  // With children: button only opens flyout — never navigates to parent href
+  // (parent href often matches first child, e.g. Survey → My Surveys).
+  const trigger = hasChildren ? (
+    <button
+      ref={triggerRef as RefObject<HTMLButtonElement>}
+      type="button"
+      className={triggerClassName}
+      aria-label={item.title}
+      aria-expanded={isOpen}
+      onClick={() => {
+        if (isOpen) {
+          setIsOpen(false);
+        } else {
+          openFlyout();
+        }
+      }}
+    >
+      {triggerIcon}
+    </button>
+  ) : (
+    <Link
+      ref={triggerRef as RefObject<HTMLAnchorElement>}
+      href={item.href}
+      className={triggerClassName}
+      aria-label={item.title}
+      onClick={() => onNavigate?.()}
+    >
+      {triggerIcon}
     </Link>
   );
 

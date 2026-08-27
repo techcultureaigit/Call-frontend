@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { ChevronRight } from "lucide-react";
@@ -26,7 +25,8 @@ interface NavGroupProps {
 }
 
 /**
- * Nested module group — parent row navigates; chevron toggles children.
+ * Nested module group — parent row toggles children (does not navigate).
+ * Only child links (My Surveys / Voices / Providers) change the route.
  */
 export function NavGroup({
   item,
@@ -85,18 +85,16 @@ export function NavGroup({
                   : "bg-transparent"
           )}
         >
-          <Link
-            href={item.href}
-            onClick={() => {
-              if (!isExpanded) setGroupExpanded(item.id, true);
-              onNavigate?.();
-            }}
+          <button
+            type="button"
+            onClick={handleToggle}
             className={cn(
               "flex min-w-0 flex-1 items-center gap-2.5 rounded-[7px] px-2.5 py-2 text-left text-[13px] font-medium tracking-[-0.01em]",
               "transition-colors duration-200 text-sidebar-foreground/85",
               "hover:text-sidebar-foreground"
             )}
-            aria-current={isActive ? "page" : undefined}
+            aria-expanded={isExpanded}
+            aria-controls={`nav-group-${item.id}`}
           >
             <Icon
               className="size-4 shrink-0 text-sidebar-foreground/75"
@@ -115,7 +113,7 @@ export function NavGroup({
                 {item.badge}
               </span>
             )}
-          </Link>
+          </button>
 
           <Tooltip delayDuration={400}>
             <TooltipTrigger asChild>
@@ -155,7 +153,7 @@ export function NavGroup({
               transition={{ duration: 0.22, ease: [0.25, 0.1, 0.25, 1] }}
               className="overflow-hidden"
             >
-              <ul className="space-y-0.5 pb-1 pt-0.5">
+              <ul id={`nav-group-${item.id}`} className="space-y-0.5 pb-1 pt-0.5">
                 {children.map((child) => (
                   <NavSubItem
                     key={child.id}
