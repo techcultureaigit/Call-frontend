@@ -53,7 +53,7 @@ export function AppSidebar({ className }: AppSidebarProps) {
         transition={sidebarTransition}
         className={cn(
           "relative flex shrink-0 flex-col overflow-hidden bg-sidebar text-sidebar-foreground",
-          "shadow-[inset_-1px_0_0_0_color-mix(in_oklch,var(--sidebar-border)_55%,transparent)]",
+          "shadow-[inset_-1px_0_0_0_color-mix(in_oklch,var(--sidebar-border)_70%,transparent)]",
           isMobile
             ? "fixed inset-y-0 left-0 z-50 h-svh"
             : "sticky top-0 z-40 h-svh",
@@ -63,20 +63,19 @@ export function AppSidebar({ className }: AppSidebarProps) {
           maxWidth: isMobile ? LAYOUT.sidebar.expanded : undefined,
         }}
       >
-        {/* Layered depth: soft top accent wash */}
         <div
           aria-hidden
           className="pointer-events-none absolute inset-0 z-0"
           style={{
             background:
-              "radial-gradient(120% 42% at 8% 0%, color-mix(in oklch, var(--sidebar-primary) 9%, transparent) 0%, transparent 52%)",
+              "radial-gradient(90% 36% at 0% 0%, color-mix(in oklch, var(--sidebar-primary) 12%, transparent) 0%, transparent 58%)",
           }}
         />
 
         <div
           className={cn(
-            "relative z-10 flex h-16 shrink-0 items-center px-4",
-            effectiveCollapsed && "justify-center px-3"
+            "relative z-10 flex h-14 shrink-0 items-center border-b border-white/[0.06] px-3",
+            effectiveCollapsed && "justify-center px-2"
           )}
         >
           <SidebarLogo />
@@ -84,7 +83,7 @@ export function AppSidebar({ className }: AppSidebarProps) {
 
         <div
           className={cn(
-            "relative z-10 min-h-0 flex-1 overflow-y-auto px-3 py-3",
+            "relative z-10 min-h-0 flex-1 overflow-y-auto px-2 py-2.5",
             "[scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
           )}
         >
@@ -93,8 +92,8 @@ export function AppSidebar({ className }: AppSidebarProps) {
 
         <div
           className={cn(
-            "relative z-10 shrink-0 border-t border-sidebar-border/60 p-3",
-            effectiveCollapsed && "px-2"
+            "relative z-10 shrink-0 border-t border-white/[0.06] p-2",
+            effectiveCollapsed && "px-1.5"
           )}
         >
           <SidebarUserCard collapsed={effectiveCollapsed} />

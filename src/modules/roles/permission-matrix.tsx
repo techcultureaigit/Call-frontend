@@ -46,7 +46,7 @@ function ensureRow(
   moduleId: string
 ): ModulePermissions {
   if (!next[moduleId as keyof RolePermissions]) {
-    next[moduleId as keyof RolePermissions] = emptyModulePermissions();
+    next[moduleId as keyof RolePermissions] = emptyModulePermissions(moduleId);
   }
   return next[moduleId as keyof RolePermissions];
 }
@@ -94,7 +94,7 @@ export function PermissionMatrix({
       const actions = getModuleActions(mod.id);
       if (actions.length > 0) {
         const row = {
-          ...emptyModulePermissions(),
+          ...emptyModulePermissions(mod.id),
           ...ensureRow(next, mod.id),
         };
         actions.forEach((action) => {

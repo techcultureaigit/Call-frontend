@@ -167,25 +167,20 @@ export function isIndicatorModule(moduleId: string): boolean {
   return Boolean(config?.children?.length) && !(config?.actions?.length);
 }
 
-export function emptyModulePermissions(): ModulePermissions {
-  return {
-    create: false,
-    read: false,
-    update: false,
-    delete: false,
-    export: false,
-    import: false,
-    upload: false,
-    download: false,
-    publish: false,
-  };
+/** Empty flags for a module — only that module’s allowed actions (matches backend Joi). */
+export function emptyModulePermissions(moduleId?: string): ModulePermissions {
+  const actions = moduleId ? getModuleActions(moduleId) : PERMISSION_ACTIONS;
+  return actions.reduce((flags, action) => {
+    flags[action] = false;
+    return flags;
+  }, {} as ModulePermissions);
 }
 
 export function createEmptyPermissions(): RolePermissions {
   const permissions = {} as RolePermissions;
 
   ALL_PERMISSION_MODULES.forEach((moduleId) => {
-    permissions[moduleId] = emptyModulePermissions();
+    permissions[moduleId] = emptyModulePermissions(moduleId);
   });
 
   return permissions;
@@ -196,7 +191,7 @@ export function createFullPermissions(): RolePermissions {
 
   ALL_PERMISSION_MODULES.forEach((moduleId) => {
     const actions = getModuleActions(moduleId);
-    const next = emptyModulePermissions();
+    const next = emptyModulePermissions(moduleId);
     actions.forEach((action) => {
       next[action] = true;
     });
@@ -254,7 +249,7 @@ function pickActions(
   source: Partial<ModulePermissions> | Record<string, unknown> | undefined,
   moduleId: string
 ): ModulePermissions {
-  const next = emptyModulePermissions();
+  const next = emptyModulePermissions(moduleId);
   if (!source) return next;
   getModuleActions(moduleId).forEach((action) => {
     next[action] = Boolean(source[action]);

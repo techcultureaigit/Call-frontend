@@ -95,26 +95,26 @@ export function NavFlyout({
       ref={triggerRef}
       href={item.href}
       className={cn(
-        "group relative flex items-center justify-center rounded-[6px] px-2.5 py-2.5",
-        "transition-[background-color,box-shadow] duration-[280ms] ease-out",
+        "group relative flex items-center justify-center rounded-[7px] px-2 py-2",
+        "transition-colors duration-200 ease-out",
         isActive
-          ? "bg-white text-neutral-900 shadow-[0_8px_20px_-8px_rgb(0_0_0/0.45)]"
-          : "text-sidebar-foreground hover:bg-sidebar-elevated",
-        isOpen && !isActive && "bg-sidebar-elevated"
+          ? "bg-white text-neutral-900 shadow-[0_4px_14px_-6px_rgb(0_0_0/0.4)]"
+          : "text-sidebar-foreground/80 hover:bg-white/[0.06] hover:text-sidebar-foreground",
+        isOpen && !isActive && "bg-white/[0.06]"
       )}
       aria-label={item.title}
       aria-expanded={hasChildren ? isOpen : undefined}
       onClick={() => onNavigate?.()}
     >
       {isActive && (
-        <span className="pointer-events-none absolute inset-0 rounded-[6px] bg-white" />
+        <span className="pointer-events-none absolute inset-0 rounded-[7px] bg-white" />
       )}
       <Icon
         className={cn(
-          "relative size-[18px] transition-colors duration-[280ms]",
-          isActive ? "text-neutral-900" : "text-sidebar-foreground"
+          "relative size-4 transition-colors duration-200",
+          isActive ? "text-neutral-900" : "text-sidebar-foreground/75"
         )}
-        strokeWidth={isActive ? 2.25 : 2}
+        strokeWidth={isActive ? 2.2 : 1.85}
       />
     </Link>
   );

@@ -69,6 +69,21 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState, type MouseEvent } from "react";
 import { toast } from "sonner";
 
+/** Round speech bubble — classic “chat” look (WhatsApp / Messenger style) */
+function ChatBubbleIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="currentColor"
+      xmlns="http://www.w3.org/2000/svg"
+      className={className}
+      aria-hidden
+    >
+      <path d="M12 2.5c-5.1 0-9.25 3.72-9.25 8.3 0 2.72 1.48 5.14 3.8 6.72v3.28a.75.75 0 0 0 1.2.6l3.55-2.48c.23.02.46.03.7.03 5.1 0 9.25-3.72 9.25-8.15S17.1 2.5 12 2.5Zm-3.35 7.4a1.1 1.1 0 1 1 0 2.2 1.1 1.1 0 0 1 0-2.2Zm3.35 0a1.1 1.1 0 1 1 0 2.2 1.1 1.1 0 0 1 0-2.2Zm3.35 0a1.1 1.1 0 1 1 0 2.2 1.1 1.1 0 0 1 0-2.2Z" />
+    </svg>
+  );
+}
+
 /** Results table / popup palette — neutral theme (no orange/peach) */
 const QA_MODAL = {
   rowOdd: "#ffffff",
@@ -567,71 +582,69 @@ function TranscriptionChatModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="flex max-h-[90vh] w-[min(96vw,560px)] max-w-none flex-col gap-0 overflow-hidden border border-border/40 bg-card p-0 shadow-elevated sm:rounded-[16px]">
-        <div className="relative shrink-0 overflow-hidden border-b border-border/40">
-          <div
-            aria-hidden
-            className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,color-mix(in_oklch,var(--brand)_22%,transparent),transparent_58%)]"
-          />
-          <div
-            aria-hidden
-            className="pointer-events-none absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-brand/35 to-transparent"
-          />
-          <DialogHeader className="relative px-5 py-4 sm:px-6">
-            <div className="flex flex-wrap items-start justify-between gap-3 pr-8">
-              <div className="min-w-0 space-y-2.5">
-                <div className="flex items-center gap-2.5">
-                  <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-brand/12 text-brand ring-1 ring-brand/20">
-                    <MessageSquareText className="size-4" />
-                  </span>
-                  <div className="min-w-0">
-                    <DialogTitle className="font-display text-lg font-semibold tracking-tight text-foreground">
-                      Chat transcription
-                    </DialogTitle>
-                    <p className="text-[11px] text-muted-foreground">
-                      Live call conversation replay
-                    </p>
-                  </div>
-                </div>
-                <DialogDescription asChild>
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span className="inline-flex items-center gap-1.5 rounded-full bg-background/80 px-2.5 py-1 text-xs font-medium text-foreground shadow-sm ring-1 ring-border/60">
-                      <Phone className="size-3.5 text-brand" />
-                      {customerNumber || "—"}
+      <DialogContent className="flex max-h-[92vh] w-[min(96vw,620px)] max-w-none flex-col gap-0 overflow-hidden border-0 bg-transparent p-0 shadow-none sm:rounded-[22px] [&>button]:right-4 [&>button]:top-4 [&>button]:rounded-full [&>button]:bg-white/10 [&>button]:p-1 [&>button]:text-white/85 [&>button]:opacity-100 [&>button]:ring-0 [&>button]:hover:bg-white/20 [&>button]:hover:text-white">
+        <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-[22px] border border-white/20 bg-card shadow-[0_28px_70px_-24px_rgba(15,23,42,0.55)]">
+          <div className="relative shrink-0 overflow-hidden bg-[linear-gradient(135deg,#13233a_0%,#1b3f5c_48%,#247399_100%)] px-5 py-4 text-white sm:px-6">
+            <div
+              aria-hidden
+              className="pointer-events-none absolute -right-10 -top-12 size-40 rounded-full bg-white/10 blur-2xl"
+            />
+            <div
+              aria-hidden
+              className="pointer-events-none absolute -bottom-10 left-16 size-28 rounded-full bg-sky-300/25 blur-2xl"
+            />
+            <DialogHeader className="relative">
+              <div className="flex flex-wrap items-start justify-between gap-3 pr-8">
+                <div className="min-w-0 space-y-3">
+                  <div className="flex items-center gap-3">
+                    <span className="flex size-11 shrink-0 items-center justify-center rounded-full bg-white/15 text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.25)] ring-1 ring-white/25">
+                      <ChatBubbleIcon className="size-5" />
                     </span>
-                    {transcriptions.length ? (
-                      <span className="inline-flex items-center gap-1 rounded-full bg-brand/10 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-brand ring-1 ring-brand/20">
-                        <MessageCircle className="size-3" />
-                        {transcriptions.length} messages
+                    <div className="min-w-0">
+                      <DialogTitle className="font-display text-[1.15rem] font-semibold tracking-tight text-white">
+                        Call conversation
+                      </DialogTitle>
+                      <p className="mt-0.5 text-[12px] text-white/70">
+                        Agent &amp; customer chat replay
+                      </p>
+                    </div>
+                  </div>
+                  <DialogDescription asChild>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="inline-flex items-center gap-1.5 rounded-full bg-white/12 px-2.5 py-1 text-xs font-medium text-white ring-1 ring-white/15">
+                        <Phone className="size-3.5 text-sky-200" />
+                        {customerNumber || "—"}
                       </span>
-                    ) : null}
-                  </div>
-                </DialogDescription>
+                      {transcriptions.length ? (
+                        <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-400/18 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-emerald-50 ring-1 ring-emerald-200/25">
+                          <ChatBubbleIcon className="size-3" />
+                          {transcriptions.length} messages
+                        </span>
+                      ) : null}
+                    </div>
+                  </DialogDescription>
+                </div>
               </div>
-            </div>
-          </DialogHeader>
-        </div>
+            </DialogHeader>
+          </div>
 
-        <div className="relative min-h-0 flex-1 overflow-hidden">
-          <div
-            aria-hidden
-            className="pointer-events-none absolute inset-0 bg-[linear-gradient(165deg,color-mix(in_oklch,var(--brand)_6%,transparent)_0%,transparent_42%),radial-gradient(circle_at_1px_1px,color-mix(in_oklch,var(--foreground)_6%,transparent)_1px,transparent_0)] bg-[length:100%_100%,14px_14px]"
-          />
-          <div className="relative min-h-0 flex-1 overflow-y-auto px-3 py-4 sm:px-4">
-            {loading ? (
-              <div className="flex items-center justify-center py-16">
-                <SurveyFetchLoader label="Loading transcription" />
-              </div>
-            ) : (
-              <>
-                {error ? (
-                  <div className="mb-3 rounded-xl border border-amber-500/30 bg-amber-500/5 px-3 py-2 text-xs text-amber-800">
-                    {error}
-                  </div>
-                ) : null}
-                <TranscriptionChat transcriptions={transcriptions} fillHeight />
-              </>
-            )}
+          <div className="relative min-h-0 flex-1 overflow-hidden bg-[#e8eef3]">
+            <div className="relative min-h-0 flex-1 overflow-y-auto p-3 sm:p-4">
+              {loading ? (
+                <div className="flex items-center justify-center py-16">
+                  <SurveyFetchLoader label="Loading conversation" />
+                </div>
+              ) : (
+                <>
+                  {error ? (
+                    <div className="mb-3 rounded-[14px] border border-amber-500/30 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+                      {error}
+                    </div>
+                  ) : null}
+                  <TranscriptionChat transcriptions={transcriptions} fillHeight />
+                </>
+              )}
+            </div>
           </div>
         </div>
       </DialogContent>
@@ -799,15 +812,15 @@ function TranscriptionChat({
 }) {
   if (!transcriptions.length) {
     return (
-      <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-border/70 bg-background/70 px-4 py-14 text-center shadow-sm">
-        <span className="mb-3 flex size-12 items-center justify-center rounded-2xl bg-muted/70 text-muted-foreground ring-1 ring-border/60">
-          <MessageSquareText className="size-5" />
+      <div className="flex flex-col items-center justify-center rounded-[20px] border border-dashed border-slate-300/80 bg-white/70 px-4 py-16 text-center shadow-sm">
+        <span className="mb-4 flex size-14 items-center justify-center rounded-full bg-brand/10 text-brand shadow-[0_10px_28px_-14px_#2983ad] ring-4 ring-brand/8">
+          <ChatBubbleIcon className="size-6" />
         </span>
-        <p className="text-sm font-medium text-foreground">
-          No chat transcription
+        <p className="text-sm font-semibold text-foreground">
+          No conversation yet
         </p>
-        <p className="mt-1 max-w-[240px] text-xs text-muted-foreground">
-          Conversation turns will appear here when the call recording is transcribed.
+        <p className="mt-1 max-w-[260px] text-xs leading-relaxed text-muted-foreground">
+          Agent and customer chat turns will appear here once this call is transcribed.
         </p>
       </div>
     );
@@ -816,88 +829,124 @@ function TranscriptionChat({
   return (
     <div
       className={cn(
-        "space-y-3.5 overflow-y-auto px-0.5 py-0.5",
-        fillHeight ? "max-h-[min(70vh,560px)]" : "max-h-[min(52vh,420px)]"
+        "flex flex-col rounded-[18px] bg-[#e8eef3] px-3 py-4 sm:px-4",
+        fillHeight ? "min-h-[min(62vh,520px)]" : "max-h-[min(52vh,420px)] overflow-y-auto"
       )}
     >
-      <div className="flex justify-center pb-1">
-        <span className="inline-flex items-center gap-1.5 rounded-full bg-background/85 px-3 py-1 text-[10px] font-medium text-muted-foreground shadow-sm ring-1 ring-border/50 backdrop-blur-sm">
-          <Sparkles className="size-3 text-brand" />
-          {transcriptions.length} turns · call transcript
+      <div className="mb-4 flex justify-center">
+        <span className="inline-flex items-center gap-1.5 rounded-full bg-white/90 px-3 py-1 text-[10px] font-medium text-slate-500 shadow-sm ring-1 ring-slate-200/80">
+          <ChatBubbleIcon className="size-3 text-brand" />
+          {transcriptions.length} messages in this call
         </span>
       </div>
 
-      {transcriptions.map((turn, index) => {
-        const isCustomer = turn.speaker === "CUSTOMER";
-        const time = formatTranscriptionTime(turn.timestamp);
-        return (
-          <motion.div
-            key={`${turn.speaker}-${turn.timestamp ?? index}-${index}`}
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.22, delay: Math.min(index * 0.02, 0.28) }}
-            className={cn(
-              "flex w-full gap-2.5",
-              isCustomer ? "flex-row-reverse" : "flex-row"
-            )}
-          >
-            <div
-              className={cn(
-                "mt-auto mb-0.5 flex size-8 shrink-0 items-center justify-center rounded-full shadow-sm ring-2 ring-background",
-                isCustomer
-                  ? "bg-brand text-brand-foreground"
-                  : "bg-slate-800 text-white dark:bg-slate-200 dark:text-slate-900"
-              )}
-              aria-hidden
-            >
-              {isCustomer ? (
-                <UserRound className="size-3.5" />
-              ) : (
-                <Bot className="size-3.5" />
-              )}
-            </div>
+      <div className="flex flex-col">
+        {transcriptions.map((turn, index) => {
+          const isCustomer = turn.speaker === "CUSTOMER";
+          const prev = transcriptions[index - 1];
+          const next = transcriptions[index + 1];
+          const isFirstInGroup = prev?.speaker !== turn.speaker;
+          const isLastInGroup = next?.speaker !== turn.speaker;
+          const time = formatTranscriptionTime(turn.timestamp);
 
-            <div
+          return (
+            <motion.div
+              key={`${turn.speaker}-${turn.timestamp ?? index}-${index}`}
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.22, delay: Math.min(index * 0.02, 0.28) }}
               className={cn(
-                "flex min-w-0 max-w-[min(100%,24rem)] flex-1 flex-col gap-1",
-                isCustomer ? "items-end" : "items-start"
+                "flex w-full gap-2.5",
+                isCustomer ? "flex-row-reverse" : "flex-row",
+                isFirstInGroup && index > 0 ? "mt-4" : "mt-1"
               )}
             >
+              {isLastInGroup ? (
+                <div
+                  className={cn(
+                    "mt-auto mb-0.5 flex size-8 shrink-0 items-center justify-center rounded-full shadow-md ring-2 ring-white",
+                    isCustomer
+                      ? "bg-[linear-gradient(145deg,#3aa0c9,#1e6a8f)] text-white"
+                      : "bg-[linear-gradient(145deg,#24344d,#152238)] text-white"
+                  )}
+                  aria-hidden
+                >
+                  {isCustomer ? (
+                    <UserRound className="size-3.5" />
+                  ) : (
+                    <Bot className="size-3.5" />
+                  )}
+                </div>
+              ) : (
+                <div className="size-8 shrink-0" aria-hidden />
+              )}
+
               <div
                 className={cn(
-                  "flex items-center gap-1.5 px-1",
-                  isCustomer ? "flex-row-reverse" : "flex-row"
+                  "flex min-w-0 max-w-[min(100%,26rem)] flex-1 flex-col",
+                  isCustomer ? "items-end" : "items-start"
                 )}
               >
-                <span
+                {isFirstInGroup ? (
+                  <div
+                    className={cn(
+                      "mb-1 flex items-center gap-1.5 px-1",
+                      isCustomer ? "flex-row-reverse" : "flex-row"
+                    )}
+                  >
+                    <span
+                      className={cn(
+                        "rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.12em]",
+                        isCustomer
+                          ? "bg-brand/12 text-brand"
+                          : "bg-slate-800/90 text-white"
+                      )}
+                    >
+                      {isCustomer ? "Customer" : "Agent"}
+                    </span>
+                    {time ? (
+                      <span className="text-[10px] tabular-nums text-slate-400">
+                        {time}
+                      </span>
+                    ) : null}
+                  </div>
+                ) : null}
+
+                <div
                   className={cn(
-                    "text-[10px] font-semibold uppercase tracking-[0.1em]",
-                    isCustomer ? "text-brand" : "text-muted-foreground"
+                    "relative px-3.5 py-2.5 text-[13px] leading-[1.55] tracking-[0.01em]",
+                    isCustomer
+                      ? cn(
+                          "bg-[linear-gradient(160deg,#2f97c2_0%,#1f6f96_100%)] text-white shadow-[0_10px_22px_-14px_rgba(31,111,150,0.85)]",
+                          isFirstInGroup ? "rounded-t-[20px]" : "rounded-t-[10px]",
+                          isLastInGroup
+                            ? "rounded-bl-[20px] rounded-br-[6px]"
+                            : "rounded-b-[10px]"
+                        )
+                      : cn(
+                          "bg-white text-slate-800 shadow-[0_8px_20px_-14px_rgba(15,23,42,0.28)] ring-1 ring-slate-200/70",
+                          isFirstInGroup ? "rounded-t-[20px]" : "rounded-t-[10px]",
+                          isLastInGroup
+                            ? "rounded-br-[20px] rounded-bl-[6px]"
+                            : "rounded-b-[10px]"
+                        )
                   )}
                 >
-                  {isCustomer ? "Customer" : "System"}
-                </span>
-                {time ? (
-                  <span className="text-[10px] tabular-nums text-muted-foreground/80">
-                    {time}
-                  </span>
-                ) : null}
+                  <p className="whitespace-pre-wrap break-words">{turn.text_content}</p>
+                </div>
               </div>
+            </motion.div>
+          );
+        })}
+      </div>
 
-              <div
-                className={cn(
-                  "relative px-3.5 py-2.5 text-[13px] leading-relaxed shadow-sm",
-                  isCustomer
-                    ? "rounded-2xl rounded-br-md bg-brand text-brand-foreground shadow-[0_8px_20px_-12px_color-mix(in_oklch,var(--brand)_70%,transparent)]"
-                    : "rounded-2xl rounded-bl-md border border-border/50 bg-background/95 text-foreground shadow-[0_6px_16px_-12px_rgba(15,23,42,0.35)]"
-                )}
-              >
-                <p className="whitespace-pre-wrap break-words">{turn.text_content}</p>
-              </div>
-            </div>
-          </motion.div>
-        );
-      })}
+      <div className="mt-6 flex items-center gap-3 px-2">
+        <span className="h-px flex-1 bg-linear-to-r from-transparent to-slate-300/80" />
+        <span className="text-[10px] font-medium uppercase tracking-[0.14em] text-slate-400">
+          End of transcript
+        </span>
+        <span className="h-px flex-1 bg-linear-to-l from-transparent to-slate-300/80" />
+      </div>
     </div>
   );
 }
@@ -1148,26 +1197,36 @@ function ResultsInlineQaTable({
                                 TABLE_ROW_ACCENT_CLASS
                               )}
                             />
-                            <div className="flex items-center gap-1">
+                            <div className="flex items-center gap-1.5">
                               <DataTableActionButton
                                 label="View response details"
                                 onClick={() => setDetailsRow(row)}
                               >
                                 <Eye className="size-3.5" />
                               </DataTableActionButton>
-                              <DataTableActionButton
-                                label={
-                                  row.has_transcription
-                                    ? "View chat transcription"
-                                    : "Open chat transcription"
-                                }
+                              <button
+                                type="button"
                                 onClick={() => setChatRow(row)}
-                                tone={
-                                  row.has_transcription ? "emerald" : "sky"
+                                className={cn(
+                                  "inline-flex size-7 shrink-0 items-center justify-center rounded-full transition-all",
+                                  "hover:scale-105 active:scale-95",
+                                  row.has_transcription
+                                    ? "bg-brand text-white shadow-[0_6px_14px_-8px_#2983ad] hover:bg-[#247399]"
+                                    : "bg-brand/15 text-brand ring-1 ring-brand/25 hover:bg-brand/25"
+                                )}
+                                aria-label={
+                                  row.has_transcription
+                                    ? "View call conversation"
+                                    : "Open call conversation"
+                                }
+                                title={
+                                  row.has_transcription
+                                    ? "View call conversation"
+                                    : "Open conversation (no transcript yet)"
                                 }
                               >
-                                <MessageSquareText className="size-3.5" />
-                              </DataTableActionButton>
+                                <ChatBubbleIcon className="size-[15px]" />
+                              </button>
                             </div>
                           </td>
                         );
@@ -1281,19 +1340,20 @@ function ResultsInlineQaTable({
                                 type="button"
                                 onClick={() => setChatRow(row)}
                                 className={cn(
-                                  "inline-flex size-8 shrink-0 items-center justify-center rounded-md border transition-colors",
+                                  "inline-flex size-8 shrink-0 items-center justify-center rounded-full transition-all",
+                                  "hover:scale-105 active:scale-95",
                                   row.has_transcription
-                                    ? "border-sky-500/30 bg-sky-500/10 text-sky-700 hover:bg-sky-500/15"
-                                    : "border-border/60 bg-muted/40 text-muted-foreground hover:bg-muted hover:text-foreground"
+                                    ? "bg-brand text-white shadow-[0_6px_14px_-8px_#2983ad] hover:bg-[#247399]"
+                                    : "bg-brand/15 text-brand ring-1 ring-brand/25 hover:bg-brand/25"
                                 )}
-                                aria-label="View chat transcription"
+                                aria-label="View call conversation"
                                 title={
                                   row.has_transcription
-                                    ? "View chat transcription"
-                                    : "Open chat (no transcript yet)"
+                                    ? "View call conversation"
+                                    : "Open conversation (no transcript yet)"
                                 }
                               >
-                                <MessageSquareText className="size-3.5" />
+                                <ChatBubbleIcon className="size-4" />
                               </button>
                             </div>
                           </td>
@@ -1311,7 +1371,7 @@ function ResultsInlineQaTable({
 
         <div className="shrink-0 border-t border-border/40 bg-muted/20 px-5 py-2.5">
           <p className="text-[11px] text-muted-foreground">
-            Chat icon opens transcription only · eye icon opens recording &amp; Q&amp;A
+            Chat icon opens conversation · eye icon opens recording &amp; Q&amp;A
           </p>
         </div>
       </div>

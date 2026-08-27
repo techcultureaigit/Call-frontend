@@ -32,9 +32,9 @@ export function SidebarNav({ collapsed }: SidebarNavProps) {
   let navIndex = 0;
 
   return (
-    <nav className="space-y-5">
+    <nav className="space-y-4">
       {navigation.map((section, sectionIndex) => (
-        <div key={section.id} className="space-y-1">
+        <div key={section.id} className="space-y-0.5">
           {section.label && !collapsed && (
             <SidebarSectionLabel label={section.label} />
           )}

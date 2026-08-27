@@ -75,13 +75,13 @@ export function NavGroup({
       <div className="group/nav relative space-y-0.5">
         <div
           className={cn(
-            "relative flex items-center rounded-[6px] transition-[background-color,box-shadow] duration-[280ms] ease-out",
+            "relative flex items-center rounded-[7px] transition-colors duration-200 ease-out",
             isActive
-              ? "bg-white/15 text-sidebar-foreground ring-1 ring-inset ring-white/20"
+              ? "bg-white/12 text-sidebar-foreground ring-1 ring-inset ring-white/15"
               : categoryHighlight
-                ? "bg-[#f3f0f0]/14 text-sidebar-foreground"
+                ? "bg-white/[0.07] text-sidebar-foreground"
                 : isHovered
-                  ? "bg-sidebar-elevated"
+                  ? "bg-white/[0.05]"
                   : "bg-transparent"
           )}
         >
@@ -92,15 +92,15 @@ export function NavGroup({
               onNavigate?.();
             }}
             className={cn(
-              "flex min-w-0 flex-1 items-center gap-3 rounded-[6px] px-3 py-2.5 text-left text-[13px] font-medium tracking-[-0.01em]",
-              "transition-colors duration-[280ms] text-sidebar-foreground",
+              "flex min-w-0 flex-1 items-center gap-2.5 rounded-[7px] px-2.5 py-2 text-left text-[13px] font-medium tracking-[-0.01em]",
+              "transition-colors duration-200 text-sidebar-foreground/85",
               "hover:text-sidebar-foreground"
             )}
             aria-current={isActive ? "page" : undefined}
           >
             <Icon
-              className="size-[18px] shrink-0 text-sidebar-foreground transition-transform duration-[280ms] group-hover/nav:translate-x-0.5"
-              strokeWidth={categoryHighlight ? 2.25 : 2}
+              className="size-4 shrink-0 text-sidebar-foreground/75"
+              strokeWidth={categoryHighlight ? 2.15 : 1.85}
             />
             <span
               className={cn(
@@ -123,9 +123,9 @@ export function NavGroup({
                 type="button"
                 onClick={handleToggle}
                 className={cn(
-                  "relative z-10 mr-1.5 inline-flex size-7 shrink-0 items-center justify-center rounded-md",
-                  "text-sidebar-foreground transition-all duration-[280ms]",
-                  "hover:bg-white/10"
+                  "relative z-10 mr-1 inline-flex size-6 shrink-0 items-center justify-center rounded-md",
+                  "text-sidebar-foreground/55 transition-colors duration-200",
+                  "hover:bg-white/10 hover:text-sidebar-foreground"
                 )}
                 aria-label={
                   isExpanded ? `Collapse ${item.title}` : `Expand ${item.title}`

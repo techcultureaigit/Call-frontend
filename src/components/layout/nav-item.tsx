@@ -47,16 +47,16 @@ export function NavItem({
   const isCta = variant === "cta";
 
   const className = cn(
-    "group relative flex items-center gap-3 rounded-[6px] text-[13px] font-medium",
-    "transition-[background-color,color,box-shadow,transform] duration-[280ms] ease-out",
-    nested ? "px-3 py-2" : "px-3 py-2.5",
-    collapsed && !nested && "justify-center px-2.5 py-2.5",
+    "group relative flex items-center gap-2.5 rounded-[7px] text-[13px] font-medium",
+    "transition-[background-color,color,box-shadow] duration-200 ease-out",
+    nested ? "px-2.5 py-1.5" : "px-2.5 py-2",
+    collapsed && !nested && "justify-center px-2 py-2",
     disabled && "pointer-events-none opacity-40",
     isActive
-      ? "bg-white text-neutral-900 shadow-[0_8px_24px_-10px_rgb(0_0_0/0.45)]"
+      ? "bg-white text-neutral-900 shadow-[0_4px_14px_-6px_rgb(0_0_0/0.4)]"
       : isCta
         ? "border border-dashed border-sidebar-primary/30 text-sidebar-primary hover:border-sidebar-primary/50 hover:bg-sidebar-primary/5"
-        : "text-sidebar-foreground hover:-translate-y-px hover:bg-sidebar-elevated hover:opacity-100 hover:shadow-[0_6px_18px_-12px_rgb(0_0_0/0.6)]"
+        : "text-sidebar-foreground/80 hover:bg-white/[0.06] hover:text-sidebar-foreground"
   );
 
   const content = (
@@ -64,21 +64,20 @@ export function NavItem({
       {isActive && !nested && (
         <motion.span
           layoutId="sidebar-active-bg"
-          className="pointer-events-none absolute inset-0 rounded-[6px] bg-white"
+          className="pointer-events-none absolute inset-0 rounded-[7px] bg-white"
           transition={{ type: "spring", stiffness: 380, damping: 34 }}
         />
       )}
       <Icon
         className={cn(
-          "relative shrink-0 transition-[color,transform] duration-[280ms] ease-out",
-          nested ? "size-4" : "size-[18px]",
+          "relative size-4 shrink-0 transition-colors duration-200 ease-out",
           isActive
             ? "text-neutral-900"
             : isCta
               ? "text-sidebar-primary/75 group-hover:text-sidebar-primary"
-              : "text-sidebar-foreground group-hover:translate-x-0.5"
+              : "text-sidebar-foreground/70 group-hover:text-sidebar-foreground"
         )}
-        strokeWidth={isActive ? 2.25 : 2}
+        strokeWidth={isActive ? 2.2 : 1.85}
       />
       {(!collapsed || nested) && (
         <>

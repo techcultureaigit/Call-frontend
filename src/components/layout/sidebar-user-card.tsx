@@ -30,25 +30,25 @@ export function SidebarUserCard({ collapsed }: SidebarUserCardProps) {
     <Link
       href={routePaths.settings.root}
       className={cn(
-        "group flex items-center gap-3 rounded-[6px] border border-white/10 bg-white/5 p-2.5 transition-colors hover:bg-white/10",
+        "group flex items-center gap-2 rounded-[7px] border border-white/[0.08] bg-white/[0.04] px-2 py-1.5 transition-colors hover:bg-white/[0.08]",
         collapsed &&
-          "justify-center border-0 bg-transparent p-1.5 hover:bg-white/10"
+          "justify-center border-0 bg-transparent p-1 hover:bg-white/10"
       )}
     >
-      <Avatar className="size-9 ring-2 ring-brand/40">
+      <Avatar className="size-7 ring-1 ring-brand/35">
         {user?.avatarUrl && (
           <AvatarImage src={user.avatarUrl} alt={displayName} />
         )}
-        <AvatarFallback className="nav-active-gradient text-[11px] font-semibold text-white">
+        <AvatarFallback className="nav-active-gradient text-[10px] font-semibold text-white">
           {initials}
         </AvatarFallback>
       </Avatar>
       {!collapsed && (
-        <div className="min-w-0 flex-1">
-          <p className="truncate text-[13px] font-semibold text-sidebar-foreground">
+        <div className="min-w-0 flex-1 leading-tight">
+          <p className="truncate text-[12px] font-semibold text-sidebar-foreground">
             {displayName}
           </p>
-          <p className="truncate text-[11px] text-sidebar-foreground/70">
+          <p className="truncate text-[10px] text-sidebar-foreground/50">
             {roleLabel}
           </p>
         </div>

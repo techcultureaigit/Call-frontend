@@ -14,17 +14,8 @@ export type PermissionAction =
 
 export type PermissionModule = NavModule | string;
 
-export interface ModulePermissions {
-  create: boolean;
-  read: boolean;
-  update: boolean;
-  delete: boolean;
-  export: boolean;
-  import: boolean;
-  upload: boolean;
-  download: boolean;
-  publish: boolean;
-}
+/** Per-module flags — only actions allowed for that module should be present */
+export type ModulePermissions = Partial<Record<PermissionAction, boolean>>;
 
 /** Dynamic matrix keyed by backend module ids */
 export type RolePermissions = Record<string, ModulePermissions>;
