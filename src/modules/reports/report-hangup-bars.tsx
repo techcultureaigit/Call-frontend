@@ -16,7 +16,7 @@ export function ReportHangupBars({
 }) {
   if (isLoading) {
     return (
-      <AnalyticsCard title="Hangup causes" description="Top disconnect reasons" icon={PhoneOff} accent="amber">
+      <AnalyticsCard title="Hangup causes" description="Top disconnect reasons" icon={PhoneOff}>
         <ChartSkeleton height={120} />
       </AnalyticsCard>
     );
@@ -24,7 +24,7 @@ export function ReportHangupBars({
 
   if (!data.length) {
     return (
-      <AnalyticsCard title="Hangup causes" description="Top disconnect reasons" icon={PhoneOff} accent="amber">
+      <AnalyticsCard title="Hangup causes" description="Top disconnect reasons" icon={PhoneOff}>
         <p className="py-4 text-center text-xs text-muted-foreground">
           No hangup data
         </p>
@@ -35,7 +35,7 @@ export function ReportHangupBars({
   const max = Math.max(...data.map((d) => d.value), 1);
 
   return (
-    <AnalyticsCard title="Hangup causes" description="Top disconnect reasons" icon={PhoneOff} accent="amber">
+    <AnalyticsCard title="Hangup causes" description="Top disconnect reasons" icon={PhoneOff}>
       <div className="w-full space-y-2.5">
         {data.slice(0, 3).map((row, i) => (
           <div key={row.name}>

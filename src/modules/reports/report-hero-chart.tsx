@@ -147,7 +147,6 @@ export function ReportHeroChart({
         title="Performance trend"
         description="Total · Connected · Missed"
         icon={TrendingUp}
-        accent="emerald"
       >
         <ChartSkeleton height={CHART_HEIGHT} />
       </AnalyticsCard>
@@ -160,7 +159,6 @@ export function ReportHeroChart({
         title="Performance trend"
         description="Total · Connected · Missed"
         icon={TrendingUp}
-        accent="emerald"
       >
         <EmptyState
           icon={TrendingUp}
@@ -176,7 +174,6 @@ export function ReportHeroChart({
       title="Performance trend"
       description={description ?? "Call outcomes over time"}
       icon={TrendingUp}
-      accent="emerald"
       action={
         <AnalyticsBadge
           value={badge.value}

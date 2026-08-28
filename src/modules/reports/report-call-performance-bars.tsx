@@ -132,7 +132,6 @@ export function ReportCallPerformanceBars({
         title="Call performance"
         description="Volume & outcomes by day"
         icon={BarChart3}
-        accent="violet"
       >
         <ChartSkeleton height={CHART_HEIGHT} />
       </AnalyticsCard>
@@ -145,7 +144,6 @@ export function ReportCallPerformanceBars({
         title="Call performance"
         description="Volume & outcomes by day"
         icon={BarChart3}
-        accent="violet"
       >
         <EmptyState
           icon={BarChart3}
@@ -168,7 +166,6 @@ export function ReportCallPerformanceBars({
             : "Monthly volume · connected vs missed")
       }
       icon={BarChart3}
-      accent="violet"
       action={
         <div className="flex items-center gap-2">
           <Select

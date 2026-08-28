@@ -100,7 +100,7 @@ export function ReportInsights({
       return <ChartSkeleton height={72} />;
     }
     return (
-      <AnalyticsCard title="Insights" description="Survey recommendations" icon={Lightbulb} accent="sky">
+      <AnalyticsCard title="Insights" description="Survey recommendations" icon={Lightbulb}>
         <ChartSkeleton height={120} />
       </AnalyticsCard>
     );
@@ -111,7 +111,7 @@ export function ReportInsights({
   }
 
   return (
-    <AnalyticsCard title="Insights" description="Survey recommendations" icon={Lightbulb} accent="sky">
+    <AnalyticsCard title="Insights" description="Survey recommendations" icon={Lightbulb}>
       <InsightItems rows={rows} />
     </AnalyticsCard>
   );

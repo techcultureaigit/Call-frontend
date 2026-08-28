@@ -204,22 +204,32 @@ export function generateReportsData(
       responsesByCampaign.length > 0
         ? responsesByCampaign
         : [{ label: campaign?.name ?? "Survey", value: 0, responses: 0 }],
-    responsesBySurvey: SURVEY_OPTIONS.map((c) => ({
-      surveyId: c.id,
-      name: c.name,
-      label: c.name,
-      total: c.responses,
-      value: c.responses,
-      responses: c.responses,
-      complete: Math.round(c.responses * 0.6),
-      incomplete: Math.round(c.responses * 0.25),
-      missed: Math.round(c.responses * 0.15),
-      connected: Math.round(c.responses * 0.7),
-      disconnected: Math.round(c.responses * 0.1),
-      avgDurationSeconds: 240,
-      completionRate: 60,
-      counting: `${Math.round(c.responses * 0.6)}/${c.responses}`,
-    })),
+    responsesBySurvey: SURVEY_OPTIONS.map((c) => {
+      const complete = Math.round(c.responses * 0.6);
+      const incomplete = Math.round(c.responses * 0.1);
+      const partially_complete = Math.round(c.responses * 0.1);
+      const processing = Math.round(c.responses * 0.05);
+      const callsMissed = Math.round(c.responses * 0.15);
+      return {
+        surveyId: c.id,
+        name: c.name,
+        label: c.name,
+        total: c.responses,
+        value: c.responses,
+        responses: c.responses,
+        complete,
+        incomplete,
+        partially_complete,
+        processing,
+        callsMissed,
+        missed: callsMissed,
+        connected: Math.round(c.responses * 0.7),
+        disconnected: Math.round(c.responses * 0.1),
+        avgDurationSeconds: 240,
+        completionRate: 60,
+        counting: `${complete}/${c.responses}`,
+      };
+    }),
     campaignBreakdown,
     callOutcomeBreakdown: emptyPie,
     surveyStatusBreakdown: sentimentBreakdown,

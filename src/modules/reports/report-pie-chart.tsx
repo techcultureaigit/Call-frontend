@@ -43,7 +43,7 @@ export function ReportPieChart({
 
   if (isLoading) {
     return (
-      <AnalyticsCard title={title} description={description} accent={accent}>
+      <AnalyticsCard title={title} description={description}>
         <Skeleton className="h-[200px] w-full rounded-[4px]" />
       </AnalyticsCard>
     );
@@ -54,7 +54,6 @@ export function ReportPieChart({
       <AnalyticsCard
         title={title}
         description={description}
-        accent={accent}
         icon={PieChartIcon}
       >
         <p className="py-12 text-center text-sm text-muted-foreground">
@@ -68,7 +67,6 @@ export function ReportPieChart({
     <AnalyticsCard
       title={title}
       description={description}
-      accent={accent}
       icon={PieChartIcon}
     >
       <div className="flex flex-col items-center gap-4 sm:flex-row sm:items-start">

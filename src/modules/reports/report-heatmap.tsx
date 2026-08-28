@@ -34,7 +34,6 @@ export function ReportHeatmap({
         title="Peak hours"
         description="Activity by day & hour"
         icon={Grid3X3}
-        accent="violet"
       >
         <ChartSkeleton height={120} />
       </AnalyticsCard>
@@ -43,7 +42,7 @@ export function ReportHeatmap({
 
   if (!data || !grid.length) {
     return (
-      <AnalyticsCard title="Peak hours" description="Activity by day & hour" icon={Grid3X3} accent="violet">
+      <AnalyticsCard title="Peak hours" description="Activity by day & hour" icon={Grid3X3}>
         <p className="py-4 text-center text-xs text-muted-foreground">
           No heatmap data
         </p>
@@ -56,7 +55,6 @@ export function ReportHeatmap({
       title="Peak hours"
       description="Activity by day & hour"
       icon={Grid3X3}
-      accent="violet"
     >
       <div className="overflow-x-auto">
         <div

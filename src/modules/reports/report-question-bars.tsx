@@ -19,7 +19,6 @@ export function ReportQuestionBars({
         title="Survey responses"
         description="Question response breakdown"
         icon={HelpCircle}
-        accent="brand"
       >
         <ChartSkeleton height={200} />
       </AnalyticsCard>
@@ -32,7 +31,6 @@ export function ReportQuestionBars({
         title="Survey responses"
         description="Question response breakdown"
         icon={HelpCircle}
-        accent="brand"
       >
         <p className="py-8 text-center text-sm text-muted-foreground">
           No question data for this period
@@ -46,7 +44,6 @@ export function ReportQuestionBars({
       title="Survey responses"
       description={`Question responses (${data.length})`}
       icon={HelpCircle}
-      accent="brand"
       contentClassName="pt-2"
     >
       <div className="w-full overflow-hidden rounded-[6px] border border-border/50">
