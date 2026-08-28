@@ -34,7 +34,7 @@ export function NotificationBell() {
         <Button
           variant="ghost"
           size="icon-sm"
-          className="relative text-muted-foreground hover:text-foreground"
+          className="relative text-[#9aa5b8] hover:bg-sidebar-hover hover:text-white"
           aria-label={`Notifications${unreadCount > 0 ? `, ${unreadCount} unread` : ""}`}
         >
           <Bell className={cn("size-4", isFetching && "opacity-80")} />

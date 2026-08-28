@@ -5,6 +5,10 @@ import { Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
+import {
+  TOOLBAR_SEARCH_INPUT_CLASS,
+  TOOLBAR_SEARCH_WIDTH_CLASS,
+} from "@/components/shared/toolbar-styles";
 import { VOICE_LANGUAGE_OPTIONS } from "@/modules/voices/voices-constants";
 import { cn } from "@/lib/utils";
 import type {
@@ -18,17 +22,27 @@ interface VoiceFiltersSidebarProps {
   filters: VoiceFilters;
   onChange: (filters: VoiceFilters) => void;
   onReset: () => void;
+  columnsControl?: ReactNode;
+  embedded?: boolean;
 }
 
 export function VoiceFiltersSidebar({
   filters,
   onChange,
   onReset,
+  columnsControl,
+  embedded = false,
 }: VoiceFiltersSidebarProps) {
   return (
-    <div className="rounded-[6px] border border-border/40 bg-card p-4 shadow-card">
-      <div className="flex flex-col gap-3 xl:flex-row xl:items-center">
-        <div className="relative min-w-0 flex-1">
+    <div
+      className={cn(
+        embedded
+          ? "shrink-0 border-b border-border/50 bg-card px-3 py-3 sm:px-4 sm:py-3.5"
+          : "rounded-[6px] border border-border/40 bg-card p-4 shadow-card"
+      )}
+    >
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+        <div className={cn("relative min-w-0", TOOLBAR_SEARCH_WIDTH_CLASS)}>
           <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             value={filters.search}
@@ -36,12 +50,12 @@ export function VoiceFiltersSidebar({
               onChange({ ...filters, search: e.target.value })
             }
             placeholder="Search voices..."
-            className="h-10 rounded-[6px] pl-9"
+            className={TOOLBAR_SEARCH_INPUT_CLASS}
             aria-label="Search voices"
           />
         </div>
 
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2 sm:ml-auto">
           <FilterGroup label="Provider">
             <FilterToggle
               active={!filters.source}
@@ -127,18 +141,20 @@ export function VoiceFiltersSidebar({
             }
             options={VOICE_LANGUAGE_OPTIONS}
             placeholder="Language"
-            className="h-10 w-full rounded-[6px] sm:w-45"
+            className="h-11 w-full rounded-[6px] border-border/50 bg-background/80 shadow-subtle sm:w-45"
             aria-label="Available languages"
           />
 
           <Button
             type="button"
             variant="outline"
-            className="h-10 shrink-0 rounded-[6px]"
+            className="h-11 shrink-0 rounded-[6px] border-border/50 bg-background/80 shadow-subtle"
             onClick={onReset}
           >
             Reset
           </Button>
+
+          {columnsControl}
         </div>
       </div>
     </div>

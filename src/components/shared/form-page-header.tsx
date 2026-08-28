@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
+import { PAGE_TITLE_CLASS } from "@/components/shared/page-heading";
 import { Button } from "@/components/ui/button";
 
 interface FormPageHeaderProps {
@@ -27,7 +28,7 @@ export function FormPageHeader({
       </Button>
 
       <div>
-        <h1 className="font-display text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
+        <h1 className={PAGE_TITLE_CLASS}>
           {title}
         </h1>
         {description && (

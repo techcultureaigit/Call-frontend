@@ -1,7 +1,6 @@
-/**
- * index.ts — reports / analytics module exports.
- */
-
+export * from "./analytics-nav";
+export * from "./analytics-details-view";
+export * from "./analytics-questions-view";
 export * from "./api";
 export { reportsApi as api } from "./api";
 export * from "./analytics-card";
@@ -17,6 +16,7 @@ export * from "./report-insights";
 export * from "./report-line-chart";
 export * from "./report-pie-chart";
 export * from "./report-question-bars";
+export * from "./report-question-analytics";
 export * from "./reports-kpi-grid";
 export * from "./reports-toolbar";
 export * from "./reports-view";

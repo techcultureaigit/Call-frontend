@@ -10,13 +10,14 @@
  *   deleteUser()        → DELETE /api/users/:id
  *   updateUserStatus()  → PATCH  /api/users/:id
  */
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import type { SortingState } from "@tanstack/react-table";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 import { PageContainer } from "@/components/layout";
 import { AppLoader } from "@/components/shared/app-loader";
+import { ListTableCard } from "@/components/shared/list-table-card";
 import { usePageMeta, usePaginatedList } from "@/hooks";
 import { isSuperAdminRole } from "@/types/role";
 import type { User, UserStatus } from "@/types/user";
@@ -24,7 +25,7 @@ import { deleteUser, listUsers, updateUserStatus } from "./api";
 import { DeleteUserDialog } from "./users-dialogs";
 import { UsersPagination } from "./users-pagination";
 import { UsersTable } from "./users-table";
-import { UsersToolbar } from "./users-toolbar";
+import { UsersToolbar, UsersListToolbar } from "./users-toolbar";
 
 const PAGE_SIZE = 10;
 
@@ -40,6 +41,7 @@ export function UsersListView() {
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [togglingId, setTogglingId] = useState<string>();
+  const [columnsControl, setColumnsControl] = useState<ReactNode | null>(null);
 
   const sortBy = sorting[0]?.id ?? "createdAt";
   const sortOrder = sorting[0]?.desc ? "desc" : "asc";
@@ -173,6 +175,7 @@ export function UsersListView() {
         className="space-y-6"
       >
         <UsersToolbar
+          headerOnly
           search={search}
           onSearchChange={setSearch}
           role={role}
@@ -189,10 +192,20 @@ export function UsersListView() {
             label="Loading users"
             hint="Fetching latest data"
           />
-        ) : null}
-        {users.length > 0 || !showLoader ? (
-          <>
+        ) : (
+          <ListTableCard>
+            <UsersListToolbar
+              embedded
+              search={search}
+              onSearchChange={setSearch}
+              role={role}
+              onRoleChange={setRole}
+              status={status}
+              onStatusChange={setStatus}
+              columnsControl={columnsControl}
+            />
             <UsersTable
+              embedded
               users={users}
               isLoading={false}
               sorting={sorting}
@@ -201,13 +214,14 @@ export function UsersListView() {
               onDelete={openDelete}
               onToggleStatus={handleToggleStatus}
               isTogglingId={togglingId}
+              onColumnsControlReady={setColumnsControl}
             />
+          </ListTableCard>
+        )}
 
-            {meta.total > 0 && (
-              <UsersPagination meta={meta} onPageChange={setPage} />
-            )}
-          </>
-        ) : null}
+        {!showLoader && meta.total > 0 && (
+          <UsersPagination meta={meta} onPageChange={setPage} />
+        )}
       </motion.div>
 
       <DeleteUserDialog

@@ -3,6 +3,9 @@
 import type { ReactNode } from "react";
 import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import {
+  TOOLBAR_SEARCH_INPUT_CLASS,
+} from "@/components/shared/toolbar-styles";
 import { cn } from "@/lib/utils";
 
 export interface ListToolbarProps {
@@ -16,6 +19,14 @@ export interface ListToolbarProps {
   disabled?: boolean;
   className?: string;
   searchAriaLabel?: string;
+  /** Optional width/layout override for the search field wrapper */
+  searchClassName?: string;
+  /** Push filters + actions to the right on wide screens */
+  alignControlsEnd?: boolean;
+  /** Column visibility / reorder control (from DataTable). */
+  columnsControl?: ReactNode;
+  /** Embedded inside a table card — no outer border/shadow */
+  variant?: "default" | "embedded";
 }
 
 /**
@@ -31,15 +42,29 @@ export function ListToolbar({
   disabled = false,
   className,
   searchAriaLabel = "Search",
+  searchClassName,
+  alignControlsEnd = false,
+  columnsControl,
+  variant = "default",
 }: ListToolbarProps) {
+  const embedded = variant === "embedded";
+
   return (
     <div
       className={cn(
-        "flex flex-col gap-3 rounded-[6px] border border-border/50 bg-card/70 p-3 shadow-card backdrop-blur-sm sm:flex-row sm:items-center sm:p-3.5",
+        "flex flex-col gap-3 sm:flex-row sm:items-center",
+        embedded
+          ? "shrink-0 border-b border-border/60 bg-card px-3 py-3 sm:px-4 sm:py-3.5"
+          : "rounded-[6px] border border-border/60 bg-card p-3 shadow-card sm:p-3.5",
         className
       )}
     >
-      <div className="relative min-w-0 flex-1">
+      <div
+        className={cn(
+          "relative min-w-0",
+          searchClassName ?? "w-full flex-1"
+        )}
+      >
         <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
         <Input
           value={search}
@@ -47,11 +72,21 @@ export function ListToolbar({
           placeholder={searchPlaceholder}
           aria-label={searchAriaLabel}
           disabled={disabled}
-          className="h-11 rounded-[6px] border-border/50 bg-background/80 pl-9 shadow-subtle"
+          className={TOOLBAR_SEARCH_INPUT_CLASS}
         />
       </div>
-      {filters}
-      {actions}
+      {filters || columnsControl || actions ? (
+        <div
+          className={cn(
+            "flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center",
+            alignControlsEnd && "sm:ml-auto"
+          )}
+        >
+          {filters}
+          {columnsControl}
+          {actions}
+        </div>
+      ) : null}
     </div>
   );
 }

@@ -1,9 +1,12 @@
 "use client";
 
+import type { ReactNode } from "react";
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Select } from "@/components/ui/select";
+import { PAGE_TITLE_CLASS } from "@/components/shared/page-heading";
 import { ListToolbar } from "@/components/shared/list-toolbar";
+import { TOOLBAR_SEARCH_WIDTH_CLASS } from "@/components/shared/toolbar-styles";
 import type { ProviderType } from "./provider-types";
 
 interface ProviderToolbarProps {
@@ -14,6 +17,10 @@ interface ProviderToolbarProps {
   onCreateClick: () => void;
   count?: number;
   modelCount?: number;
+  columnsControl?: ReactNode;
+  headerOnly?: boolean;
+  filtersOnly?: boolean;
+  embedded?: boolean;
 }
 
 export function ProviderToolbar({
@@ -24,13 +31,48 @@ export function ProviderToolbar({
   onCreateClick,
   count,
   modelCount,
+  columnsControl,
+  headerOnly = false,
+  filtersOnly = false,
+  embedded = false,
 }: ProviderToolbarProps) {
+  if (filtersOnly) {
+    return (
+      <ListToolbar
+        variant="embedded"
+        search={search}
+        onSearchChange={onSearchChange}
+        searchPlaceholder="Search provider or model..."
+        searchAriaLabel="Search providers"
+        searchClassName={TOOLBAR_SEARCH_WIDTH_CLASS}
+        alignControlsEnd
+        filters={
+          <Select
+            value={type}
+            onChange={(e) =>
+              onTypeChange(e.target.value as ProviderType | "all")
+            }
+            options={[
+              { label: "All types", value: "all" },
+              { label: "Listen (STT)", value: "stt" },
+              { label: "Reason (LLM)", value: "llm" },
+              { label: "Speak (TTS)", value: "tts" },
+            ]}
+            className="h-11 w-full rounded-[6px] border-border/50 bg-background/80 shadow-subtle sm:w-52"
+            aria-label="Filter by type"
+          />
+        }
+        columnsControl={columnsControl}
+      />
+    );
+  }
+
   return (
-    <div className="space-y-4">
+    <div className={headerOnly ? undefined : "space-y-4"}>
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="font-display text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
-            Providers
+          <h1 className={PAGE_TITLE_CLASS}>
+            Agent Providers
           </h1>
           <p className="mt-1.5 text-sm text-muted-foreground">
             Type → Provider → Models for survey speech pipeline.
@@ -51,28 +93,34 @@ export function ProviderToolbar({
         </Button>
       </div>
 
-      <ListToolbar
-        search={search}
-        onSearchChange={onSearchChange}
-        searchPlaceholder="Search provider or model..."
-        searchAriaLabel="Search providers"
-        filters={
-          <Select
-            value={type}
-            onChange={(e) =>
-              onTypeChange(e.target.value as ProviderType | "all")
-            }
-            options={[
-              { label: "All types", value: "all" },
-              { label: "Listen (STT)", value: "stt" },
-              { label: "Reason (LLM)", value: "llm" },
-              { label: "Speak (TTS)", value: "tts" },
-            ]}
-            className="h-11 w-full rounded-[6px] border-border/50 bg-background/80 shadow-subtle sm:w-52"
-            aria-label="Filter by type"
-          />
-        }
-      />
+      {headerOnly ? null : (
+        <ListToolbar
+          variant={embedded ? "embedded" : "default"}
+          search={search}
+          onSearchChange={onSearchChange}
+          searchPlaceholder="Search provider or model..."
+          searchAriaLabel="Search providers"
+          searchClassName={TOOLBAR_SEARCH_WIDTH_CLASS}
+          alignControlsEnd
+          filters={
+            <Select
+              value={type}
+              onChange={(e) =>
+                onTypeChange(e.target.value as ProviderType | "all")
+              }
+              options={[
+                { label: "All types", value: "all" },
+                { label: "Listen (STT)", value: "stt" },
+                { label: "Reason (LLM)", value: "llm" },
+                { label: "Speak (TTS)", value: "tts" },
+              ]}
+              className="h-11 w-full rounded-[6px] border-border/50 bg-background/80 shadow-subtle sm:w-52"
+              aria-label="Filter by type"
+            />
+          }
+          columnsControl={columnsControl}
+        />
+      )}
     </div>
   );
 }

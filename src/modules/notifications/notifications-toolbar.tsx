@@ -4,6 +4,7 @@ import { CheckCheck, Filter, Search, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
+import { PAGE_TITLE_CLASS } from "@/components/shared/page-heading";
 import {
   NOTIFICATION_READ_OPTIONS,
   NOTIFICATION_TYPE_OPTIONS,
@@ -47,7 +48,7 @@ export function NotificationsToolbar({
     <div className="space-y-4">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <h2 className="font-display text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
+          <h2 className={PAGE_TITLE_CLASS}>
             Notifications
           </h2>
           <p className="mt-1 text-sm text-muted-foreground">

@@ -18,7 +18,13 @@ export { usePaginatedList, EMPTY_PAGE_META } from "./use-paginated-list";
 export { useDashboard } from "@/modules/dashboard/use-dashboard";
 export { useUsers, useUserMutations, useUserDetail } from "@/modules/users/use-users";
 export { useRoles, useRoleMutations, useRoleDetail } from "@/modules/roles/use-roles";
-export { useReports, useReportCampaigns } from "@/modules/reports/use-reports";
+export {
+  useAnalyticsKpis,
+  useAnalyticsBreakdowns,
+  useAnalyticsTrends,
+  useReports,
+  useReportCampaigns,
+} from "@/modules/reports/use-reports";
 export {
   useNotifications,
   useNotificationFeed,

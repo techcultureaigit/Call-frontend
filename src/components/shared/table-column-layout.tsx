@@ -37,6 +37,7 @@ import { ArrowDown, ArrowUp, ArrowUpDown, Columns3, GripVertical } from "lucide-
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
+import { TOOLBAR_OUTLINE_CONTROL_CLASS } from "@/components/shared/toolbar-styles";
 import {
   loadTableColumnPrefs,
   saveTableColumnPref,
@@ -501,16 +502,16 @@ export function TableColumnsButton({
   };
 
   return (
-    <div ref={rootRef} className={cn("relative", className)}>
+    <div ref={rootRef} className="relative shrink-0">
       <Button
         type="button"
         variant="outline"
-        size="sm"
         onClick={() => setOpen((value) => !value)}
         aria-expanded={open}
-        className="h-8 gap-1.5 rounded-[6px] border-border/70 bg-card px-2.5 text-[12px] font-semibold"
+        aria-haspopup="dialog"
+        className={cn(TOOLBAR_OUTLINE_CONTROL_CLASS, className)}
       >
-        <Columns3 className="size-3.5" />
+        <Columns3 className="size-4" />
         Columns
       </Button>
 
@@ -559,13 +560,23 @@ export function TableColumnsButton({
 }
 
 /** Shared header / cell spacing — every list table uses these. */
+export const TABLE_FONT_CLASS = "font-sans text-sm leading-snug";
+export const TABLE_STATUS_BADGE_CLASS =
+  "inline-flex items-center rounded-[6px] font-sans text-[11px] font-medium leading-snug";
+export const TABLE_CHIP_CLASS =
+  "inline-flex items-center rounded-[6px] font-sans text-xs font-medium leading-snug";
+export const TABLE_PRIMARY_TEXT_CLASS =
+  "truncate font-sans text-sm font-medium leading-snug text-foreground";
+export const TABLE_SUBTEXT_CLASS =
+  "mt-0.5 line-clamp-1 font-sans text-xs leading-snug text-muted-foreground";
 export const TABLE_HEAD_ROW_CLASS =
-  "border-b border-border/50 bg-muted/40";
+  "border-b border-border/50 bg-card";
 export const TABLE_HEAD_CELL_CLASS =
-  "px-4 py-3.5 text-left text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground";
+  "px-4 py-3.5 text-left font-sans text-[11px] font-medium uppercase tracking-[0.08em] text-muted-foreground";
 export const TABLE_BODY_ROW_CLASS =
   "group border-b border-border/30 transition-colors last:border-0 hover:bg-muted/25";
-export const TABLE_BODY_CELL_CLASS = "relative px-4 py-3.5 align-middle";
+export const TABLE_BODY_CELL_CLASS =
+  "relative px-4 py-3.5 align-middle font-sans text-sm leading-snug text-foreground";
 export const TABLE_SELECT_CELL_CLASS = "w-12 px-3.5";
 
 const ColumnLockContext = createContext<Set<string>>(new Set());
@@ -819,7 +830,7 @@ export function TableColumnsBar({
   onReset: () => void;
 }) {
   return (
-    <div className="relative z-20 flex items-center justify-end border-b border-border/40 bg-muted/20 px-3 py-2">
+    <div className="relative z-20 flex items-center justify-end border-b border-border/40 bg-card px-3 py-2">
       <TableColumnsButton
         items={items}
         hidden={hidden}

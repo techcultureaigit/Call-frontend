@@ -33,9 +33,19 @@ import { exportSurveys } from "./survey-export";
 import type { SurveysExportFormat } from "./survey-export";
 import { getSurveySchedule, getSurveyDisplayStatus, isSurveyCompleted, isSurveyReadyToSchedule, isSurveyScheduled } from "./survey-lib";
 import { PageContainer } from "@/components/layout";
-import { DataTable, DataTableActionButton, DataTableActionDivider, DataTableActionGroup, DataTableMetaChip } from "@/components/shared/data-table";
+import {
+  DataTable,
+  DataTableActionButton,
+  DataTableActionDivider,
+  DataTableActionGroup,
+  DataTableMetaChip,
+  TABLE_PRIMARY_TEXT_CLASS,
+  TABLE_SUBTEXT_CLASS,
+} from "@/components/shared/data-table";
 import type { DataTableColumn } from "@/components/shared/data-table";
+import { PAGE_TITLE_CLASS } from "@/components/shared/page-heading";
 import { PaginatedListShell } from "@/components/shared/paginated-list-shell";
+import { TOOLBAR_SEARCH_WIDTH_CLASS } from "@/components/shared/toolbar-styles";
 import { AppLoader, AppLoaderSpinner } from "@/components/shared/app-loader";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -51,7 +61,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { Ban, CalendarClock, ClipboardList, Clock3, Copy, Eye, Languages, MessagesSquare, Mic2, Pencil, Bot, Download, FileSpreadsheet, FileText, HelpCircle, Trash2, UserPlus, X } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useState, useMemo, useCallback } from "react";
+import { useEffect, useState, useMemo, useCallback, type ReactNode } from "react";
 import { toast } from "sonner";
 
 interface SurveysTableProps {
@@ -64,6 +74,8 @@ interface SurveysTableProps {
   onSchedule: (survey: Survey) => void;
   onUnschedule: (survey: Survey) => void;
   unschedulingId?: string | null;
+  embedded?: boolean;
+  onColumnsControlReady?: (control: ReactNode | null) => void;
 }
 
 /* --- Table: one row per survey (used only on list page) --- */
@@ -78,6 +90,8 @@ export function SurveysTable({
   onSchedule,
   onUnschedule,
   unschedulingId,
+  embedded = false,
+  onColumnsControlReady,
 }: SurveysTableProps) {
   const router = useRouter();
   const {
@@ -125,13 +139,10 @@ export function SurveysTable({
         pin: "start",
         cell: (survey) => (
           <div className="min-w-0">
-            <p
-              className="truncate font-display text-[15px] font-semibold tracking-tight text-foreground"
-              title={survey.name}
-            >
+            <p className={TABLE_PRIMARY_TEXT_CLASS} title={survey.name}>
               {survey.name}
             </p>
-            <p className="mt-0.5 truncate text-[11px] text-muted-foreground">
+            <p className={TABLE_SUBTEXT_CLASS}>
               Voice survey · {formatSurveyCreatedAt(survey.createdAt)}
             </p>
           </div>
@@ -187,15 +198,8 @@ export function SurveysTable({
         cell: (survey) => {
           const count = survey.conversationCount;
           return (
-            <span
-              className={cn(
-                "inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold tabular-nums ring-1",
-                count > 0
-                  ? "bg-primary/10 text-primary ring-primary/15"
-                  : "bg-muted/60 text-muted-foreground ring-border/50"
-              )}
-            >
-              <MessagesSquare className="size-3.5 opacity-70" />
+            <span className="inline-flex items-center gap-1.5 font-sans text-sm tabular-nums text-foreground/85">
+              <MessagesSquare className="size-3.5 text-muted-foreground" />
               {count}
             </span>
           );
@@ -220,7 +224,7 @@ export function SurveysTable({
               {locked ? (
                 <Link
                   href={`/survey/${survey.id}/results`}
-                  className="inline-flex h-8 items-center gap-1.5 rounded-[6px] border border-primary/25 bg-primary/8 px-2.5 text-[11px] font-semibold text-primary shadow-subtle transition-all duration-200 hover:border-primary/40 hover:bg-primary/14 hover:shadow-brand"
+                  className="inline-flex h-8 items-center gap-1.5 rounded-[6px] border border-[#2c3b59]/25 bg-[#2c3b59]/8 px-2.5 text-[11px] font-medium text-[#2c3b59] shadow-subtle transition-all duration-200 hover:border-[#2c3b59]/40 hover:bg-[#2c3b59]/14 hover:shadow-brand"
                   aria-label="View responses"
                 >
                   Response
@@ -329,6 +333,8 @@ export function SurveysTable({
       minWidthClassName="min-w-245"
       isRowSelected={(survey) => selectedIds.has(survey.id)}
       fillHeight
+      embedded={embedded}
+      onColumnsControlReady={onColumnsControlReady}
     />
   );
 }
@@ -363,6 +369,7 @@ export function SurveyListView() {
   const [pendingSchedule, setPendingSchedule] = useState<Survey | null>(null);
   const [unschedulingId, setUnschedulingId] = useState<string | null>(null);
   const [isExporting, setIsExporting] = useState(false);
+  const [columnsControl, setColumnsControl] = useState<ReactNode | null>(null);
 
   const fetchPage = useCallback(
     async ({
@@ -619,7 +626,7 @@ export function SurveyListView() {
     Boolean(search.trim()) || language !== "all" || status !== "all";
 
   return (
-    <div className="flex h-[calc(100svh-3.5rem)] min-h-0 min-w-0 flex-col overflow-hidden bg-linear-to-b from-brand/5 to-transparent">
+    <div className="flex h-[calc(100svh-3.5rem)] min-h-0 min-w-0 flex-col overflow-hidden bg-background">
       <PageContainer
         size="full"
         className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden"
@@ -627,7 +634,7 @@ export function SurveyListView() {
         <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-4 overflow-hidden">
           <div className="flex shrink-0 items-start justify-between gap-4">
             <div>
-              <h1 className="font-display text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
+              <h1 className={PAGE_TITLE_CLASS}>
                 My Surveys
               </h1>
               <p className="mt-1.5 max-w-xl text-sm text-muted-foreground">
@@ -644,10 +651,14 @@ export function SurveyListView() {
           </div>
 
           <PaginatedListShell
+            unified
             search={search}
             onSearchChange={setSearch}
             searchPlaceholder="Search surveys by name..."
             searchAriaLabel="Search surveys"
+            searchClassName={TOOLBAR_SEARCH_WIDTH_CLASS}
+            alignControlsEnd
+            columnsControl={columnsControl}
             toolbarDisabled={showLoader && surveys.length === 0}
             filters={
               <>
@@ -741,7 +752,7 @@ export function SurveyListView() {
             />
           ) : null}
           {!showLoader && surveys.length === 0 ? (
-            <div className="flex flex-col items-center justify-center rounded-[6px] border border-dashed border-border/60 bg-card/60 px-6 py-20 text-center shadow-sm backdrop-blur-sm">
+            <div className="flex flex-1 flex-col items-center justify-center px-6 py-20 text-center">
               <div className="mb-4 flex size-16 items-center justify-center rounded-[6px] bg-primary/10">
                 <Bot className="size-8 text-primary" />
               </div>
@@ -789,6 +800,8 @@ export function SurveyListView() {
                 onSchedule={openSchedule}
                 onUnschedule={handleUnschedule}
                 unschedulingId={unschedulingId}
+                embedded
+                onColumnsControlReady={setColumnsControl}
               />
           ) : null}
           </PaginatedListShell>

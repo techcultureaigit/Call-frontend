@@ -1,47 +1,37 @@
 "use client";
 
 import Link from "next/link";
-import { Phone } from "lucide-react";
-import { motion } from "framer-motion";
+import { PhoneCall } from "lucide-react";
 import { siteConfig } from "@/config/site";
-import { useSidebarStore } from "@/stores";
 import { cn } from "@/lib/utils";
 
-export function SidebarLogo() {
-  const isCollapsed = useSidebarStore((state) => state.isCollapsed);
-
+export function SidebarLogo({ collapsed }: { collapsed?: boolean }) {
   return (
     <Link
       href="/dashboard"
       className={cn(
-        "flex min-w-0 items-center gap-2 transition-opacity hover:opacity-80",
-        isCollapsed && "justify-center"
+        "group relative flex min-w-0 items-center gap-3 rounded-lg px-2 py-2 transition-all duration-200",
+        "hover:bg-white/5",
+        collapsed && "justify-center px-1.5"
       )}
     >
-      <motion.div
-        layout
-        className="nav-active-gradient relative flex size-8 shrink-0 items-center justify-center overflow-hidden rounded-[7px] shadow-[0_6px_16px_-8px_color-mix(in_oklch,var(--brand)_65%,transparent)] ring-1 ring-inset ring-white/18"
-        transition={{ type: "spring", stiffness: 400, damping: 30 }}
-      >
-        <span className="absolute -right-1.5 -top-1.5 size-4 rounded-full bg-white/25 blur-[5px]" />
-        <Phone className="relative size-3.5 text-white" strokeWidth={2.4} />
-      </motion.div>
+      <div className="relative flex size-9 shrink-0 items-center justify-center rounded-[6px] bg-[#3b82f6]/12 ring-1 ring-[#3b82f6]/25">
+        <PhoneCall
+          className="size-[18px] text-[#60a5fa]"
+          strokeWidth={2.1}
+          aria-hidden
+        />
+      </div>
 
-      {!isCollapsed && (
-        <motion.div
-          initial={{ opacity: 0, x: -8 }}
-          animate={{ opacity: 1, x: 0 }}
-          exit={{ opacity: 0, x: -8 }}
-          transition={{ duration: 0.2 }}
-          className="flex min-w-0 flex-col leading-tight"
-        >
-          <span className="truncate font-display text-[13.5px] font-semibold tracking-tight text-sidebar-foreground">
+      {!collapsed && (
+        <div className="min-w-0 flex-1 leading-tight">
+          <p className="truncate text-[13px] font-medium tracking-tight text-white">
             {siteConfig.name}
-          </span>
-          <span className="mt-0.5 truncate text-[9px] font-medium uppercase tracking-[0.14em] text-sidebar-foreground/50">
+          </p>
+          <p className="mt-0.5 truncate text-[10px] font-normal text-[#9aa5b8]">
             {siteConfig.tagline}
-          </span>
-        </motion.div>
+          </p>
+        </div>
       )}
     </Link>
   );

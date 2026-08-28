@@ -10,11 +10,13 @@
  *   getVoice()   → GET /api/voices/:id
  */
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { HelpCircle, Volume2 } from "lucide-react";
 import { PageContainer } from "@/components/layout";
+import { PAGE_TITLE_CLASS } from "@/components/shared/page-heading";
+import { ListTableCard } from "@/components/shared/list-table-card";
 import { AppLoader } from "@/components/shared/app-loader";
 import { Button } from "@/components/ui/button";
 import { useDebounce, usePageMeta } from "@/hooks";
@@ -46,6 +48,7 @@ export function VoicesListView() {
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [columnsControl, setColumnsControl] = useState<ReactNode | null>(null);
 
   const debouncedSearch = useDebounce(filters.search, 300);
   const activeFilters = useMemo(
@@ -132,7 +135,7 @@ export function VoicesListView() {
   }, [activeFiltersKey, page]);
 
   const { applyMeta, resetPageMeta } = usePageMeta({
-    title: "Voice Explorer",
+    title: "Voice Sample",
     breadcrumbs: [
       { label: "Library", href: "/library/voices" },
       { label: "Voices" },
@@ -163,8 +166,8 @@ export function VoicesListView() {
         >
           <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
             <div className="space-y-1">
-              <h1 className="font-display text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
-                Voice Explorer
+              <h1 className={PAGE_TITLE_CLASS}>
+                Voice Sample
               </h1>
               <p className="max-w-2xl text-sm text-muted-foreground">
                 Browse, filter, and preview available voices. Select the perfect
@@ -182,13 +185,7 @@ export function VoicesListView() {
             </div>
           </div>
 
-          <div className="space-y-5">
-            <VoiceFiltersSidebar
-              filters={filters}
-              onChange={setFilters}
-              onReset={handleReset}
-            />
-
+          <div className="space-y-4">
             {isError ? (
               <div className="flex flex-col items-center justify-center rounded-[6px] border border-dashed border-border/60 bg-card/60 px-6 py-20 text-center shadow-sm">
                 <div className="mb-4 flex size-16 items-center justify-center rounded-[6px] bg-destructive/10">
@@ -214,13 +211,23 @@ export function VoicesListView() {
                     label="Loading voices"
                     hint="Fetching voice catalog"
                   />
-                ) : null}
-                {voices.length > 0 || !showInitialLoader ? (
-                  <VoicesTable
-                    voices={voices}
-                    isLoading={isRefreshing}
-                  />
-                ) : null}
+                ) : (
+                  <ListTableCard>
+                    <VoiceFiltersSidebar
+                      embedded
+                      filters={filters}
+                      onChange={setFilters}
+                      onReset={handleReset}
+                      columnsControl={columnsControl}
+                    />
+                    <VoicesTable
+                      embedded
+                      voices={voices}
+                      isLoading={isRefreshing}
+                      onColumnsControlReady={setColumnsControl}
+                    />
+                  </ListTableCard>
+                )}
               </>
             )}
 

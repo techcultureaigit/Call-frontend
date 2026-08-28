@@ -25,7 +25,7 @@ export function HeaderSearch() {
         type="button"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        className="inline-flex size-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
+        className="inline-flex size-8 items-center justify-center rounded-md text-[#9aa5b8] transition-colors hover:bg-sidebar-hover hover:text-white"
         onClick={() => {
           openGlobalSearch();
           inputRef.current?.focus();
@@ -47,16 +47,16 @@ export function HeaderSearch() {
         isFocused && "drop-shadow-sm"
       )}
     >
-      <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+      <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-[#9aa5b8]" />
       <Input
         ref={inputRef}
         type="search"
         placeholder="Search surveys..."
         className={cn(
-          "h-9 rounded-[6px] border-border/60 bg-muted/50 pl-9 pr-16 text-sm shadow-none transition-all",
-          "placeholder:text-muted-foreground/70",
-          "hover:bg-muted/70 hover:border-border",
-          "focus-visible:bg-background focus-visible:border-brand/30 focus-visible:ring-1 focus-visible:ring-brand/20"
+          "h-9 rounded-[6px] border-sidebar-border/60 bg-[#ffffff30] pl-9 pr-16 text-sm text-white shadow-none transition-all",
+          "placeholder:text-[#9aa5b8]",
+          "hover:border-sidebar-border hover:bg-[#ffffff40]",
+          "focus-visible:border-[#3b82f6]/40 focus-visible:bg-[#ffffff45] focus-visible:ring-1 focus-visible:ring-[#3b82f6]/25"
         )}
         onFocus={() => setIsFocused(true)}
         onBlur={() => setIsFocused(false)}
@@ -67,7 +67,7 @@ export function HeaderSearch() {
         }}
         aria-label="Search"
       />
-      <kbd className="pointer-events-none absolute right-2.5 top-1/2 hidden -translate-y-1/2 items-center gap-0.5 rounded-[6px] border border-border bg-background px-1.5 py-0.5 font-mono text-[10px] font-medium text-muted-foreground sm:inline-flex">
+      <kbd className="pointer-events-none absolute right-2.5 top-1/2 hidden -translate-y-1/2 items-center gap-0.5 rounded-[6px] border border-sidebar-border bg-sidebar-elevated px-1.5 py-0.5 font-mono text-[10px] font-medium text-[#9aa5b8] sm:inline-flex">
         <span className="text-xs">⌘</span>K
       </kbd>
     </motion.div>

@@ -7,14 +7,7 @@ import {
   ResponsiveContainer,
   Tooltip,
 } from "recharts";
-import {
-  CheckCircle2,
-  Clock,
-  PhoneMissed,
-  PhoneOff,
-  PieChart as PieChartIcon,
-  type LucideIcon,
-} from "lucide-react";
+import { PieChart as PieChartIcon } from "lucide-react";
 import { useMounted } from "@/hooks";
 import { ChartSkeleton } from "./dashboard-skeleton";
 import { DashboardCard } from "./dashboard-card";
@@ -27,38 +20,19 @@ interface CallOutcomeChartProps {
   isLoading?: boolean;
 }
 
-const OUTCOME_STYLE: Record<
-  string,
-  { fill: string; soft: string; border: string; text: string; icon: LucideIcon }
-> = {
-  Completed: {
-    fill: "#34d399",
-    soft: "bg-emerald-50 dark:bg-emerald-500/10",
-    border: "border-emerald-200/80 dark:border-emerald-500/25",
-    text: "text-emerald-700 dark:text-emerald-300",
-    icon: CheckCircle2,
-  },
-  "No Answer": {
-    fill: "#38bdf8",
-    soft: "bg-sky-50 dark:bg-sky-500/10",
-    border: "border-sky-200/80 dark:border-sky-500/25",
-    text: "text-sky-700 dark:text-sky-300",
-    icon: PhoneMissed,
-  },
-  Busy: {
-    fill: "#2dd4bf",
-    soft: "bg-teal-50 dark:bg-teal-500/10",
-    border: "border-teal-200/80 dark:border-teal-500/25",
-    text: "text-teal-700 dark:text-teal-300",
-    icon: Clock,
-  },
-  Failed: {
-    fill: "#fb923c",
-    soft: "bg-amber-50 dark:bg-amber-500/10",
-    border: "border-amber-200/80 dark:border-amber-500/25",
-    text: "text-amber-700 dark:text-amber-300",
-    icon: PhoneOff,
-  },
+/** Theme accents — blue, yellow, navy, red */
+const OUTCOME_FILLS: Record<string, string> = {
+  Completed: "#3b82f6",
+  "No Answer": "#eab308",
+  Busy: "#2c3b59",
+  Failed: "#dc2626",
+};
+
+const OUTCOME_LEGEND: Record<string, { soft: string; border: string }> = {
+  Completed: { soft: "bg-[#3b82f6]/8", border: "border-[#3b82f6]/20" },
+  "No Answer": { soft: "bg-[#eab308]/10", border: "border-[#eab308]/25" },
+  Busy: { soft: "bg-[#2c3b59]/8", border: "border-[#2c3b59]/18" },
+  Failed: { soft: "bg-[#dc2626]/8", border: "border-[#dc2626]/20" },
 };
 
 function OutcomeTooltip({
@@ -75,7 +49,7 @@ function OutcomeTooltip({
   const value = Number(payload[0]?.value ?? 0);
   const pct = total ? Math.round((value / total) * 100) : 0;
   return (
-    <div className="rounded-[6px] border border-border/60 bg-white/95 px-3 py-2 shadow-elevated backdrop-blur-sm dark:bg-card/95">
+    <div className="rounded-[6px] border border-border/60 bg-card/95 px-3 py-2 shadow-elevated backdrop-blur-sm">
       <p className="text-[11px] font-semibold text-foreground">{name}</p>
       <p className="mt-0.5 text-xs tabular-nums text-muted-foreground">
         {value.toLocaleString()} · {pct}%
@@ -94,7 +68,7 @@ export function CallOutcomeChart({ data, isLoading }: CallOutcomeChartProps) {
 
   const styled = data.map((d) => ({
     ...d,
-    fill: OUTCOME_STYLE[d.name]?.fill ?? d.fill,
+    fill: OUTCOME_FILLS[d.name] ?? "#6b778c",
   }));
 
   if (isLoading) {
@@ -129,13 +103,13 @@ export function CallOutcomeChart({ data, isLoading }: CallOutcomeChartProps) {
       title="Call Outcomes"
       description="Status mix across voice AI calls"
       icon={PieChartIcon}
-      className="bg-gradient-to-br from-emerald-50/40 via-card to-violet-50/30 dark:from-emerald-500/5 dark:via-card dark:to-violet-500/5"
+      className="bg-card"
       action={
-        <div className="rounded-[6px] border border-violet-200/70 bg-violet-50 px-2.5 py-1.5 text-right dark:border-violet-500/25 dark:bg-violet-500/10">
-          <p className="text-sm font-semibold tabular-nums leading-none text-violet-700 dark:text-violet-300">
+        <div className="rounded-[6px] border border-[#2c3b59]/15 bg-[#2c3b59]/6 px-2.5 py-1.5 text-right">
+          <p className="text-sm font-semibold tabular-nums leading-none text-[#2c3b59]">
             {total.toLocaleString()}
           </p>
-          <p className="mt-1 text-[9px] font-medium text-violet-500/80">
+          <p className="mt-1 text-[9px] font-medium text-muted-foreground">
             Total calls
           </p>
         </div>
@@ -152,7 +126,7 @@ export function CallOutcomeChart({ data, isLoading }: CallOutcomeChartProps) {
                   cy="50%"
                   innerRadius={42}
                   outerRadius={62}
-                  paddingAngle={4}
+                  paddingAngle={3}
                   dataKey="value"
                   nameKey="name"
                   strokeWidth={3}
@@ -171,7 +145,7 @@ export function CallOutcomeChart({ data, isLoading }: CallOutcomeChartProps) {
             <p className="text-xl font-semibold tabular-nums leading-none text-foreground">
               {completedPct}%
             </p>
-            <p className="mt-1 text-[9px] font-semibold uppercase tracking-[0.14em] text-emerald-600 dark:text-emerald-400">
+            <p className="mt-1 text-[9px] font-semibold uppercase tracking-[0.14em] text-[#3b82f6]">
               Connected
             </p>
           </div>
@@ -180,35 +154,22 @@ export function CallOutcomeChart({ data, isLoading }: CallOutcomeChartProps) {
         <div className="mt-auto grid grid-cols-2 gap-1.5 pt-3">
           {styled.map((item) => {
             const pct = Math.round((item.value / total) * 100);
-            const style = OUTCOME_STYLE[item.name];
-            const Icon = style?.icon ?? PieChartIcon;
+            const legend = OUTCOME_LEGEND[item.name];
             return (
               <div
                 key={item.name}
                 className={cn(
-                  "relative flex items-center gap-2 overflow-hidden rounded-[6px] border px-2 py-1.5",
-                  style?.soft,
-                  style?.border
+                  "flex items-center gap-2 rounded-[6px] border px-2 py-1.5",
+                  legend?.soft ?? "bg-card",
+                  legend?.border ?? "border-border/60"
                 )}
               >
-                <Icon
-                  aria-hidden
-                  className={cn(
-                    "pointer-events-none absolute -bottom-1 -right-1 size-7 opacity-[0.12]",
-                    style?.text
-                  )}
-                />
                 <span
                   className="size-2 shrink-0 rounded-[3px]"
                   style={{ backgroundColor: item.fill }}
                 />
-                <div className="relative z-[1] min-w-0 flex-1">
-                  <p
-                    className={cn(
-                      "truncate text-[10px] font-medium",
-                      style?.text
-                    )}
-                  >
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-[10px] font-medium text-muted-foreground">
                     {item.name}
                   </p>
                   <p className="text-[12px] font-semibold tabular-nums text-foreground">

@@ -72,8 +72,8 @@ export function RecentActivities({ activities, isLoading }: RecentActivitiesProp
                 index !== activities.length - 1 && "border-b border-border/40"
               )}
             >
-              <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-muted">
-                <Icon className="size-3.5 text-muted-foreground" />
+              <div className="flex size-8 shrink-0 items-center justify-center rounded-[6px] bg-[#2c3b59]/8 text-[#2c3b59]">
+                <Icon className="size-3.5" />
               </div>
               <div className="min-w-0 flex-1">
                 <p className="text-sm font-medium leading-tight">{activity.title}</p>

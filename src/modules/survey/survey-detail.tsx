@@ -18,6 +18,7 @@ import { SurveyStatusBadge, ScheduleSurveyDialog } from "./survey-dialogs";
 import type { ScheduleSurveyPayload } from "./survey-dialogs";
 import { ClientContactsPreview } from "./survey-tabs";
 import { PageContainer } from "@/components/layout";
+import { PAGE_TITLE_CLASS } from "@/components/shared/page-heading";
 import { Button } from "@/components/ui/button";
 import { usePageMeta, usePermissions } from "@/hooks";
 import { AGENT_CONFIG_TABS as SURVEY_CONFIG_TABS, getAgentLanguageLabel as getSurveyLanguageLabel, getVoiceSpeedLabel, isAgentConfigTabDisabled as isSurveyConfigTabDisabled } from "@/lib/constants/agent-config";
@@ -234,7 +235,7 @@ export function SurveyDetailView({ survey }: { survey: Survey }) {
                 <ArrowLeft className="size-4" />
               </Button>
               <div className="min-w-0">
-                <h1 className="font-display text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
+                <h1 className={PAGE_TITLE_CLASS}>
                   {currentSurvey.name}
                 </h1>
                 <div className="mt-1.5 flex flex-wrap items-center gap-2 text-sm text-muted-foreground">

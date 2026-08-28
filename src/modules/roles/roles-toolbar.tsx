@@ -1,7 +1,9 @@
 "use client";
 
+import type { ReactNode } from "react";
 import { ShieldPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { PAGE_TITLE_CLASS } from "@/components/shared/page-heading";
 import { ListToolbar } from "@/components/shared/list-toolbar";
 
 interface RolesToolbarProps {
@@ -9,6 +11,10 @@ interface RolesToolbarProps {
   onSearchChange: (value: string) => void;
   onCreateClick: () => void;
   roleCount?: number;
+  columnsControl?: ReactNode;
+  headerOnly?: boolean;
+  filtersOnly?: boolean;
+  embedded?: boolean;
 }
 
 export function RolesToolbar({
@@ -16,12 +22,29 @@ export function RolesToolbar({
   onSearchChange,
   onCreateClick,
   roleCount,
+  columnsControl,
+  headerOnly = false,
+  filtersOnly = false,
+  embedded = false,
 }: RolesToolbarProps) {
+  if (filtersOnly) {
+    return (
+      <ListToolbar
+        variant="embedded"
+        search={search}
+        onSearchChange={onSearchChange}
+        searchPlaceholder="Search roles..."
+        searchAriaLabel="Search roles"
+        columnsControl={columnsControl}
+      />
+    );
+  }
+
   return (
-    <div className="space-y-4">
+    <div className={headerOnly ? undefined : "space-y-4"}>
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="font-display text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
+          <h1 className={PAGE_TITLE_CLASS}>
             Roles & Permissions
           </h1>
           <p className="mt-1.5 text-sm text-muted-foreground">
@@ -42,12 +65,16 @@ export function RolesToolbar({
         </Button>
       </div>
 
-      <ListToolbar
-        search={search}
-        onSearchChange={onSearchChange}
-        searchPlaceholder="Search roles..."
-        searchAriaLabel="Search roles"
-      />
+      {headerOnly ? null : (
+        <ListToolbar
+          variant={embedded ? "embedded" : "default"}
+          search={search}
+          onSearchChange={onSearchChange}
+          searchPlaceholder="Search roles..."
+          searchAriaLabel="Search roles"
+          columnsControl={columnsControl}
+        />
+      )}
     </div>
   );
 }

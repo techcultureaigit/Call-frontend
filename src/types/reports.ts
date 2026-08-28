@@ -30,6 +30,8 @@ export interface AnalyticsCallCounts {
 export interface AnalyticsSurveyCounts {
   complete: number;
   incomplete: number;
+  partially_complete?: number;
+  processing?: number;
   missed: number;
   total: number;
   counting: string;
@@ -71,7 +73,25 @@ export interface AnalyticsQuestionDetail {
   total: number;
   answerRate: number;
   counting: string;
+  usersAnswered?: number;
+  usersSkipped?: number;
+  totalUsers?: number;
   topAnswers: { name: string; count: number; percent: number }[];
+  answers?: { name: string; count: number; percent: number }[];
+  users?: {
+    phone: string;
+    answer: string;
+    answeredAt: string | null;
+  }[];
+}
+
+export interface QuestionAnalyticsData {
+  dateRange: { from: string; to: string };
+  surveyId: string | "all";
+  surveyName?: string;
+  totalQuestions: number;
+  totalAnswers: number;
+  questions: AnalyticsQuestionDetail[];
 }
 
 export interface AnalyticsSurveyBreakdown {
@@ -83,12 +103,16 @@ export interface AnalyticsSurveyBreakdown {
   responses: number;
   complete: number;
   incomplete: number;
-  missed: number;
+  partially_complete: number;
+  processing: number;
+  callsMissed: number;
   connected: number;
   disconnected: number;
   avgDurationSeconds: number | null;
   completionRate: number;
   counting: string;
+  /** @deprecated use callsMissed */
+  missed?: number;
 }
 
 export interface AnalyticsHeatmap {
@@ -109,6 +133,38 @@ export interface AnalyticsInsight {
   tone: "success" | "warning" | "info";
   title: string;
   message: string;
+}
+
+export interface AnalyticsMeta {
+  dateRange: { from: string; to: string };
+  surveyId: string | "all";
+  surveyName?: string;
+}
+
+/** GET /analytics/kpis */
+export interface AnalyticsKpisData extends AnalyticsMeta {
+  kpis: ReportKpi[];
+}
+
+/** GET /analytics/breakdowns */
+export interface AnalyticsBreakdownsData extends AnalyticsMeta {
+  responsesBySurvey: AnalyticsSurveyBreakdown[];
+  surveyStatusBreakdown: ReportPieSlice[];
+  callOutcomeBreakdown: ReportPieSlice[];
+  survey: AnalyticsSurveyCounts;
+  calls: AnalyticsCallCounts;
+  duration: AnalyticsDuration;
+  recording: {
+    withRecording: number;
+    withoutRecording: number;
+    coverageRate: number;
+  };
+}
+
+/** GET /analytics/trends */
+export interface AnalyticsTrendsData extends AnalyticsMeta {
+  completionTrend: ChartDataPoint[];
+  callsOverTime: ChartDataPoint[];
 }
 
 export interface ReportsData {
@@ -149,7 +205,12 @@ export interface AnalyticsDetailRow {
   surveyName: string;
   callOutcome: "connected" | "disconnected" | "missed";
   callStatus: string;
-  surveyStatus: "complete" | "incomplete" | "missed";
+  surveyStatus:
+    | "complete"
+    | "incomplete"
+    | "partially_complete"
+    | "processing"
+    | "missed";
   durationSeconds: number | null;
   durationLabel: string;
   extractedAt: string | null;
@@ -158,6 +219,21 @@ export interface AnalyticsDetailRow {
   answeredQuestions: number;
   totalQuestions: number;
   progress: string;
+}
+
+/** One question answer for a single client (from details/:id API) */
+export interface AnalyticsClientQuestion {
+  index: number;
+  questionId: string;
+  question: string;
+  type: string;
+  answered: boolean;
+  answer: string | null;
+  status: "answered" | "skipped";
+}
+
+export interface AnalyticsClientDetail extends AnalyticsDetailRow {
+  questions: AnalyticsClientQuestion[];
 }
 
 export interface AnalyticsDetailsData {

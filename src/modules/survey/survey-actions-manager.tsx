@@ -8,6 +8,7 @@
  */
 
 import { cn } from "@/lib/utils";
+import { PAGE_TITLE_CLASS } from "@/components/shared/page-heading";
 import type {
   AgentAction,
   AgentActionField,
@@ -142,7 +143,7 @@ export function AgentActionsManager({
   return (
     <div className={cn("space-y-6", className)}>
       <div className="flex items-start justify-between gap-4">
-        <h1 className="font-display text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
+        <h1 className={PAGE_TITLE_CLASS}>
           {title}
         </h1>
         {showHelpButton && (

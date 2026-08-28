@@ -2,14 +2,17 @@
 
 import {
   CheckCircle2,
-  Clock3,
-  Mic,
+  CircleDashed,
+  Loader2,
   Minus,
   Phone,
   PhoneMissed,
+  PhoneOff,
   PhoneOutgoing,
+  Split,
   TrendingDown,
   TrendingUp,
+  type LucideIcon,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -17,59 +20,31 @@ import { cn } from "@/lib/utils";
 import type { ReportKpi } from "@/types/reports";
 import type { AnalyticsKpiFilterId } from "@/modules/reports/analytics-kpi-filter";
 
-const CONFIG: Record<
-  string,
-  { icon: typeof Phone; accent: string; bar: string; iconBg: string }
-> = {
-  phone: {
-    icon: Phone,
-    accent: "text-sky-600 dark:text-sky-400",
-    bar: "bg-sky-500",
-    iconBg: "bg-sky-500/12",
-  },
-  connected: {
-    icon: PhoneOutgoing,
-    accent: "text-teal-600 dark:text-teal-400",
-    bar: "bg-teal-500",
-    iconBg: "bg-teal-500/12",
-  },
-  check: {
-    icon: CheckCircle2,
-    accent: "text-emerald-600 dark:text-emerald-400",
-    bar: "bg-emerald-500",
-    iconBg: "bg-emerald-500/12",
-  },
-  clock: {
-    icon: Clock3,
-    accent: "text-violet-600 dark:text-violet-400",
-    bar: "bg-violet-500",
-    iconBg: "bg-violet-500/12",
-  },
-  missed: {
-    icon: PhoneMissed,
-    accent: "text-rose-600 dark:text-rose-400",
-    bar: "bg-rose-500",
-    iconBg: "bg-rose-500/12",
-  },
-  mic: {
-    icon: Mic,
-    accent: "text-indigo-600 dark:text-indigo-400",
-    bar: "bg-indigo-500",
-    iconBg: "bg-indigo-500/12",
-  },
+const KPI_ICONS: Record<string, LucideIcon> = {
+  phone: Phone,
+  connected: PhoneOutgoing,
+  disconnected: PhoneOff,
+  missed: PhoneMissed,
+  check: CheckCircle2,
+  partial: Split,
+  processing: Loader2,
+  incomplete: CircleDashed,
 };
 
-const KPI_ICON: Record<string, string> = {
+const KPI_ICON_KEY: Record<string, string> = {
   total_calls: "phone",
   connected: "connected",
-  survey_complete: "check",
-  avg_duration: "clock",
+  disconnected: "disconnected",
   missed: "missed",
-  recording: "mic",
+  survey_complete: "check",
+  survey_partial: "partial",
+  survey_processing: "processing",
+  survey_incomplete: "incomplete",
 };
 
 function TrendCaption({ kpi }: { kpi: ReportKpi }) {
-  const isMissed = kpi.id === "missed";
+  const isMissed =
+    kpi.id === "missed" || kpi.id === "survey_incomplete";
   const positive = isMissed ? kpi.change <= 0 : kpi.trend !== "down";
   const TrendIcon =
     kpi.trend === "up"
@@ -86,10 +61,8 @@ function TrendCaption({ kpi }: { kpi: ReportKpi }) {
   return (
     <p
       className={cn(
-        "mt-1 flex items-center gap-1 truncate text-[11px] font-medium",
-        positive
-          ? "text-emerald-600 dark:text-emerald-400"
-          : "text-rose-600 dark:text-rose-400"
+        "mt-1 flex items-center gap-1 truncate text-[10px] font-medium",
+        positive ? "text-[#2c3b59]/80" : "text-[#dc2626]"
       )}
     >
       <TrendIcon className="size-3 shrink-0" />
@@ -117,64 +90,61 @@ export function AnalyticsKpiGrid({
 }) {
   if (isLoading) {
     return (
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-6">
-        {Array.from({ length: 6 }).map((_, i) => (
-          <Skeleton key={i} className="h-[108px] rounded-[6px]" />
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+        {Array.from({ length: 8 }).map((_, i) => (
+          <div
+            key={i}
+            className="flex min-h-[88px] items-center gap-3 rounded-[6px] border border-border/50 bg-card px-4 py-4"
+          >
+            <Skeleton className="size-10 shrink-0 rounded-[6px]" />
+            <div className="min-w-0 flex-1 space-y-2">
+              <Skeleton className="h-6 w-16" />
+              <Skeleton className="h-3 w-24" />
+            </div>
+          </div>
         ))}
       </div>
     );
   }
 
   return (
-    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-6">
-      {kpis.slice(0, 6).map((kpi, index) => {
-        const iconKey = kpi.icon ?? KPI_ICON[kpi.id] ?? "phone";
-        const cfg = CONFIG[iconKey] ?? CONFIG.phone;
-        const Icon = cfg.icon;
-
+    <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+      {kpis.slice(0, 8).map((kpi, index) => {
+        const iconKey = kpi.icon ?? KPI_ICON_KEY[kpi.id] ?? "phone";
+        const Icon = KPI_ICONS[iconKey] ?? Phone;
         const isSelected = selectedId === kpi.id;
 
         return (
           <motion.button
             key={kpi.id}
             type="button"
-            initial={{ opacity: 0, y: 8 }}
+            initial={{ opacity: 0, y: 6 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: index * 0.04, duration: 0.25 }}
+            transition={{ delay: index * 0.03, duration: 0.22 }}
             onClick={() => onSelect?.(kpi.id as AnalyticsKpiFilterId)}
-            title="Click to view client details"
+            title="Click to open details"
             className={cn(
-              "relative w-full cursor-pointer overflow-hidden rounded-[6px] border bg-card p-3.5 text-left shadow-card transition-all",
-              "hover:shadow-elevated focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40",
+              "flex min-h-[88px] w-full min-w-0 items-center gap-3 rounded-[6px] border bg-card px-4 py-4 text-left shadow-subtle transition-colors",
+              "hover:border-[#2c3b59]/20 hover:bg-[#2c3b59]/2",
+              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2c3b59]/25",
               isSelected
-                ? "border-brand/50 ring-2 ring-brand/20 shadow-elevated"
-                : "border-border/55"
+                ? "border-[#2c3b59]/30 ring-1 ring-[#2c3b59]/15"
+                : "border-border/60"
             )}
           >
-            <span
-              className={cn("absolute inset-x-0 top-0 h-0.5", cfg.bar)}
-              aria-hidden
-            />
-
-            <div className="flex items-start justify-between gap-2">
-              <span
-                className={cn(
-                  "flex size-10 items-center justify-center rounded-full",
-                  cfg.iconBg,
-                  cfg.accent
-                )}
-              >
-                <Icon className="size-[18px]" strokeWidth={2.2} />
-              </span>
+            <div className="flex size-10 shrink-0 items-center justify-center rounded-[6px] bg-[#2c3b59]/10 text-[#2c3b59]">
+              <Icon className="size-[18px]" strokeWidth={2} />
             </div>
 
-            <p className="mt-3 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-              {kpi.label}
-            </p>
-            <p className="font-display mt-0.5 text-2xl font-semibold tabular-nums leading-none tracking-tight text-foreground">
-              {kpi.value}
-            </p>
-            <TrendCaption kpi={kpi} />
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-xl font-semibold tabular-nums leading-none tracking-tight text-foreground">
+                {kpi.value}
+              </p>
+              <p className="mt-1.5 truncate text-xs text-muted-foreground">
+                {kpi.label}
+              </p>
+              <TrendCaption kpi={kpi} />
+            </div>
           </motion.button>
         );
       })}

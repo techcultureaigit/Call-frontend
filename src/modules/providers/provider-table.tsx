@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, type ReactNode } from "react";
 import { Cpu, Pencil, Trash2 } from "lucide-react";
 import {
   DataTable,
@@ -9,8 +9,11 @@ import {
   DataTableActionGroup,
   DataTableMetaChip,
   DataTablePrimaryCell,
+  TABLE_CHIP_CLASS,
+  TABLE_STATUS_BADGE_CLASS,
   type DataTableColumn,
 } from "@/components/shared/data-table";
+import { cn } from "@/lib/utils";
 import { PROVIDER_TYPE_LABEL, providerLabel, type ProviderItem } from "./provider-types";
 
 interface ProviderTableProps {
@@ -18,6 +21,8 @@ interface ProviderTableProps {
   onEdit: (item: ProviderItem) => void;
   onDelete: (item: ProviderItem) => void;
   isLoading?: boolean;
+  embedded?: boolean;
+  onColumnsControlReady?: (control: ReactNode | null) => void;
 }
 
 export function ProviderTable({
@@ -25,6 +30,8 @@ export function ProviderTable({
   onEdit,
   onDelete,
   isLoading,
+  embedded = false,
+  onColumnsControlReady,
 }: ProviderTableProps) {
   const columns = useMemo<DataTableColumn<ProviderItem>[]>(
     () => [
@@ -35,7 +42,7 @@ export function ProviderTable({
         hideable: false,
         pin: "start",
         cell: (row) => (
-          <span className="inline-flex items-center rounded-md bg-muted px-2 py-1 text-[11px] font-semibold text-foreground">
+          <span className={cn(TABLE_STATUS_BADGE_CLASS, "bg-muted px-2 py-1 text-foreground")}>
             {PROVIDER_TYPE_LABEL[row.type]}
           </span>
         ),
@@ -67,7 +74,7 @@ export function ProviderTable({
             {row.models.slice(0, 5).map((m) => (
               <span
                 key={m.id || m.name}
-                className="inline-flex items-center rounded-md bg-muted/70 px-2 py-0.5 text-[11px] font-medium"
+                className={cn(TABLE_CHIP_CLASS, "bg-muted/70 px-2 py-0.5")}
               >
                 {m.name}
               </span>
@@ -132,6 +139,7 @@ export function ProviderTable({
 
   return (
     <DataTable
+      embedded={embedded}
       columnLayoutKey="providers"
       columns={columns}
       data={items}
@@ -144,6 +152,7 @@ export function ProviderTable({
       footerHint="Type tells which pipeline stage this provider belongs to."
       minWidthClassName="min-w-[52rem]"
       skeletonRows={4}
+      onColumnsControlReady={onColumnsControlReady}
     />
   );
 }

@@ -1,7 +1,7 @@
 export const LAYOUT = {
   sidebar: {
-    expanded: 232,
-    collapsed: 64,
+    expanded: 260,
+    collapsed: 68,
   },
   header: {
     height: 56,

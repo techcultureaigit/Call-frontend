@@ -71,13 +71,13 @@ export const PERMISSION_MODULE_GROUPS: PermissionModuleGroup[] = [
           },
           {
             id: "voices",
-            label: "Voices",
+            label: "Voice Sample",
             description: "Voice library",
             actions: [...CRUD, "download"],
           },
           {
             id: "providers",
-            label: "Providers",
+            label: "Agent Providers",
             description: "STT / LLM / TTS providers and models",
             actions: [...CRUD],
           },
@@ -91,8 +91,8 @@ export const PERMISSION_MODULE_GROUPS: PermissionModuleGroup[] = [
     modules: [
       {
         id: "reports",
-        label: "Analytics",
-        description: "Analytics",
+        label: "Analytics Report",
+        description: "Analytics reports and insights",
         actions: ["read", "download"],
       },
     ],

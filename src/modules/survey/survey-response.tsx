@@ -49,6 +49,7 @@ import {
   TABLE_BODY_CELL_CLASS,
 } from "@/components/shared/table-column-layout";
 import { ListToolbar } from "@/components/shared/list-toolbar";
+import { PAGE_TITLE_CLASS } from "@/components/shared/page-heading";
 import { AppLoaderSpinner } from "@/components/shared/app-loader";
 import { Button } from "@/components/ui/button";
 import { Select } from "@/components/ui/select";
@@ -582,69 +583,63 @@ function TranscriptionChatModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="flex max-h-[92vh] w-[min(96vw,620px)] max-w-none flex-col gap-0 overflow-hidden border-0 bg-transparent p-0 shadow-none sm:rounded-[22px] [&>button]:right-4 [&>button]:top-4 [&>button]:rounded-full [&>button]:bg-white/10 [&>button]:p-1 [&>button]:text-white/85 [&>button]:opacity-100 [&>button]:ring-0 [&>button]:hover:bg-white/20 [&>button]:hover:text-white">
-        <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-[22px] border border-white/20 bg-card shadow-[0_28px_70px_-24px_rgba(15,23,42,0.55)]">
-          <div className="relative shrink-0 overflow-hidden bg-[linear-gradient(135deg,#13233a_0%,#1b3f5c_48%,#247399_100%)] px-5 py-4 text-white sm:px-6">
-            <div
-              aria-hidden
-              className="pointer-events-none absolute -right-10 -top-12 size-40 rounded-full bg-white/10 blur-2xl"
-            />
-            <div
-              aria-hidden
-              className="pointer-events-none absolute -bottom-10 left-16 size-28 rounded-full bg-sky-300/25 blur-2xl"
-            />
-            <DialogHeader className="relative">
-              <div className="flex flex-wrap items-start justify-between gap-3 pr-8">
-                <div className="min-w-0 space-y-3">
-                  <div className="flex items-center gap-3">
-                    <span className="flex size-11 shrink-0 items-center justify-center rounded-full bg-white/15 text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.25)] ring-1 ring-white/25">
-                      <ChatBubbleIcon className="size-5" />
-                    </span>
-                    <div className="min-w-0">
-                      <DialogTitle className="font-display text-[1.15rem] font-semibold tracking-tight text-white">
-                        Call conversation
-                      </DialogTitle>
-                      <p className="mt-0.5 text-[12px] text-white/70">
-                        Agent &amp; customer chat replay
-                      </p>
-                    </div>
+      <DialogContent className="flex max-h-[92vh] w-[min(96vw,620px)] max-w-none flex-col gap-0 overflow-hidden border border-border/60 bg-card p-0 shadow-elevated sm:rounded-[8px]">
+        <div className="relative shrink-0 overflow-hidden border-b border-border/50">
+          <div
+            aria-hidden
+            className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,color-mix(in_oklch,var(--brand)_18%,transparent),transparent_55%)]"
+          />
+          <DialogHeader className="relative px-5 py-4 sm:px-6">
+            <div className="flex flex-wrap items-start justify-between gap-3 pr-8">
+              <div className="min-w-0 space-y-3">
+                <div className="flex items-center gap-3">
+                  <span className="flex size-10 shrink-0 items-center justify-center rounded-md bg-brand/10 text-brand ring-1 ring-brand/15">
+                    <ChatBubbleIcon className="size-4" />
+                  </span>
+                  <div className="min-w-0">
+                    <DialogTitle className="font-display text-lg font-semibold tracking-tight text-foreground">
+                      Call conversation
+                    </DialogTitle>
+                    <p className="mt-0.5 text-xs text-muted-foreground">
+                      Agent &amp; customer chat replay
+                    </p>
                   </div>
-                  <DialogDescription asChild>
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span className="inline-flex items-center gap-1.5 rounded-full bg-white/12 px-2.5 py-1 text-xs font-medium text-white ring-1 ring-white/15">
-                        <Phone className="size-3.5 text-sky-200" />
-                        {customerNumber || "—"}
+                </div>
+                <DialogDescription asChild>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-muted/60 px-2.5 py-1 text-xs font-medium text-foreground ring-1 ring-border/50">
+                      <Phone className="size-3.5 text-primary" />
+                      {customerNumber || "—"}
+                    </span>
+                    {transcriptions.length ? (
+                      <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-primary ring-1 ring-primary/20">
+                        <ChatBubbleIcon className="size-3" />
+                        {transcriptions.length} messages
                       </span>
-                      {transcriptions.length ? (
-                        <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-400/18 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-emerald-50 ring-1 ring-emerald-200/25">
-                          <ChatBubbleIcon className="size-3" />
-                          {transcriptions.length} messages
-                        </span>
-                      ) : null}
-                    </div>
-                  </DialogDescription>
-                </div>
+                    ) : null}
+                  </div>
+                </DialogDescription>
               </div>
-            </DialogHeader>
-          </div>
-
-          <div className="relative flex min-h-0 flex-1 flex-col overflow-hidden bg-[#e8eef3]">
-            <div className="min-h-0 max-h-[calc(92vh-7.5rem)] flex-1 overflow-y-auto overscroll-contain p-3 sm:p-4">
-              {loading ? (
-                <div className="flex items-center justify-center py-16">
-                  <SurveyFetchLoader label="Loading conversation" />
-                </div>
-              ) : (
-                <>
-                  {error ? (
-                    <div className="mb-3 rounded-[14px] border border-amber-500/30 bg-amber-50 px-3 py-2 text-xs text-amber-800">
-                      {error}
-                    </div>
-                  ) : null}
-                  <TranscriptionChat transcriptions={transcriptions} fillHeight />
-                </>
-              )}
             </div>
+          </DialogHeader>
+        </div>
+
+        <div className="relative flex min-h-0 flex-1 flex-col overflow-hidden bg-muted/20">
+          <div className="min-h-0 max-h-[calc(92vh-7.5rem)] flex-1 overflow-y-auto overscroll-contain p-3 sm:p-4">
+            {loading ? (
+              <div className="flex items-center justify-center py-16">
+                <SurveyFetchLoader label="Loading conversation" />
+              </div>
+            ) : (
+              <>
+                {error ? (
+                  <div className="mb-3 rounded-md border border-amber-500/30 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+                    {error}
+                  </div>
+                ) : null}
+                <TranscriptionChat transcriptions={transcriptions} fillHeight />
+              </>
+            )}
           </div>
         </div>
       </DialogContent>
@@ -812,9 +807,9 @@ function TranscriptionChat({
 }) {
   if (!transcriptions.length) {
     return (
-      <div className="flex flex-col items-center justify-center rounded-[20px] border border-dashed border-slate-300/80 bg-white/70 px-4 py-16 text-center shadow-sm">
-        <span className="mb-4 flex size-14 items-center justify-center rounded-full bg-brand/10 text-brand shadow-[0_10px_28px_-14px_#2983ad] ring-4 ring-brand/8">
-          <ChatBubbleIcon className="size-6" />
+      <div className="flex flex-col items-center justify-center rounded-md border border-dashed border-border bg-card/80 px-4 py-16 text-center shadow-subtle">
+        <span className="mb-4 flex size-12 items-center justify-center rounded-md bg-brand/10 text-brand ring-1 ring-brand/15">
+          <ChatBubbleIcon className="size-5" />
         </span>
         <p className="text-sm font-semibold text-foreground">
           No conversation yet
@@ -829,14 +824,14 @@ function TranscriptionChat({
   return (
     <div
       className={cn(
-        "flex flex-col rounded-[18px] bg-[#e8eef3] px-3 py-4 sm:px-4",
+        "flex flex-col rounded-md border border-border/50 bg-card/60 px-3 py-4 sm:px-4",
         fillHeight
           ? "min-h-0"
           : "max-h-[min(52vh,420px)] overflow-y-auto"
       )}
     >
       <div className="mb-4 flex justify-center">
-        <span className="inline-flex items-center gap-1.5 rounded-full bg-white/90 px-3 py-1 text-[10px] font-medium text-slate-500 shadow-sm ring-1 ring-slate-200/80">
+        <span className="inline-flex items-center gap-1.5 rounded-full bg-muted/70 px-3 py-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground ring-1 ring-border/50">
           <ChatBubbleIcon className="size-3 text-brand" />
           {transcriptions.length} messages in this call
         </span>
@@ -866,10 +861,10 @@ function TranscriptionChat({
               {isLastInGroup ? (
                 <div
                   className={cn(
-                    "mt-auto mb-0.5 flex size-8 shrink-0 items-center justify-center rounded-full shadow-md ring-2 ring-white",
+                    "mt-auto mb-0.5 flex size-8 shrink-0 items-center justify-center rounded-md shadow-sm ring-1 ring-border/40",
                     isCustomer
-                      ? "bg-[linear-gradient(145deg,#3aa0c9,#1e6a8f)] text-white"
-                      : "bg-[linear-gradient(145deg,#24344d,#152238)] text-white"
+                      ? "bg-brand-blue text-white"
+                      : "bg-brand text-brand-foreground"
                   )}
                   aria-hidden
                 >
@@ -892,22 +887,22 @@ function TranscriptionChat({
                 {isFirstInGroup ? (
                   <div
                     className={cn(
-                      "mb-1 flex items-center gap-1.5 px-1",
+                      "mb-1 flex items-center gap-1.5 px-0.5",
                       isCustomer ? "flex-row-reverse" : "flex-row"
                     )}
                   >
                     <span
                       className={cn(
-                        "rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.12em]",
+                        "rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide",
                         isCustomer
-                          ? "bg-brand/12 text-brand"
-                          : "bg-slate-800/90 text-white"
+                          ? "bg-brand-blue/10 text-brand-blue ring-1 ring-brand-blue/20"
+                          : "bg-brand/10 text-brand ring-1 ring-brand/20"
                       )}
                     >
                       {isCustomer ? "Customer" : "Agent"}
                     </span>
                     {time ? (
-                      <span className="text-[10px] tabular-nums text-slate-400">
+                      <span className="text-[10px] tabular-nums text-muted-foreground">
                         {time}
                       </span>
                     ) : null}
@@ -916,25 +911,13 @@ function TranscriptionChat({
 
                 <div
                   className={cn(
-                    "relative px-3.5 py-2.5 text-[13px] leading-[1.55] tracking-[0.01em]",
+                    "relative px-3.5 py-2.5 text-sm leading-relaxed",
                     isCustomer
-                      ? cn(
-                          "bg-[linear-gradient(160deg,#2f97c2_0%,#1f6f96_100%)] text-white shadow-[0_10px_22px_-14px_rgba(31,111,150,0.85)]",
-                          isFirstInGroup ? "rounded-t-[20px]" : "rounded-t-[10px]",
-                          isLastInGroup
-                            ? "rounded-bl-[20px] rounded-br-[6px]"
-                            : "rounded-b-[10px]"
-                        )
-                      : cn(
-                          "bg-white text-slate-800 shadow-[0_8px_20px_-14px_rgba(15,23,42,0.28)] ring-1 ring-slate-200/70",
-                          isFirstInGroup ? "rounded-t-[20px]" : "rounded-t-[10px]",
-                          isLastInGroup
-                            ? "rounded-br-[20px] rounded-bl-[6px]"
-                            : "rounded-b-[10px]"
-                        )
+                      ? "rounded-md rounded-br-sm bg-brand text-brand-foreground shadow-brand"
+                      : "rounded-md rounded-bl-sm bg-card text-foreground shadow-subtle ring-1 ring-border/70"
                   )}
                 >
-                  <p className="whitespace-pre-wrap break-words">{turn.text_content}</p>
+                  <p className="font-hindi whitespace-pre-wrap break-words">{turn.text_content}</p>
                 </div>
               </div>
             </motion.div>
@@ -943,11 +926,11 @@ function TranscriptionChat({
       </div>
 
       <div className="mt-6 flex items-center gap-3 px-2">
-        <span className="h-px flex-1 bg-linear-to-r from-transparent to-slate-300/80" />
-        <span className="text-[10px] font-medium uppercase tracking-[0.14em] text-slate-400">
+        <span className="h-px flex-1 bg-border/70" />
+        <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
           End of transcript
         </span>
-        <span className="h-px flex-1 bg-linear-to-l from-transparent to-slate-300/80" />
+        <span className="h-px flex-1 bg-border/70" />
       </div>
     </div>
   );
@@ -1603,7 +1586,7 @@ export function SurveyResponseView({ surveyId }: SurveyResultsViewProps) {
               </Button>
               <div className="min-w-0">
                 <div className="flex flex-wrap items-center gap-2">
-                  <h1 className="font-display text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
+                  <h1 className={PAGE_TITLE_CLASS}>
                     Survey results
                   </h1>
                   {survey?.scheduling_status ? (
@@ -2047,7 +2030,7 @@ export function SurveyResponseDetailView({
               <ArrowLeft className="size-4" />
             </Button>
             <div className="min-w-0">
-              <h1 className="font-display text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
+              <h1 className={PAGE_TITLE_CLASS}>
                 Response details
               </h1>
               <p className="mt-1 text-sm text-muted-foreground">

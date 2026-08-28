@@ -1,4 +1,5 @@
 import { cn } from "@/lib/utils";
+import { TABLE_STATUS_BADGE_CLASS } from "@/components/shared/table-column-layout";
 import type { UserStatus } from "@/types/user";
 
 const statusStyles: Record<UserStatus, string> = {
@@ -18,7 +19,8 @@ export function StatusBadge({ status, className }: StatusBadgeProps) {
   return (
     <span
       className={cn(
-        "inline-flex items-center rounded-md px-2 py-0.5 text-[11px] font-medium capitalize",
+        TABLE_STATUS_BADGE_CLASS,
+        "px-2 py-0.5 capitalize",
         statusStyles[status],
         className
       )}

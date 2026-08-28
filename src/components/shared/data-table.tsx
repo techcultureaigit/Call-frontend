@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useMemo, useState, type MouseEvent, type ReactNode } from "react";
+import { useMemo, useState, useEffect, useRef, type MouseEvent, type ReactNode } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { Inbox, ArrowUp, ArrowDown, ArrowUpDown, type LucideIcon } from "lucide-react";
@@ -9,8 +9,8 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/shared/empty-state";
 import {
-  TableColumnsBar,
   TableColumnDnd,
+  TableColumnsButton,
   SortableColumnTh,
   applyColumnLayout,
   columnLabelFromHeader,
@@ -20,6 +20,11 @@ import {
   TABLE_BODY_ROW_CLASS,
   TABLE_BODY_CELL_CLASS,
   TABLE_SELECT_CELL_CLASS,
+  TABLE_PRIMARY_TEXT_CLASS,
+  TABLE_SUBTEXT_CLASS,
+  TABLE_FONT_CLASS,
+  TABLE_STATUS_BADGE_CLASS,
+  TABLE_CHIP_CLASS,
   type TableColumnLayoutItem,
 } from "@/components/shared/table-column-layout";
 import { cn } from "@/lib/utils";
@@ -41,7 +46,14 @@ export interface DataTableColumn<T> {
 }
 
 /** Same left-edge accent on every list table (Providers / Surveys / Users / …). */
-export const TABLE_ROW_ACCENT_CLASS = "bg-brand";
+export const TABLE_ROW_ACCENT_CLASS = "bg-[#2c3b59]";
+export {
+  TABLE_FONT_CLASS,
+  TABLE_PRIMARY_TEXT_CLASS,
+  TABLE_SUBTEXT_CLASS,
+  TABLE_STATUS_BADGE_CLASS,
+  TABLE_CHIP_CLASS,
+} from "@/components/shared/table-column-layout";
 
 export interface DataTableProps<T> {
   columns: DataTableColumn<T>[];
@@ -63,6 +75,10 @@ export interface DataTableProps<T> {
   columnLayoutKey?: string;
   /** Fill parent height and scroll inside the table (sticky header). */
   fillHeight?: boolean;
+  /** Render inside a parent card — no outer border or shadow */
+  embedded?: boolean;
+  /** Renders Columns control in the list toolbar (removes the extra table row). */
+  onColumnsControlReady?: (control: ReactNode | null) => void;
 }
 
 /** Shared table shell used by Surveys, Roles, Voices, etc. */
@@ -84,6 +100,8 @@ export function DataTable<T>({
   skeletonRows = 5,
   columnLayoutKey,
   fillHeight = false,
+  embedded = false,
+  onColumnsControlReady,
 }: DataTableProps<T>) {
   const layoutItems = useMemo<TableColumnLayoutItem[]>(
     () =>
@@ -124,29 +142,56 @@ export function DataTable<T>({
     [columns, layout, layoutEnabled]
   );
 
-  const pickerBar = layoutEnabled ? (
-    <TableColumnsBar
-      items={pickerItems}
-      hidden={hidden}
-      onToggle={toggleHidden}
-      onReorder={reorder}
-      onReset={reset}
-    />
-  ) : null;
+  const columnsControlKey = useMemo(
+    () =>
+      layoutEnabled
+        ? `${pickerItems.map((item) => item.id).join(",")}|${hidden.join(",")}`
+        : "",
+    [layoutEnabled, pickerItems, hidden]
+  );
+
+  const onColumnsControlReadyRef = useRef(onColumnsControlReady);
+  onColumnsControlReadyRef.current = onColumnsControlReady;
+
+  useEffect(() => {
+    const notify = onColumnsControlReadyRef.current;
+    if (!layoutEnabled) {
+      notify?.(null);
+      return;
+    }
+
+    notify?.(
+      <TableColumnsButton
+        items={pickerItems}
+        hidden={hidden}
+        onToggle={toggleHidden}
+        onReorder={reorder}
+        onReset={reset}
+      />
+    );
+    // Re-sync toolbar only when column order/visibility changes — not every render.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [layoutEnabled, columnsControlKey]);
+
+  useEffect(() => {
+    return () => onColumnsControlReadyRef.current?.(null);
+  }, []);
+
+  const tableShellClass = cn(
+    "relative min-w-0 font-sans text-sm leading-snug",
+    embedded
+      ? "flex min-h-0 flex-1 flex-col overflow-hidden"
+      : "overflow-hidden rounded-[6px] border border-border/60 bg-card/95 shadow-elevated backdrop-blur-sm",
+    !embedded && fillHeight && "flex min-h-0 flex-1 flex-col"
+  );
 
   if (isLoading) {
-    return <DataTableSkeleton columns={columns.length} rows={skeletonRows} />;
+    return <DataTableSkeleton columns={columns.length} rows={skeletonRows} embedded={embedded} />;
   }
 
   if (data.length === 0) {
     return (
-      <div
-        className={cn(
-          "overflow-hidden rounded-[6px] border border-border/60 bg-card shadow-card",
-          fillHeight && "flex min-h-0 flex-1 flex-col"
-        )}
-      >
-        {pickerBar}
+      <div className={tableShellClass}>
         <EmptyState
           icon={emptyIcon}
           title={emptyTitle}
@@ -158,17 +203,13 @@ export function DataTable<T>({
   }
 
   return (
-    <div
-      className={cn(
-        "relative min-w-0 overflow-hidden rounded-[6px] border border-border/60 bg-card/95 shadow-elevated backdrop-blur-sm",
-        fillHeight && "flex min-h-0 flex-1 flex-col"
-      )}
-    >
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-x-0 top-0 h-24 bg-[radial-gradient(ellipse_at_top_left,color-mix(in_oklch,var(--brand)_14%,transparent),transparent_55%)]"
-      />
-      {pickerBar ? <div className="relative shrink-0">{pickerBar}</div> : null}
+    <div className={tableShellClass}>
+      {!embedded ? (
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-x-0 top-0 h-24 bg-[radial-gradient(ellipse_at_top_left,color-mix(in_oklch,var(--brand)_14%,transparent),transparent_55%)]"
+        />
+      ) : null}
 
       <div
         className={cn(
@@ -185,7 +226,10 @@ export function DataTable<T>({
           disabled={!layoutEnabled}
         >
           <table
-            className={cn("w-full border-collapse", minWidthClassName)}
+            className={cn(
+              "w-full border-collapse font-sans text-sm leading-snug",
+              minWidthClassName
+            )}
           >
             <thead>
               <tr
@@ -290,12 +334,21 @@ export function DataTable<T>({
 export function DataTableSkeleton({
   columns = 5,
   rows = 5,
+  embedded = false,
 }: {
   columns?: number;
   rows?: number;
+  embedded?: boolean;
 }) {
   return (
-    <div className="overflow-hidden rounded-[6px] border border-border/60 bg-card shadow-card">
+    <div
+      className={cn(
+        "overflow-hidden",
+        embedded
+          ? "flex min-h-0 flex-1 flex-col"
+          : "rounded-[6px] border border-border/60 bg-card shadow-card"
+      )}
+    >
       <div className="border-b border-border/60 bg-muted/30 px-4 py-3">
         <Skeleton className="h-4 w-full max-w-md" />
       </div>
@@ -387,14 +440,11 @@ export function DataTablePrimaryCell({
         </div>
       ) : null}
       <div className="min-w-0">
-        <p
-          className="truncate font-display text-[15px] font-semibold tracking-tight text-foreground"
-          title={title}
-        >
+        <p className={TABLE_PRIMARY_TEXT_CLASS} title={title}>
           {title}
         </p>
         {subtitle ? (
-          <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">
+          <p className={TABLE_SUBTEXT_CLASS}>
             {subtitle}
           </p>
         ) : null}
@@ -417,14 +467,14 @@ export function DataTableMetaChip({
   return (
     <span
       className={cn(
-        "inline-flex max-w-35 items-center gap-1.5 rounded-full bg-muted/45 px-2.5 py-1 text-xs font-medium text-foreground/80 ring-1 ring-border/40",
+        "inline-flex max-w-48 items-center gap-1.5 font-sans text-sm text-foreground/85",
         tabular && "tabular-nums",
         className
       )}
       title={label}
     >
       {Icon ? (
-        <Icon className="size-3 shrink-0 text-muted-foreground" aria-hidden />
+        <Icon className="size-3.5 shrink-0 text-muted-foreground" aria-hidden />
       ) : null}
       <span className="truncate">{label}</span>
     </span>

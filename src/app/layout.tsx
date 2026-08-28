@@ -13,11 +13,11 @@ export const metadata: Metadata = {
   metadataBase: new URL(siteConfig.url),
   icons: {
     icon: [
-      { url: "/favicon.svg?v=call-crm-v2", type: "image/svg+xml" },
-      { url: "/icon?v=call-crm-v2", type: "image/png", sizes: "32x32" },
+      { url: "/favicon.svg?v=techcall-v1", type: "image/svg+xml" },
+      { url: "/icon?v=techcall-v1", type: "image/png", sizes: "32x32" },
     ],
-    shortcut: "/favicon.svg?v=call-crm-v2",
-    apple: "/icon?v=call-crm-v2",
+    shortcut: "/favicon.svg?v=techcall-v1",
+    apple: "/icon?v=techcall-v1",
   },
   robots: {
     index: false,
@@ -27,8 +27,8 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#fafafa" },
-    { media: "(prefers-color-scheme: dark)", color: "#1a1a1a" },
+    { media: "(prefers-color-scheme: light)", color: "#1a2233" },
+    { media: "(prefers-color-scheme: dark)", color: "#1a2233" },
   ],
   width: "device-width",
   initialScale: 1,

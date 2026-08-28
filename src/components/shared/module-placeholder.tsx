@@ -6,6 +6,7 @@ import Link from "next/link";
 import type { LucideIcon } from "lucide-react";
 import { ArrowLeft, Sparkles } from "lucide-react";
 import { PageContainer } from "@/components/layout";
+import { PAGE_TITLE_CLASS } from "@/components/shared/page-heading";
 import { Button } from "@/components/ui/button";
 import { usePageMeta } from "@/hooks";
 
@@ -48,7 +49,7 @@ export function ModulePlaceholder({
             <Sparkles className="absolute -right-1 -top-1 size-4 text-amber-500" />
           </div>
         </div>
-        <h1 className="font-display text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
+        <h1 className={PAGE_TITLE_CLASS}>
           {title}
         </h1>
         <p className="mt-2 max-w-md text-sm text-muted-foreground">

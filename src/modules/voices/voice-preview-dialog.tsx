@@ -174,7 +174,7 @@ export function VoicePreviewDialog({
     try {
       if (typeof navigator !== "undefined" && navigator.share) {
         await navigator.share({
-          title: `${voice.name} — Voice Survey`,
+          title: `${voice.name} — Ai Agent - TechCulture`,
           text: voice.description,
           url: shareUrl,
         });

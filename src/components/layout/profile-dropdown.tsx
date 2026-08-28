@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
-  ChevronDown,
   LogOut,
   User,
 } from "lucide-react";
@@ -45,22 +44,18 @@ export function ProfileDropdown() {
       <DropdownMenuTrigger asChild>
         <Button
           variant="ghost"
-          className="h-9 gap-2 px-2 hover:bg-accent"
-          aria-label="Account menu"
+          className="size-9 rounded-[6px] p-0 text-white hover:bg-transparent hover:text-white"
+          aria-label={`Account menu — ${displayName}`}
           disabled={!isHydrated}
         >
-          <Avatar className="size-7">
+          <Avatar className="size-8">
             {user?.avatarUrl && (
               <AvatarImage src={user.avatarUrl} alt={displayName} />
             )}
-            <AvatarFallback className="bg-primary/10 text-[10px] font-semibold text-primary">
+            <AvatarFallback className="bg-[#ffffff30] text-[11px] font-semibold text-white">
               {initials}
             </AvatarFallback>
           </Avatar>
-          <span className="hidden max-w-[120px] truncate text-sm font-medium md:inline-block">
-            {displayName}
-          </span>
-          <ChevronDown className="hidden size-3.5 text-muted-foreground md:block" />
         </Button>
       </DropdownMenuTrigger>
 

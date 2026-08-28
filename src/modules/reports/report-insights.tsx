@@ -35,69 +35,84 @@ const toneStyle = {
   },
 } as const;
 
+function InsightItems({ rows }: { rows: AnalyticsInsight[] }) {
+  return (
+    <ul className="grid w-full gap-2.5 sm:grid-cols-2 xl:grid-cols-3">
+      {rows.map((item) => {
+        const cfg = toneStyle[item.tone] || toneStyle.info;
+        const Icon = cfg.icon;
+        return (
+          <li
+            key={item.id}
+            className={cn(
+              "rounded-[6px] border px-3 py-2.5",
+              cfg.border,
+              cfg.bg
+            )}
+          >
+            <div className="flex gap-2.5">
+              <span
+                className={cn(
+                  "flex size-8 shrink-0 items-center justify-center rounded-full",
+                  cfg.iconBg
+                )}
+              >
+                <Icon className="size-4" />
+              </span>
+              <div className="min-w-0">
+                <p className={cn("text-sm font-semibold", cfg.title)}>
+                  {item.title}
+                </p>
+                <p className="mt-0.5 text-xs leading-snug text-muted-foreground">
+                  {item.message}
+                </p>
+              </div>
+            </div>
+          </li>
+        );
+      })}
+    </ul>
+  );
+}
+
 export function ReportInsights({
   insights,
   isLoading,
+  variant = "card",
 }: {
   insights?: AnalyticsInsight[];
   isLoading?: boolean;
+  variant?: "card" | "strip";
 }) {
-  if (isLoading) {
-    return (
-      <AnalyticsCard title="Insights" description="Recommendations" icon={Lightbulb} accent="sky">
-        <ChartSkeleton height={120} />
-      </AnalyticsCard>
-    );
-  }
-
   const rows = insights?.length
-    ? insights.slice(0, 2)
+    ? insights.slice(0, 3)
     : [
         {
           id: "empty",
           tone: "info" as const,
           title: "Collecting insights",
-          message: "More call data will unlock recommendations.",
+          message: "More survey data will unlock recommendations.",
         },
       ];
 
+  if (isLoading) {
+    if (variant === "strip") {
+      return <ChartSkeleton height={72} />;
+    }
+    return (
+      <AnalyticsCard title="Insights" description="Survey recommendations" icon={Lightbulb} accent="sky">
+        <ChartSkeleton height={120} />
+      </AnalyticsCard>
+    );
+  }
+
+  if (variant === "strip") {
+    return <InsightItems rows={rows} />;
+  }
+
   return (
-    <AnalyticsCard title="Insights" description="Recommendations" icon={Lightbulb} accent="sky">
-      <ul className="w-full space-y-2.5">
-        {rows.map((item) => {
-          const cfg = toneStyle[item.tone] || toneStyle.info;
-          const Icon = cfg.icon;
-          return (
-            <li
-              key={item.id}
-              className={cn(
-                "rounded-[6px] border px-3 py-2.5",
-                cfg.border,
-                cfg.bg
-              )}
-            >
-              <div className="flex gap-2.5">
-                <span
-                  className={cn(
-                    "flex size-8 shrink-0 items-center justify-center rounded-full",
-                    cfg.iconBg
-                  )}
-                >
-                  <Icon className="size-4" />
-                </span>
-                <div className="min-w-0">
-                  <p className={cn("text-sm font-semibold", cfg.title)}>
-                    {item.title}
-                  </p>
-                  <p className="mt-0.5 text-xs leading-snug text-muted-foreground">
-                    {item.message}
-                  </p>
-                </div>
-              </div>
-            </li>
-          );
-        })}
-      </ul>
+    <AnalyticsCard title="Insights" description="Survey recommendations" icon={Lightbulb} accent="sky">
+      <InsightItems rows={rows} />
     </AnalyticsCard>
   );
 }

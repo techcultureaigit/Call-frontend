@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { toast } from "sonner";
 import { PageContainer } from "@/components/layout";
+import { PAGE_TITLE_CLASS } from "@/components/shared/page-heading";
 import { Skeleton } from "@/components/ui/skeleton";
 import { usePageMeta } from "@/hooks";
 import { getSettings, saveSettings } from "./api";
@@ -245,7 +246,7 @@ export function SettingsView() {
             <SettingsBreadcrumbs activeSection={activeSection} />
             <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
               <div className="space-y-1">
-                <h1 className="font-display text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
+                <h1 className={PAGE_TITLE_CLASS}>
                   Settings
                 </h1>
                 <p className="text-sm text-muted-foreground">

@@ -1,10 +1,11 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 import { PageContainer } from "@/components/layout";
 import { AppLoader } from "@/components/shared/app-loader";
+import { ListTableCard } from "@/components/shared/list-table-card";
 import { useDebounce, usePageMeta } from "@/hooks";
 import {
   createProvider,
@@ -30,6 +31,7 @@ export function ProvidersListView() {
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleting, setDeleting] = useState<ProviderItem | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [columnsControl, setColumnsControl] = useState<ReactNode | null>(null);
 
   const debouncedSearch = useDebounce(search, 300);
 
@@ -54,10 +56,10 @@ export function ProvidersListView() {
   }, [load]);
 
   const { applyMeta, resetPageMeta } = usePageMeta({
-    title: "Providers",
+    title: "Agent Providers",
     breadcrumbs: [
-      { label: "Survey", href: "/survey" },
-      { label: "Providers" },
+      { label: "Automation Center", href: "/survey" },
+      { label: "Agent Providers" },
     ],
   });
 
@@ -127,6 +129,7 @@ export function ProvidersListView() {
         className="space-y-6"
       >
         <ProviderToolbar
+          headerOnly
           search={search}
           onSearchChange={setSearch}
           type={type}
@@ -138,18 +141,29 @@ export function ProvidersListView() {
 
         {isLoading ? (
           <AppLoader variant="section" label="Loading" hint="Fetching providers" />
-        ) : null}
-
-        {items.length > 0 || !isLoading ? (
-          <ProviderTable
-            items={items}
-            onEdit={openEdit}
-            onDelete={(row) => {
-              setDeleting(row);
-              setDeleteOpen(true);
-            }}
-          />
-        ) : null}
+        ) : (
+          <ListTableCard>
+            <ProviderToolbar
+              filtersOnly
+              search={search}
+              onSearchChange={setSearch}
+              type={type}
+              onTypeChange={setType}
+              onCreateClick={openCreate}
+              columnsControl={columnsControl}
+            />
+            <ProviderTable
+              embedded
+              items={items}
+              onEdit={openEdit}
+              onDelete={(row) => {
+                setDeleting(row);
+                setDeleteOpen(true);
+              }}
+              onColumnsControlReady={setColumnsControl}
+            />
+          </ListTableCard>
+        )}
       </motion.div>
 
       <ProviderFormDialog

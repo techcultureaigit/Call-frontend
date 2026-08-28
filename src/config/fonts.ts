@@ -1,22 +1,24 @@
-import { Plus_Jakarta_Sans, Space_Grotesk, Geist_Mono } from "next/font/google";
+import { Inter, JetBrains_Mono, Noto_Sans_Devanagari } from "next/font/google";
 import type { FontConfig } from "@/types";
 
-const sans = Plus_Jakarta_Sans({
+const sans = Inter({
   subsets: ["latin"],
   variable: "--font-sans",
   display: "swap",
 });
 
-const display = Space_Grotesk({
-  subsets: ["latin"],
-  variable: "--font-display",
-  display: "swap",
-});
-
-const mono = Geist_Mono({
+const mono = JetBrains_Mono({
   subsets: ["latin"],
   variable: "--font-mono",
   display: "swap",
+});
+
+/** Hindi / Devanagari script for call transcriptions and survey copy */
+const devanagari = Noto_Sans_Devanagari({
+  subsets: ["devanagari"],
+  variable: "--font-devanagari",
+  display: "swap",
+  weight: ["400", "500", "600"],
 });
 
 export const fonts: FontConfig = {
@@ -24,4 +26,5 @@ export const fonts: FontConfig = {
   mono,
 };
 
-export const fontVariables = `${sans.variable} ${display.variable} ${mono.variable}`;
+/** Display headings use the same family as body for a cohesive CRM look */
+export const fontVariables = `${sans.variable} ${mono.variable} ${devanagari.variable}`;

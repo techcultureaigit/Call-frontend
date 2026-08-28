@@ -1,60 +1,32 @@
 "use client";
 
-/**
- * dashboard-view.tsx
- * Dashboard overview page.
- * Route: /dashboard
- *
- * API calls in this file:
- *   getDashboard() → GET /api/dashboard (via useDashboard hook)
- */
-
-import { useEffect, useMemo, type ReactNode } from "react";
+import { useEffect, useMemo } from "react";
 import { motion } from "framer-motion";
-import {
-  Activity as ActivityIcon,
-  ClipboardList,
-  Headphones,
-  Zap,
-  type LucideIcon,
-} from "lucide-react";
 import { PageContainer } from "@/components/layout";
 import { useDashboard } from "@/modules/dashboard/use-dashboard";
 import { usePageMeta } from "@/hooks";
-import { KpiModule } from "./kpi-grid";
+import { MetricBox } from "./kpi-card";
 import { DailyCallsChart } from "./daily-calls-chart";
-import { CallSuccessChart } from "./call-success-chart";
 import { CallOutcomeChart } from "./call-outcome-chart";
 import { RecentActivities } from "./recent-activities";
 import { RecentNotificationsList } from "./recent-notifications-list";
-import { DashboardSkeleton } from "./dashboard-skeleton";
+import { DashboardSkeleton, KpiGridSkeleton } from "./dashboard-skeleton";
 import { DashboardHeader } from "./dashboard-header";
-import { QuickActions } from "./quick-actions";
 
-function SectionHeading({
-  icon: Icon,
-  title,
-}: {
-  icon: LucideIcon;
-  title: string;
-}) {
-  return (
-    <div className="flex items-center gap-2.5">
-      <span className="flex size-7 items-center justify-center rounded-[6px] bg-gradient-to-br from-brand/15 to-brand-blue/10 text-brand ring-1 ring-inset ring-brand/15">
-        <Icon className="size-3.5" />
-      </span>
-      <h3 className="text-sm font-semibold tracking-tight text-foreground">
-        {title}
-      </h3>
-    </div>
-  );
-}
+const DASHBOARD_KPI_IDS = [
+  "survey-completed",
+  "response-rate",
+  "reach-rate",
+  "total-contacts",
+  "engaged-rate",
+  "conversion-rate",
+] as const;
 
 function Section({
   children,
   delay = 0,
 }: {
-  children: ReactNode;
+  children: React.ReactNode;
   delay?: number;
 }) {
   return (
@@ -62,7 +34,6 @@ function Section({
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay, duration: 0.35, ease: "easeOut" }}
-      className="space-y-3"
     >
       {children}
     </motion.section>
@@ -80,17 +51,10 @@ export function DashboardView() {
     return () => resetPageMeta();
   }, [applyMeta, resetPageMeta]);
 
-  const studioKpis = useMemo(
+  const overviewKpis = useMemo(
     () =>
-      (data?.kpis ?? []).filter((k) =>
-        [
-          "survey-completed",
-          "survey-created",
-          "captured-data",
-          "survey-pending",
-          "survey-ongoing",
-          "survey-responses",
-        ].includes(k.id)
+      DASHBOARD_KPI_IDS.map((id) => data?.kpis.find((k) => k.id === id)).filter(
+        (k): k is NonNullable<typeof k> => Boolean(k)
       ),
     [data?.kpis]
   );
@@ -129,25 +93,18 @@ export function DashboardView() {
         </Section>
 
         <Section delay={0.04}>
-          <div className="flex flex-col gap-4">
-            <KpiModule
-              title="Survey"
-              description="Survey status, creation, and captured data"
-              icon={ClipboardList}
-              kpis={studioKpis}
-              isLoading={isLoading}
-              variant="studio"
-            />
-          </div>
+          {isLoading ? (
+            <KpiGridSkeleton count={6} />
+          ) : (
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-6">
+              {overviewKpis.map((kpi, index) => (
+                <MetricBox key={kpi.id} kpi={kpi} index={index} />
+              ))}
+            </div>
+          )}
         </Section>
 
         <Section delay={0.08}>
-         
-          <QuickActions />
-        </Section>
-
-        <Section delay={0.12}>
-       
           <div className="grid grid-cols-1 items-stretch gap-4 xl:grid-cols-3">
             <div className="h-full xl:col-span-2">
               <DailyCallsChart data={data.dailyCalls} isLoading={isLoading} />
@@ -159,14 +116,9 @@ export function DashboardView() {
               />
             </div>
           </div>
-          <CallSuccessChart
-            data={data.callSuccessTrend}
-            isLoading={isLoading}
-          />
         </Section>
 
-        <Section delay={0.16}>
-          <SectionHeading icon={ActivityIcon} title="Recent activity" />
+        <Section delay={0.12}>
           <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
             <RecentActivities
               activities={data.recentActivities}

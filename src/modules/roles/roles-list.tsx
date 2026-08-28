@@ -10,12 +10,13 @@
  *   deleteRole() → DELETE /api/roles/:id
  */
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 import { PageContainer } from "@/components/layout";
 import { AppLoader } from "@/components/shared/app-loader";
+import { ListTableCard } from "@/components/shared/list-table-card";
 import { useDebounce, usePageMeta } from "@/hooks";
 import type { RoleListItem } from "@/types/role";
 import { isProtectedRole } from "@/types/role";
@@ -33,6 +34,7 @@ export function RolesListView() {
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [selectedRole, setSelectedRole] = useState<RoleListItem | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [columnsControl, setColumnsControl] = useState<ReactNode | null>(null);
 
   const debouncedSearch = useDebounce(search, 300);
 
@@ -109,6 +111,7 @@ export function RolesListView() {
         className="space-y-6"
       >
         <RolesToolbar
+          headerOnly
           search={search}
           onSearchChange={setSearch}
           onCreateClick={openCreate}
@@ -121,16 +124,26 @@ export function RolesListView() {
             label="Loading roles"
             hint="Fetching latest data"
           />
-        ) : null}
-        {roles.length > 0 || !isLoading ? (
-          <RolesTable
-            roles={roles}
-            onOpen={openRole}
-            onEdit={openRole}
-            onDelete={openDelete}
-            isLoading={false}
-          />
-        ) : null}
+        ) : (
+          <ListTableCard>
+            <RolesToolbar
+              filtersOnly
+              search={search}
+              onSearchChange={setSearch}
+              onCreateClick={openCreate}
+              columnsControl={columnsControl}
+            />
+            <RolesTable
+              embedded
+              roles={roles}
+              onOpen={openRole}
+              onEdit={openRole}
+              onDelete={openDelete}
+              isLoading={false}
+              onColumnsControlReady={setColumnsControl}
+            />
+          </ListTableCard>
+        )}
       </motion.div>
 
       <DeleteRoleDialog

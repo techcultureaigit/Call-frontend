@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { PAGE_TITLE_CLASS } from "@/components/shared/page-heading";
 
 interface ErrorProps {
   error: Error & { digest?: string };
@@ -15,7 +16,7 @@ export default function Error({ error, reset }: ErrorProps) {
   return (
     <div className="flex min-h-svh flex-col items-center justify-center gap-4 px-4 text-center">
       <p className="text-sm font-medium text-destructive">Error</p>
-      <h1 className="text-2xl font-semibold tracking-tight">
+      <h1 className={PAGE_TITLE_CLASS}>
         Something went wrong
       </h1>
       <p className="max-w-md text-sm text-muted-foreground">

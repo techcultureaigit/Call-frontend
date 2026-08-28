@@ -6,9 +6,8 @@ import {
   ChevronDown,
   ChevronLeft,
   ChevronRight,
-  RefreshCw,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { PAGE_TITLE_CLASS } from "@/components/shared/page-heading";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -96,9 +95,12 @@ export function DashboardHeader({
   return (
     <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
       <div className="min-w-0">
-        <h2 className="font-display text-xl font-semibold tracking-tight text-foreground">
+        <h2 className={PAGE_TITLE_CLASS}>
           Survey Dashboard
         </h2>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Survey status and analytics overview
+        </p>
       </div>
 
       <div className="flex flex-wrap items-center gap-2">

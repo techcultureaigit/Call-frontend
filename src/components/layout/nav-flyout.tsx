@@ -15,6 +15,7 @@ import {
 import { cn } from "@/lib/utils";
 import { isRouteActive } from "@/lib/navigation";
 import { LAYOUT } from "./constants";
+import { sidebarIconClass } from "./sidebar-styles";
 
 interface NavFlyoutProps {
   item: NavItemConfig;
@@ -91,27 +92,19 @@ export function NavFlyout({
   }, [isOpen]);
 
   const triggerClassName = cn(
-    "group relative flex items-center justify-center rounded-[7px] px-2 py-2",
-    "transition-colors duration-200 ease-out",
+    "group relative flex items-center justify-center rounded-md px-2.5 py-2.5",
+    "transition-colors duration-150 ease-out",
     isActive
-      ? "bg-white text-neutral-900 shadow-[0_4px_14px_-6px_rgb(0_0_0/0.4)]"
-      : "text-sidebar-foreground/80 hover:bg-white/[0.06] hover:text-sidebar-foreground",
-    isOpen && !isActive && "bg-white/[0.06]"
+      ? "bg-sidebar-active text-white"
+      : "text-sidebar-muted hover:bg-sidebar-hover hover:text-white",
+    isOpen && !isActive && "bg-sidebar-hover text-white"
   );
 
   const triggerIcon = (
-    <>
-      {isActive && (
-        <span className="pointer-events-none absolute inset-0 rounded-[7px] bg-white" />
-      )}
-      <Icon
-        className={cn(
-          "relative size-4 transition-colors duration-200",
-          isActive ? "text-neutral-900" : "text-sidebar-foreground/75"
-        )}
-        strokeWidth={isActive ? 2.2 : 1.85}
-      />
-    </>
+    <Icon
+      className={sidebarIconClass(isActive || isOpen)}
+      strokeWidth={isActive ? 2.1 : 1.85}
+    />
   );
 
   // With children: button only opens flyout — never navigates to parent href

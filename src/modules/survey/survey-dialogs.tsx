@@ -15,6 +15,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
+import { TABLE_STATUS_BADGE_CLASS } from "@/components/shared/table-column-layout";
 import type { AgentSchedule as SurveySchedule, Agent as Survey } from "@/types/agent";
 import { CalendarClock, CalendarX, AlertTriangle, Ban, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -67,7 +68,8 @@ export function SurveyStatusBadge({
   return (
     <span
       className={cn(
-        "inline-flex shrink-0 items-center gap-1.5 rounded-full border font-semibold uppercase tracking-wide",
+        TABLE_STATUS_BADGE_CLASS,
+        "shrink-0 gap-1.5 border uppercase tracking-wide",
         size === "sm" && "px-2 py-0.5 text-[10px]",
         size === "md" && "px-2.5 py-1 text-[11px]",
         style.className,

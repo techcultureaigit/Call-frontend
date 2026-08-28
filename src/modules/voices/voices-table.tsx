@@ -1,9 +1,11 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, type ReactNode } from "react";
 import { Volume2 } from "lucide-react";
 import {
   DataTable,
+  TABLE_PRIMARY_TEXT_CLASS,
+  TABLE_SUBTEXT_CLASS,
   TABLE_ROW_ACCENT_CLASS,
   type DataTableColumn,
 } from "@/components/shared/data-table";
@@ -72,15 +74,13 @@ function VoiceIdentityCell({
       </button>
 
       <div className="min-w-0">
-        <p
-          className="truncate font-display text-[15px] font-semibold tracking-tight text-foreground"
-          title={voice.name}
-        >
+        <p className={TABLE_PRIMARY_TEXT_CLASS} title={voice.name}>
           {voice.name}
         </p>
         <p
           className={cn(
-            "mt-0.5 max-w-md text-xs leading-relaxed text-muted-foreground",
+            TABLE_SUBTEXT_CLASS,
+            "max-w-md leading-relaxed",
             !expanded && "line-clamp-1"
           )}
         >
@@ -104,11 +104,15 @@ function VoiceIdentityCell({
 interface VoicesTableProps {
   voices: VoiceProfile[];
   isLoading?: boolean;
+  embedded?: boolean;
+  onColumnsControlReady?: (control: ReactNode | null) => void;
 }
 
 export function VoicesTable({
   voices,
   isLoading,
+  embedded = false,
+  onColumnsControlReady,
 }: VoicesTableProps) {
   const columns = useMemo<DataTableColumn<VoiceProfile>[]>(
     () => [
@@ -205,6 +209,7 @@ export function VoicesTable({
 
   return (
     <DataTable
+      embedded={embedded}
       columnLayoutKey="voices"
       columns={columns}
       data={voices}
@@ -217,6 +222,7 @@ export function VoicesTable({
       minWidthClassName="min-w-320"
       getRowAccentClassName={() => TABLE_ROW_ACCENT_CLASS}
       skeletonRows={6}
+      onColumnsControlReady={onColumnsControlReady}
     />
   );
 }

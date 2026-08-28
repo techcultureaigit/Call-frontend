@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, type ReactNode } from "react";
 import {
   Eye,
   KeyRound,
@@ -18,6 +18,7 @@ import {
   DataTableMetaChip,
   DataTablePrimaryCell,
   TABLE_ROW_ACCENT_CLASS,
+  TABLE_STATUS_BADGE_CLASS,
   type DataTableColumn,
 } from "@/components/shared/data-table";
 import { cn } from "@/lib/utils";
@@ -33,6 +34,8 @@ interface RolesTableProps {
   onEdit: (role: RoleListItem) => void;
   onDelete: (role: RoleListItem) => void;
   isLoading?: boolean;
+  embedded?: boolean;
+  onColumnsControlReady?: (control: ReactNode | null) => void;
 }
 
 export function RolesTable({
@@ -41,6 +44,8 @@ export function RolesTable({
   onEdit,
   onDelete,
   isLoading,
+  embedded = false,
+  onColumnsControlReady,
 }: RolesTableProps) {
   const columns = useMemo<DataTableColumn<RoleListItem>[]>(
     () => [
@@ -76,14 +81,14 @@ export function RolesTable({
           const superAdmin = isSuperAdminRole(role.name);
           if (protectedRole) {
             return (
-              <span className="inline-flex items-center gap-1 rounded-md bg-muted px-2 py-1 text-[11px] font-medium text-muted-foreground">
+              <span className={cn(TABLE_STATUS_BADGE_CLASS, "gap-1 bg-muted px-2 py-1 text-muted-foreground")}>
                 <Lock className="size-3" />
                 {superAdmin ? "Locked" : "System"}
               </span>
             );
           }
           return (
-            <span className="inline-flex items-center rounded-md bg-emerald-500/10 px-2 py-1 text-[11px] font-medium text-emerald-700">
+            <span className={cn(TABLE_STATUS_BADGE_CLASS, "bg-emerald-500/10 px-2 py-1 text-emerald-700")}>
               Custom
             </span>
           );
@@ -185,6 +190,7 @@ export function RolesTable({
 
   return (
     <DataTable
+      embedded={embedded}
       columnLayoutKey="roles"
       columns={columns}
       data={roles}
@@ -198,6 +204,7 @@ export function RolesTable({
       minWidthClassName="min-w-190"
       getRowAccentClassName={() => TABLE_ROW_ACCENT_CLASS}
       skeletonRows={4}
+      onColumnsControlReady={onColumnsControlReady}
     />
   );
 }

@@ -24,6 +24,8 @@ import {
 } from "@/modules/reports/analytics-card";
 import { cn } from "@/lib/utils";
 import type { ReportPieSlice } from "@/types/reports";
+import type { AnalyticsKpiFilterId } from "@/modules/reports/analytics-kpi-filter";
+import { sliceToKpiFilter } from "@/modules/reports/analytics-kpi-filter";
 
 type SliceStyle = {
   fill: string;
@@ -33,50 +35,62 @@ type SliceStyle = {
   icon: LucideIcon;
 };
 
+const THEME_BLUE = "#3b82f6";
+const THEME_YELLOW = "#eab308";
+const THEME_RED = "#dc2626";
+const THEME_NAVY = "#2c3b59";
+
 const CALL_STYLE: Record<string, SliceStyle> = {
   Connected: {
-    fill: "#34d399",
-    soft: "bg-emerald-50 dark:bg-emerald-500/10",
-    border: "border-emerald-200/70 dark:border-emerald-500/25",
-    text: "text-emerald-700 dark:text-emerald-300",
+    fill: THEME_BLUE,
+    soft: "bg-[#3b82f6]/8",
+    border: "border-[#3b82f6]/20",
+    text: "text-[#3b82f6]",
     icon: CheckCircle2,
   },
   Disconnected: {
-    fill: "#fb923c",
-    soft: "bg-amber-50 dark:bg-amber-500/10",
-    border: "border-amber-200/70 dark:border-amber-500/25",
-    text: "text-amber-700 dark:text-amber-300",
+    fill: THEME_RED,
+    soft: "bg-[#dc2626]/8",
+    border: "border-[#dc2626]/20",
+    text: "text-[#dc2626]",
     icon: PhoneOff,
   },
   Missed: {
-    fill: "#38bdf8",
-    soft: "bg-sky-50 dark:bg-sky-500/10",
-    border: "border-sky-200/70 dark:border-sky-500/25",
-    text: "text-sky-700 dark:text-sky-300",
+    fill: THEME_YELLOW,
+    soft: "bg-[#eab308]/10",
+    border: "border-[#eab308]/25",
+    text: "text-[#ca8a04]",
     icon: PhoneMissed,
   },
 };
 
 const SURVEY_STYLE: Record<string, SliceStyle> = {
   Complete: {
-    fill: "#34d399",
-    soft: "bg-emerald-50 dark:bg-emerald-500/10",
-    border: "border-emerald-200/70 dark:border-emerald-500/25",
-    text: "text-emerald-700 dark:text-emerald-300",
+    fill: THEME_BLUE,
+    soft: "bg-[#3b82f6]/8",
+    border: "border-[#3b82f6]/20",
+    text: "text-[#3b82f6]",
     icon: CheckCircle2,
   },
-  Incomplete: {
-    fill: "#fb923c",
-    soft: "bg-amber-50 dark:bg-amber-500/10",
-    border: "border-amber-200/70 dark:border-amber-500/25",
-    text: "text-amber-700 dark:text-amber-300",
+  "Partially complete": {
+    fill: THEME_YELLOW,
+    soft: "bg-[#eab308]/10",
+    border: "border-[#eab308]/25",
+    text: "text-[#ca8a04]",
     icon: CircleDashed,
   },
-  Missed: {
-    fill: "#f472b6",
-    soft: "bg-rose-50 dark:bg-rose-500/10",
-    border: "border-rose-200/70 dark:border-rose-500/25",
-    text: "text-rose-700 dark:text-rose-300",
+  Processing: {
+    fill: THEME_NAVY,
+    soft: "bg-[#2c3b59]/8",
+    border: "border-[#2c3b59]/18",
+    text: "text-[#2c3b59]",
+    icon: CircleDashed,
+  },
+  Incomplete: {
+    fill: THEME_RED,
+    soft: "bg-[#dc2626]/8",
+    border: "border-[#dc2626]/20",
+    text: "text-[#dc2626]",
     icon: PhoneMissed,
   },
 };
@@ -96,6 +110,7 @@ function DonutTooltip({
       <p className="text-xs tabular-nums text-muted-foreground">
         {row?.count ?? 0} · {payload[0]?.value}%
       </p>
+      <p className="mt-0.5 text-[10px] text-muted-foreground">Click to view clients</p>
     </div>
   );
 }
@@ -104,10 +119,14 @@ export function ReportDashboardDonut({
   data,
   isLoading,
   variant = "call",
+  activeFilter,
+  onSliceSelect,
 }: {
   data: ReportPieSlice[];
   isLoading?: boolean;
   variant?: "call" | "survey";
+  activeFilter?: AnalyticsKpiFilterId;
+  onSliceSelect?: (filter: AnalyticsKpiFilterId) => void;
 }) {
   const mounted = useMounted();
   const styleMap = variant === "survey" ? SURVEY_STYLE : CALL_STYLE;
@@ -128,13 +147,17 @@ export function ReportDashboardDonut({
   const title = variant === "call" ? "Call outcomes" : "Survey status";
   const description =
     variant === "call"
-      ? "Connected · Disconnected · Missed"
-      : "Complete · Incomplete · Missed";
-  const accent = variant === "call" ? "emerald" : "amber";
+      ? "Click a status to view clients"
+      : "Complete · Partial · Processing · Incomplete";
+
+  const handleSelect = (name: string) => {
+    const filter = sliceToKpiFilter(variant, name);
+    if (filter && onSliceSelect) onSliceSelect(filter);
+  };
 
   if (isLoading) {
     return (
-      <AnalyticsCard title={title} description={description} icon={PieChartIcon} accent={accent}>
+      <AnalyticsCard title={title} description={description} icon={PieChartIcon}>
         <ChartSkeleton height={152} />
       </AnalyticsCard>
     );
@@ -142,7 +165,7 @@ export function ReportDashboardDonut({
 
   if (!data.length || total === 0) {
     return (
-      <AnalyticsCard title={title} description={description} icon={PieChartIcon} accent={accent}>
+      <AnalyticsCard title={title} description={description} icon={PieChartIcon}>
         <EmptyState icon={PieChartIcon} title="No data" description="Awaiting call activity." />
       </AnalyticsCard>
     );
@@ -153,13 +176,12 @@ export function ReportDashboardDonut({
       title={title}
       description={description}
       icon={PieChartIcon}
-      accent={accent}
       action={
-        <AnalyticsBadge value={total.toLocaleString()} label="Total" tone="violet" />
+        <AnalyticsBadge value={total.toLocaleString()} label="Total" />
       }
     >
-      <div className="flex w-full items-center justify-center gap-4 py-1">
-        <div className="relative h-[100px] w-[100px] shrink-0 overflow-hidden">
+      <div className="grid w-full grid-cols-[auto_minmax(0,1fr)] items-center gap-3 sm:gap-4">
+        <div className="relative h-[160px] w-[160px] shrink-0 overflow-hidden">
           {mounted && (
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
@@ -167,16 +189,21 @@ export function ReportDashboardDonut({
                   data={styled}
                   cx="50%"
                   cy="50%"
-                  innerRadius={32}
-                  outerRadius={48}
+                  innerRadius={48}
+                  outerRadius={72}
                   paddingAngle={3}
                   dataKey="value"
                   strokeWidth={2}
                   stroke="var(--card)"
-                  cornerRadius={3}
+                  cornerRadius={4}
+                  className="cursor-pointer outline-none"
+                  onClick={(_, index) => {
+                    const name = styled[index]?.name;
+                    if (name) handleSelect(name);
+                  }}
                 >
                   {styled.map((entry) => (
-                    <Cell key={entry.name} fill={entry.fill} />
+                    <Cell key={entry.name} fill={entry.fill} className="cursor-pointer" />
                   ))}
                 </Pie>
                 <Tooltip content={<DonutTooltip />} />
@@ -184,40 +211,59 @@ export function ReportDashboardDonut({
             </ResponsiveContainer>
           )}
           <div className="pointer-events-none absolute inset-0 z-10 flex flex-col items-center justify-center px-1">
-            <p className="font-display text-sm font-semibold tabular-nums leading-none">
+            <p className="font-display text-lg font-semibold tabular-nums leading-none">
               {centerPct}%
             </p>
-            <p className="mt-0.5 max-w-[54px] text-center text-[7px] font-semibold uppercase leading-tight tracking-wide text-muted-foreground">
+            <p className="mt-0.5 max-w-[72px] text-center text-[8px] font-semibold uppercase leading-tight tracking-wide text-muted-foreground">
               {centerLabel}
             </p>
           </div>
         </div>
 
-        <div className="grid min-w-0 flex-1 grid-cols-1 gap-2">
+        <div className="grid min-w-0 grid-cols-1 gap-1">
           {styled.map((item) => {
             const style = styleMap[item.name];
+            const filter = sliceToKpiFilter(variant, item.name);
+            const isActive = Boolean(filter && activeFilter === filter);
+            const Icon = style?.icon;
+
             return (
-              <div key={item.name} className="space-y-1">
-                <div className="flex items-center justify-between gap-2">
-                  <div className="flex min-w-0 items-center gap-2">
-                    <span
-                      className="size-2 shrink-0 rounded-full"
-                      style={{ backgroundColor: item.fill }}
-                    />
+              <button
+                key={item.name}
+                type="button"
+                onClick={() => handleSelect(item.name)}
+                className={cn(
+                  "w-full rounded-[6px] px-1.5 py-1 text-left transition-colors",
+                  "hover:bg-muted/40",
+                  isActive && "bg-[#2c3b59]/6 ring-1 ring-[#2c3b59]/15"
+                )}
+              >
+                <div className="flex items-center justify-between gap-1.5">
+                  <div className="flex min-w-0 flex-1 items-center gap-1.5">
+                    {Icon ? (
+                      <Icon className={cn("size-3 shrink-0", style?.text)} />
+                    ) : (
+                      <span
+                        className="size-2 shrink-0 rounded-full"
+                        style={{ backgroundColor: item.fill }}
+                      />
+                    )}
                     <span
                       className={cn(
-                        "truncate text-xs font-medium",
+                        "truncate text-[11px] font-medium leading-tight",
                         style?.text
                       )}
                     >
                       {item.name}
                     </span>
                   </div>
-                  <span className="font-display shrink-0 text-sm font-semibold tabular-nums text-foreground">
+                  <span className="shrink-0 text-[11px] font-semibold tabular-nums text-foreground">
+                    <span className="text-muted-foreground">{item.count ?? 0}</span>
+                    {" · "}
                     {item.value}%
                   </span>
                 </div>
-                <div className="h-1.5 overflow-hidden rounded-full bg-muted/50">
+                <div className="mt-1 h-1 overflow-hidden rounded-full bg-muted/50">
                   <div
                     className="h-full rounded-full transition-all duration-500"
                     style={{
@@ -226,7 +272,7 @@ export function ReportDashboardDonut({
                     }}
                   />
                 </div>
-              </div>
+              </button>
             );
           })}
         </div>

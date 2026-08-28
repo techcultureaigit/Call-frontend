@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, type ReactNode } from "react";
 import type { SortingState } from "@tanstack/react-table";
 import {
   MoreHorizontal,
@@ -21,6 +21,8 @@ import { Switch } from "@/components/ui/switch";
 import {
   DataTable,
   DataTableSortHeader,
+  TABLE_PRIMARY_TEXT_CLASS,
+  TABLE_SUBTEXT_CLASS,
   TABLE_ROW_ACCENT_CLASS,
   type DataTableColumn,
 } from "@/components/shared/data-table";
@@ -43,6 +45,8 @@ interface UsersTableProps {
   onDelete: (user: User) => void;
   onToggleStatus: (user: User, active: boolean) => void;
   isTogglingId?: string;
+  embedded?: boolean;
+  onColumnsControlReady?: (control: ReactNode | null) => void;
 }
 
 function sortState(sorting: SortingState, id: string): false | "asc" | "desc" {
@@ -77,6 +81,8 @@ export function UsersTable({
   onDelete,
   onToggleStatus,
   isTogglingId,
+  embedded = false,
+  onColumnsControlReady,
 }: UsersTableProps) {
   const columns = useMemo<DataTableColumn<User>[]>(
     () => [
@@ -102,10 +108,10 @@ export function UsersTable({
               </AvatarFallback>
             </Avatar>
             <div className="min-w-0">
-              <p className="truncate font-display text-[15px] font-semibold tracking-tight text-foreground">
+              <p className={TABLE_PRIMARY_TEXT_CLASS}>
                 {user.firstName} {user.lastName}
               </p>
-              <p className="mt-0.5 truncate text-xs text-muted-foreground">
+              <p className={TABLE_SUBTEXT_CLASS}>
                 {user.email}
               </p>
             </div>
@@ -240,6 +246,7 @@ export function UsersTable({
 
   return (
     <DataTable
+      embedded={embedded}
       columnLayoutKey="users"
       columns={columns}
       data={users}
@@ -255,6 +262,7 @@ export function UsersTable({
       minWidthClassName="min-w-200"
       getRowAccentClassName={() => TABLE_ROW_ACCENT_CLASS}
       skeletonRows={8}
+      onColumnsControlReady={onColumnsControlReady}
     />
   );
 }

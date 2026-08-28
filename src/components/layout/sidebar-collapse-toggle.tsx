@@ -35,8 +35,8 @@ export function SidebarCollapseToggle({
             className={cn(
               // CSS hide below lg — avoids JS media-query hydration mismatch
               "hidden size-9 shrink-0 items-center justify-center rounded-[8px] lg:inline-flex",
-              "-ml-0.5 text-muted-foreground transition-colors",
-              "hover:bg-muted hover:text-foreground",
+              "-ml-0.5 text-[#9aa5b8] transition-colors",
+              "hover:bg-sidebar-hover hover:text-white",
               "active:scale-95",
               "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/35",
               className

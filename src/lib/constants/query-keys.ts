@@ -57,6 +57,16 @@ export const queryKeys = {
       ["reports", "data", params] as const,
     details: (params?: Record<string, unknown>) =>
       ["reports", "details", params] as const,
+    questions: (params?: Record<string, unknown>) =>
+      ["reports", "questions", params] as const,
+    kpis: (params?: Record<string, unknown>) =>
+      ["reports", "kpis", params] as const,
+    breakdowns: (params?: Record<string, unknown>) =>
+      ["reports", "breakdowns", params] as const,
+    trends: (params?: Record<string, unknown>) =>
+      ["reports", "trends", params] as const,
+    clientDetail: (resultId: string) =>
+      ["reports", "clientDetail", resultId] as const,
   },
   dashboard: {
     overview: ["dashboard", "overview"] as const,

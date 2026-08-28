@@ -1,6 +1,11 @@
+import type { Metadata } from "next";
 import { Suspense } from "react";
 import { ReportsView } from "@/modules/reports";
 import { Skeleton } from "@/components/ui/skeleton";
+
+export const metadata: Metadata = {
+  title: "Analytics Report",
+};
 
 export default function AnalyticsPage() {
   return (

@@ -28,6 +28,8 @@ export interface ModuleNavItem {
   disabled?: boolean;
   external?: boolean;
   variant?: "default" | "cta";
+  /** When true, child renders indented under a group header */
+  nested?: boolean;
   children?: ModuleNavItem[];
 }
 
@@ -52,41 +54,32 @@ export const moduleNavSections: ModuleNavSection[] = [
     ],
   },
   {
-    id: "surveys",
+    id: "automation-center",
+    label: "Automation Center",
     items: [
       {
-        id: "survey",
-        title: "Survey",
+        id: "surveys-main",
+        title: "My Surveys",
         href: "/survey",
         icon: ClipboardList,
-        module: "survey",
-        description: "Survey module — campaigns and voices.",
-        children: [
-          {
-            id: "surveys-main",
-            title: "My Surveys",
-            href: "/survey",
-            icon: ClipboardList,
-            module: "my_surveys",
-            description: "List, create, edit, and delete surveys.",
-          },
-          {
-            id: "library-voices",
-            title: "Voices",
-            href: "/library/voices",
-            icon: Volume2,
-            module: "voices",
-            description: "Browse and select survey voices.",
-          },
-          {
-            id: "library-providers",
-            title: "Providers",
-            href: "/library/providers",
-            icon: Cpu,
-            module: "providers",
-            description: "Type + provider + models for survey speech pipeline.",
-          },
-        ],
+        module: "my_surveys",
+        description: "List, create, edit, and delete surveys.",
+      },
+      {
+        id: "library-voices",
+        title: "Voice Sample",
+        href: "/library/voices",
+        icon: Volume2,
+        module: "voices",
+        description: "Browse and select survey voices.",
+      },
+      {
+        id: "library-providers",
+        title: "Agent Providers",
+        href: "/library/providers",
+        icon: Cpu,
+        module: "providers",
+        description: "Type + provider + models for survey speech pipeline.",
       },
     ],
   },
@@ -96,7 +89,7 @@ export const moduleNavSections: ModuleNavSection[] = [
     items: [
       {
         id: "reports",
-        title: "Analytics",
+        title: "Analytics Report",
         href: "/analytics",
         icon: BarChart3,
         module: "reports",

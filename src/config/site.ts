@@ -1,9 +1,9 @@
 export const siteConfig = {
-  /** Product brand — voice survey + calling CRM admin */
-  name: "Voice Survey",
-  tagline: "Voice Survey CRM ADMIN",
+  /** Product brand — Ai Agent TechCulture admin */
+  name: "TechCall",
+  tagline: "AI Voice & Survey CRM",
   description:
-    "VoxCRM — voice survey and calling CRM administration platform",
+    "TechCall — TechCulture AI voice survey and calling administration platform",
   /** Absolute base URL for metadata/OG tags only — update for production deploy */
   url: "http://localhost:3000",
   ogImage: "/og.png",

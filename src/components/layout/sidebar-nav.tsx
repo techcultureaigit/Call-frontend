@@ -4,6 +4,7 @@ import { useMemo } from "react";
 import type { NavItemConfig, NavSection } from "@/config/navigation";
 import { useNavigation } from "@/hooks";
 import { useSidebarStore } from "@/stores";
+import { cn } from "@/lib/utils";
 import { NavGroup } from "./nav-group";
 import { NavItem } from "./nav-item";
 import { SidebarSectionLabel } from "./sidebar-section-label";
@@ -32,19 +33,14 @@ export function SidebarNav({ collapsed }: SidebarNavProps) {
   let navIndex = 0;
 
   return (
-    <nav className="space-y-4">
+    <nav className="space-y-2">
       {navigation.map((section, sectionIndex) => (
-        <div key={section.id} className="space-y-0.5">
-          {section.label && !collapsed && (
+        <div key={section.id} className={cn(sectionIndex > 0 && "pt-2")}>
+          {section.label && !collapsed ? (
             <SidebarSectionLabel label={section.label} />
-          )}
-          {section.label && collapsed && sectionIndex > 0 && (
-            <div className="mx-auto my-2 flex flex-col items-center gap-1">
-              <span className="nav-active-gradient size-1 rounded-full" />
-              <div className="h-px w-5 bg-[#f3f0f0]/15" />
-            </div>
-          )}
-          <ul className="space-y-0.5">
+          ) : null}
+
+          <ul className="space-y-1">
             {section.items.map((item) => {
               const currentIndex = navIndex++;
               return (

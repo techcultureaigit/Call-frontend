@@ -3,8 +3,9 @@
 import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
-import { Eye, EyeOff, Phone } from "lucide-react";
+import { Eye, EyeOff, PhoneCall } from "lucide-react";
 import { AppLoaderSpinner } from "@/components/shared/app-loader";
+import { PAGE_TITLE_CLASS } from "@/components/shared/page-heading";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -71,10 +72,10 @@ function LoginForm() {
       className="w-full"
     >
       <div className="mb-8 text-center">
-        <div className="mx-auto mb-4 flex size-12 items-center justify-center rounded-[6px] bg-primary shadow-subtle">
-          <Phone className="size-5 text-primary-foreground" strokeWidth={2.4} />
+        <div className="mx-auto mb-4 flex size-12 items-center justify-center rounded-[6px] bg-[#2c3b59]/8 ring-1 ring-[#2c3b59]/15">
+          <PhoneCall className="size-5 text-[#2c3b59]" strokeWidth={2.1} />
         </div>
-        <h1 className="text-2xl font-semibold tracking-tight">
+        <h1 className={PAGE_TITLE_CLASS}>
           Sign in to {siteConfig.name}
         </h1>
         <p className="mt-2 text-sm text-muted-foreground">

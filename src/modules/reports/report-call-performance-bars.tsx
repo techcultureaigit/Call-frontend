@@ -5,13 +5,13 @@ import {
   Bar,
   BarChart,
   CartesianGrid,
-  Cell,
+  Legend,
   ResponsiveContainer,
   Tooltip,
   XAxis,
   YAxis,
 } from "recharts";
-import { BarChart3 } from "lucide-react";
+import { BarChart3, TrendingUp } from "lucide-react";
 import { useMounted } from "@/hooks";
 import { ChartSkeleton } from "@/modules/dashboard/dashboard-skeleton";
 import { EmptyState } from "@/components/shared/empty-state";
@@ -26,16 +26,7 @@ import {
 } from "@/modules/reports/analytics-chart-utils";
 import type { ChartDataPoint } from "@/types/dashboard";
 
-const BAR_PALETTE = [
-  { solid: "#34d399", soft: "#d1fae5" },
-  { solid: "#a78bfa", soft: "#ede9fe" },
-  { solid: "#22d3ee", soft: "#cffafe" },
-  { solid: "#818cf8", soft: "#e0e7ff" },
-  { solid: "#f472b6", soft: "#fce7f3" },
-  { solid: "#38bdf8", soft: "#e0f2fe" },
-];
-
-const CHART_HEIGHT = 152;
+const CHART_HEIGHT = 200;
 
 function formatDayLabel(raw: string) {
   if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) {
@@ -47,43 +38,37 @@ function formatDayLabel(raw: string) {
   return raw;
 }
 
-function CallsTooltip({
+function PerformanceTooltip({
   active,
   payload,
   label,
-  metricLabel = "calls",
 }: {
   active?: boolean;
-  payload?: Array<{ value?: number }>;
+  payload?: Array<{ dataKey?: string; value?: number; color?: string }>;
   label?: string;
-  metricLabel?: string;
 }) {
   if (!active || !payload?.length) return null;
   return (
-    <div className="rounded-[6px] border border-violet-200/80 bg-white/95 px-3 py-2 shadow-elevated backdrop-blur-sm dark:border-violet-500/30 dark:bg-card/95">
-      <p className="text-[10px] font-semibold uppercase tracking-wide text-violet-500">
+    <div className="rounded-[6px] border border-border/60 bg-popover px-3 py-2 shadow-elevated">
+      <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
         {label}
       </p>
-      <p className="mt-0.5 text-sm font-semibold tabular-nums text-foreground">
-        {Number(payload[0]?.value ?? 0).toLocaleString()} {metricLabel}
-      </p>
+      <div className="mt-1 space-y-0.5">
+        {payload.map((p) => (
+          <p
+            key={String(p.dataKey)}
+            className="text-xs font-medium tabular-nums text-foreground"
+          >
+            <span
+              className="mr-1.5 inline-block size-1.5 rounded-full"
+              style={{ backgroundColor: p.color }}
+            />
+            {p.dataKey}: {Number(p.value ?? 0).toLocaleString()}
+          </p>
+        ))}
+      </div>
     </div>
   );
-}
-
-export function useBarChartStats(data: ChartDataPoint[]) {
-  return useMemo(() => {
-    const rows = data.map((row) => ({
-      label: formatDayLabel(String(row.label || "")),
-      calls: Number(row.calls ?? row.value ?? 0),
-    }));
-    const total = rows.reduce((acc, d) => acc + d.calls, 0);
-    const peak = rows.reduce(
-      (max, d) => (d.calls > max.calls ? d : max),
-      rows[0] ?? { label: "—", calls: 0 }
-    );
-    return { rows, total, peak, peakValue: peak?.calls ?? 0 };
-  }, [data]);
 }
 
 export function ReportCallPerformanceBars({
@@ -105,13 +90,47 @@ export function ReportCallPerformanceBars({
     [data, granularity]
   );
 
-  const { rows: chartRows, total, peakValue } = useBarChartStats(chartSource);
+  const { rows, total, connected, missed, peak, avg } = useMemo(() => {
+    const mapped = chartSource.map((row) => {
+      const c = Number(row.connected ?? 0);
+      const m = Number(row.missed ?? 0);
+      const d = Number(row.disconnected ?? 0);
+      const calls = Number(row.calls ?? row.value ?? c + m + d);
+      return {
+        label: formatDayLabel(String(row.label || "")),
+        calls,
+        connected: c,
+        missed: m,
+        disconnected: d,
+      };
+    });
+    const totalCalls = mapped.reduce((s, r) => s + r.calls, 0);
+    const totalConnected = mapped.reduce((s, r) => s + r.connected, 0);
+    const totalMissed = mapped.reduce((s, r) => s + r.missed, 0);
+    const peakRow = mapped.reduce(
+      (max, r) => (r.calls > max.calls ? r : max),
+      mapped[0] ?? { label: "—", calls: 0, connected: 0, missed: 0, disconnected: 0 }
+    );
+    const avgCalls = mapped.length
+      ? Math.round((totalCalls / mapped.length) * 10) / 10
+      : 0;
+    return {
+      rows: mapped,
+      total: totalCalls,
+      connected: totalConnected,
+      missed: totalMissed,
+      peak: peakRow,
+      avg: avgCalls,
+    };
+  }, [chartSource]);
+
+  const connectRate = total ? Math.round((connected / total) * 1000) / 10 : 0;
 
   if (isLoading) {
     return (
       <AnalyticsCard
         title="Call performance"
-        description="Daily volume"
+        description="Volume & outcomes by day"
         icon={BarChart3}
         accent="violet"
       >
@@ -120,11 +139,11 @@ export function ReportCallPerformanceBars({
     );
   }
 
-  if (!chartRows.length) {
+  if (!rows.length) {
     return (
       <AnalyticsCard
         title="Call performance"
-        description="Daily volume"
+        description="Volume & outcomes by day"
         icon={BarChart3}
         accent="violet"
       >
@@ -143,10 +162,10 @@ export function ReportCallPerformanceBars({
       description={
         description ??
         (granularity === "daily"
-          ? "Daily volume across the selected period"
+          ? "Daily volume · connected vs missed"
           : granularity === "weekly"
-            ? "Weekly volume across the selected period"
-            : "Monthly volume across the selected period")
+            ? "Weekly volume · connected vs missed"
+            : "Monthly volume · connected vs missed")
       }
       icon={BarChart3}
       accent="violet"
@@ -170,29 +189,58 @@ export function ReportCallPerformanceBars({
         </div>
       }
     >
-      <div className="h-[152px] w-full">
+      {/* Summary strip */}
+      <div className="mb-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
+        <div className="rounded-[6px] border border-border/50 bg-muted/15 px-2.5 py-2">
+          <p className="text-[10px] uppercase tracking-wide text-muted-foreground">
+            Connected
+          </p>
+          <p className="font-display mt-0.5 text-base font-semibold tabular-nums text-emerald-600">
+            {connected.toLocaleString()}
+          </p>
+        </div>
+        <div className="rounded-[6px] border border-border/50 bg-muted/15 px-2.5 py-2">
+          <p className="text-[10px] uppercase tracking-wide text-muted-foreground">
+            Missed
+          </p>
+          <p className="font-display mt-0.5 text-base font-semibold tabular-nums text-sky-600">
+            {missed.toLocaleString()}
+          </p>
+        </div>
+        <div className="rounded-[6px] border border-border/50 bg-muted/15 px-2.5 py-2">
+          <p className="text-[10px] uppercase tracking-wide text-muted-foreground">
+            Connect rate
+          </p>
+          <p className="font-display mt-0.5 flex items-center gap-1 text-base font-semibold tabular-nums text-foreground">
+            <TrendingUp className="size-3.5 text-emerald-500" />
+            {connectRate}%
+          </p>
+        </div>
+        <div className="rounded-[6px] border border-border/50 bg-muted/15 px-2.5 py-2">
+          <p className="text-[10px] uppercase tracking-wide text-muted-foreground">
+            Peak · Avg
+          </p>
+          <p className="font-display mt-0.5 text-base font-semibold tabular-nums text-foreground">
+            {peak.calls}
+            <span className="text-xs font-normal text-muted-foreground">
+              {" "}
+              · {avg}/{metricLabel === "calls" ? "day" : "period"}
+            </span>
+          </p>
+          <p className="truncate text-[10px] text-muted-foreground" title={peak.label}>
+            Peak: {peak.label}
+          </p>
+        </div>
+      </div>
+
+      <div className="h-[200px] w-full">
         {mounted && (
           <ResponsiveContainer width="100%" height="100%">
             <BarChart
-              data={chartRows}
+              data={rows}
               margin={{ top: 8, right: 4, left: -18, bottom: 0 }}
-              barCategoryGap="20%"
+              barCategoryGap="18%"
             >
-              <defs>
-                {BAR_PALETTE.map((c, i) => (
-                  <linearGradient
-                    key={i}
-                    id={`reportBarGrad-${i}`}
-                    x1="0"
-                    y1="0"
-                    x2="0"
-                    y2="1"
-                  >
-                    <stop offset="0%" stopColor={c.solid} stopOpacity={0.95} />
-                    <stop offset="100%" stopColor={c.soft} stopOpacity={1} />
-                  </linearGradient>
-                ))}
-              </defs>
               <CartesianGrid
                 strokeDasharray="4 6"
                 vertical={false}
@@ -213,24 +261,30 @@ export function ReportCallPerformanceBars({
                 allowDecimals={false}
                 tick={{ fontSize: 11, fill: "var(--muted-foreground)" }}
               />
-              <Tooltip
-                content={<CallsTooltip metricLabel={metricLabel} />}
-                cursor={{ fill: "rgba(139, 92, 246, 0.07)", radius: 6 }}
+              <Tooltip content={<PerformanceTooltip />} cursor={{ fill: "rgba(139, 92, 246, 0.06)", radius: 6 }} />
+              <Legend
+                verticalAlign="top"
+                height={28}
+                iconType="circle"
+                iconSize={8}
+                wrapperStyle={{ fontSize: 11 }}
               />
-              <Bar dataKey="calls" radius={[6, 6, 0, 0]} maxBarSize={32}>
-                {chartRows.map((entry, index) => {
-                  const isPeak = entry.calls === peakValue && peakValue > 0;
-                  const palette = BAR_PALETTE[index % BAR_PALETTE.length];
-                  return (
-                    <Cell
-                      key={`${entry.label}-${index}`}
-                      fill={`url(#reportBarGrad-${index % BAR_PALETTE.length})`}
-                      stroke={isPeak ? palette.solid : "transparent"}
-                      strokeWidth={isPeak ? 1.5 : 0}
-                    />
-                  );
-                })}
-              </Bar>
+              <Bar
+                dataKey="connected"
+                name="Connected"
+                stackId="a"
+                fill="#34d399"
+                radius={[0, 0, 0, 0]}
+                maxBarSize={28}
+              />
+              <Bar
+                dataKey="missed"
+                name="Missed"
+                stackId="a"
+                fill="#38bdf8"
+                radius={[4, 4, 0, 0]}
+                maxBarSize={28}
+              />
             </BarChart>
           </ResponsiveContainer>
         )}
