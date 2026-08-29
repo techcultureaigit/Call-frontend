@@ -23,9 +23,9 @@ export function AppHeader({ className }: AppHeaderProps) {
   return (
     <header
       className={cn(
-        "sticky top-0 z-30 flex h-14 shrink-0 items-center gap-3 pl-0 pr-4",
+        "sticky top-0 z-30 flex h-12 shrink-0 items-center gap-2 pl-0 pr-3 sm:h-14 sm:gap-3 sm:pr-4",
         "border-b border-sidebar-border/70 bg-linear-to-b from-[#1e2a40] via-[#1c2538] to-sidebar text-white",
-        "md:gap-4 lg:pl-1 lg:pr-6",
+        "md:gap-3 lg:gap-4 lg:pl-1 lg:pr-6",
         className
       )}
     >
@@ -34,7 +34,7 @@ export function AppHeader({ className }: AppHeaderProps) {
         initial={false}
         animate="visible"
         variants={headerItemVariants}
-        className="flex min-w-0 flex-1 items-center gap-2 md:gap-3"
+        className="flex min-w-0 flex-1 items-center gap-1.5 sm:gap-2 md:gap-3"
       >
         <Button
           variant="ghost"
@@ -52,20 +52,20 @@ export function AppHeader({ className }: AppHeaderProps) {
           initial={false}
           animate="visible"
           variants={headerItemVariants}
-          className="min-w-0 flex-1 md:max-w-md"
+          className="min-w-42 flex-1 sm:min-w-56 md:max-w-md"
         >
           <HeaderSearch />
         </motion.div>
       </motion.div>
 
-      <div className="hidden min-w-0 flex-1 lg:block" aria-hidden />
+      <div className="hidden min-w-0 flex-1 xl:block" aria-hidden />
 
       <motion.div
         custom={2}
         initial={false}
         animate="visible"
         variants={headerItemVariants}
-        className="flex shrink-0 items-center gap-1.5"
+        className="flex shrink-0 items-center gap-1 sm:gap-1.5"
       >
         <ThemeToggle />
 

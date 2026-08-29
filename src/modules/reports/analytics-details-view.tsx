@@ -15,6 +15,7 @@ import { motion } from "framer-motion";
 import { PageContainer } from "@/components/layout";
 import { DataPagination } from "@/components/shared/data-pagination";
 import { ListToolbar } from "@/components/shared/list-toolbar";
+import { TOOLBAR_SEARCH_WIDTH_CLASS } from "@/components/shared/toolbar-styles";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Select } from "@/components/ui/select";
@@ -588,6 +589,10 @@ export function AnalyticsDetailsView() {
   const dateTo = searchParams.get("to") || "";
   const surveyId = searchParams.get("surveyId") || "all";
   const page = Math.max(1, Number(searchParams.get("page") || "1") || 1);
+  const limit = Math.max(
+    1,
+    Number(searchParams.get("limit") || "10") || 10
+  );
   const callOutcome = searchParams.get("callOutcome") || "all";
   const surveyStatus = searchParams.get("surveyStatus") || "all";
   const searchFromUrl = searchParams.get("q") || "";
@@ -647,7 +652,7 @@ export function AnalyticsDetailsView() {
   useEffect(() => {
     setPopupOpen(false);
     setSelectedRow(null);
-  }, [metric, page, dateFrom, dateTo, surveyId, debouncedSearch, callOutcome, surveyStatus]);
+  }, [metric, page, limit, dateFrom, dateTo, surveyId, debouncedSearch, callOutcome, surveyStatus]);
 
   const hasActiveFilters =
     Boolean(debouncedSearch) || callOutcome !== "all" || surveyStatus !== "all";
@@ -673,7 +678,7 @@ export function AnalyticsDetailsView() {
       surveyId: surveyId === "all" ? undefined : surveyId,
       metric,
       page,
-      limit: 15,
+      limit,
       search: debouncedSearch || undefined,
       callOutcome: callOutcome !== "all" ? callOutcome : undefined,
       surveyStatus: surveyStatus !== "all" ? surveyStatus : undefined,
@@ -690,13 +695,13 @@ export function AnalyticsDetailsView() {
     () =>
       data?.pagination ?? {
         page: 1,
-        limit: 15,
+        limit,
         total: 0,
         totalPages: 1,
         hasNextPage: false,
         hasPreviousPage: false,
       },
-    [data?.pagination]
+    [data?.pagination, limit]
   );
 
   const setPage = (nextPage: number) => {
@@ -704,6 +709,15 @@ export function AnalyticsDetailsView() {
     params.set("metric", metric);
     if (nextPage <= 1) params.delete("page");
     else params.set("page", String(nextPage));
+    router.push(`/analytics/details?${params.toString()}`);
+  };
+
+  const setLimit = (nextLimit: number) => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("metric", metric);
+    params.delete("page");
+    if (nextLimit === 10) params.delete("limit");
+    else params.set("limit", String(nextLimit));
     router.push(`/analytics/details?${params.toString()}`);
   };
 
@@ -780,6 +794,8 @@ export function AnalyticsDetailsView() {
             searchPlaceholder="Search phone or survey…"
             searchAriaLabel="Search clients"
             disabled={isLoading}
+            searchClassName={TOOLBAR_SEARCH_WIDTH_CLASS}
+            alignControlsEnd
             filters={
               <>
                 <Select
@@ -857,7 +873,14 @@ export function AnalyticsDetailsView() {
               )}
             </div>
           ) : (
-            <div className="max-h-[min(65vh,560px)] overflow-y-auto overscroll-contain rounded-[8px]">
+            <div
+              className={cn(
+                "rounded-[8px]",
+                limit > 10
+                  ? "max-h-[min(65vh,560px)] overflow-y-auto overscroll-contain"
+                  : "overflow-x-auto"
+              )}
+            >
               <ClientsTable
                 rows={data.rows}
                 page={pagination.page}
@@ -891,6 +914,7 @@ export function AnalyticsDetailsView() {
             <DataPagination
               meta={pagination}
               onPageChange={setPage}
+              onLimitChange={setLimit}
               itemLabel="clients"
               variant="inline"
               className="flex-1"

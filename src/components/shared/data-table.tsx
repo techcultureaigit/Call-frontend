@@ -177,12 +177,16 @@ export function DataTable<T>({
     return () => onColumnsControlReadyRef.current?.(null);
   }, []);
 
+  const constrainsHeight = fillHeight && data.length > 10;
+
   const tableShellClass = cn(
     "relative min-w-0 font-sans text-sm leading-snug",
     embedded
-      ? "flex min-h-0 flex-1 flex-col overflow-hidden"
+      ? constrainsHeight
+        ? "flex min-h-0 flex-1 flex-col overflow-hidden"
+        : "flex flex-col"
       : "overflow-hidden rounded-[6px] border border-border/60 bg-card/95 shadow-elevated backdrop-blur-sm",
-    !embedded && fillHeight && "flex min-h-0 flex-1 flex-col"
+    !embedded && constrainsHeight && "flex min-h-0 flex-1 flex-col"
   );
 
   if (isLoading) {
@@ -214,7 +218,8 @@ export function DataTable<T>({
       <div
         className={cn(
           "relative min-w-0",
-          fillHeight
+          // Vertical scroll only when more than a page of default rows (10+)
+          constrainsHeight
             ? "min-h-0 flex-1 overflow-auto overscroll-contain"
             : "overflow-x-auto"
         )}
@@ -235,7 +240,7 @@ export function DataTable<T>({
               <tr
                 className={cn(
                   TABLE_HEAD_ROW_CLASS,
-                  fillHeight &&
+                  constrainsHeight &&
                     "[&_th]:sticky [&_th]:top-0 [&_th]:z-20 [&_th]:bg-card"
                 )}
               >

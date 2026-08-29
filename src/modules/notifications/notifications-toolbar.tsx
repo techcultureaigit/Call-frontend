@@ -1,15 +1,19 @@
 "use client";
 
-import { CheckCheck, Filter, Search, X } from "lucide-react";
+import { CheckCheck, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { PAGE_TITLE_CLASS } from "@/components/shared/page-heading";
+import { ListToolbar } from "@/components/shared/list-toolbar";
+import { TOOLBAR_SEARCH_WIDTH_CLASS } from "@/components/shared/toolbar-styles";
 import {
   NOTIFICATION_READ_OPTIONS,
   NOTIFICATION_TYPE_OPTIONS,
 } from "@/modules/notifications/notifications-constants";
 import type { NotificationType } from "@/types/notification";
+
+const FILTER_SELECT_CLASS =
+  "h-9 w-full min-w-[120px] rounded-[6px] border-border/50 bg-background/80 shadow-subtle sm:w-auto lg:h-11";
 
 interface NotificationsToolbarProps {
   search: string;
@@ -48,9 +52,7 @@ export function NotificationsToolbar({
     <div className="space-y-4">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <h2 className={PAGE_TITLE_CLASS}>
-            Notifications
-          </h2>
+          <h2 className={PAGE_TITLE_CLASS}>Notifications</h2>
           <p className="mt-1 text-sm text-muted-foreground">
             Stay on top of campaigns, calls, responses, and system alerts.
             {totalCount !== undefined && (
@@ -61,40 +63,29 @@ export function NotificationsToolbar({
           </p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2">
-          {unreadCount > 0 && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={onMarkAllRead}
-              disabled={isMarkingAll}
-              className="h-9 gap-1.5"
-            >
-              <CheckCheck className="size-3.5" />
-              Mark all read
-            </Button>
-          )}
-        </div>
+        {unreadCount > 0 ? (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={onMarkAllRead}
+            disabled={isMarkingAll}
+            className="h-9 gap-1.5"
+          >
+            <CheckCheck className="size-3.5" />
+            Mark all read
+          </Button>
+        ) : null}
       </div>
 
-      <div className="rounded-[6px] border border-border/60 bg-card p-4 shadow-card">
-        <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
-          <div className="relative min-w-0 flex-1">
-            <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              value={search}
-              onChange={(e) => onSearchChange(e.target.value)}
-              placeholder="Search notifications..."
-              className="h-9 pl-9"
-            />
-          </div>
-
-          <div className="flex flex-wrap items-center gap-2">
-            <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-              <Filter className="size-3.5" />
-              <span className="hidden sm:inline">Filters</span>
-            </div>
-
+      <ListToolbar
+        search={search}
+        onSearchChange={onSearchChange}
+        searchPlaceholder="Search notifications..."
+        searchAriaLabel="Search notifications"
+        searchClassName={TOOLBAR_SEARCH_WIDTH_CLASS}
+        alignControlsEnd
+        filters={
+          <>
             <Select
               value={read}
               onChange={(e) =>
@@ -104,9 +95,9 @@ export function NotificationsToolbar({
                 label: opt.label,
                 value: opt.value,
               }))}
-              className="h-9 w-full min-w-[120px] sm:w-auto"
+              className={FILTER_SELECT_CLASS}
+              aria-label="Filter by read status"
             />
-
             <Select
               value={type}
               onChange={(e) =>
@@ -116,23 +107,25 @@ export function NotificationsToolbar({
                 label: opt.label,
                 value: opt.value,
               }))}
-              className="h-9 w-full min-w-[120px] sm:w-auto"
+              className={FILTER_SELECT_CLASS}
+              aria-label="Filter by type"
             />
-
-            {hasFilters && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={clearAll}
-                className="h-9 gap-1 text-muted-foreground"
-              >
-                <X className="size-3.5" />
-                Clear
-              </Button>
-            )}
-          </div>
-        </div>
-      </div>
+          </>
+        }
+        actions={
+          hasFilters ? (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={clearAll}
+              className="h-9 gap-1 text-muted-foreground lg:h-11"
+            >
+              <X className="size-3.5" />
+              Clear
+            </Button>
+          ) : null
+        }
+      />
     </div>
   );
 }

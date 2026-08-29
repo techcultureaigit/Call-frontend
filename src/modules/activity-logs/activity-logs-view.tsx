@@ -35,6 +35,7 @@ export function ActivityLogsView() {
   const [module, setModule] = useState<AuditModule | "all">("all");
   const [actorId, setActorId] = useState("all");
   const [page, setPage] = useState(1);
+  const [pageSize, setPageSizeState] = useState(10);
   const [viewMode, setViewMode] = useState<ActivityLogsViewMode>("table");
   const [sorting, setSorting] = useState<SortingState>([
     { id: "occurredAt", desc: true },
@@ -42,13 +43,18 @@ export function ActivityLogsView() {
   const [selected, setSelected] = useState<ActivityLog | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
 
+  const setPageSize = (limit: number) => {
+    setPageSizeState(limit);
+    setPage(1);
+  };
+
   const debouncedSearch = useDebounce(search, 300);
   const sortBy = sorting[0]?.id ?? "occurredAt";
   const sortOrder = sorting[0]?.desc ? "desc" : "asc";
 
   const { data, isLoading, isFetching } = useActivityLogs({
     page,
-    limit: 10,
+    limit: pageSize,
     search: debouncedSearch,
     action,
     module,
@@ -124,7 +130,11 @@ export function ActivityLogsView() {
         )}
 
         {data?.meta && data.meta.total > 0 && (
-          <ActivityLogsPagination meta={data.meta} onPageChange={setPage} />
+          <ActivityLogsPagination
+            meta={data.meta}
+            onPageChange={setPage}
+            onLimitChange={setPageSize}
+          />
         )}
 
         <ActivityLogDetailDrawer

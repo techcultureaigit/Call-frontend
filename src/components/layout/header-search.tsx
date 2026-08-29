@@ -43,17 +43,17 @@ export function HeaderSearch() {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.25, delay: 0.05 }}
       className={cn(
-        "relative w-full max-w-md transition-shadow",
+        "relative w-full min-w-42 max-w-md transition-shadow sm:min-w-56",
         isFocused && "drop-shadow-sm"
       )}
     >
-      <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-[#9aa5b8]" />
+      <Search className="pointer-events-none absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-[#9aa5b8] sm:left-3 sm:size-4" />
       <Input
         ref={inputRef}
         type="search"
         placeholder="Search surveys..."
         className={cn(
-          "h-9 rounded-[6px] border-sidebar-border/60 bg-[#ffffff30] pl-9 pr-16 text-sm text-white shadow-none transition-all",
+          "h-8 rounded-[6px] border-sidebar-border/60 bg-[#ffffff30] pl-8 pr-3 text-xs text-white shadow-none transition-all sm:h-9 sm:pl-9 sm:pr-14 sm:text-sm",
           "placeholder:text-[#9aa5b8]",
           "hover:border-sidebar-border hover:bg-[#ffffff40]",
           "focus-visible:border-[#3b82f6]/40 focus-visible:bg-[#ffffff45] focus-visible:ring-1 focus-visible:ring-[#3b82f6]/25"
@@ -67,8 +67,8 @@ export function HeaderSearch() {
         }}
         aria-label="Search"
       />
-      <kbd className="pointer-events-none absolute right-2.5 top-1/2 hidden -translate-y-1/2 items-center gap-0.5 rounded-[6px] border border-sidebar-border bg-sidebar-elevated px-1.5 py-0.5 font-mono text-[10px] font-medium text-[#9aa5b8] sm:inline-flex">
-        <span className="text-xs">⌘</span>K
+      <kbd className="pointer-events-none absolute right-2 top-1/2 hidden -translate-y-1/2 items-center gap-0.5 rounded-[6px] border border-sidebar-border bg-sidebar-elevated px-1.5 py-0.5 font-mono text-[10px] font-medium text-[#9aa5b8] lg:inline-flex">
+        <span className="text-[10px]">⌘</span>K
       </kbd>
     </motion.div>
   );

@@ -5,6 +5,7 @@ import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import {
   TOOLBAR_SEARCH_INPUT_CLASS,
+  TOOLBAR_SEARCH_WIDTH_CLASS,
 } from "@/components/shared/toolbar-styles";
 import { cn } from "@/lib/utils";
 
@@ -21,7 +22,10 @@ export interface ListToolbarProps {
   searchAriaLabel?: string;
   /** Optional width/layout override for the search field wrapper */
   searchClassName?: string;
-  /** Push filters + actions to the right on wide screens */
+  /**
+   * Push filters + actions to the right (default true).
+   * Search stays left; filters/actions share the same row.
+   */
   alignControlsEnd?: boolean;
   /** Column visibility / reorder control (from DataTable). */
   columnsControl?: ReactNode;
@@ -30,8 +34,8 @@ export interface ListToolbarProps {
 }
 
 /**
- * Shared list search + filters bar (DRY with DataTable / DataPagination).
- * Modules only pass filter controls + action buttons.
+ * Shared list search + filters bar.
+ * One row: search (left) · filters + actions (right).
  */
 export function ListToolbar({
   search,
@@ -43,50 +47,54 @@ export function ListToolbar({
   className,
   searchAriaLabel = "Search",
   searchClassName,
-  alignControlsEnd = false,
+  alignControlsEnd = true,
   columnsControl,
   variant = "default",
 }: ListToolbarProps) {
   const embedded = variant === "embedded";
+  const hasControls = Boolean(filters || columnsControl || actions);
 
   return (
     <div
       className={cn(
-        "flex min-w-0 flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center",
+        "flex min-w-0",
         embedded
           ? "shrink-0 border-b border-border/60 bg-card px-3 py-3 sm:px-4 sm:py-3.5"
           : "rounded-[6px] border border-border/60 bg-card p-3 shadow-card sm:p-3.5",
         className
       )}
     >
-      <div
-        className={cn(
-          "relative min-w-0",
-          searchClassName ?? "w-full flex-1"
-        )}
-      >
-        <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-        <Input
-          value={search}
-          onChange={(e) => onSearchChange(e.target.value)}
-          placeholder={searchPlaceholder}
-          aria-label={searchAriaLabel}
-          disabled={disabled}
-          className={TOOLBAR_SEARCH_INPUT_CLASS}
-        />
-      </div>
-      {filters || columnsControl || actions ? (
+      <div className="flex min-w-0 w-full flex-wrap items-center gap-2">
         <div
           className={cn(
-            "flex min-w-0 flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:gap-2",
-            alignControlsEnd && "sm:ml-auto"
+            "relative min-w-0",
+            searchClassName ?? TOOLBAR_SEARCH_WIDTH_CLASS
           )}
         >
-          {filters}
-          {columnsControl}
-          {actions}
+          <Search className="pointer-events-none absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground sm:left-3 sm:size-4" />
+          <Input
+            value={search}
+            onChange={(e) => onSearchChange(e.target.value)}
+            placeholder={searchPlaceholder}
+            aria-label={searchAriaLabel}
+            disabled={disabled}
+            className={TOOLBAR_SEARCH_INPUT_CLASS}
+          />
         </div>
-      ) : null}
+
+        {hasControls ? (
+          <div
+            className={cn(
+              "flex min-w-0 flex-wrap items-center gap-2",
+              alignControlsEnd && "ml-auto"
+            )}
+          >
+            {filters}
+            {columnsControl}
+            {actions}
+          </div>
+        ) : null}
+      </div>
     </div>
   );
 }

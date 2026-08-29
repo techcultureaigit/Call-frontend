@@ -75,6 +75,8 @@ interface SurveysTableProps {
   onUnschedule: (survey: Survey) => void;
   unschedulingId?: string | null;
   embedded?: boolean;
+  /** Enable sticky header + inner scroll when page size is large. */
+  fillHeight?: boolean;
   onColumnsControlReady?: (control: ReactNode | null) => void;
 }
 
@@ -91,6 +93,7 @@ export function SurveysTable({
   onUnschedule,
   unschedulingId,
   embedded = false,
+  fillHeight = false,
   onColumnsControlReady,
 }: SurveysTableProps) {
   const router = useRouter();
@@ -332,7 +335,7 @@ export function SurveysTable({
       emptyDescription="Create a survey or adjust your filters."
       minWidthClassName="min-w-245"
       isRowSelected={(survey) => selectedIds.has(survey.id)}
-      fillHeight
+      fillHeight={fillHeight}
       embedded={embedded}
       onColumnsControlReady={onColumnsControlReady}
     />
@@ -403,6 +406,8 @@ export function SurveyListView() {
     debouncedSearch,
     page,
     setPage,
+    pageSize,
+    setPageSize,
     data: surveys,
     meta,
     isLoading,
@@ -427,7 +432,7 @@ export function SurveyListView() {
 
   useEffect(() => {
     setSelectedIds(new Set());
-  }, [page, debouncedSearch, language, status]);
+  }, [page, pageSize, debouncedSearch, language, status]);
 
   const allSelected =
     surveys.length > 0 && surveys.every((survey) => selectedIds.has(survey.id));
@@ -455,7 +460,7 @@ export function SurveyListView() {
       // API: listSurveys() → GET /api/surveys?includeQuestions=true  (full questions for export)
       const result = await listSurveys({
         page: 1,
-        limit: Math.min(Math.max(meta.total, PAGE_SIZE), EXPORT_MAX_ROWS),
+        limit: Math.min(Math.max(meta.total, pageSize), EXPORT_MAX_ROWS),
         search: debouncedSearch.trim() || undefined,
         language: language !== "all" ? language : undefined,
         status: status !== "all" ? status : undefined,
@@ -624,15 +629,33 @@ export function SurveyListView() {
   const showLoader = isLoading || isRefreshing;
   const hasActiveFilters =
     Boolean(search.trim()) || language !== "all" || status !== "all";
+  /** Inner table scroll only when user asks for more than default 10 rows. */
+  const useTableScroll = pageSize > 10;
 
   return (
-    <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-background">
+    <div
+      className={cn(
+        "min-w-0 bg-background",
+        useTableScroll &&
+          "flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden"
+      )}
+    >
       <PageContainer
         size="full"
-        fullHeight
-        className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden"
+        fullHeight={useTableScroll}
+        className={
+          useTableScroll
+            ? "flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden"
+            : undefined
+        }
       >
-        <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-4 overflow-hidden">
+        <div
+          className={cn(
+            "flex min-w-0 flex-col gap-4",
+            useTableScroll &&
+              "min-h-0 flex-1 overflow-hidden"
+          )}
+        >
           <div className="flex shrink-0 items-start justify-between gap-4">
             <div>
               <h1 className={PAGE_TITLE_CLASS}>
@@ -744,6 +767,8 @@ export function SurveyListView() {
             meta={meta}
             itemLabel="surveys"
             onPageChange={setPage}
+            onLimitChange={setPageSize}
+            constrainHeight={useTableScroll}
           >
           {showLoader ? (
             <AppLoader
@@ -802,6 +827,7 @@ export function SurveyListView() {
                 onUnschedule={handleUnschedule}
                 unschedulingId={unschedulingId}
                 embedded
+                fillHeight={useTableScroll}
                 onColumnsControlReady={setColumnsControl}
               />
           ) : null}

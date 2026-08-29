@@ -64,7 +64,7 @@ function toMeta(pagination?: {
   total: number;
   totalPages: number;
 }): PaginatedMeta {
-  return toPaginatedMeta(pagination, 9);
+  return toPaginatedMeta(pagination, 10);
 }
 
 const surveyCall = createModuleApiCall("survey");
@@ -91,7 +91,7 @@ export async function listSurveys(
 ): Promise<SurveysListResult> {
   const query = {
     page: params.page ?? 1,
-    limit: params.limit ?? 9,
+    limit: params.limit ?? 10,
     search: params.search || undefined,
     status: params.status,
     language: params.language || undefined,

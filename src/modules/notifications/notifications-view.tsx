@@ -33,13 +33,19 @@ export function NotificationsView() {
   const [type, setType] = useState<NotificationType | "all">("all");
   const [read, setRead] = useState<"all" | "read" | "unread">("all");
   const [page, setPage] = useState(1);
+  const [pageSize, setPageSizeState] = useState(10);
   const [markingId, setMarkingId] = useState<string | null>(null);
+
+  const setPageSize = (limit: number) => {
+    setPageSizeState(limit);
+    setPage(1);
+  };
 
   const debouncedSearch = useDebounce(search, 300);
 
   const { data, isLoading, isFetching } = useNotifications({
     page,
-    limit: 10,
+    limit: pageSize,
     search: debouncedSearch,
     type,
     read,
@@ -117,6 +123,7 @@ export function NotificationsView() {
           <NotificationsPagination
             meta={data.meta}
             onPageChange={setPage}
+            onLimitChange={setPageSize}
           />
         )}
 

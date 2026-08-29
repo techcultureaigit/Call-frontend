@@ -1,6 +1,6 @@
 import type { VoiceFilters, VoiceGender, VoiceProvider } from "@/types/voice";
 
-export const VOICES_PAGE_SIZE = 12;
+export const VOICES_PAGE_SIZE = 10;
 
 export const DEFAULT_VOICE_FILTERS: VoiceFilters = {
   search: "",

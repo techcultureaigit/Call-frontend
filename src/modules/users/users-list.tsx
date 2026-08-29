@@ -79,6 +79,7 @@ export function UsersListView() {
     setSearch,
     page,
     setPage,
+    setPageSize,
     data: users,
     meta,
     isLoading,
@@ -220,7 +221,11 @@ export function UsersListView() {
         )}
 
         {!showLoader && meta.total > 0 && (
-          <UsersPagination meta={meta} onPageChange={setPage} />
+          <UsersPagination
+            meta={meta}
+            onPageChange={setPage}
+            onLimitChange={setPageSize}
+          />
         )}
       </motion.div>
 

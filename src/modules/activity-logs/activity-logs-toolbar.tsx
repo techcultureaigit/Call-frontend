@@ -1,8 +1,7 @@
 "use client";
 
-import { Filter, History, LayoutList, Search, X } from "lucide-react";
+import { History, LayoutList, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import {
   AUDIT_ACTION_OPTIONS,
@@ -10,9 +9,14 @@ import {
 } from "@/modules/activity-logs/activity-logs-constants";
 import type { AuditAction, AuditModule } from "@/types/activity-log";
 import { PAGE_TITLE_CLASS } from "@/components/shared/page-heading";
+import { ListToolbar } from "@/components/shared/list-toolbar";
+import { TOOLBAR_SEARCH_WIDTH_CLASS } from "@/components/shared/toolbar-styles";
 import { cn } from "@/lib/utils";
 
 export type ActivityLogsViewMode = "table" | "timeline";
+
+const FILTER_SELECT_CLASS =
+  "h-9 w-full min-w-[130px] rounded-[6px] border-border/50 bg-background/80 shadow-subtle sm:w-auto lg:h-11";
 
 interface ActivityLogsToolbarProps {
   search: string;
@@ -60,9 +64,7 @@ export function ActivityLogsToolbar({
     <div className="space-y-4">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <h2 className={PAGE_TITLE_CLASS}>
-            Activity Logs
-          </h2>
+          <h2 className={PAGE_TITLE_CLASS}>Activity Logs</h2>
           <p className="mt-1 text-sm text-muted-foreground">
             Complete audit trail of system actions with before/after changes.
             {totalCount !== undefined && (
@@ -101,24 +103,15 @@ export function ActivityLogsToolbar({
         </div>
       </div>
 
-      <div className="rounded-[6px] border border-border/60 bg-card p-4 shadow-card">
-        <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
-          <div className="relative min-w-0 flex-1">
-            <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              value={search}
-              onChange={(e) => onSearchChange(e.target.value)}
-              placeholder="Search logs, actors, resources, changes..."
-              className="h-9 pl-9"
-            />
-          </div>
-
-          <div className="flex flex-wrap items-center gap-2">
-            <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-              <Filter className="size-3.5" />
-              <span className="hidden sm:inline">Filters</span>
-            </div>
-
+      <ListToolbar
+        search={search}
+        onSearchChange={onSearchChange}
+        searchPlaceholder="Search logs, actors, resources, changes..."
+        searchAriaLabel="Search activity logs"
+        searchClassName={TOOLBAR_SEARCH_WIDTH_CLASS}
+        alignControlsEnd
+        filters={
+          <>
             <Select
               value={action}
               onChange={(e) =>
@@ -128,9 +121,9 @@ export function ActivityLogsToolbar({
                 label: o.label,
                 value: o.value,
               }))}
-              className="h-9 w-full min-w-[130px] sm:w-auto"
+              className={FILTER_SELECT_CLASS}
+              aria-label="Filter by action"
             />
-
             <Select
               value={module}
               onChange={(e) =>
@@ -140,9 +133,9 @@ export function ActivityLogsToolbar({
                 label: o.label,
                 value: o.value,
               }))}
-              className="h-9 w-full min-w-[130px] sm:w-auto"
+              className={FILTER_SELECT_CLASS}
+              aria-label="Filter by module"
             />
-
             <Select
               value={actorId}
               onChange={(e) => onActorChange(e.target.value)}
@@ -150,23 +143,25 @@ export function ActivityLogsToolbar({
                 { label: "All actors", value: "all" },
                 ...actors.map((a) => ({ label: a.name, value: a.id })),
               ]}
-              className="h-9 w-full min-w-[130px] sm:w-auto"
+              className={FILTER_SELECT_CLASS}
+              aria-label="Filter by actor"
             />
-
-            {hasFilters && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={clearAll}
-                className="h-9 gap-1 text-muted-foreground"
-              >
-                <X className="size-3.5" />
-                Clear
-              </Button>
-            )}
-          </div>
-        </div>
-      </div>
+          </>
+        }
+        actions={
+          hasFilters ? (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={clearAll}
+              className="h-9 gap-1 text-muted-foreground lg:h-11"
+            >
+              <X className="size-3.5" />
+              Clear
+            </Button>
+          ) : null
+        }
+      />
     </div>
   );
 }

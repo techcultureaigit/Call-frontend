@@ -560,24 +560,24 @@ export function TableColumnsButton({
 }
 
 /** Shared header / cell spacing — every list table uses these. */
-export const TABLE_FONT_CLASS = "font-sans text-sm leading-snug";
+export const TABLE_FONT_CLASS = "font-sans text-xs leading-snug";
 export const TABLE_STATUS_BADGE_CLASS =
-  "inline-flex items-center rounded-[6px] font-sans text-[11px] font-medium leading-snug";
+  "inline-flex items-center rounded-[6px] font-sans text-[10px] font-medium leading-snug";
 export const TABLE_CHIP_CLASS =
-  "inline-flex items-center rounded-[6px] font-sans text-xs font-medium leading-snug";
+  "inline-flex items-center rounded-[6px] font-sans text-[11px] font-medium leading-snug";
 export const TABLE_PRIMARY_TEXT_CLASS =
-  "truncate font-sans text-sm font-medium leading-snug text-foreground";
+  "truncate font-sans text-xs font-medium leading-snug text-foreground";
 export const TABLE_SUBTEXT_CLASS =
-  "mt-0.5 line-clamp-1 font-sans text-xs leading-snug text-muted-foreground";
+  "mt-0.5 line-clamp-1 font-sans text-[11px] leading-snug text-muted-foreground";
 export const TABLE_HEAD_ROW_CLASS =
   "border-b border-border/50 bg-card";
 export const TABLE_HEAD_CELL_CLASS =
-  "px-4 py-3.5 text-left font-sans text-[11px] font-medium uppercase tracking-[0.08em] text-muted-foreground";
+  "px-3 py-2 text-left font-sans text-[10px] font-medium uppercase tracking-[0.08em] text-muted-foreground";
 export const TABLE_BODY_ROW_CLASS =
   "group border-b border-border/30 transition-colors last:border-0 hover:bg-muted/25";
 export const TABLE_BODY_CELL_CLASS =
-  "relative px-4 py-3.5 align-middle font-sans text-sm leading-snug text-foreground";
-export const TABLE_SELECT_CELL_CLASS = "w-12 px-3.5";
+  "relative px-3 py-2 align-middle font-sans text-xs leading-snug text-foreground";
+export const TABLE_SELECT_CELL_CLASS = "w-10 px-2.5";
 
 const ColumnLockContext = createContext<Set<string>>(new Set());
 

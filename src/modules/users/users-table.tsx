@@ -167,7 +167,7 @@ export function UsersTable({
           />
         ),
         cell: (user) => (
-          <span className="text-sm text-muted-foreground">
+          <span className="text-xs text-muted-foreground">
             {user.lastLoginAt
               ? formatRelativeTime(user.lastLoginAt)
               : "Never"}
@@ -185,7 +185,7 @@ export function UsersTable({
           />
         ),
         cell: (user) => (
-          <span className="text-sm text-muted-foreground">
+          <span className="text-xs text-muted-foreground">
             {formatDate(user.createdAt)}
           </span>
         ),

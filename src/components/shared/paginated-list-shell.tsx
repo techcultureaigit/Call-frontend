@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 import { DataPagination } from "@/components/shared/data-pagination";
 import { ListTableCard } from "@/components/shared/list-table-card";
 import { ListToolbar } from "@/components/shared/list-toolbar";
+import { cn } from "@/lib/utils";
 import type { PaginatedMeta } from "@/types";
 
 export interface PaginatedListShellProps {
@@ -19,10 +20,18 @@ export interface PaginatedListShellProps {
   toolbarDisabled?: boolean;
   meta: PaginatedMeta;
   onPageChange: (page: number) => void;
+  /** Passes selected rows-per-page limit to the list fetch. */
+  onLimitChange?: (limit: number) => void;
+  limitOptions?: readonly number[];
   itemLabel?: string;
   children: ReactNode;
   /** Full-height layout with toolbar + table as separate cards */
   unified?: boolean;
+  /**
+   * Lock table area to remaining viewport and scroll inside (for large page sizes).
+   * Default false — table grows with rows; page scrolls if needed.
+   */
+  constrainHeight?: boolean;
 }
 
 /** Shared list layout: search bar + content + pagination (DRY for survey list & response). */
@@ -39,9 +48,12 @@ export function PaginatedListShell({
   toolbarDisabled,
   meta,
   onPageChange,
+  onLimitChange,
+  limitOptions,
   itemLabel = "items",
   children,
   unified = false,
+  constrainHeight = false,
 }: PaginatedListShellProps) {
   const toolbar = (
     <ListToolbar
@@ -60,10 +72,32 @@ export function PaginatedListShell({
     />
   );
 
+  const pagination = (
+    <DataPagination
+      meta={meta}
+      onPageChange={onPageChange}
+      onLimitChange={onLimitChange}
+      limitOptions={limitOptions}
+      itemLabel={itemLabel}
+      variant="inline"
+      className="shrink-0"
+    />
+  );
+
   if (unified) {
     return (
-      <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-4 overflow-hidden">
-        <ListTableCard className="flex min-h-0 flex-1 flex-col">
+      <div
+        className={cn(
+          "flex min-w-0 flex-col gap-4",
+          constrainHeight && "min-h-0 flex-1 overflow-hidden"
+        )}
+      >
+        <ListTableCard
+          className={cn(
+            "flex flex-col",
+            constrainHeight && "min-h-0 flex-1"
+          )}
+        >
           <ListToolbar
             className="shrink-0"
             variant="embedded"
@@ -78,34 +112,37 @@ export function PaginatedListShell({
             actions={actions}
             disabled={toolbarDisabled}
           />
-          <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
+          <div
+            className={cn(
+              "flex min-w-0 flex-col",
+              constrainHeight && "min-h-0 flex-1 overflow-hidden"
+            )}
+          >
             {children}
           </div>
         </ListTableCard>
-        <DataPagination
-          meta={meta}
-          onPageChange={onPageChange}
-          itemLabel={itemLabel}
-          variant="inline"
-          className="shrink-0"
-        />
+        {pagination}
       </div>
     );
   }
 
   return (
-    <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-4 overflow-hidden">
+    <div
+      className={cn(
+        "flex min-w-0 flex-col gap-4",
+        constrainHeight && "min-h-0 flex-1 overflow-hidden"
+      )}
+    >
       {toolbar}
-      <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
+      <div
+        className={cn(
+          "flex min-w-0 flex-col",
+          constrainHeight && "min-h-0 flex-1 overflow-hidden"
+        )}
+      >
         {children}
       </div>
-      <DataPagination
-        meta={meta}
-        onPageChange={onPageChange}
-        itemLabel={itemLabel}
-        variant="inline"
-        className="shrink-0"
-      />
+      {pagination}
     </div>
   );
 }

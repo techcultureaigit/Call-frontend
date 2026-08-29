@@ -50,7 +50,7 @@ export function ActivityLogsTable({
         header: "Time",
         enableSorting: true,
         cell: ({ row }) => (
-          <span className="whitespace-nowrap text-sm text-muted-foreground">
+          <span className="whitespace-nowrap text-xs text-muted-foreground">
             {formatRelativeTime(row.original.occurredAt)}
           </span>
         ),
@@ -69,7 +69,7 @@ export function ActivityLogsTable({
                 </AvatarFallback>
               </Avatar>
               <div className="min-w-0">
-                <p className="truncate text-sm font-medium">{actor.name}</p>
+                <p className="truncate text-xs font-medium">{actor.name}</p>
                 <p className="truncate text-xs text-muted-foreground">
                   {actor.role}
                 </p>
@@ -99,7 +99,7 @@ export function ActivityLogsTable({
         header: "Resource",
         cell: ({ row }) => (
           <div className="min-w-0">
-            <p className="truncate text-sm font-medium">
+            <p className="truncate text-xs font-medium">
               {row.original.resourceName}
             </p>
             <p className="truncate text-xs text-muted-foreground">

@@ -14,6 +14,7 @@ export const EMPTY_PAGE_META: PaginatedMeta = {
 };
 
 export interface UsePaginatedListOptions<T> {
+  /** Default rows per page (limit). Default 10. */
   pageSize?: number;
   debounceMs?: number;
   fetchPage: (params: {
@@ -28,7 +29,7 @@ export interface UsePaginatedListOptions<T> {
 
 /** Shared search + page + load state for list pages (surveys, users, …). */
 export function usePaginatedList<T>({
-  pageSize = 10,
+  pageSize: initialPageSize = 10,
   debounceMs = 300,
   fetchPage,
   resetPageWhen = [],
@@ -36,10 +37,11 @@ export function usePaginatedList<T>({
 }: UsePaginatedListOptions<T>) {
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
+  const [pageSize, setPageSizeState] = useState(initialPageSize);
   const [data, setData] = useState<T[]>([]);
   const [meta, setMeta] = useState<PaginatedMeta>({
     ...EMPTY_PAGE_META,
-    limit: pageSize,
+    limit: initialPageSize,
   });
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -60,6 +62,11 @@ export function usePaginatedList<T>({
   useEffect(() => {
     onErrorRef.current = onError;
   }, [onError]);
+
+  const setPageSize = useCallback((limit: number) => {
+    setPageSizeState(limit);
+    setPage(1);
+  }, []);
 
   const load = useCallback(async () => {
     const requestId = ++requestIdRef.current;
@@ -110,6 +117,8 @@ export function usePaginatedList<T>({
     debouncedSearch,
     page,
     setPage,
+    pageSize,
+    setPageSize,
     data,
     meta,
     isLoading,

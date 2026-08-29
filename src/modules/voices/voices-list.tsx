@@ -43,12 +43,18 @@ const EMPTY_META: PaginatedMeta = {
 export function VoicesListView() {
   const [filters, setFilters] = useState<VoiceFilters>(DEFAULT_VOICE_FILTERS);
   const [page, setPage] = useState(1);
+  const [pageSize, setPageSizeState] = useState(VOICES_PAGE_SIZE);
   const [voices, setVoices] = useState<VoiceProfile[]>([]);
   const [meta, setMeta] = useState<PaginatedMeta>(EMPTY_META);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [columnsControl, setColumnsControl] = useState<ReactNode | null>(null);
+
+  const setPageSize = useCallback((limit: number) => {
+    setPageSizeState(limit);
+    setPage(1);
+  }, []);
 
   const debouncedSearch = useDebounce(filters.search, 300);
   const activeFilters = useMemo(
@@ -67,7 +73,7 @@ export function VoicesListView() {
     try {
       // API: listVoices() → GET /api/voices
       const result = await listVoices(
-        filtersToVoicesParams(activeFilters, page, VOICES_PAGE_SIZE)
+        filtersToVoicesParams(activeFilters, page, pageSize)
       );
       setVoices(result.data);
       setMeta(result.meta);
@@ -79,12 +85,12 @@ export function VoicesListView() {
           : "Something went wrong fetching voices."
       );
       setVoices([]);
-      setMeta(EMPTY_META);
+      setMeta({ ...EMPTY_META, limit: pageSize });
     } finally {
       setIsLoading(false);
       setIsRefreshing(false);
     }
-  }, [activeFilters, page]);
+  }, [activeFilters, page, pageSize]);
 
   useEffect(() => {
     const filtersChanged = prevFiltersKeyRef.current !== activeFiltersKey;
@@ -104,7 +110,7 @@ export function VoicesListView() {
       try {
         // API: listVoices() → GET /api/voices
         const result = await listVoices(
-          filtersToVoicesParams(activeFilters, page, VOICES_PAGE_SIZE)
+          filtersToVoicesParams(activeFilters, page, pageSize)
         );
         if (!cancelled) {
           setVoices(result.data);
@@ -119,7 +125,7 @@ export function VoicesListView() {
               : "Something went wrong fetching voices."
           );
           setVoices([]);
-          setMeta(EMPTY_META);
+          setMeta({ ...EMPTY_META, limit: pageSize });
         }
       } finally {
         if (!cancelled) {
@@ -132,7 +138,7 @@ export function VoicesListView() {
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeFiltersKey, page]);
+  }, [activeFiltersKey, page, pageSize]);
 
   const { applyMeta, resetPageMeta } = usePageMeta({
     title: "Voice Sample",
@@ -232,7 +238,11 @@ export function VoicesListView() {
             )}
 
             {!showInitialLoader && !isError && meta.total > 0 && (
-              <VoicesPagination meta={meta} onPageChange={setPage} />
+              <VoicesPagination
+                meta={meta}
+                onPageChange={setPage}
+                onLimitChange={setPageSize}
+              />
             )}
           </div>
 

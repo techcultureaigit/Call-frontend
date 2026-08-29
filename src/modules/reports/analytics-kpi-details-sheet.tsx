@@ -316,6 +316,8 @@ export function AnalyticsKpiDetailsSheet({
   surveyId,
   page,
   onPageChange,
+  limit,
+  onLimitChange,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -326,16 +328,19 @@ export function AnalyticsKpiDetailsSheet({
   surveyId: string;
   page: number;
   onPageChange: (page: number) => void;
+  limit?: number;
+  onLimitChange?: (limit: number) => void;
 }) {
   const [selectedRow, setSelectedRow] = useState<AnalyticsDetailRow | null>(
     null
   );
   const [popupOpen, setPopupOpen] = useState(false);
+  const pageSize = limit ?? 10;
 
   useEffect(() => {
     setPopupOpen(false);
     setSelectedRow(null);
-  }, [metric, page]);
+  }, [metric, page, pageSize]);
 
   const { data, isLoading, isFetching } = useAnalyticsDetails(
     {
@@ -344,7 +349,7 @@ export function AnalyticsKpiDetailsSheet({
       surveyId: surveyId === "all" ? undefined : surveyId,
       metric,
       page,
-      limit: 15,
+      limit: pageSize,
     },
     open
   );
@@ -358,13 +363,13 @@ export function AnalyticsKpiDetailsSheet({
     () =>
       data?.pagination ?? {
         page: 1,
-        limit: 15,
+        limit: pageSize,
         total: 0,
         totalPages: 1,
         hasNextPage: false,
         hasPreviousPage: false,
       },
-    [data?.pagination]
+    [data?.pagination, pageSize]
   );
 
   return (
@@ -472,6 +477,7 @@ export function AnalyticsKpiDetailsSheet({
             <DataPagination
               meta={pagination}
               onPageChange={onPageChange}
+              onLimitChange={onLimitChange}
               itemLabel="clients"
               variant="inline"
               className="flex-1"

@@ -50,6 +50,7 @@ import {
 } from "@/components/shared/table-column-layout";
 import { ListToolbar } from "@/components/shared/list-toolbar";
 import { PAGE_TITLE_CLASS } from "@/components/shared/page-heading";
+import { TOOLBAR_SEARCH_WIDTH_CLASS } from "@/components/shared/toolbar-styles";
 import { AppLoaderSpinner } from "@/components/shared/app-loader";
 import { Button } from "@/components/ui/button";
 import { Select } from "@/components/ui/select";
@@ -1044,7 +1045,12 @@ function ResultsInlineQaTable({
 
   return (
     <>
-      <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-[6px] border border-border/60 bg-card shadow-card">
+      <div
+        className={cn(
+          "flex min-w-0 flex-col rounded-[6px] border border-border/60 bg-card shadow-card",
+          rows.length > 10 && "min-h-0 flex-1 overflow-hidden"
+        )}
+      >
         <div className="shrink-0">
           <TableColumnsBar
             items={pickerItems}
@@ -1055,7 +1061,14 @@ function ResultsInlineQaTable({
           />
         </div>
 
-        <div className="min-h-0 min-w-0 flex-1 overflow-auto overscroll-contain">
+        <div
+          className={cn(
+            "min-w-0",
+            rows.length > 10
+              ? "min-h-0 flex-1 overflow-auto overscroll-contain"
+              : "overflow-x-auto"
+          )}
+        >
           <TableColumnDnd
             ids={visibleItems.map((col) => col.id)}
             lockedIds={lockedIds}
@@ -1474,11 +1487,14 @@ export function SurveyResponseView({ surveyId }: SurveyResultsViewProps) {
     debouncedSearch,
     page,
     setPage,
+    pageSize,
+    setPageSize,
     data: rows,
     meta,
     isLoading: loading,
     reload,
   } = usePaginatedList<SurveyResultRow>({
+    pageSize: 10,
     fetchPage,
     resetPageWhen: [responseStatus],
     onError: (err) =>
@@ -1565,14 +1581,31 @@ export function SurveyResponseView({ surveyId }: SurveyResultsViewProps) {
 
   const status = (survey?.scheduling_status ?? "completed") as SurveyDisplayStatus;
 
+  const useTableScroll = pageSize > 10;
+
   return (
-    <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-linear-to-b from-brand/5 to-transparent">
+    <div
+      className={cn(
+        "min-w-0 bg-linear-to-b from-brand/5 to-transparent",
+        useTableScroll &&
+          "flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden"
+      )}
+    >
       <PageContainer
         size="full"
-        fullHeight
-        className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden"
+        fullHeight={useTableScroll}
+        className={
+          useTableScroll
+            ? "flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden"
+            : undefined
+        }
       >
-        <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-4 overflow-hidden">
+        <div
+          className={cn(
+            "flex min-w-0 flex-col gap-4",
+            useTableScroll && "min-h-0 flex-1 overflow-hidden"
+          )}
+        >
           <div className="flex shrink-0 flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex min-w-0 items-start gap-3">
               <Button
@@ -1628,6 +1661,8 @@ export function SurveyResponseView({ surveyId }: SurveyResultsViewProps) {
             onSearchChange={setSearch}
             searchPlaceholder="Search phone, session, or call sid…"
             searchAriaLabel="Search responses"
+            searchClassName={TOOLBAR_SEARCH_WIDTH_CLASS}
+            alignControlsEnd
             filters={
               <Select
                 value={responseStatus}
@@ -1701,7 +1736,12 @@ export function SurveyResponseView({ surveyId }: SurveyResultsViewProps) {
             </div>
           ) : null}
 
-          <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
+          <div
+            className={cn(
+              "flex min-w-0 flex-col",
+              useTableScroll && "min-h-0 flex-1 overflow-hidden"
+            )}
+          >
             {loading ? (
               <SurveyFetchLoader label="Loading results" />
             ) : error ? (
@@ -1736,6 +1776,7 @@ export function SurveyResponseView({ surveyId }: SurveyResultsViewProps) {
             <DataPagination
               meta={meta}
               onPageChange={setPage}
+              onLimitChange={setPageSize}
               itemLabel="responses"
               variant="inline"
               className="shrink-0"

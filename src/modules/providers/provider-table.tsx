@@ -61,7 +61,7 @@ export function ProviderTable({
         id: "name",
         header: "Provider name",
         cell: (row) => (
-          <span className="text-sm font-medium text-foreground">
+          <span className="text-xs font-medium text-foreground">
             {row.name || row.provider || "—"}
           </span>
         ),
@@ -102,9 +102,9 @@ export function ProviderTable({
         header: "Status",
         cell: (row) =>
           row.active !== false && row.isActive !== false ? (
-            <span className="text-sm font-medium text-emerald-600">Active</span>
+            <span className="text-xs font-medium text-emerald-600">Active</span>
           ) : (
-            <span className="text-sm text-muted-foreground">Inactive</span>
+            <span className="text-xs text-muted-foreground">Inactive</span>
           ),
       },
       {
