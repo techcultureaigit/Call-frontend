@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
-import { ChevronRight, ExternalLink, Layers } from "lucide-react";
+import { Layers } from "lucide-react";
 import { ChartSkeleton } from "@/modules/dashboard/dashboard-skeleton";
 import {
   DataTable,
@@ -10,8 +10,8 @@ import {
   type DataTableColumn,
 } from "@/components/shared/data-table";
 import {
-  AnalyticsBadge,
   AnalyticsCard,
+  AnalyticsCardActions,
 } from "@/modules/reports/analytics-card";
 import { cn } from "@/lib/utils";
 import type { AnalyticsSurveyBreakdown } from "@/types/reports";
@@ -95,9 +95,11 @@ function StatusStack({ row, total }: { row: AnalyticsSurveyBreakdown; total: num
 export function SurveyBreakdownTable({
   rows,
   onSurveySelect,
+  selectedSurveyId,
 }: {
   rows: AnalyticsSurveyBreakdown[];
   onSurveySelect?: (surveyId: string) => void;
+  selectedSurveyId?: string;
 }) {
   const columns = useMemo<DataTableColumn<AnalyticsSurveyBreakdown>[]>(
     () => [
@@ -195,19 +197,8 @@ export function SurveyBreakdownTable({
           return <StatusStack row={row} total={total} />;
         },
       },
-      {
-        id: "actions",
-        header: "",
-        hideable: false,
-        pin: "end",
-        align: "right",
-        cell: () =>
-          onSurveySelect ? (
-            <ChevronRight className="size-4 text-muted-foreground/50" />
-          ) : null,
-      },
     ],
-    [onSurveySelect]
+    []
   );
 
   return (
@@ -217,6 +208,11 @@ export function SurveyBreakdownTable({
       getRowId={(row) => row.surveyId}
       onRowClick={
         onSurveySelect ? (row) => onSurveySelect(row.surveyId) : undefined
+      }
+      isRowSelected={
+        selectedSurveyId
+          ? (row) => row.surveyId === selectedSurveyId
+          : undefined
       }
       embedded
       minWidthClassName="min-w-[880px]"
@@ -294,21 +290,18 @@ export function ReportSurveyBreakdown({
       contentClassName="pt-2"
       noPadding
       action={
-        <div className="flex flex-wrap items-center gap-2">
-          <AnalyticsBadge value={summary.totalCalls} label="Calls" />
-          <AnalyticsBadge value={summary.complete} label="Complete" />
-          <AnalyticsBadge value={summary.partial} label="Partial" />
-          {onOpenFullPage && data.length > rows.length ? (
-            <button
-              type="button"
-              onClick={onOpenFullPage}
-              className="inline-flex items-center gap-1 rounded-[6px] border border-border/60 bg-card px-2 py-1 text-[11px] font-medium text-muted-foreground transition-colors hover:border-[#2c3b59]/25 hover:text-[#2c3b59]"
-            >
-              View all
-              <ExternalLink className="size-3" />
-            </button>
-          ) : null}
-        </div>
+        <AnalyticsCardActions
+          badges={[
+            { value: summary.totalCalls, label: "Calls" },
+            { value: summary.complete, label: "Complete" },
+            { value: summary.partial, label: "Partial" },
+          ]}
+          onViewAll={
+            onOpenFullPage && data.length > rows.length
+              ? onOpenFullPage
+              : undefined
+          }
+        />
       }
     >
       <div className="mb-3 flex flex-wrap gap-3 px-4 text-[10px] text-muted-foreground">

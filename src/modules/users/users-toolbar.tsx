@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Select } from "@/components/ui/select";
 import { PAGE_TITLE_CLASS } from "@/components/shared/page-heading";
 import { ListToolbar } from "@/components/shared/list-toolbar";
+import { TOOLBAR_SEARCH_WIDTH_CLASS } from "@/components/shared/toolbar-styles";
 import type { RoleListItem } from "@/types/role";
 import type { UserStatus } from "@/types/user";
 import { listRoles } from "@/modules/roles/api";
@@ -41,7 +42,7 @@ export function UsersToolbar({
 }: UsersToolbarProps) {
   return (
     <div className={headerOnly ? undefined : "space-y-4"}>
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex min-w-0 flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
         <div>
           <h1 className={PAGE_TITLE_CLASS}>
             Users
@@ -132,6 +133,8 @@ export function UsersListToolbar({
       onSearchChange={onSearchChange}
       searchPlaceholder="Search by name or email..."
       searchAriaLabel="Search users"
+      searchClassName={TOOLBAR_SEARCH_WIDTH_CLASS}
+      alignControlsEnd
       filters={
         <>
           <Select

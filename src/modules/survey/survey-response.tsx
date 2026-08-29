@@ -1566,9 +1566,10 @@ export function SurveyResponseView({ surveyId }: SurveyResultsViewProps) {
   const status = (survey?.scheduling_status ?? "completed") as SurveyDisplayStatus;
 
   return (
-    <div className="flex h-[calc(100svh-3.5rem)] min-h-0 min-w-0 flex-col overflow-hidden bg-linear-to-b from-brand/5 to-transparent">
+    <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-linear-to-b from-brand/5 to-transparent">
       <PageContainer
         size="full"
+        fullHeight
         className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden"
       >
         <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-4 overflow-hidden">

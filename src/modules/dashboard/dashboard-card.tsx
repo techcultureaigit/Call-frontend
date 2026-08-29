@@ -42,7 +42,7 @@ export function DashboardCard({
     >
       <CardHeader
         className={cn(
-          "flex-row items-start justify-between space-y-0 border-b border-border/50",
+          "grid grid-cols-1 gap-3 space-y-0 border-b border-border/50 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center sm:gap-4",
           compact ? "gap-2 p-3 pb-2" : "gap-3 pb-4"
         )}
       >
@@ -80,7 +80,11 @@ export function DashboardCard({
             )}
           </div>
         </div>
-        {action}
+        {action ? (
+          <div className="flex shrink-0 flex-wrap items-center justify-start gap-2 sm:justify-end">
+            {action}
+          </div>
+        ) : null}
       </CardHeader>
       <CardContent
         className={cn(

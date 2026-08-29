@@ -2,7 +2,7 @@
 
 import { AnimatePresence, motion } from "framer-motion";
 import { useSidebarStore } from "@/stores";
-import { useIsMobile, useIsTablet } from "@/hooks";
+import { useIsMobile } from "@/hooks";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { LAYOUT } from "./constants";
@@ -20,9 +20,8 @@ export function AppSidebar({ className }: AppSidebarProps) {
   const isMobileOpen = useSidebarStore((state) => state.isMobileOpen);
   const closeMobile = useSidebarStore((state) => state.closeMobile);
   const isMobile = useIsMobile();
-  const isTablet = useIsTablet();
 
-  const effectiveCollapsed = isCollapsed && !isMobile && !isTablet;
+  const effectiveCollapsed = isCollapsed && !isMobile;
   const sidebarWidth = effectiveCollapsed
     ? LAYOUT.sidebar.collapsed
     : LAYOUT.sidebar.expanded;

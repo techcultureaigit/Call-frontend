@@ -7,6 +7,8 @@ import {
   ChevronLeft,
   ChevronRight,
   FileText,
+  GripVertical,
+  RotateCcw,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -79,6 +81,9 @@ interface ReportsToolbarProps {
   surveys: { id: string; name: string }[];
   onExportPdf: () => void;
   isExporting?: boolean;
+  reorderMode?: boolean;
+  onReorderModeChange?: (enabled: boolean) => void;
+  onResetLayout?: () => void;
 }
 
 export function ReportsToolbar({
@@ -92,6 +97,9 @@ export function ReportsToolbar({
   surveys,
   onExportPdf,
   isExporting,
+  reorderMode = false,
+  onReorderModeChange,
+  onResetLayout,
 }: ReportsToolbarProps) {
   const today = useMemo(() => {
     const d = new Date();
@@ -172,7 +180,7 @@ export function ReportsToolbar({
   };
 
   return (
-    <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+    <div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-start sm:justify-between">
       <div className="min-w-0">
         <h1 className={PAGE_TITLE_CLASS}>
           Analytics Report
@@ -187,7 +195,7 @@ export function ReportsToolbar({
         ) : null}
       </div>
 
-      <div className="flex flex-wrap items-center gap-2">
+      <div className="flex min-w-0 flex-wrap items-center gap-2">
         <DropdownMenu open={open} onOpenChange={setOpen}>
           <DropdownMenuTrigger asChild>
             <button
@@ -322,6 +330,31 @@ export function ReportsToolbar({
           aria-label="Filter by survey"
           className="h-8 w-[min(200px,40vw)] text-sm"
         />
+
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => onReorderModeChange?.(!reorderMode)}
+          className={cn(
+            "h-8 gap-1.5 px-2.5 text-sm",
+            reorderMode && "border-brand/40 bg-brand/5 text-brand"
+          )}
+        >
+          <GripVertical className="size-3.5" />
+          {reorderMode ? "Done" : "Reorder"}
+        </Button>
+
+        {reorderMode && onResetLayout ? (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={onResetLayout}
+            className="h-8 gap-1.5 px-2.5 text-sm"
+          >
+            <RotateCcw className="size-3.5" />
+            Reset
+          </Button>
+        ) : null}
 
         <Button
           variant="outline"

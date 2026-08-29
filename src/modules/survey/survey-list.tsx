@@ -626,9 +626,10 @@ export function SurveyListView() {
     Boolean(search.trim()) || language !== "all" || status !== "all";
 
   return (
-    <div className="flex h-[calc(100svh-3.5rem)] min-h-0 min-w-0 flex-col overflow-hidden bg-background">
+    <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-background">
       <PageContainer
         size="full"
+        fullHeight
         className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden"
       >
         <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-4 overflow-hidden">

@@ -12,6 +12,7 @@ import { usePageMeta } from "@/hooks";
 import { useAnalyticsBreakdowns } from "@/modules/reports/use-reports";
 import {
   analyticsHomeHref,
+  analyticsSurveysHref,
 } from "@/modules/reports/analytics-nav";
 import {
   SurveyBreakdownTable,
@@ -84,11 +85,13 @@ export function AnalyticsSurveysView() {
   }, [data?.responsesBySurvey]);
 
   const selectSurvey = (id: string) => {
-    const params = new URLSearchParams();
-    if (dateFrom) params.set("from", dateFrom);
-    if (dateTo) params.set("to", dateTo);
-    params.set("surveyId", id);
-    router.push(`/analytics?${params.toString()}`);
+    router.push(
+      analyticsSurveysHref({
+        from: dateFrom || undefined,
+        to: dateTo || undefined,
+        surveyId: id,
+      })
+    );
   };
 
   return (
@@ -186,7 +189,11 @@ export function AnalyticsSurveysView() {
 
             <div className="px-4 pb-5 sm:px-5">
               {rows.length ? (
-                <SurveyBreakdownTable rows={rows} onSurveySelect={selectSurvey} />
+                <SurveyBreakdownTable
+                  rows={rows}
+                  onSurveySelect={selectSurvey}
+                  selectedSurveyId={surveyId !== "all" ? surveyId : undefined}
+                />
               ) : (
                 <p className="py-12 text-center text-sm text-muted-foreground">
                   No surveys match your search

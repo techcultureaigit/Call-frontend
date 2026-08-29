@@ -69,7 +69,7 @@ export function ProviderToolbar({
 
   return (
     <div className={headerOnly ? undefined : "space-y-4"}>
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex min-w-0 flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
         <div>
           <h1 className={PAGE_TITLE_CLASS}>
             Agent Providers

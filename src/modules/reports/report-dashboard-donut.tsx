@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import {
   Cell,
   Pie,
@@ -104,13 +105,18 @@ function DonutTooltip({
 }) {
   if (!active || !payload?.length) return null;
   const row = payload[0]?.payload;
+  const name = payload[0]?.name ?? row?.name ?? "";
+  const value = payload[0]?.value ?? row?.value ?? 0;
+
   return (
-    <div className="rounded-[6px] border border-border/60 bg-popover px-3 py-2 shadow-elevated">
-      <p className="text-xs font-semibold">{payload[0]?.name}</p>
-      <p className="text-xs tabular-nums text-muted-foreground">
-        {row?.count ?? 0} · {payload[0]?.value}%
+    <div className="pointer-events-none z-50 min-w-[120px] rounded-[6px] border border-border/60 bg-popover px-3 py-2 shadow-elevated">
+      <p className="text-xs font-semibold leading-tight text-foreground">{name}</p>
+      <p className="mt-0.5 text-xs tabular-nums leading-tight text-muted-foreground">
+        {row?.count ?? 0} · {value}%
       </p>
-      <p className="mt-0.5 text-[10px] text-muted-foreground">Click to view clients</p>
+      <p className="mt-1 text-[10px] leading-tight text-muted-foreground">
+        Click to view clients
+      </p>
     </div>
   );
 }
@@ -129,6 +135,7 @@ export function ReportDashboardDonut({
   onSliceSelect?: (filter: AnalyticsKpiFilterId) => void;
 }) {
   const mounted = useMounted();
+  const [sliceHover, setSliceHover] = useState(false);
   const styleMap = variant === "survey" ? SURVEY_STYLE : CALL_STYLE;
   const total = data.reduce((sum, d) => sum + (d.count ?? 0), 0);
   const styled = data.map((d) => ({
@@ -176,12 +183,14 @@ export function ReportDashboardDonut({
       title={title}
       description={description}
       icon={PieChartIcon}
+      className="overflow-visible"
+      contentClassName="overflow-visible"
       action={
         <AnalyticsBadge value={total.toLocaleString()} label="Total" />
       }
     >
       <div className="grid w-full grid-cols-[auto_minmax(0,1fr)] items-center gap-3 sm:gap-4">
-        <div className="relative h-[160px] w-[160px] shrink-0 overflow-hidden">
+        <div className="relative h-[160px] w-[160px] shrink-0">
           {mounted && (
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
@@ -196,28 +205,45 @@ export function ReportDashboardDonut({
                   strokeWidth={2}
                   stroke="var(--card)"
                   cornerRadius={4}
-                  className="cursor-pointer outline-none"
+                  className="cursor-pointer outline-none [&_path]:outline-none"
+                  isAnimationActive={false}
+                  onMouseEnter={() => setSliceHover(true)}
+                  onMouseLeave={() => setSliceHover(false)}
                   onClick={(_, index) => {
                     const name = styled[index]?.name;
                     if (name) handleSelect(name);
                   }}
                 >
                   {styled.map((entry) => (
-                    <Cell key={entry.name} fill={entry.fill} className="cursor-pointer" />
+                    <Cell
+                      key={entry.name}
+                      fill={entry.fill}
+                      className="cursor-pointer outline-none"
+                      stroke="var(--card)"
+                      strokeWidth={2}
+                    />
                   ))}
                 </Pie>
-                <Tooltip content={<DonutTooltip />} />
+                <Tooltip
+                  content={<DonutTooltip />}
+                  cursor={false}
+                  wrapperStyle={{ outline: "none", zIndex: 50 }}
+                  allowEscapeViewBox={{ x: true, y: true }}
+                  offset={12}
+                />
               </PieChart>
             </ResponsiveContainer>
           )}
-          <div className="pointer-events-none absolute inset-0 z-10 flex flex-col items-center justify-center px-1">
-            <p className="font-display text-lg font-semibold tabular-nums leading-none">
-              {centerPct}%
-            </p>
-            <p className="mt-0.5 max-w-[72px] text-center text-[8px] font-semibold uppercase leading-tight tracking-wide text-muted-foreground">
-              {centerLabel}
-            </p>
-          </div>
+          {!sliceHover ? (
+            <div className="pointer-events-none absolute inset-0 z-[1] flex flex-col items-center justify-center px-1">
+              <p className="font-display text-lg font-semibold tabular-nums leading-none">
+                {centerPct}%
+              </p>
+              <p className="mt-0.5 max-w-[72px] text-center text-[8px] font-semibold uppercase leading-tight tracking-wide text-muted-foreground">
+                {centerLabel}
+              </p>
+            </div>
+          ) : null}
         </div>
 
         <div className="grid min-w-0 grid-cols-1 gap-1">

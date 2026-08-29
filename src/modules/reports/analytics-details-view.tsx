@@ -5,7 +5,6 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
   ArrowLeft,
-  ChevronRight,
   Clock,
   ExternalLink,
   Mic,
@@ -445,11 +444,11 @@ function AnswerProgress({ progress }: { progress: string }) {
         : "bg-muted-foreground/30";
 
   return (
-    <div className="flex min-w-[72px] flex-col items-end gap-1">
+    <div className="flex w-full min-w-0 flex-col items-end gap-1">
       <span className="text-xs font-semibold tabular-nums text-foreground">
         {progress}
       </span>
-      <div className="h-1 w-full max-w-[56px] overflow-hidden rounded-full bg-muted/50">
+      <div className="h-1 w-full max-w-[72px] overflow-hidden rounded-full bg-muted/50">
         <div
           className={cn("h-full rounded-full transition-all", barColor)}
           style={{ width: `${pct}%` }}
@@ -474,20 +473,28 @@ function ClientsTable({
 
   return (
     <div className="overflow-hidden rounded-[6px] border border-border/60 bg-card shadow-card">
-      <div className="overflow-x-auto">
-        <table className="w-full min-w-[960px] text-left">
+      <div className="w-full overflow-x-auto">
+        <table className="w-full min-w-[720px] table-fixed text-left">
+          <colgroup>
+            <col className="w-[6%]" />
+            <col className="w-[16%]" />
+            <col className="w-[22%]" />
+            <col className="w-[12%]" />
+            <col className="w-[14%]" />
+            <col className="w-[10%]" />
+            <col className="w-[8%]" />
+            <col className="w-[12%]" />
+          </colgroup>
           <thead className="sticky top-0 z-10 bg-muted/95 backdrop-blur-sm">
             <tr className="border-b border-border/55 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-              <th className="w-11 px-3 py-3.5">#</th>
-              <th className="w-36 px-3 py-3.5">Phone</th>
-              <th className="min-w-[150px] px-3 py-3.5">Survey</th>
-              <th className="w-28 px-3 py-3.5">Call</th>
-              <th className="w-32 px-3 py-3.5">Status</th>
-              <th className="w-24 px-3 py-3.5 text-right">Duration</th>
-              <th className="w-24 px-3 py-3.5 text-right">Answers</th>
-              <th className="min-w-[128px] px-3 py-3.5">When</th>
-              <th className="min-w-[100px] px-3 py-3.5">Hangup</th>
-              <th className="w-9 px-2 py-3.5" />
+              <th className="px-3 py-3.5">#</th>
+              <th className="px-3 py-3.5">Phone</th>
+              <th className="px-3 py-3.5">Survey</th>
+              <th className="px-3 py-3.5">Call</th>
+              <th className="px-3 py-3.5">Status</th>
+              <th className="px-3 py-3.5 text-right">Duration</th>
+              <th className="px-3 py-3.5 text-right">Answers</th>
+              <th className="px-3 py-3.5">When</th>
             </tr>
           </thead>
           <tbody>
@@ -503,12 +510,12 @@ function ClientsTable({
                   </span>
                 </td>
                 <td className="px-3 py-3.5 align-middle">
-                  <div className="flex items-center gap-2.5">
+                  <div className="flex min-w-0 items-center gap-2.5">
                     <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-brand/10 text-brand">
                       <Phone className="size-3.5" />
                     </span>
-                    <div className="min-w-0">
-                      <p className="text-sm font-semibold tabular-nums leading-none text-foreground">
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-semibold tabular-nums leading-none text-foreground">
                         {row.phone}
                       </p>
                       {row.hasRecording ? (
@@ -522,7 +529,7 @@ function ClientsTable({
                 </td>
                 <td className="px-3 py-3.5 align-middle">
                   <p
-                    className="line-clamp-2 text-xs font-medium leading-snug text-foreground/80"
+                    className="line-clamp-2 break-words text-xs font-medium leading-snug text-foreground/80"
                     title={row.surveyName}
                   >
                     {row.surveyName}
@@ -541,10 +548,12 @@ function ClientsTable({
                   </span>
                 </td>
                 <td className="px-3 py-3.5 align-middle">
-                  <AnswerProgress progress={row.progress} />
+                  <div className="flex justify-end">
+                    <AnswerProgress progress={row.progress} />
+                  </div>
                 </td>
                 <td className="px-3 py-3.5 align-middle">
-                  <p className="text-xs font-medium tabular-nums text-foreground">
+                  <p className="truncate text-xs font-medium tabular-nums text-foreground">
                     {row.extractedAt
                       ? new Date(row.extractedAt).toLocaleDateString("en-IN", {
                           day: "2-digit",
@@ -553,7 +562,7 @@ function ClientsTable({
                         })
                       : "—"}
                   </p>
-                  <p className="mt-0.5 text-[10px] tabular-nums text-muted-foreground">
+                  <p className="mt-0.5 truncate text-[10px] tabular-nums text-muted-foreground">
                     {row.extractedAt
                       ? new Date(row.extractedAt).toLocaleTimeString("en-IN", {
                           hour: "2-digit",
@@ -561,21 +570,6 @@ function ClientsTable({
                         })
                       : ""}
                   </p>
-                </td>
-                <td className="px-3 py-3.5 align-middle">
-                  {row.hangupCause ? (
-                    <span
-                      className="line-clamp-2 rounded-[4px] bg-muted/40 px-1.5 py-0.5 text-[10px] leading-snug text-muted-foreground"
-                      title={row.hangupCause}
-                    >
-                      {row.hangupCause}
-                    </span>
-                  ) : (
-                    <span className="text-xs text-muted-foreground/50">—</span>
-                  )}
-                </td>
-                <td className="px-2 py-3.5 align-middle">
-                  <ChevronRight className="size-4 text-muted-foreground/30 transition-all group-hover:translate-x-0.5 group-hover:text-brand" />
                 </td>
               </tr>
             ))}
@@ -783,7 +777,7 @@ export function AnalyticsDetailsView() {
             className="mb-4"
             search={search}
             onSearchChange={setSearch}
-            searchPlaceholder="Search phone, survey, or hangup reason…"
+            searchPlaceholder="Search phone or survey…"
             searchAriaLabel="Search clients"
             disabled={isLoading}
             filters={

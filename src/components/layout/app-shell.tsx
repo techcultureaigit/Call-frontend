@@ -29,7 +29,7 @@ export function AppShell({ children, className }: AppShellProps) {
           animate={{ opacity: 1 }}
           transition={{ duration: 0.3, delay: 0.05 }}
           className={cn(
-            "flex min-h-0 min-w-0 flex-1 flex-col overflow-y-auto overflow-x-clip overscroll-contain",
+            "flex min-h-0 min-w-0 flex-1 flex-col overflow-y-auto overflow-x-clip overscroll-contain [&>*]:min-w-0",
             className
           )}
         >

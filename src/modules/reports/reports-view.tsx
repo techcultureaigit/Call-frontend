@@ -14,7 +14,6 @@ import {
   useQuestionAnalytics,
 } from "@/modules/reports/use-reports";
 import { exportReportsPdf } from "@/modules/reports/reports-export";
-import { AnalyticsKpiGrid } from "@/modules/reports/analytics-kpi-grid";
 import {
   analyticsDetailsHref,
   analyticsQuestionsHref,
@@ -25,7 +24,15 @@ import { ReportDashboardDonut } from "./report-dashboard-donut";
 import { ReportAreaChart } from "./report-area-chart";
 import { ReportQuestionAnalytics } from "./report-question-analytics";
 import { ReportSurveyBreakdown } from "./report-survey-breakdown";
+import { AnalyticsReportSections } from "./analytics-report-sections";
+import { useAnalyticsReportLayout } from "./use-analytics-report-layout";
+import type { AnalyticsSectionId } from "./analytics-report-layout";
 import type { AnalyticsKpiFilterId } from "@/modules/reports/analytics-kpi-filter";
+import {
+  AnalyticsKpiGrid,
+  KpiCardBody,
+  findOrderedKpi,
+} from "@/modules/reports/analytics-kpi-grid";
 
 function toLocalDateKey(date: Date) {
   const y = date.getFullYear();
@@ -55,6 +62,15 @@ export function ReportsView() {
   const [surveyId, setSurveyId] = useState(
     searchParams.get("surveyId") || "all"
   );
+
+  const {
+    layout,
+    reorderMode,
+    setReorderMode,
+    reorderSections,
+    reorderKpis,
+    resetLayout,
+  } = useAnalyticsReportLayout();
 
   const filterParams = {
     from: dateFrom,
@@ -251,6 +267,82 @@ export function ReportsView() {
     }
   }, [exportPayload]);
 
+  const renderSection = useCallback(
+    (sectionId: AnalyticsSectionId) => {
+      switch (sectionId) {
+        case "kpis":
+          return (
+            <AnalyticsKpiGrid
+              kpis={kpisData?.kpis ?? []}
+              isLoading={kpisLoading}
+              onSelect={reorderMode ? undefined : openMetricPage}
+              order={layout.kpis}
+              reorderMode={reorderMode}
+            />
+          );
+        case "survey_status":
+          return (
+            <ReportDashboardDonut
+              data={breakdownsData?.surveyStatusBreakdown ?? []}
+              isLoading={breakdownsLoading}
+              variant="survey"
+              onSliceSelect={reorderMode ? undefined : openMetricPage}
+            />
+          );
+        case "completion_trend":
+          return (
+            <ReportAreaChart
+              data={trendsData?.completionTrend ?? []}
+              isLoading={trendsLoading}
+            />
+          );
+        case "survey_breakdown":
+          return (
+            <ReportSurveyBreakdown
+              data={surveysBreakdownData?.responsesBySurvey ?? []}
+              isLoading={surveysBreakdownLoading}
+              onSurveySelect={reorderMode ? undefined : setSurveyId}
+              onOpenFullPage={reorderMode ? undefined : openSurveysPage}
+            />
+          );
+        case "question_analytics":
+          return (
+            <ReportQuestionAnalytics
+              data={questionData?.questions ?? []}
+              totalQuestions={questionData?.totalQuestions}
+              totalAnswers={questionData?.totalAnswers}
+              surveyId={surveyId}
+              isLoading={questionsLoading}
+              onOpenFullPage={reorderMode ? undefined : openQuestionsPage}
+              onQuestionOpen={reorderMode ? undefined : openQuestionsPage}
+            />
+          );
+        default:
+          return null;
+      }
+    },
+    [
+      breakdownsData?.surveyStatusBreakdown,
+      breakdownsLoading,
+      kpisData?.kpis,
+      kpisLoading,
+      layout.kpis,
+      openMetricPage,
+      openQuestionsPage,
+      openSurveysPage,
+      questionData?.questions,
+      questionData?.totalAnswers,
+      questionData?.totalQuestions,
+      questionsLoading,
+      reorderMode,
+      surveysBreakdownData?.responsesBySurvey,
+      surveysBreakdownLoading,
+      surveyId,
+      trendsData?.completionTrend,
+      trendsLoading,
+    ]
+  );
+
   return (
     <PageContainer size="full" className="pb-5 pt-4 lg:px-8">
       <motion.div
@@ -270,42 +362,38 @@ export function ReportsView() {
           onSurveyChange={setSurveyId}
           surveys={surveys}
           onExportPdf={handleExportPdf}
+          reorderMode={reorderMode}
+          onReorderModeChange={setReorderMode}
+          onResetLayout={resetLayout}
         />
 
-        <AnalyticsKpiGrid
-          kpis={kpisData?.kpis ?? []}
-          isLoading={kpisLoading}
-          onSelect={openMetricPage}
-        />
+        {reorderMode ? (
+          <p className="rounded-[6px] border border-dashed border-brand/25 bg-brand/5 px-3 py-2 text-xs text-muted-foreground">
+            Use the dashed bar grip to move a whole block. Drag inside KPI cards to
+            swap them. Click{" "}
+            <span className="font-medium text-foreground">Done</span> when finished.
+          </p>
+        ) : null}
 
-        <div className="grid grid-cols-1 items-stretch gap-4 lg:grid-cols-2">
-          <ReportDashboardDonut
-            data={breakdownsData?.surveyStatusBreakdown ?? []}
-            isLoading={breakdownsLoading}
-            variant="survey"
-            onSliceSelect={openMetricPage}
-          />
-          <ReportAreaChart
-            data={trendsData?.completionTrend ?? []}
-            isLoading={trendsLoading}
-          />
-        </div>
-
-        <ReportSurveyBreakdown
-          data={surveysBreakdownData?.responsesBySurvey ?? []}
-          isLoading={surveysBreakdownLoading}
-          onSurveySelect={setSurveyId}
-          onOpenFullPage={openSurveysPage}
-        />
-
-        <ReportQuestionAnalytics
-          data={questionData?.questions ?? []}
-          totalQuestions={questionData?.totalQuestions}
-          totalAnswers={questionData?.totalAnswers}
-          surveyId={surveyId}
-          isLoading={questionsLoading}
-          onOpenFullPage={openQuestionsPage}
-          onQuestionOpen={openQuestionsPage}
+        <AnalyticsReportSections
+          sectionOrder={layout.sections}
+          reorderMode={reorderMode}
+          onReorderSections={reorderSections}
+          onReorderKpis={reorderKpis}
+          renderSection={renderSection}
+          renderKpiOverlay={(kpiId) => {
+            const kpi = findOrderedKpi(
+              kpisData?.kpis ?? [],
+              layout.kpis,
+              kpiId
+            );
+            if (!kpi) return null;
+            return (
+              <div className="w-[min(240px,28vw)] cursor-grabbing">
+                <KpiCardBody kpi={kpi} reorderMode isDragging />
+              </div>
+            );
+          }}
         />
 
         {isFetching && !isLoading && (

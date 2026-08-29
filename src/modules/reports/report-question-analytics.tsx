@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
-import { ChevronRight, ExternalLink, HelpCircle } from "lucide-react";
+import { HelpCircle } from "lucide-react";
 import { ChartSkeleton } from "@/modules/dashboard/dashboard-skeleton";
 import {
   DataTable,
@@ -10,8 +10,8 @@ import {
   type DataTableColumn,
 } from "@/components/shared/data-table";
 import {
-  AnalyticsBadge,
   AnalyticsCard,
+  AnalyticsCardActions,
 } from "@/modules/reports/analytics-card";
 import { cn } from "@/lib/utils";
 import type { AnalyticsQuestionDetail } from "@/types/reports";
@@ -159,16 +159,6 @@ export function ReportQuestionAnalytics({
             </div>
           );
         },
-      },
-      {
-        id: "actions",
-        header: "",
-        hideable: false,
-        pin: "end",
-        align: "right",
-        cell: () => (
-          <ChevronRight className="size-4 text-muted-foreground/50" />
-        ),
       }
     );
 
@@ -223,20 +213,13 @@ export function ReportQuestionAnalytics({
       contentClassName="pt-2"
       noPadding
       action={
-        <div className="flex flex-wrap items-center gap-2">
-          <AnalyticsBadge value={avgRate} label="Avg rate %" />
-          <AnalyticsBadge value={answersTotal} label="Answers" />
-          {onOpenFullPage ? (
-            <button
-              type="button"
-              onClick={onOpenFullPage}
-              className="inline-flex items-center gap-1 rounded-[6px] border border-border/60 bg-card px-2 py-1 text-[11px] font-medium text-muted-foreground transition-colors hover:border-[#2c3b59]/25 hover:text-[#2c3b59]"
-            >
-              View all
-              <ExternalLink className="size-3" />
-            </button>
-          ) : null}
-        </div>
+        <AnalyticsCardActions
+          badges={[
+            { value: avgRate, label: "Avg rate %" },
+            { value: answersTotal, label: "Answers" },
+          ]}
+          onViewAll={onOpenFullPage}
+        />
       }
     >
       <DataTable

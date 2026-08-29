@@ -3,6 +3,7 @@
 import {
   CheckCircle2,
   CircleDashed,
+  GripVertical,
   Loader2,
   Minus,
   Phone,
@@ -14,7 +15,11 @@ import {
   TrendingUp,
   type LucideIcon,
 } from "lucide-react";
-import { motion } from "framer-motion";
+import {
+  SortableContext,
+  rectSortingStrategy,
+  useSortable,
+} from "@dnd-kit/sortable";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import type { ReportKpi } from "@/types/reports";
@@ -43,8 +48,7 @@ const KPI_ICON_KEY: Record<string, string> = {
 };
 
 function TrendCaption({ kpi }: { kpi: ReportKpi }) {
-  const isMissed =
-    kpi.id === "missed" || kpi.id === "survey_incomplete";
+  const isMissed = kpi.id === "missed" || kpi.id === "survey_incomplete";
   const positive = isMissed ? kpi.change <= 0 : kpi.trend !== "down";
   const TrendIcon =
     kpi.trend === "up"
@@ -77,17 +81,147 @@ function TrendCaption({ kpi }: { kpi: ReportKpi }) {
   );
 }
 
+export function KpiCardBody({
+  kpi,
+  isSelected,
+  reorderMode,
+  isDragging,
+  onSelect,
+}: {
+  kpi: ReportKpi;
+  isSelected?: boolean;
+  reorderMode?: boolean;
+  isDragging?: boolean;
+  onSelect?: (id: AnalyticsKpiFilterId) => void;
+}) {
+  const iconKey = kpi.icon ?? KPI_ICON_KEY[kpi.id] ?? "phone";
+  const Icon = KPI_ICONS[iconKey] ?? Phone;
+
+  return (
+    <div
+      className={cn(
+        "flex min-h-[88px] w-full min-w-0 items-center gap-2 rounded-[6px] border bg-card px-3 py-4 text-left shadow-subtle sm:gap-3 sm:px-4",
+        isSelected
+          ? "border-[#2c3b59]/30 ring-1 ring-[#2c3b59]/15"
+          : "border-border/60",
+        reorderMode && "ring-1 ring-border/50",
+        isDragging && "border-[#2c3b59]/40 shadow-elevated ring-2 ring-[#2c3b59]/20"
+      )}
+    >
+      {reorderMode ? (
+        <span
+          className="inline-flex size-8 shrink-0 items-center justify-center rounded-[6px] text-muted-foreground"
+          aria-hidden
+        >
+          <GripVertical className="size-4" />
+        </span>
+      ) : null}
+
+      <button
+        type="button"
+        onClick={() => {
+          if (reorderMode) return;
+          onSelect?.(kpi.id as AnalyticsKpiFilterId);
+        }}
+        disabled={reorderMode}
+        title={reorderMode ? "Drag to reorder" : "Click to open details"}
+        className={cn(
+          "flex min-w-0 flex-1 items-center gap-3 text-left",
+          !reorderMode && "hover:opacity-90",
+          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2c3b59]/25",
+          reorderMode && "pointer-events-none"
+        )}
+      >
+        <div className="flex size-10 shrink-0 items-center justify-center rounded-[6px] bg-[#2c3b59]/10 text-[#2c3b59]">
+          <Icon className="size-[18px]" strokeWidth={2} />
+        </div>
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-xl font-semibold tabular-nums leading-none tracking-tight text-foreground">
+            {kpi.value}
+          </p>
+          <p className="mt-1.5 truncate text-xs text-muted-foreground">
+            {kpi.label}
+          </p>
+          <TrendCaption kpi={kpi} />
+        </div>
+      </button>
+    </div>
+  );
+}
+
+function SortableKpiCard({
+  kpi,
+  isSelected,
+  reorderMode,
+  onSelect,
+}: {
+  kpi: ReportKpi;
+  isSelected: boolean;
+  reorderMode: boolean;
+  onSelect?: (id: AnalyticsKpiFilterId) => void;
+}) {
+  const { attributes, listeners, setNodeRef, isDragging } = useSortable({
+    id: kpi.id,
+    disabled: !reorderMode,
+    data: { type: "kpi" },
+    animateLayoutChanges: () => false,
+  });
+
+  return (
+    <div
+      ref={setNodeRef}
+      className={cn(
+        "min-w-0 w-full max-w-full touch-none overflow-hidden",
+        reorderMode && "cursor-grab active:cursor-grabbing",
+        isDragging && "opacity-35"
+      )}
+      {...(reorderMode ? { ...attributes, ...listeners } : {})}
+    >
+      <KpiCardBody
+        kpi={kpi}
+        isSelected={isSelected}
+        reorderMode={reorderMode}
+        isDragging={isDragging}
+        onSelect={onSelect}
+      />
+    </div>
+  );
+}
+
+function orderKpis(
+  kpis: ReportKpi[],
+  order?: AnalyticsKpiFilterId[]
+): ReportKpi[] {
+  if (!order?.length) return kpis.slice(0, 8);
+  return [
+    ...order
+      .map((id) => kpis.find((kpi) => kpi.id === id))
+      .filter((kpi): kpi is ReportKpi => Boolean(kpi)),
+    ...kpis.filter(
+      (kpi) => !order.includes(kpi.id as AnalyticsKpiFilterId)
+    ),
+  ].slice(0, 8);
+}
+
 export function AnalyticsKpiGrid({
   kpis,
   isLoading,
   selectedId = "total_calls",
   onSelect,
+  order,
+  reorderMode = false,
 }: {
   kpis: ReportKpi[];
   isLoading?: boolean;
   selectedId?: string;
   onSelect?: (id: AnalyticsKpiFilterId) => void;
+  order?: AnalyticsKpiFilterId[];
+  /** When true, cards are sortable under the parent report DndContext. */
+  reorderMode?: boolean;
 }) {
+  const orderedKpis = orderKpis(kpis, order);
+  const itemIds = orderedKpis.map((kpi) => kpi.id);
+
   if (isLoading) {
     return (
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
@@ -107,47 +241,36 @@ export function AnalyticsKpiGrid({
     );
   }
 
-  return (
+  const grid = (
     <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-      {kpis.slice(0, 8).map((kpi, index) => {
-        const iconKey = kpi.icon ?? KPI_ICON_KEY[kpi.id] ?? "phone";
-        const Icon = KPI_ICONS[iconKey] ?? Phone;
-        const isSelected = selectedId === kpi.id;
-
-        return (
-          <motion.button
-            key={kpi.id}
-            type="button"
-            initial={{ opacity: 0, y: 6 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: index * 0.03, duration: 0.22 }}
-            onClick={() => onSelect?.(kpi.id as AnalyticsKpiFilterId)}
-            title="Click to open details"
-            className={cn(
-              "flex min-h-[88px] w-full min-w-0 items-center gap-3 rounded-[6px] border bg-card px-4 py-4 text-left shadow-subtle transition-colors",
-              "hover:border-[#2c3b59]/20 hover:bg-[#2c3b59]/2",
-              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2c3b59]/25",
-              isSelected
-                ? "border-[#2c3b59]/30 ring-1 ring-[#2c3b59]/15"
-                : "border-border/60"
-            )}
-          >
-            <div className="flex size-10 shrink-0 items-center justify-center rounded-[6px] bg-[#2c3b59]/10 text-[#2c3b59]">
-              <Icon className="size-[18px]" strokeWidth={2} />
-            </div>
-
-            <div className="min-w-0 flex-1">
-              <p className="truncate text-xl font-semibold tabular-nums leading-none tracking-tight text-foreground">
-                {kpi.value}
-              </p>
-              <p className="mt-1.5 truncate text-xs text-muted-foreground">
-                {kpi.label}
-              </p>
-              <TrendCaption kpi={kpi} />
-            </div>
-          </motion.button>
-        );
-      })}
+      {orderedKpis.map((kpi) => (
+        <SortableKpiCard
+          key={kpi.id}
+          kpi={kpi}
+          isSelected={selectedId === kpi.id}
+          reorderMode={reorderMode}
+          onSelect={onSelect}
+        />
+      ))}
     </div>
   );
+
+  if (!reorderMode) {
+    return grid;
+  }
+
+  // SortableContext only — parent AnalyticsReportSections owns DndContext
+  return (
+    <SortableContext items={itemIds} strategy={rectSortingStrategy}>
+      {grid}
+    </SortableContext>
+  );
+}
+
+export function findOrderedKpi(
+  kpis: ReportKpi[],
+  order: AnalyticsKpiFilterId[] | undefined,
+  kpiId: AnalyticsKpiFilterId
+) {
+  return orderKpis(kpis, order).find((kpi) => kpi.id === kpiId) ?? null;
 }

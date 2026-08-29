@@ -52,7 +52,7 @@ export function ListToolbar({
   return (
     <div
       className={cn(
-        "flex flex-col gap-3 sm:flex-row sm:items-center",
+        "flex min-w-0 flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center",
         embedded
           ? "shrink-0 border-b border-border/60 bg-card px-3 py-3 sm:px-4 sm:py-3.5"
           : "rounded-[6px] border border-border/60 bg-card p-3 shadow-card sm:p-3.5",
@@ -78,7 +78,7 @@ export function ListToolbar({
       {filters || columnsControl || actions ? (
         <div
           className={cn(
-            "flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center",
+            "flex min-w-0 flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:gap-2",
             alignControlsEnd && "sm:ml-auto"
           )}
         >

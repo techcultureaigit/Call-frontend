@@ -41,7 +41,7 @@ export function VoiceFiltersSidebar({
           : "rounded-[6px] border border-border/40 bg-card p-4 shadow-card"
       )}
     >
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+      <div className="flex min-w-0 flex-col gap-3 xl:flex-row xl:flex-wrap xl:items-center">
         <div className={cn("relative min-w-0", TOOLBAR_SEARCH_WIDTH_CLASS)}>
           <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
           <Input
@@ -55,7 +55,7 @@ export function VoiceFiltersSidebar({
           />
         </div>
 
-        <div className="flex flex-wrap items-center gap-2 sm:ml-auto">
+        <div className="flex min-w-0 flex-wrap items-center gap-2 xl:ml-auto">
           <FilterGroup label="Provider">
             <FilterToggle
               active={!filters.source}
