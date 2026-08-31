@@ -23,7 +23,6 @@ function surveyStatusCounts(row: AnalyticsSurveyBreakdown) {
   return {
     complete: row.complete ?? 0,
     partial: row.partially_complete ?? 0,
-    processing: row.processing ?? 0,
     incomplete: row.incomplete ?? 0,
   };
 }
@@ -70,7 +69,6 @@ function StatusStack({ row, total }: { row: AnalyticsSurveyBreakdown; total: num
   const segments = [
     { key: "complete", count: s.complete, color: "bg-[#3b82f6]" },
     { key: "partial", count: s.partial, color: "bg-[#eab308]" },
-    { key: "processing", count: s.processing, color: "bg-[#2c3b59]" },
     { key: "incomplete", count: s.incomplete, color: "bg-[#dc2626]" },
   ].filter((seg) => seg.count > 0);
 
@@ -169,16 +167,6 @@ export function SurveyBreakdownTable({
         },
       },
       {
-        id: "processing",
-        header: "Processing",
-        align: "right",
-        cell: (row) => {
-          const total = row.total ?? row.value;
-          const s = surveyStatusCounts(row);
-          return <StatCell count={s.processing} total={total} tone="navy" />;
-        },
-      },
-      {
         id: "incomplete",
         header: "Incomplete",
         align: "right",
@@ -244,16 +232,14 @@ export function ReportSurveyBreakdown({
     const totalCalls = rows.reduce((sum, row) => sum + (row.total ?? row.value), 0);
     let complete = 0;
     let partial = 0;
-    let processing = 0;
     let incomplete = 0;
     for (const row of rows) {
       const s = surveyStatusCounts(row);
       complete += s.complete;
       partial += s.partial;
-      processing += s.processing;
       incomplete += s.incomplete;
     }
-    return { totalCalls, complete, partial, processing, incomplete };
+    return { totalCalls, complete, partial, incomplete };
   }, [rows]);
 
   if (isLoading) {
@@ -310,9 +296,6 @@ export function ReportSurveyBreakdown({
         </span>
         <span className="inline-flex items-center gap-1.5">
           <span className="size-2 rounded-[3px] bg-[#eab308]" /> Partial
-        </span>
-        <span className="inline-flex items-center gap-1.5">
-          <span className="size-2 rounded-[3px] bg-[#2c3b59]" /> Processing
         </span>
         <span className="inline-flex items-center gap-1.5">
           <span className="size-2 rounded-[3px] bg-[#dc2626]" /> Incomplete

@@ -5,15 +5,14 @@ import { Button } from "@/components/ui/button";
 import { Select } from "@/components/ui/select";
 import { PAGE_TITLE_CLASS } from "@/components/shared/page-heading";
 import { ListToolbar } from "@/components/shared/list-toolbar";
-import { TOOLBAR_SEARCH_WIDTH_CLASS } from "@/components/shared/toolbar-styles";
+import { TOOLBAR_SEARCH_WIDTH_CLASS, TOOLBAR_FILTER_SELECT_CLASS } from "@/components/shared/toolbar-styles";
 import {
   NOTIFICATION_READ_OPTIONS,
   NOTIFICATION_TYPE_OPTIONS,
 } from "@/modules/notifications/notifications-constants";
 import type { NotificationType } from "@/types/notification";
 
-const FILTER_SELECT_CLASS =
-  "h-9 w-full min-w-[120px] rounded-[6px] border-border/50 bg-background/80 shadow-subtle sm:w-auto lg:h-11";
+const FILTER_SELECT_CLASS = TOOLBAR_FILTER_SELECT_CLASS;
 
 interface NotificationsToolbarProps {
   search: string;

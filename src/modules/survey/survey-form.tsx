@@ -955,8 +955,7 @@ export function SurveyCreateEditView({
     if (
       isLast &&
       scheduleForm.enabled &&
-      schedulingStatus !== "scheduled" &&
-      schedulingStatus !== "processing"
+      schedulingStatus !== "scheduled"
     ) {
       const parsed = parseScheduleForm(scheduleForm);
       if (!parsed.ok) {
@@ -1015,9 +1014,7 @@ export function SurveyCreateEditView({
         }
       }
 
-      const alreadyScheduled =
-        schedulingStatus === "scheduled" ||
-        schedulingStatus === "processing";
+      const alreadyScheduled = schedulingStatus === "scheduled";
 
       let schedulePayload: Parameters<typeof saveSurvey>[1] = null;
       if (isLast && !alreadyScheduled) {
@@ -1156,10 +1153,7 @@ export function SurveyCreateEditView({
             values={scheduleForm}
             onChange={setScheduleForm}
             mode={isNew ? "create" : "edit"}
-            readOnly={
-              schedulingStatus === "scheduled" ||
-              schedulingStatus === "processing"
-            }
+            readOnly={schedulingStatus === "scheduled"}
             onUnschedule={handleUnschedule}
             isUnscheduling={isUnscheduling}
           />

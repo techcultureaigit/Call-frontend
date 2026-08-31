@@ -132,18 +132,10 @@ export function generateReportsData(
         trend: "up",
       },
       {
-        id: "disconnected",
-        label: "Disconnected",
-        value: String(Math.round(totalCalls * 0.18)),
-        change: 18,
-        changeLabel: "% of calls",
-        trend: "down",
-      },
-      {
         id: "missed",
         label: "Missed",
-        value: String(Math.round(totalCalls * 0.2)),
-        change: 20,
+        value: String(Math.round(totalCalls * 0.38)),
+        change: 38,
         changeLabel: "% of calls",
         trend: "down",
       },
@@ -167,8 +159,7 @@ export function generateReportsData(
     calls: {
       total: totalCalls,
       connected: Math.round(totalCalls * 0.62),
-      disconnected: Math.round(totalCalls * 0.18),
-      missed: Math.round(totalCalls * 0.2),
+      missed: Math.round(totalCalls * 0.38),
       connectRate: 62,
       pie: emptyPie,
     },
@@ -206,9 +197,8 @@ export function generateReportsData(
         : [{ label: campaign?.name ?? "Survey", value: 0, responses: 0 }],
     responsesBySurvey: SURVEY_OPTIONS.map((c) => {
       const complete = Math.round(c.responses * 0.6);
-      const incomplete = Math.round(c.responses * 0.1);
+      const incomplete = Math.round(c.responses * 0.15);
       const partially_complete = Math.round(c.responses * 0.1);
-      const processing = Math.round(c.responses * 0.05);
       const callsMissed = Math.round(c.responses * 0.15);
       return {
         surveyId: c.id,
@@ -220,11 +210,9 @@ export function generateReportsData(
         complete,
         incomplete,
         partially_complete,
-        processing,
         callsMissed,
         missed: callsMissed,
         connected: Math.round(c.responses * 0.7),
-        disconnected: Math.round(c.responses * 0.1),
         avgDurationSeconds: 240,
         completionRate: 60,
         counting: `${complete}/${c.responses}`,

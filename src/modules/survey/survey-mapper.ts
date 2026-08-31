@@ -44,11 +44,11 @@ function mapSchedulingStatus(s: BackendSurvey): SurveySchedulingStatus {
   if (
     raw === "draft" ||
     raw === "scheduled" ||
-    raw === "completed" ||
-    raw === "processing"
+    raw === "completed"
   ) {
     return raw;
   }
+  if (raw === "processing") return "scheduled";
   return "draft";
 }
 

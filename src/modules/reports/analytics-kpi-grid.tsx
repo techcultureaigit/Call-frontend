@@ -4,11 +4,9 @@ import {
   CheckCircle2,
   CircleDashed,
   GripVertical,
-  Loader2,
   Minus,
   Phone,
   PhoneMissed,
-  PhoneOff,
   PhoneOutgoing,
   Split,
   TrendingDown,
@@ -28,22 +26,18 @@ import type { AnalyticsKpiFilterId } from "@/modules/reports/analytics-kpi-filte
 const KPI_ICONS: Record<string, LucideIcon> = {
   phone: Phone,
   connected: PhoneOutgoing,
-  disconnected: PhoneOff,
   missed: PhoneMissed,
   check: CheckCircle2,
   partial: Split,
-  processing: Loader2,
   incomplete: CircleDashed,
 };
 
 const KPI_ICON_KEY: Record<string, string> = {
   total_calls: "phone",
   connected: "connected",
-  disconnected: "disconnected",
   missed: "missed",
   survey_complete: "check",
   survey_partial: "partial",
-  survey_processing: "processing",
   survey_incomplete: "incomplete",
 };
 
@@ -65,18 +59,18 @@ function TrendCaption({ kpi }: { kpi: ReportKpi }) {
   return (
     <p
       className={cn(
-        "mt-1 flex items-center gap-1 truncate text-[10px] font-medium",
+        "mt-1 flex flex-wrap items-center gap-x-1 gap-y-0 text-[10px] font-medium leading-snug",
         positive ? "text-[#2c3b59]/80" : "text-[#dc2626]"
       )}
     >
       <TrendIcon className="size-3 shrink-0" />
       {showSigned ? (
-        <span className="tabular-nums">
+        <span className="shrink-0 tabular-nums">
           {kpi.change > 0 ? "+" : ""}
           {kpi.change}%
         </span>
       ) : null}
-      <span className="truncate text-muted-foreground">{kpi.changeLabel}</span>
+      <span className="text-muted-foreground">{kpi.changeLabel}</span>
     </p>
   );
 }
@@ -100,7 +94,7 @@ export function KpiCardBody({
   return (
     <div
       className={cn(
-        "flex min-h-[88px] w-full min-w-0 items-center gap-2 rounded-[6px] border bg-card px-3 py-4 text-left shadow-subtle sm:gap-3 sm:px-4",
+        "flex min-h-[92px] w-full min-w-0 items-stretch gap-2 rounded-[6px] border bg-card px-3 py-3.5 shadow-subtle sm:px-3.5",
         isSelected
           ? "border-[#2c3b59]/30 ring-1 ring-[#2c3b59]/15"
           : "border-border/60",
@@ -110,7 +104,7 @@ export function KpiCardBody({
     >
       {reorderMode ? (
         <span
-          className="inline-flex size-8 shrink-0 items-center justify-center rounded-[6px] text-muted-foreground"
+          className="inline-flex size-8 shrink-0 items-center justify-center self-center rounded-[6px] text-muted-foreground"
           aria-hidden
         >
           <GripVertical className="size-4" />
@@ -126,23 +120,24 @@ export function KpiCardBody({
         disabled={reorderMode}
         title={reorderMode ? "Drag to reorder" : "Click to open details"}
         className={cn(
-          "flex min-w-0 flex-1 items-center gap-3 text-left",
+          "flex min-w-0 flex-1 items-center justify-between gap-2 text-left",
           !reorderMode && "hover:opacity-90",
           "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2c3b59]/25",
           reorderMode && "pointer-events-none"
         )}
       >
-        <div className="flex size-10 shrink-0 items-center justify-center rounded-[6px] bg-[#2c3b59]/10 text-[#2c3b59]">
-          <Icon className="size-[18px]" strokeWidth={2} />
-        </div>
         <div className="min-w-0 flex-1">
-          <p className="truncate text-xl font-semibold tabular-nums leading-none tracking-tight text-foreground">
+          <p className="text-xl font-semibold tabular-nums leading-none tracking-tight text-foreground">
             {kpi.value}
           </p>
-          <p className="mt-1.5 truncate text-xs text-muted-foreground">
+          <p className="mt-1.5 text-[11px] font-medium leading-tight text-muted-foreground">
             {kpi.label}
           </p>
           <TrendCaption kpi={kpi} />
+        </div>
+
+        <div className="flex size-9 shrink-0 items-center justify-center self-center rounded-[6px] bg-[#2c3b59]/10 text-[#2c3b59]">
+          <Icon className="size-[17px]" strokeWidth={2} />
         </div>
       </button>
     </div>
@@ -224,17 +219,18 @@ export function AnalyticsKpiGrid({
 
   if (isLoading) {
     return (
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        {Array.from({ length: 8 }).map((_, i) => (
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+        {Array.from({ length: 6 }).map((_, i) => (
           <div
             key={i}
-            className="flex min-h-[88px] items-center gap-3 rounded-[6px] border border-border/50 bg-card px-4 py-4"
+            className="flex min-h-[92px] items-center justify-between gap-2 rounded-[6px] border border-border/50 bg-card px-3.5 py-3.5"
           >
-            <Skeleton className="size-10 shrink-0 rounded-[6px]" />
             <div className="min-w-0 flex-1 space-y-2">
-              <Skeleton className="h-6 w-16" />
-              <Skeleton className="h-3 w-24" />
+              <Skeleton className="h-6 w-10" />
+              <Skeleton className="h-3 w-20" />
+              <Skeleton className="h-2.5 w-24" />
             </div>
+            <Skeleton className="size-9 shrink-0 rounded-[6px]" />
           </div>
         ))}
       </div>
@@ -242,7 +238,7 @@ export function AnalyticsKpiGrid({
   }
 
   const grid = (
-    <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
       {orderedKpis.map((kpi) => (
         <SortableKpiCard
           key={kpi.id}

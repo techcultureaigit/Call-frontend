@@ -15,7 +15,7 @@ import { motion } from "framer-motion";
 import { PageContainer } from "@/components/layout";
 import { DataPagination } from "@/components/shared/data-pagination";
 import { ListToolbar } from "@/components/shared/list-toolbar";
-import { TOOLBAR_SEARCH_WIDTH_CLASS } from "@/components/shared/toolbar-styles";
+import { TOOLBAR_SEARCH_WIDTH_CLASS, TOOLBAR_FILTER_SELECT_CLASS } from "@/components/shared/toolbar-styles";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Select } from "@/components/ui/select";
@@ -52,14 +52,12 @@ const STATUS_BADGE_CLASS =
 
 const OUTCOME_STYLE: Record<string, string> = {
   connected: STATUS_BADGE_CLASS,
-  disconnected: STATUS_BADGE_CLASS,
   missed: STATUS_BADGE_CLASS,
 };
 
 const SURVEY_STYLE: Record<string, string> = {
   complete: "bg-[#2c3b59]/8 text-[#2c3b59] ring-1 ring-inset ring-[#2c3b59]/15",
   partially_complete: STATUS_BADGE_CLASS,
-  processing: STATUS_BADGE_CLASS,
   incomplete: STATUS_BADGE_CLASS,
   missed: STATUS_BADGE_CLASS,
 };
@@ -67,11 +65,9 @@ const SURVEY_STYLE: Record<string, string> = {
 const METRIC_HINT: Record<AnalyticsKpiFilterId, string> = {
   total_calls: "All clients in this period",
   connected: "Clients with a connected call",
-  disconnected: "Clients with a disconnected call",
   survey_complete: "All required questions answered",
   survey_partial: "Some questions answered, not finished",
-  survey_processing: "Connected call, no answers yet",
-  survey_incomplete: "Missed call — survey never started",
+  survey_incomplete: "Missed call or no answers collected",
   survey_missed: "Missed call — survey never started",
   avg_duration: "Calls ranked by duration",
   missed: "Clients with a missed call",
@@ -81,7 +77,6 @@ const METRIC_HINT: Record<AnalyticsKpiFilterId, string> = {
 const CALL_OUTCOME_OPTIONS = [
   { label: "All call outcomes", value: "all" },
   { label: "Connected", value: "connected" },
-  { label: "Disconnected", value: "disconnected" },
   { label: "Missed", value: "missed" },
 ];
 
@@ -89,7 +84,6 @@ const SURVEY_STATUS_OPTIONS = [
   { label: "All survey statuses", value: "all" },
   { label: "Complete", value: "complete" },
   { label: "Partially complete", value: "partially_complete" },
-  { label: "Processing", value: "processing" },
   { label: "Incomplete", value: "incomplete" },
 ];
 
@@ -804,7 +798,7 @@ export function AnalyticsDetailsView() {
                     updateParams({ callOutcome: e.target.value }, true)
                   }
                   options={CALL_OUTCOME_OPTIONS}
-                  className="h-11 w-full rounded-[6px] border-border/50 bg-background/80 shadow-subtle sm:w-44"
+                  className={TOOLBAR_FILTER_SELECT_CLASS}
                   aria-label="Filter by call outcome"
                 />
                 <Select
@@ -813,7 +807,7 @@ export function AnalyticsDetailsView() {
                     updateParams({ surveyStatus: e.target.value }, true)
                   }
                   options={SURVEY_STATUS_OPTIONS}
-                  className="h-11 w-full rounded-[6px] border-border/50 bg-background/80 shadow-subtle sm:w-48"
+                  className={cn(TOOLBAR_FILTER_SELECT_CLASS, "lg:w-40")}
                   aria-label="Filter by survey status"
                 />
               </>

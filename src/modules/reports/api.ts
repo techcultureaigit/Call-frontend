@@ -25,11 +25,9 @@ export type { ReportsParams };
 const KPI_ICON: Record<string, string> = {
   total_calls: "phone",
   connected: "connected",
-  disconnected: "disconnected",
   missed: "missed",
   survey_complete: "check",
   survey_partial: "partial",
-  survey_processing: "processing",
   survey_incomplete: "incomplete",
   avg_duration: "clock",
   recording: "mic",

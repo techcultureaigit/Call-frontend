@@ -94,14 +94,12 @@ export function ReportCallPerformanceBars({
     const mapped = chartSource.map((row) => {
       const c = Number(row.connected ?? 0);
       const m = Number(row.missed ?? 0);
-      const d = Number(row.disconnected ?? 0);
-      const calls = Number(row.calls ?? row.value ?? c + m + d);
+      const calls = Number(row.calls ?? row.value ?? c + m);
       return {
         label: formatDayLabel(String(row.label || "")),
         calls,
         connected: c,
         missed: m,
-        disconnected: d,
       };
     });
     const totalCalls = mapped.reduce((s, r) => s + r.calls, 0);
@@ -109,7 +107,7 @@ export function ReportCallPerformanceBars({
     const totalMissed = mapped.reduce((s, r) => s + r.missed, 0);
     const peakRow = mapped.reduce(
       (max, r) => (r.calls > max.calls ? r : max),
-      mapped[0] ?? { label: "—", calls: 0, connected: 0, missed: 0, disconnected: 0 }
+      mapped[0] ?? { label: "—", calls: 0, connected: 0, missed: 0 }
     );
     const avgCalls = mapped.length
       ? Math.round((totalCalls / mapped.length) * 10) / 10

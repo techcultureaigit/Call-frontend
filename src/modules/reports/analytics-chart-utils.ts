@@ -43,7 +43,6 @@ export function aggregateCallsOverTime(
     {
       calls: number;
       connected: number;
-      disconnected: number;
       missed: number;
     }
   >();
@@ -61,13 +60,11 @@ export function aggregateCallsOverTime(
     const bucket = buckets.get(key) || {
       calls: 0,
       connected: 0,
-      disconnected: 0,
       missed: 0,
     };
 
     bucket.calls += Number(row.calls ?? row.value ?? 0);
     bucket.connected += Number(row.connected ?? 0);
-    bucket.disconnected += Number(row.disconnected ?? 0);
     bucket.missed += Number(row.missed ?? 0);
     buckets.set(key, bucket);
   }
@@ -79,7 +76,6 @@ export function aggregateCallsOverTime(
       value: row.calls,
       calls: row.calls,
       connected: row.connected,
-      disconnected: row.disconnected,
       missed: row.missed,
     }));
 }

@@ -36,12 +36,6 @@ const STATUS_STYLES: Record<
       "border-emerald-500/20 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400",
     dotClassName: "bg-emerald-500",
   },
-  processing: {
-    label: "Processing",
-    className:
-      "border-violet-500/20 bg-violet-500/10 text-violet-700 dark:text-violet-400",
-    dotClassName: "bg-violet-500",
-  },
   completed: {
     label: "Completed",
     className:
@@ -87,8 +81,8 @@ export function SurveyStatusBadge({
 }
 
 
-const CALL_WINDOW_MIN = "09:00";
-const CALL_WINDOW_MAX = "18:00";
+const CALL_WINDOW_DEFAULT_START = "09:00";
+const CALL_WINDOW_DEFAULT_END = "18:00";
 
 export interface ScheduleFormValues {
   enabled: boolean;
@@ -124,25 +118,17 @@ function normalizeCallWindow(start: string, end: string): {
   callWindowEnd: string;
   error?: string;
 } {
-  const callWindowStart = String(start || "").trim() || CALL_WINDOW_MIN;
-  const callWindowEnd = String(end || "").trim() || CALL_WINDOW_MAX;
+  const callWindowStart =
+    String(start || "").trim() || CALL_WINDOW_DEFAULT_START;
+  const callWindowEnd = String(end || "").trim() || CALL_WINDOW_DEFAULT_END;
   const startMins = timeToMinutes(callWindowStart);
   const endMins = timeToMinutes(callWindowEnd);
-  const minMins = timeToMinutes(CALL_WINDOW_MIN)!;
-  const maxMins = timeToMinutes(CALL_WINDOW_MAX)!;
 
   if (startMins == null || endMins == null) {
     return {
       callWindowStart,
       callWindowEnd,
       error: "Timing limit must use HH:mm (e.g. 09:00)",
-    };
-  }
-  if (startMins < minMins || endMins > maxMins) {
-    return {
-      callWindowStart,
-      callWindowEnd,
-      error: "Timing limit must stay between 09:00 and 18:00",
     };
   }
   if (startMins >= endMins) {
@@ -160,8 +146,8 @@ export function createEmptyScheduleForm(): ScheduleFormValues {
     enabled: false,
     startAt: defaultStartLocal(),
     endAt: "",
-    callWindowStart: CALL_WINDOW_MIN,
-    callWindowEnd: CALL_WINDOW_MAX,
+    callWindowStart: CALL_WINDOW_DEFAULT_START,
+    callWindowEnd: CALL_WINDOW_DEFAULT_END,
   };
 }
 
@@ -175,8 +161,8 @@ export function scheduleToFormValues(
     enabled: hasStart ? Boolean(s.enabled) : false,
     startAt: toLocalInputValue(s.startAt) || defaultStartLocal(),
     endAt: toLocalInputValue(s.endAt),
-    callWindowStart: s.callWindowStart || CALL_WINDOW_MIN,
-    callWindowEnd: s.callWindowEnd || CALL_WINDOW_MAX,
+    callWindowStart: s.callWindowStart || CALL_WINDOW_DEFAULT_START,
+    callWindowEnd: s.callWindowEnd || CALL_WINDOW_DEFAULT_END,
   };
 }
 
@@ -340,8 +326,8 @@ export function SurveyScheduleFields({
           <div className="space-y-2">
             <Label>Timing limit (call window)</Label>
             <p className="text-[11px] text-muted-foreground">
-              Calls run only between these times. Default 09:00–18:00; customize
-              within that range.
+              Calls run only between these times each day. Default is 09:00–18:00;
+              you can customize to any valid range.
             </p>
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
@@ -349,8 +335,6 @@ export function SurveyScheduleFields({
                 <Input
                   id="inline-schedule-window-start"
                   type="time"
-                  min={CALL_WINDOW_MIN}
-                  max={CALL_WINDOW_MAX}
                   step={60}
                   value={values.callWindowStart}
                   onChange={(e) => update("callWindowStart", e.target.value)}
@@ -363,8 +347,6 @@ export function SurveyScheduleFields({
                 <Input
                   id="inline-schedule-window-end"
                   type="time"
-                  min={CALL_WINDOW_MIN}
-                  max={CALL_WINDOW_MAX}
                   step={60}
                   value={values.callWindowEnd}
                   onChange={(e) => update("callWindowEnd", e.target.value)}
@@ -411,8 +393,8 @@ export function ScheduleSurveyDialog({
 }: ScheduleSurveyDialogProps) {
   const [startAt, setStartAt] = useState(defaultStartLocal);
   const [endAt, setEndAt] = useState("");
-  const [callWindowStart, setCallWindowStart] = useState(CALL_WINDOW_MIN);
-  const [callWindowEnd, setCallWindowEnd] = useState(CALL_WINDOW_MAX);
+  const [callWindowStart, setCallWindowStart] = useState(CALL_WINDOW_DEFAULT_START);
+  const [callWindowEnd, setCallWindowEnd] = useState(CALL_WINDOW_DEFAULT_END);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState("");
 
@@ -421,8 +403,8 @@ export function ScheduleSurveyDialog({
     const schedule = getSurveySchedule(survey);
     setStartAt(toLocalInputValue(schedule.startAt) || defaultStartLocal());
     setEndAt(toLocalInputValue(schedule.endAt));
-    setCallWindowStart(schedule.callWindowStart || CALL_WINDOW_MIN);
-    setCallWindowEnd(schedule.callWindowEnd || CALL_WINDOW_MAX);
+    setCallWindowStart(schedule.callWindowStart || CALL_WINDOW_DEFAULT_START);
+    setCallWindowEnd(schedule.callWindowEnd || CALL_WINDOW_DEFAULT_END);
     setError("");
     setIsSaving(false);
   }, [open, survey]);
@@ -516,7 +498,8 @@ export function ScheduleSurveyDialog({
           <div className="space-y-2">
             <Label>Timing limit (call window)</Label>
             <p className="text-[11px] text-muted-foreground">
-              Default 09:00–18:00. Customize only within that range.
+              Default is 09:00–18:00. You can set any daily call window; start
+              must be before end.
             </p>
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
@@ -524,8 +507,6 @@ export function ScheduleSurveyDialog({
                 <Input
                   id="schedule-window-start"
                   type="time"
-                  min={CALL_WINDOW_MIN}
-                  max={CALL_WINDOW_MAX}
                   step={60}
                   value={callWindowStart}
                   onChange={(e) => setCallWindowStart(e.target.value)}
@@ -537,8 +518,6 @@ export function ScheduleSurveyDialog({
                 <Input
                   id="schedule-window-end"
                   type="time"
-                  min={CALL_WINDOW_MIN}
-                  max={CALL_WINDOW_MAX}
                   step={60}
                   value={callWindowEnd}
                   onChange={(e) => setCallWindowEnd(e.target.value)}

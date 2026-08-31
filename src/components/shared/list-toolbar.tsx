@@ -4,6 +4,8 @@ import type { ReactNode } from "react";
 import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import {
+  TOOLBAR_CONTROLS_CLASS,
+  TOOLBAR_ROW_CLASS,
   TOOLBAR_SEARCH_INPUT_CLASS,
   TOOLBAR_SEARCH_WIDTH_CLASS,
 } from "@/components/shared/toolbar-styles";
@@ -35,7 +37,7 @@ export interface ListToolbarProps {
 
 /**
  * Shared list search + filters bar.
- * One row: search (left) · filters + actions (right).
+ * One row on desktop: search (left) · filters + actions (right).
  */
 export function ListToolbar({
   search,
@@ -59,19 +61,19 @@ export function ListToolbar({
       className={cn(
         "flex min-w-0",
         embedded
-          ? "shrink-0 border-b border-border/60 bg-card px-3 py-3 sm:px-4 sm:py-3.5"
-          : "rounded-[6px] border border-border/60 bg-card p-3 shadow-card sm:p-3.5",
+          ? "shrink-0 border-b border-border/60 bg-card px-2.5 py-2 md:px-3 md:py-2.5 xl:px-4 xl:py-3.5"
+          : "rounded-[6px] border border-border/60 bg-card p-2.5 shadow-card md:p-3 xl:p-3.5",
         className
       )}
     >
-      <div className="flex min-w-0 w-full flex-wrap items-center gap-2">
+      <div className={TOOLBAR_ROW_CLASS}>
         <div
           className={cn(
             "relative min-w-0",
             searchClassName ?? TOOLBAR_SEARCH_WIDTH_CLASS
           )}
         >
-          <Search className="pointer-events-none absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground sm:left-3 sm:size-4" />
+          <Search className="pointer-events-none absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
           <Input
             value={search}
             onChange={(e) => onSearchChange(e.target.value)}
@@ -85,8 +87,8 @@ export function ListToolbar({
         {hasControls ? (
           <div
             className={cn(
-              "flex min-w-0 flex-wrap items-center gap-2",
-              alignControlsEnd && "ml-auto"
+              TOOLBAR_CONTROLS_CLASS,
+              !alignControlsEnd && "md:ml-0"
             )}
           >
             {filters}

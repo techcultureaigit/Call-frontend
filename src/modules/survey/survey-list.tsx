@@ -45,7 +45,12 @@ import {
 import type { DataTableColumn } from "@/components/shared/data-table";
 import { PAGE_TITLE_CLASS } from "@/components/shared/page-heading";
 import { PaginatedListShell } from "@/components/shared/paginated-list-shell";
-import { TOOLBAR_SEARCH_WIDTH_CLASS } from "@/components/shared/toolbar-styles";
+import {
+  TOOLBAR_ACTION_BUTTON_CLASS,
+  TOOLBAR_FILTER_SELECT_CLASS,
+  TOOLBAR_PRIMARY_BUTTON_CLASS,
+  TOOLBAR_SEARCH_WIDTH_CLASS,
+} from "@/components/shared/toolbar-styles";
 import { AppLoader, AppLoaderSpinner } from "@/components/shared/app-loader";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -354,7 +359,6 @@ const SURVEY_STATUS_FILTER_OPTIONS = [
   { label: "All statuses", value: "all" },
   { label: "Draft", value: "draft" },
   { label: "Scheduled", value: "scheduled" },
-  { label: "Processing", value: "processing" },
   { label: "Completed", value: "completed" },
 ];
 
@@ -691,7 +695,7 @@ export function SurveyListView() {
                   onChange={setStatus}
                   options={SURVEY_STATUS_FILTER_OPTIONS}
                   searchPlaceholder="Search statuses…"
-                  className="h-11 w-full rounded-[6px] border-border/50 bg-background/80 shadow-subtle sm:w-44"
+                  className={TOOLBAR_FILTER_SELECT_CLASS}
                   disabled={showLoader && surveys.length === 0}
                   aria-label="Filter by status"
                 />
@@ -700,7 +704,7 @@ export function SurveyListView() {
                   onChange={setLanguage}
                   options={LANGUAGE_FILTER_OPTIONS}
                   searchPlaceholder="Search languages…"
-                  className="h-11 w-full rounded-[6px] border-border/50 bg-background/80 shadow-subtle sm:w-52"
+                  className={cn(TOOLBAR_FILTER_SELECT_CLASS, "lg:w-40")}
                   disabled={showLoader && surveys.length === 0}
                   aria-label="Filter by language"
                 />
@@ -714,7 +718,7 @@ export function SurveyListView() {
                       <Button
                         type="button"
                         variant="outline"
-                        className="h-11 shrink-0 rounded-[6px] gap-1.5 border-border/50 bg-background/80 shadow-subtle hover:border-primary/30"
+                        className={TOOLBAR_ACTION_BUTTON_CLASS}
                         disabled={
                           isExporting ||
                           (showLoader && surveys.length === 0) ||
@@ -750,11 +754,11 @@ export function SurveyListView() {
                   </DropdownMenu>
                 ) : null}
                 {!isReady || (showLoader && surveys.length === 0) ? (
-                  <Skeleton className="h-11 w-44 shrink-0 rounded-[6px]" />
+                  <Skeleton className="h-9 w-36 shrink-0 rounded-[6px] xl:h-10" />
                 ) : canCreateSurvey ? (
                   <Button
                     asChild
-                    className="h-11 shrink-0 rounded-[6px] px-5 shadow-brand"
+                    className={TOOLBAR_PRIMARY_BUTTON_CLASS}
                   >
                     <Link href="/survey/new">
                       <UserPlus className="size-4" />

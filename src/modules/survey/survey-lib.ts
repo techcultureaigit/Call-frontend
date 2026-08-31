@@ -54,8 +54,7 @@ export function isSurveyCompleted(survey: Survey): boolean {
 }
 
 export function isSurveyScheduled(survey: Survey): boolean {
-  const status = getSchedulingStatus(survey);
-  return status === "scheduled" || status === "processing";
+  return getSchedulingStatus(survey) === "scheduled";
 }
 
 /** Badge / label — mirrors backend `scheduling_status` only */

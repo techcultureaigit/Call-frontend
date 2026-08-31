@@ -339,6 +339,8 @@ function QuestionDetailPanel({
   question: AnalyticsQuestionDetail;
   index: number;
 }) {
+  const [userSearch, setUserSearch] = useState("");
+
   const answered = question.usersAnswered ?? question.answered;
   const total = (question.totalUsers ?? question.total) || 0;
   const skipped = question.usersSkipped ?? question.unanswered;
@@ -350,6 +352,21 @@ function QuestionDetailPanel({
     .slice(0, 8);
   const maxAns = Math.max(...answers.map((a) => a.count), 1);
   const users = question.users ?? [];
+
+  const filteredUsers = useMemo(() => {
+    const q = userSearch.trim().toLowerCase();
+    if (!q) return users;
+    return users.filter((user) => {
+      const phone = user.phone?.toLowerCase() ?? "";
+      const answer = user.answer?.toLowerCase() ?? "";
+      const when = formatDate(user.answeredAt).toLowerCase();
+      return phone.includes(q) || answer.includes(q) || when.includes(q);
+    });
+  }, [users, userSearch]);
+
+  useEffect(() => {
+    setUserSearch("");
+  }, [question.surveyId, question.questionId]);
 
   return (
     <motion.div
@@ -501,19 +518,34 @@ function QuestionDetailPanel({
 
         {/* Users table */}
         <div className="sm:col-span-1">
-          <div className="mb-4 flex items-center justify-between">
+          <div className="mb-3 flex items-center justify-between gap-2">
             <div className="flex items-center gap-2">
               <Phone className="size-4 text-muted-foreground" />
               <p className="text-sm font-semibold text-foreground">Users who answered</p>
             </div>
             {users.length ? (
-              <span className="rounded-[6px] border border-border/50 bg-muted/40 px-2.5 py-0.5 text-[11px] font-semibold tabular-nums text-muted-foreground">
-                {users.length} shown
+              <span className="shrink-0 rounded-[6px] border border-border/50 bg-muted/40 px-2.5 py-0.5 text-[11px] font-semibold tabular-nums text-muted-foreground">
+                {userSearch.trim()
+                  ? `${filteredUsers.length} of ${users.length}`
+                  : `${users.length} shown`}
               </span>
             ) : null}
           </div>
 
           {users.length ? (
+            <>
+              <div className="relative mb-3">
+                <Search className="absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
+                <input
+                  type="search"
+                  value={userSearch}
+                  onChange={(e) => setUserSearch(e.target.value)}
+                  placeholder="Search phone, answer, date..."
+                  className="h-9 w-full rounded-[6px] border border-border/55 bg-card pl-8 pr-3 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-brand/25"
+                />
+              </div>
+
+              {filteredUsers.length ? (
             <div className="max-h-[420px] overflow-auto rounded-[8px] border border-border/55">
               <table className="w-full min-w-[280px] text-left text-xs">
                 <thead className="sticky top-0 z-10 bg-muted/95 backdrop-blur-sm">
@@ -524,7 +556,7 @@ function QuestionDetailPanel({
                   </tr>
                 </thead>
                 <tbody>
-                  {users.map((user, i) => (
+                  {filteredUsers.map((user, i) => (
                     <tr
                       key={`${user.phone}-${i}`}
                       className="border-b border-border/35 transition-colors last:border-b-0 hover:bg-muted/20"
@@ -548,6 +580,15 @@ function QuestionDetailPanel({
                 </tbody>
               </table>
             </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center rounded-[8px] border border-dashed border-border/55 py-10 text-center">
+                  <Search className="size-7 text-muted-foreground/30" />
+                  <p className="mt-2 text-sm text-muted-foreground">
+                    No users match your search
+                  </p>
+                </div>
+              )}
+            </>
           ) : (
             <div className="flex flex-col items-center justify-center rounded-[8px] border border-dashed border-border/55 py-12 text-center">
               <Phone className="size-8 text-muted-foreground/30" />

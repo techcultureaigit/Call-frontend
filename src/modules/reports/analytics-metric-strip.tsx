@@ -29,7 +29,6 @@ export function AnalyticsMetricStrip({
   const items = [
     { label: "Total Calls", value: String(total) },
     { label: "Connected", value: String(data.calls?.connected ?? 0) },
-    { label: "Disconnected", value: String(data.calls?.disconnected ?? 0) },
     { label: "Missed", value: String(data.calls?.missed ?? 0) },
     {
       label: "Survey Complete",

@@ -34,11 +34,9 @@ export const ANALYTICS_SECTION_SPAN: Record<AnalyticsSectionId, 1 | 2> = {
 export const DEFAULT_KPI_ORDER: AnalyticsKpiFilterId[] = [
   "total_calls",
   "connected",
-  "disconnected",
   "missed",
   "survey_complete",
   "survey_partial",
-  "survey_processing",
   "survey_incomplete",
 ];
 

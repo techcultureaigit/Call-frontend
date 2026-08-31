@@ -29,14 +29,12 @@ import type { AnalyticsDetailRow, ReportKpi } from "@/types/reports";
 
 const OUTCOME_STYLE: Record<string, string> = {
   connected: "bg-emerald-500/12 text-emerald-700 dark:text-emerald-300",
-  disconnected: "bg-amber-500/12 text-amber-700 dark:text-amber-300",
   missed: "bg-sky-500/12 text-sky-700 dark:text-sky-300",
 };
 
 const SURVEY_STYLE: Record<string, string> = {
   complete: "bg-emerald-500/12 text-emerald-700 dark:text-emerald-300",
   partially_complete: "bg-violet-500/12 text-violet-700 dark:text-violet-300",
-  processing: "bg-sky-500/12 text-sky-700 dark:text-sky-300",
   incomplete: "bg-amber-500/12 text-amber-700 dark:text-amber-300",
   missed: "bg-rose-500/12 text-rose-700 dark:text-rose-300",
 };
@@ -44,11 +42,9 @@ const SURVEY_STYLE: Record<string, string> = {
 const METRIC_HINT: Record<AnalyticsKpiFilterId, string> = {
   total_calls: "All clients in this period",
   connected: "Clients with a connected call",
-  disconnected: "Clients with a disconnected call",
   survey_complete: "All required questions answered",
   survey_partial: "Some questions answered, not finished",
-  survey_processing: "Connected call, no answers yet",
-  survey_incomplete: "Missed call — survey never started",
+  survey_incomplete: "Missed call or no answers collected",
   survey_missed: "Missed call — survey never started",
   avg_duration: "Calls ranked by duration",
   missed: "Clients with a missed call",

@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Select } from "@/components/ui/select";
 import { PAGE_TITLE_CLASS } from "@/components/shared/page-heading";
 import { ListToolbar } from "@/components/shared/list-toolbar";
-import { TOOLBAR_SEARCH_WIDTH_CLASS } from "@/components/shared/toolbar-styles";
+import { TOOLBAR_SEARCH_WIDTH_CLASS, TOOLBAR_FILTER_SELECT_CLASS } from "@/components/shared/toolbar-styles";
 import type { RoleListItem } from "@/types/role";
 import type { UserStatus } from "@/types/user";
 import { listRoles } from "@/modules/roles/api";
@@ -25,8 +25,7 @@ interface UsersToolbarProps {
   headerOnly?: boolean;
 }
 
-const filterSelectClass =
-  "h-11 w-full rounded-[6px] border-border/50 bg-background/80 shadow-subtle sm:w-44";
+const filterSelectClass = TOOLBAR_FILTER_SELECT_CLASS;
 
 export function UsersToolbar({
   onCreateClick,

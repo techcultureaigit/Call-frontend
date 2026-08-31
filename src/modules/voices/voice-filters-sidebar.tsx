@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { SearchableSelect } from "@/components/ui/searchable-select";
 import { ListToolbar } from "@/components/shared/list-toolbar";
 import {
+  TOOLBAR_FILTER_SELECT_CLASS,
   TOOLBAR_OUTLINE_CONTROL_CLASS,
   TOOLBAR_SEARCH_WIDTH_CLASS,
 } from "@/components/shared/toolbar-styles";
@@ -16,8 +17,7 @@ import type {
   VoiceProvider,
 } from "@/types/voice";
 
-const FILTER_SELECT_CLASS =
-  "h-9 w-full rounded-[6px] border-border/50 bg-background/80 shadow-subtle sm:h-10 sm:w-36 lg:h-11 lg:w-40";
+const FILTER_SELECT_CLASS = TOOLBAR_FILTER_SELECT_CLASS;
 
 const PROVIDER_OPTIONS = [
   { label: "All providers", value: "all" },
@@ -94,7 +94,7 @@ export function VoiceFiltersSidebar({
             }
             options={VOICE_LANGUAGE_OPTIONS}
             searchPlaceholder="Search languages…"
-            className={cn(FILTER_SELECT_CLASS, "sm:w-40 lg:w-44")}
+            className={cn(FILTER_SELECT_CLASS, "lg:w-40")}
             aria-label="Filter by language"
           />
         </>

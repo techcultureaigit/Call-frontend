@@ -21,7 +21,6 @@ export interface ReportPieSlice {
 export interface AnalyticsCallCounts {
   total: number;
   connected: number;
-  disconnected: number;
   missed: number;
   connectRate: number;
   pie: ReportPieSlice[];
@@ -31,7 +30,6 @@ export interface AnalyticsSurveyCounts {
   complete: number;
   incomplete: number;
   partially_complete?: number;
-  processing?: number;
   missed: number;
   total: number;
   counting: string;
@@ -104,10 +102,8 @@ export interface AnalyticsSurveyBreakdown {
   complete: number;
   incomplete: number;
   partially_complete: number;
-  processing: number;
   callsMissed: number;
   connected: number;
-  disconnected: number;
   avgDurationSeconds: number | null;
   completionRate: number;
   counting: string;
@@ -203,13 +199,12 @@ export interface AnalyticsDetailRow {
   phone: string;
   surveyId: string;
   surveyName: string;
-  callOutcome: "connected" | "disconnected" | "missed";
+  callOutcome: "connected" | "missed";
   callStatus: string;
   surveyStatus:
     | "complete"
     | "incomplete"
     | "partially_complete"
-    | "processing"
     | "missed";
   durationSeconds: number | null;
   durationLabel: string;

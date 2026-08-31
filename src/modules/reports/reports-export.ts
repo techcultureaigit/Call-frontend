@@ -203,7 +203,6 @@ function buildAnalyticsPdf(data: ReportsData, fontBase64: string): jsPDF {
     (data.survey?.complete ?? 0) +
       (data.survey?.incomplete ?? 0) +
       (data.survey?.partially_complete ?? 0) +
-      (data.survey?.processing ?? 0) +
       (data.survey?.missed ?? 0);
 
   y = ensureSpace(doc, y, 40);
@@ -219,11 +218,6 @@ function buildAnalyticsPdf(data: ReportsData, fontBase64: string): jsPDF {
           "Connected",
           (data.calls?.connected ?? 0).toLocaleString(),
           pct(data.calls?.connected ?? 0, totalCalls),
-        ],
-        [
-          "Disconnected",
-          (data.calls?.disconnected ?? 0).toLocaleString(),
-          pct(data.calls?.disconnected ?? 0, totalCalls),
         ],
         [
           "Missed",
@@ -259,11 +253,6 @@ function buildAnalyticsPdf(data: ReportsData, fontBase64: string): jsPDF {
           "Partially complete",
           (data.survey?.partially_complete ?? 0).toLocaleString(),
           pct(data.survey?.partially_complete ?? 0, surveyTotal),
-        ],
-        [
-          "Processing",
-          (data.survey?.processing ?? 0).toLocaleString(),
-          pct(data.survey?.processing ?? 0, surveyTotal),
         ],
         [
           "Incomplete",
@@ -315,7 +304,7 @@ function buildAnalyticsPdf(data: ReportsData, fontBase64: string): jsPDF {
     y = ensureSpace(doc, y, 20);
     y = drawSectionTitle(doc, y, `By survey (${surveys.length})`);
     {
-      const [c0, c1, c2, c3, c4, c5, c6] = w([34, 10, 12, 10, 12, 12, 10]);
+      const [c0, c1, c2, c3, c4, c5] = w([38, 12, 12, 12, 12, 12]);
       autoTable(doc, {
         ...tableStyles(),
         startY: y,
@@ -326,7 +315,6 @@ function buildAnalyticsPdf(data: ReportsData, fontBase64: string): jsPDF {
             "Total",
             "Complete",
             "Partial",
-            "Processing",
             "Incomplete",
             "Rate",
           ],
@@ -336,7 +324,6 @@ function buildAnalyticsPdf(data: ReportsData, fontBase64: string): jsPDF {
           row.total.toLocaleString(),
           row.complete.toLocaleString(),
           row.partially_complete.toLocaleString(),
-          row.processing.toLocaleString(),
           row.incomplete.toLocaleString(),
           `${row.completionRate}%`,
         ]),
@@ -347,7 +334,6 @@ function buildAnalyticsPdf(data: ReportsData, fontBase64: string): jsPDF {
           3: { cellWidth: c3, halign: "right" },
           4: { cellWidth: c4, halign: "right" },
           5: { cellWidth: c5, halign: "right" },
-          6: { cellWidth: c6, halign: "right" },
         },
       });
     }
@@ -359,16 +345,15 @@ function buildAnalyticsPdf(data: ReportsData, fontBase64: string): jsPDF {
     y = ensureSpace(doc, y, 20);
     y = drawSectionTitle(doc, y, "Recent call activity");
     {
-      const [c0, c1, c2, c3, c4] = w([28, 18, 18, 18, 18]);
+      const [c0, c1, c2, c3] = w([34, 22, 22, 22]);
       autoTable(doc, {
         ...tableStyles(),
         startY: y,
-        head: [["Date", "Calls", "Connected", "Disconnected", "Missed"]],
+        head: [["Date", "Calls", "Connected", "Missed"]],
         body: trendRows.map((point) => [
           point.label,
           String(point.calls ?? point.value ?? 0),
           String(point.connected ?? "—"),
-          String(point.disconnected ?? "—"),
           String(point.missed ?? "—"),
         ]),
         columnStyles: {
@@ -376,7 +361,6 @@ function buildAnalyticsPdf(data: ReportsData, fontBase64: string): jsPDF {
           1: { cellWidth: c1, halign: "right" },
           2: { cellWidth: c2, halign: "right" },
           3: { cellWidth: c3, halign: "right" },
-          4: { cellWidth: c4, halign: "right" },
         },
       });
     }

@@ -50,7 +50,7 @@ import {
 } from "@/components/shared/table-column-layout";
 import { ListToolbar } from "@/components/shared/list-toolbar";
 import { PAGE_TITLE_CLASS } from "@/components/shared/page-heading";
-import { TOOLBAR_SEARCH_WIDTH_CLASS } from "@/components/shared/toolbar-styles";
+import { TOOLBAR_SEARCH_WIDTH_CLASS, TOOLBAR_FILTER_SELECT_CLASS } from "@/components/shared/toolbar-styles";
 import { AppLoaderSpinner } from "@/components/shared/app-loader";
 import { Button } from "@/components/ui/button";
 import { Select } from "@/components/ui/select";
@@ -1668,7 +1668,7 @@ export function SurveyResponseView({ surveyId }: SurveyResultsViewProps) {
                 value={responseStatus}
                 onChange={(e) => setResponseStatus(e.target.value)}
                 options={RESULTS_STATUS_OPTIONS}
-                className="h-11 w-full rounded-[6px] border-border/50 bg-background/80 shadow-subtle sm:w-52"
+                className={TOOLBAR_FILTER_SELECT_CLASS}
                 aria-label="Filter by response status"
               />
             }

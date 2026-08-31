@@ -66,12 +66,10 @@ export function AnalyticsSurveysView() {
     const all = data?.responsesBySurvey ?? [];
     let complete = 0;
     let partial = 0;
-    let processing = 0;
     let incomplete = 0;
     for (const row of all) {
       complete += row.complete ?? 0;
       partial += row.partially_complete ?? 0;
-      processing += row.processing ?? 0;
       incomplete += row.incomplete ?? 0;
     }
     return {
@@ -79,7 +77,6 @@ export function AnalyticsSurveysView() {
       calls: all.reduce((sum, row) => sum + (row.total ?? row.value), 0),
       complete,
       partial,
-      processing,
       incomplete,
     };
   }, [data?.responsesBySurvey]);
@@ -114,7 +111,7 @@ export function AnalyticsSurveysView() {
             By survey
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            All surveys — complete + partial + processing + incomplete = total calls
+            All surveys — complete + partial + incomplete = total calls
           </p>
           <div className="mt-2 flex flex-wrap items-center gap-2">
             <span className="rounded-[5px] border border-border/55 bg-muted/30 px-2 py-1 text-xs text-muted-foreground">
@@ -178,9 +175,6 @@ export function AnalyticsSurveysView() {
               </span>
               <span className="inline-flex items-center gap-1.5">
                 <span className="size-2 rounded-full bg-violet-500" /> Partial
-              </span>
-              <span className="inline-flex items-center gap-1.5">
-                <span className="size-2 rounded-full bg-slate-400" /> Processing
               </span>
               <span className="inline-flex items-center gap-1.5">
                 <span className="size-2 rounded-full bg-amber-500" /> Incomplete

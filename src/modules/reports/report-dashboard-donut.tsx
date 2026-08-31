@@ -12,7 +12,6 @@ import {
   CheckCircle2,
   CircleDashed,
   PhoneMissed,
-  PhoneOff,
   PieChart as PieChartIcon,
   type LucideIcon,
 } from "lucide-react";
@@ -39,7 +38,6 @@ type SliceStyle = {
 const THEME_BLUE = "#3b82f6";
 const THEME_YELLOW = "#eab308";
 const THEME_RED = "#dc2626";
-const THEME_NAVY = "#2c3b59";
 
 const CALL_STYLE: Record<string, SliceStyle> = {
   Connected: {
@@ -48,13 +46,6 @@ const CALL_STYLE: Record<string, SliceStyle> = {
     border: "border-[#3b82f6]/20",
     text: "text-[#3b82f6]",
     icon: CheckCircle2,
-  },
-  Disconnected: {
-    fill: THEME_RED,
-    soft: "bg-[#dc2626]/8",
-    border: "border-[#dc2626]/20",
-    text: "text-[#dc2626]",
-    icon: PhoneOff,
   },
   Missed: {
     fill: THEME_YELLOW,
@@ -78,13 +69,6 @@ const SURVEY_STYLE: Record<string, SliceStyle> = {
     soft: "bg-[#eab308]/10",
     border: "border-[#eab308]/25",
     text: "text-[#ca8a04]",
-    icon: CircleDashed,
-  },
-  Processing: {
-    fill: THEME_NAVY,
-    soft: "bg-[#2c3b59]/8",
-    border: "border-[#2c3b59]/18",
-    text: "text-[#2c3b59]",
     icon: CircleDashed,
   },
   Incomplete: {
@@ -155,7 +139,7 @@ export function ReportDashboardDonut({
   const description =
     variant === "call"
       ? "Click a status to view clients"
-      : "Complete · Partial · Processing · Incomplete";
+      : "Complete · Partial · Incomplete";
 
   const handleSelect = (name: string) => {
     const filter = sliceToKpiFilter(variant, name);
