@@ -34,6 +34,7 @@ import { DataPagination } from "@/components/shared/data-pagination";
 import {
   DataTableActionButton,
   DataTableMetaChip,
+  DataTableSortHeader,
   TableReadMore,
   TABLE_ROW_ACCENT_CLASS,
 } from "@/components/shared/data-table";
@@ -150,6 +151,145 @@ function formatDurationLabel(value?: string) {
   if (!raw) return "---";
   if (/^\d+(\.\d+)?$/.test(raw)) return `${raw}s`;
   return raw;
+}
+
+type ResultsSortState = { id: string; desc: boolean };
+
+/** Sortable columns: Date, Duration, and call stamps */
+const RESULTS_SORTABLE_IDS = new Set([
+  "date",
+  "duration",
+  "call:start_stamp",
+  "call:answer_stamp",
+  "call:end_stamp",
+]);
+
+const DEFAULT_RESULTS_SORT: ResultsSortState = { id: "date", desc: true };
+
+function resultsSortState(
+  sorting: ResultsSortState,
+  id: string
+): false | "asc" | "desc" {
+  if (sorting.id !== id) return false;
+  return sorting.desc ? "desc" : "asc";
+}
+
+/** Toggle asc ↔ desc on the same column; switch column starts at asc. */
+function toggleResultsSort(
+  sorting: ResultsSortState,
+  id: string
+): ResultsSortState {
+  if (sorting.id !== id) return { id, desc: false };
+  return { id, desc: !sorting.desc };
+}
+
+function parseRowSortDate(raw: unknown): number {
+  if (raw == null || raw === "") return 0;
+  if (typeof raw === "number" && Number.isFinite(raw)) return raw;
+  const s = String(raw).trim();
+  if (!s) return 0;
+  const normalized = /^\d{4}-\d{2}-\d{2} \d/.test(s) ? s.replace(" ", "T") : s;
+  const t = new Date(normalized).getTime();
+  return Number.isFinite(t) ? t : 0;
+}
+
+function parseRowSortNumber(raw: unknown): number {
+  if (raw == null || raw === "") return 0;
+  if (typeof raw === "number" && Number.isFinite(raw)) return raw;
+  const match = String(raw).trim().match(/-?\d+(\.\d+)?/);
+  if (!match) return 0;
+  const n = Number(match[0]);
+  return Number.isFinite(n) ? n : 0;
+}
+
+function getRowSortValue(
+  row: SurveyResultRow,
+  sortBy: string
+): string | number | null {
+  const key = String(sortBy || "").trim();
+  if (!key || key === "actions") return null;
+
+  if (key === "phone") return String(row.customer_number || "").toLowerCase();
+  if (key === "date") {
+    // Prefer call end/start stamp when present (matches what users see on the timeline)
+    const fromCall =
+      parseRowSortDate(row.call?.end_stamp) ||
+      parseRowSortDate(row.call?.start_stamp);
+    return fromCall || parseRowSortDate(row.extracted_at);
+  }
+  if (key === "status") return String(row.status || "").toLowerCase();
+  if (key === "duration") {
+    return parseRowSortNumber(
+      row.call?.duration ?? row.recording_duration_seconds
+    );
+  }
+  if (key === "audio") return row.recording_url ? 1 : 0;
+
+  if (key.startsWith("call:")) {
+    const field = key.slice(5);
+    const raw = getCallFieldValue(row.call, field);
+    if (!raw) return field.endsWith("_stamp") ? 0 : "";
+    if (field === "duration") return parseRowSortNumber(raw);
+    if (field.endsWith("_stamp")) return parseRowSortDate(raw);
+    if (/^\d+(\.\d+)?$/.test(raw.trim())) return parseRowSortNumber(raw);
+    return raw.toLowerCase();
+  }
+
+  if (key.startsWith("q:")) {
+    const qid = key.slice(2);
+    const answer = row.answers?.find((a) => String(a.questionId) === qid);
+    return String(answer?.answer ?? "").toLowerCase();
+  }
+
+  return null;
+}
+
+function compareRowSortValues(a: string | number | null, b: string | number | null) {
+  if (a == null && b == null) return 0;
+  if (a == null || a === "") return 1;
+  if (b == null || b === "") return -1;
+  if (typeof a === "number" && typeof b === "number") return a - b;
+  return String(a).localeCompare(String(b), undefined, {
+    numeric: true,
+    sensitivity: "base",
+  });
+}
+
+function sortResultRowsClient(
+  rows: SurveyResultRow[],
+  sorting: ResultsSortState
+): SurveyResultRow[] {
+  const key = sorting.id;
+  if (!key || key === "actions") return rows;
+  const sorted = [...rows].sort((left, right) => {
+    const cmp = compareRowSortValues(
+      getRowSortValue(left, key),
+      getRowSortValue(right, key)
+    );
+    return sorting.desc ? -cmp : cmp;
+  });
+  return sorted;
+}
+
+/** Sort button for Date / Duration headers */
+function ResultsColumnSortHeader({
+  label,
+  columnId,
+  sorting,
+  onSortingChange,
+}: {
+  label: string;
+  columnId: string;
+  sorting: ResultsSortState;
+  onSortingChange: (next: ResultsSortState) => void;
+}) {
+  return (
+    <DataTableSortHeader
+      label={label}
+      sorted={resultsSortState(sorting, columnId)}
+      onToggle={() => onSortingChange(toggleResultsSort(sorting, columnId))}
+    />
+  );
 }
 
 interface SurveyResultsViewProps {
@@ -979,11 +1119,24 @@ function ResultsInlineQaTable({
   questionColumns,
   layoutKey,
   surveyId,
+  sorting,
+  onSortingChange,
+  statusFilter,
+  onStatusFilterChange,
+  statusOptions,
+  fillHeight = false,
 }: {
   rows: SurveyResultRow[];
   questionColumns: { id: string; question: string }[];
   layoutKey: string;
   surveyId: string;
+  sorting: ResultsSortState;
+  onSortingChange: (next: ResultsSortState) => void;
+  statusFilter: string;
+  onStatusFilterChange: (value: string) => void;
+  statusOptions: { label: string; value: string }[];
+  /** When true, table body scrolls inside the viewport (does not clip rows). */
+  fillHeight?: boolean;
 }) {
   const [questionPopup, setQuestionPopup] = useState<{
     number: number;
@@ -1048,7 +1201,7 @@ function ResultsInlineQaTable({
       <div
         className={cn(
           "flex min-w-0 flex-col rounded-[6px] border border-border/60 bg-card shadow-card",
-          rows.length > 10 && "min-h-0 flex-1 overflow-hidden"
+          fillHeight && "min-h-0 flex-1 overflow-hidden"
         )}
       >
         <div className="shrink-0">
@@ -1058,13 +1211,22 @@ function ResultsInlineQaTable({
             onToggle={toggleHidden}
             onReorder={reorder}
             onReset={reset}
+            leading={
+              <Select
+                value={statusFilter}
+                onChange={(e) => onStatusFilterChange(e.target.value)}
+                options={statusOptions}
+                className={cn(TOOLBAR_FILTER_SELECT_CLASS, "h-9")}
+                aria-label="Filter by response status"
+              />
+            }
           />
         </div>
 
         <div
           className={cn(
             "min-w-0",
-            rows.length > 10
+            fillHeight
               ? "min-h-0 flex-1 overflow-auto overscroll-contain"
               : "overflow-x-auto"
           )}
@@ -1116,6 +1278,8 @@ function ResultsInlineQaTable({
                                   question: question.question,
                                 })
                               }
+                              onPointerDown={(e) => e.stopPropagation()}
+                              onMouseDown={(e) => e.stopPropagation()}
                               className="inline-flex size-5 shrink-0 items-center justify-center rounded-full border border-primary/20 bg-primary/10 text-[10px] font-bold tabular-nums text-primary hover:bg-primary/15"
                               title="View full question"
                               aria-label={`View question ${number}`}
@@ -1137,6 +1301,8 @@ function ResultsInlineQaTable({
                                     question: question.question,
                                   })
                                 }
+                                onPointerDown={(e) => e.stopPropagation()}
+                                onMouseDown={(e) => e.stopPropagation()}
                                 className="shrink-0 text-[10px] font-semibold text-primary hover:underline"
                               >
                                 More
@@ -1152,7 +1318,16 @@ function ResultsInlineQaTable({
                         id={col.id}
                         className={cn(col.id === "audio" && "text-center")}
                       >
-                        {col.label}
+                        {RESULTS_SORTABLE_IDS.has(col.id) ? (
+                          <ResultsColumnSortHeader
+                            label={col.label}
+                            columnId={col.id}
+                            sorting={sorting}
+                            onSortingChange={onSortingChange}
+                          />
+                        ) : (
+                          col.label
+                        )}
                       </SortableColumnTh>
                     );
                   })}
@@ -1452,6 +1627,7 @@ export function SurveyResponseView({ surveyId }: SurveyResultsViewProps) {
   const [error, setError] = useState<string | null>(null);
   const [exporting, setExporting] = useState(false);
   const [responseStatus, setResponseStatus] = useState("all");
+  const [sorting, setSorting] = useState<ResultsSortState>(DEFAULT_RESULTS_SORT);
 
   const fetchPage = useCallback(
     async ({
@@ -1470,6 +1646,8 @@ export function SurveyResponseView({ surveyId }: SurveyResultsViewProps) {
           limit,
           search: search || undefined,
           status: responseStatus !== "all" ? responseStatus : undefined,
+          sortBy: sorting.id,
+          sortOrder: sorting.desc ? "desc" : "asc",
         });
         setSurvey(res.survey);
         return { data: res.data, meta: res.meta };
@@ -1478,7 +1656,7 @@ export function SurveyResponseView({ surveyId }: SurveyResultsViewProps) {
         throw error;
       }
     },
-    [surveyId, responseStatus]
+    [surveyId, responseStatus, sorting.id, sorting.desc]
   );
 
   const {
@@ -1497,7 +1675,7 @@ export function SurveyResponseView({ surveyId }: SurveyResultsViewProps) {
   } = usePaginatedList<SurveyResultRow>({
     pageSize: 10,
     fetchPage,
-    resetPageWhen: [responseStatus],
+    resetPageWhen: [responseStatus, sorting.id, sorting.desc],
     onError: (err) =>
       setError(err instanceof Error ? err.message : "Failed to load results"),
   });
@@ -1525,6 +1703,12 @@ export function SurveyResponseView({ surveyId }: SurveyResultsViewProps) {
         answers: enrichRowAnswers(row, questions),
       })),
     [rows, questions]
+  );
+
+  // Instant client sort (also applied on the server for correct pagination)
+  const sortedRows = useMemo(
+    () => sortResultRowsClient(enrichedRows, sorting),
+    [enrichedRows, sorting]
   );
 
   const questionColumns = useMemo(() => {
@@ -1582,7 +1766,9 @@ export function SurveyResponseView({ surveyId }: SurveyResultsViewProps) {
 
   const status = (survey?.scheduling_status ?? "completed") as SurveyDisplayStatus;
 
-  const useTableScroll = pageSize > 10;
+  // Only lock page height when there are enough rows to need an inner scroll.
+  // pageSize > 10 alone was clipping rows (overflow hidden, no vertical scroll).
+  const useTableScroll = pageSize > 10 && sortedRows.length > 10;
   const showLoader = loading || isRefreshing;
 
   return (
@@ -1665,15 +1851,6 @@ export function SurveyResponseView({ surveyId }: SurveyResultsViewProps) {
             searchAriaLabel="Search responses"
             searchClassName={TOOLBAR_SEARCH_WIDTH_CLASS}
             alignControlsEnd
-            filters={
-              <Select
-                value={responseStatus}
-                onChange={(e) => setResponseStatus(e.target.value)}
-                options={RESULTS_STATUS_OPTIONS}
-                className={TOOLBAR_FILTER_SELECT_CLASS}
-                aria-label="Filter by response status"
-              />
-            }
             actions={
               canExportSurvey ? (
                 <DropdownMenu>
@@ -1774,10 +1951,16 @@ export function SurveyResponseView({ surveyId }: SurveyResultsViewProps) {
               </div>
             ) : (
               <ResultsInlineQaTable
-                rows={enrichedRows}
+                rows={sortedRows}
                 questionColumns={questionColumns}
                 layoutKey={`survey-results:${surveyId}`}
                 surveyId={surveyId}
+                sorting={sorting}
+                onSortingChange={setSorting}
+                statusFilter={responseStatus}
+                onStatusFilterChange={setResponseStatus}
+                statusOptions={RESULTS_STATUS_OPTIONS}
+                fillHeight={useTableScroll}
               />
             )}
           </div>

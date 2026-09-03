@@ -691,18 +691,20 @@ function DraggableColumnTh({
       style={{ transform: CSS.Transform.toString(transform), transition }}
       className={cn(
         TABLE_HEAD_CELL_CLASS,
-        "cursor-grab select-none active:cursor-grabbing",
         isDragging && "z-20 bg-card shadow-card ring-1 ring-brand/30",
         className
       )}
       {...attributes}
-      {...listeners}
     >
       <span className="inline-flex items-center gap-1.5">
-        <GripVertical
-          className="size-3 shrink-0 text-muted-foreground/50"
-          aria-hidden
-        />
+        <button
+          type="button"
+          className="inline-flex shrink-0 cursor-grab touch-none items-center justify-center rounded p-0.5 text-muted-foreground/50 hover:bg-muted/50 hover:text-muted-foreground active:cursor-grabbing"
+          aria-label="Drag to reorder column"
+          {...listeners}
+        >
+          <GripVertical className="size-3" aria-hidden />
+        </button>
         <span className="min-w-0">{children}</span>
       </span>
     </th>
@@ -822,15 +824,19 @@ export function TableColumnsBar({
   onToggle,
   onReorder,
   onReset,
+  leading,
 }: {
   items: TableColumnLayoutItem[];
   hidden: string[];
   onToggle: (id: string, hide: boolean) => void;
   onReorder: (activeId: string, overId: string) => void;
   onReset: () => void;
+  /** Optional controls shown to the left of the Columns button (e.g. status filter) */
+  leading?: ReactNode;
 }) {
   return (
-    <div className="relative z-20 flex items-center justify-end border-b border-border/40 bg-card px-3 py-2">
+    <div className="relative z-20 flex items-center justify-end gap-2 border-b border-border/40 bg-card px-3 py-2">
+      {leading}
       <TableColumnsButton
         items={items}
         hidden={hidden}

@@ -102,6 +102,9 @@ export interface SurveyResultsListParams {
   search?: string;
   /** Filter by computed status: missed | completed | partially completed */
   status?: string;
+  /** Column id: phone | date | status | duration | audio | call:* | q:* */
+  sortBy?: string;
+  sortOrder?: "asc" | "desc";
 }
 
 export type SurveyResultsExportFormat = "xlsx" | "csv";

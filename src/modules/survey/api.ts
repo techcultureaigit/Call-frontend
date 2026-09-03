@@ -210,6 +210,8 @@ export async function listSurveyResults(
     limit: params.limit ?? 20,
     search: params.search || undefined,
     status: params.status || undefined,
+    sortBy: params.sortBy || undefined,
+    sortOrder: params.sortOrder || undefined,
   };
   return surveyCall("listSurveyResults", "GET", url, async () => {
     const res = await apiGet<SurveyResultsResponse>(url, query);
