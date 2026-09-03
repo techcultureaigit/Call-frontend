@@ -16,6 +16,8 @@ export const DEFAULT_PAGE_SIZE_OPTIONS = [10, 20, 50, 100] as const;
 export interface DataPaginationProps {
   meta: PaginatedMeta;
   onPageChange: (page: number) => void;
+  /** Disable page controls while the next page is loading. */
+  disabled?: boolean;
   /** When set, shows a rows-per-page dropdown that passes `limit` to the caller. */
   onLimitChange?: (limit: number) => void;
   /** Options for the limit dropdown. Default: 10, 20, 50, 100 */
@@ -42,10 +44,12 @@ function PageSizeSelect({
   limit,
   options,
   onLimitChange,
+  disabled = false,
 }: {
   limit: number;
   options: number[];
   onLimitChange: (limit: number) => void;
+  disabled?: boolean;
 }) {
   return (
     <div className="flex items-center gap-2.5">
@@ -57,13 +61,15 @@ function PageSizeSelect({
           <button
             type="button"
             aria-label="Rows per page"
+            disabled={disabled}
             className={cn(
               "group inline-flex h-9 min-w-18 items-center justify-between gap-1.5 rounded-[6px]",
               "border border-border/50 bg-background/80 px-2.5 text-sm font-medium text-foreground",
               "shadow-subtle outline-none transition-[color,box-shadow,border-color] duration-200",
               "hover:border-primary/30 hover:bg-card",
               "focus-visible:border-brand focus-visible:ring-[3px] focus-visible:ring-brand/20",
-              "data-[state=open]:border-brand data-[state=open]:ring-[3px] data-[state=open]:ring-brand/20"
+              "data-[state=open]:border-brand data-[state=open]:ring-[3px] data-[state=open]:ring-brand/20",
+              disabled && "pointer-events-none opacity-50"
             )}
           >
             <span className="tabular-nums">{limit}</span>
@@ -107,6 +113,7 @@ function PageSizeSelect({
 export function DataPagination({
   meta,
   onPageChange,
+  disabled = false,
   onLimitChange,
   limitOptions = DEFAULT_PAGE_SIZE_OPTIONS,
   itemLabel = "items",
@@ -150,6 +157,7 @@ export function DataPagination({
               limit={limit}
               options={sizeOptions}
               onLimitChange={onLimitChange}
+              disabled={disabled}
             />
           ) : null}
         </div>
@@ -160,7 +168,7 @@ export function DataPagination({
             variant="outline"
             size="sm"
             onClick={() => onPageChange(page - 1)}
-            disabled={!hasPreviousPage}
+            disabled={disabled || !hasPreviousPage}
             className="h-9 gap-1 rounded-[6px] px-3"
           >
             <ChevronLeft className="size-4" />
@@ -181,6 +189,7 @@ export function DataPagination({
                     variant={isActive ? "default" : "ghost"}
                     size="sm"
                     onClick={() => onPageChange(p)}
+                    disabled={disabled}
                     aria-current={isActive ? "page" : undefined}
                     aria-label={`Go to page ${p}`}
                     className={cn(
@@ -200,7 +209,7 @@ export function DataPagination({
             variant="outline"
             size="sm"
             onClick={() => onPageChange(page + 1)}
-            disabled={!hasNextPage}
+            disabled={disabled || !hasNextPage}
             className="h-9 gap-1 rounded-[6px] px-3"
           >
             <span className="hidden sm:inline">Next</span>

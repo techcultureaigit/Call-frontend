@@ -51,7 +51,7 @@ import {
 import { ListToolbar } from "@/components/shared/list-toolbar";
 import { PAGE_TITLE_CLASS } from "@/components/shared/page-heading";
 import { TOOLBAR_SEARCH_WIDTH_CLASS, TOOLBAR_FILTER_SELECT_CLASS } from "@/components/shared/toolbar-styles";
-import { AppLoaderSpinner } from "@/components/shared/app-loader";
+import { AppLoader, AppLoaderSpinner } from "@/components/shared/app-loader";
 import { Button } from "@/components/ui/button";
 import { Select } from "@/components/ui/select";
 import {
@@ -1492,6 +1492,7 @@ export function SurveyResponseView({ surveyId }: SurveyResultsViewProps) {
     data: rows,
     meta,
     isLoading: loading,
+    isRefreshing,
     reload,
   } = usePaginatedList<SurveyResultRow>({
     pageSize: 10,
@@ -1582,6 +1583,7 @@ export function SurveyResponseView({ surveyId }: SurveyResultsViewProps) {
   const status = (survey?.scheduling_status ?? "completed") as SurveyDisplayStatus;
 
   const useTableScroll = pageSize > 10;
+  const showLoader = loading || isRefreshing;
 
   return (
     <div
@@ -1742,8 +1744,16 @@ export function SurveyResponseView({ surveyId }: SurveyResultsViewProps) {
               useTableScroll && "min-h-0 flex-1 overflow-hidden"
             )}
           >
-            {loading ? (
-              <SurveyFetchLoader label="Loading results" />
+            {showLoader ? (
+              loading ? (
+                <SurveyFetchLoader label="Loading results" />
+              ) : (
+                <AppLoader
+                  variant="section"
+                  label="Loading results"
+                  hint="Fetching latest data"
+                />
+              )
             ) : error ? (
               <div className="rounded-[10px] border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive">
                 {error}
@@ -1777,6 +1787,7 @@ export function SurveyResponseView({ surveyId }: SurveyResultsViewProps) {
               meta={meta}
               onPageChange={setPage}
               onLimitChange={setPageSize}
+              disabled={isRefreshing}
               itemLabel="responses"
               variant="inline"
               className="shrink-0"

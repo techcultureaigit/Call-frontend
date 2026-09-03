@@ -168,7 +168,7 @@ export function SurveyDetailView({ survey }: { survey: Survey }) {
   const language = getSurveyLanguageLabel(persona.language || currentSurvey.language);
   const greeting = currentSurvey.config.prompts.greeting?.trim() || "—";
   const farewell = currentSurvey.config.prompts.farewell?.trim() || "—";
-  const greetsFirst = currentSurvey.config.prompts.greetsFirst;
+  const description = currentSurvey.config.prompts.description?.trim() || "";
   const questions = currentSurvey.config.surveyQuestions.questions ?? [];
   const questionsFileUrl = currentSurvey.config.surveyQuestions.questionsFileUrl ?? "";
   const questionsFileName = currentSurvey.config.surveyQuestions.questionsFileName ?? "";
@@ -384,9 +384,13 @@ export function SurveyDetailView({ survey }: { survey: Survey }) {
                     <span className="text-muted-foreground">{greeting}</span>
                   </span>
                 </DetailField>
-                <DetailField label="Greets first">
-                  {onOff(greetsFirst)}
-                </DetailField>
+                {description ? (
+                  <DetailField label="Survey personal information">
+                    <span className="text-muted-foreground whitespace-pre-wrap">
+                      {description}
+                    </span>
+                  </DetailField>
+                ) : null}
               </div>
             </StepSection>
 

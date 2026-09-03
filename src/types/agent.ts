@@ -80,7 +80,8 @@ export interface AgentPersonaConfig {
 
 export interface AgentPromptsConfig {
   greeting: string;
-  greetsFirst: boolean;
+  /** Optional survey personal information (Instructions step) */
+  description: string;
   farewell: string;
 }
 

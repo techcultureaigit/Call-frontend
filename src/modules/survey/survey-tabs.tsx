@@ -329,16 +329,15 @@ export function PromptsTab({
         ) : null}
       </div>
 
-      <div className="max-w-xs space-y-1.5">
-        <Label>Survey Greets First?</Label>
-        <Select
-          value={values.greetsFirst ? "yes" : "no"}
-          onChange={(e) => update("greetsFirst", e.target.value === "yes")}
-          options={[
-            { label: "Yes", value: "yes" },
-            { label: "No", value: "no" },
-          ]}
-          className="rounded-[6px]"
+      <div className="space-y-1.5">
+        <Label htmlFor="survey-description">Survey personal information</Label>
+        <textarea
+          id="survey-description"
+          value={values.description ?? ""}
+          onChange={(e) => update("description", e.target.value)}
+          rows={3}
+          className="w-full rounded-[6px] border border-input bg-transparent px-3 py-2 text-sm shadow-subtle focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          placeholder="Optional notes or personal information about this survey"
         />
       </div>
     </div>

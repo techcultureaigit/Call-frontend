@@ -141,7 +141,7 @@ export function backendSurveyToAgent(s: BackendSurvey): Survey {
     },
     prompts: {
       greeting: prompts.greeting ?? "",
-      greetsFirst: prompts.greetsFirst ?? true,
+      description: prompts.description ?? s.description ?? "",
       farewell: prompts.farewell ?? "",
     },
     surveyQuestions: {
@@ -245,7 +245,7 @@ export function agentToBackendPayload(
     },
     prompts: {
       greeting: c.prompts.greeting,
-      greetsFirst: c.prompts.greetsFirst,
+      description: (c.prompts.description ?? "").trim(),
       farewell: c.prompts.farewell ?? "",
     },
     surveyQuestions: {

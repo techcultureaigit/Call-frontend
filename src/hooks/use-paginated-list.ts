@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useDebounce } from "@/hooks/use-debounce";
 import type { PaginatedMeta } from "@/types";
 
@@ -111,6 +111,18 @@ export function usePaginatedList<T>({
     await load();
   }, [load]);
 
+  /** Reflect clicked page immediately — API meta.page updates only after fetch. */
+  const displayMeta = useMemo((): PaginatedMeta => {
+    const totalPages = Math.max(meta.totalPages, 1);
+    return {
+      ...meta,
+      page,
+      limit: pageSize,
+      hasPreviousPage: page > 1,
+      hasNextPage: page < totalPages,
+    };
+  }, [meta, page, pageSize]);
+
   return {
     search,
     setSearch,
@@ -120,7 +132,7 @@ export function usePaginatedList<T>({
     pageSize,
     setPageSize,
     data,
-    meta,
+    meta: displayMeta,
     isLoading,
     isRefreshing,
     reload,

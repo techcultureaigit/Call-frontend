@@ -300,7 +300,7 @@ export const DEFAULT_AGENT_CONFIG: AgentConfig = {
   },
   prompts: {
     greeting: "",
-    greetsFirst: true,
+    description: "",
     farewell: "",
   },
   wisdom: {
