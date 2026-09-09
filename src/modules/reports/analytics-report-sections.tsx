@@ -27,6 +27,7 @@ import {
   ANALYTICS_SECTION_LABELS,
   ANALYTICS_SECTION_SPAN,
   DEFAULT_KPI_ORDER,
+  groupAnalyticsSections,
   type AnalyticsSectionId,
 } from "@/modules/reports/analytics-report-layout";
 import type { AnalyticsKpiFilterId } from "@/modules/reports/analytics-kpi-filter";
@@ -66,10 +67,12 @@ const typedCollision: CollisionDetection = (args) => {
 function SortableSectionShell({
   id,
   reorderMode,
+  fillHeight,
   children,
 }: {
   id: AnalyticsSectionId;
   reorderMode: boolean;
+  fillHeight?: boolean;
   children: ReactNode;
 }) {
   const { attributes, listeners, setNodeRef, isDragging } = useSortable({
@@ -79,18 +82,22 @@ function SortableSectionShell({
     animateLayoutChanges: () => false,
   });
 
-  const span = ANALYTICS_SECTION_SPAN[id];
-
   return (
     <div
       ref={setNodeRef}
       className={cn(
         "relative isolate flex min-w-0 w-full max-w-full flex-col gap-1.5 overflow-hidden",
+        fillHeight && id === "kpis" && "shrink-0",
+        fillHeight && id === "survey_status" && "shrink-0",
+        fillHeight && id === "disconnect_reason" && "shrink-0",
+        fillHeight && id === "question_analytics" && "min-h-0 flex-1",
         isDragging && "opacity-35"
       )}
-      style={{
-        gridColumn: span === 2 ? "1 / -1" : "span 1",
-      }}
+      style={
+        fillHeight
+          ? undefined
+          : { gridColumn: ANALYTICS_SECTION_SPAN[id] === 2 ? "1 / -1" : "span 1" }
+      }
     >
       {reorderMode ? (
         <div className="flex shrink-0 items-center gap-2 rounded-[6px] border border-dashed border-border/60 bg-muted/30 px-2 py-1.5">
@@ -131,6 +138,7 @@ export function AnalyticsReportSections({
   onReorderKpis,
   renderSection,
   renderKpiOverlay,
+  fillHeight = false,
 }: {
   sectionOrder: AnalyticsSectionId[];
   reorderMode: boolean;
@@ -144,6 +152,7 @@ export function AnalyticsReportSections({
   ) => void;
   renderSection: (id: AnalyticsSectionId) => ReactNode;
   renderKpiOverlay?: (kpiId: AnalyticsKpiFilterId) => ReactNode;
+  fillHeight?: boolean;
 }) {
   const [activeId, setActiveId] = useState<string | null>(null);
   const [activeType, setActiveType] = useState<DragType | null>(null);
@@ -193,27 +202,80 @@ export function AnalyticsReportSections({
     return null;
   }, [activeId, activeType]);
 
-  const gridClassName =
-    "grid grid-cols-1 items-stretch gap-4 overflow-hidden lg:grid-cols-2 lg:gap-5";
+  const gridClassName = fillHeight
+    ? "flex min-h-0 flex-1 flex-col gap-2 overflow-hidden"
+    : "grid grid-cols-1 items-stretch gap-4 overflow-hidden lg:grid-cols-2";
 
-  if (!reorderMode) {
-    return (
-      <div className={gridClassName}>
-        {sectionOrder.map((id) => {
-          const span = ANALYTICS_SECTION_SPAN[id];
-          return (
-            <div
-              key={id}
-              className="min-w-0 w-full max-w-full overflow-hidden"
-              style={{ gridColumn: span === 2 ? "1 / -1" : "span 1" }}
-            >
-              {renderSection(id)}
-            </div>
-          );
-        })}
+  const sectionClass = (id: AnalyticsSectionId) =>
+    fillHeight
+      ? cn(
+          "min-h-0 min-w-0 w-full overflow-hidden",
+          (id === "kpis" ||
+            id === "survey_status" ||
+            id === "disconnect_reason") &&
+            "shrink-0",
+          id === "question_analytics" && "min-h-0 flex-1"
+        )
+      : "min-w-0 w-full max-w-full overflow-hidden";
+
+  const renderFillItem = (id: AnalyticsSectionId) =>
+    reorderMode ? (
+      <SortableSectionShell
+        key={id}
+        id={id}
+        reorderMode={reorderMode}
+        fillHeight={fillHeight}
+      >
+        {renderSection(id)}
+      </SortableSectionShell>
+    ) : (
+      <div key={id} className={sectionClass(id)}>
+        {renderSection(id)}
       </div>
     );
-  }
+
+  const sections = (
+    <div className={gridClassName}>
+      {fillHeight
+        ? groupAnalyticsSections(sectionOrder).map((row) =>
+            row.length === 1 ? (
+              renderFillItem(row[0])
+            ) : (
+              <div
+                key={row.join("-")}
+                className="grid shrink-0 grid-cols-1 gap-2 lg:grid-cols-2"
+              >
+                {row.map((id) => renderFillItem(id))}
+              </div>
+            )
+          )
+        : reorderMode
+          ? sectionOrder.map((id) => (
+              <SortableSectionShell
+                key={id}
+                id={id}
+                reorderMode={reorderMode}
+                fillHeight={fillHeight}
+              >
+                {renderSection(id)}
+              </SortableSectionShell>
+            ))
+          : sectionOrder.map((id) => {
+              const span = ANALYTICS_SECTION_SPAN[id];
+              return (
+                <div
+                  key={id}
+                  className={sectionClass(id)}
+                  style={{
+                    gridColumn: span === 2 ? "1 / -1" : "span 1",
+                  }}
+                >
+                  {renderSection(id)}
+                </div>
+              );
+            })}
+    </div>
+  );
 
   return (
     <DndContext
@@ -225,15 +287,13 @@ export function AnalyticsReportSections({
       onDragEnd={handleDragEnd}
       onDragCancel={handleDragCancel}
     >
-      <SortableContext items={sectionOrder} strategy={rectSortingStrategy}>
-        <div className={gridClassName}>
-          {sectionOrder.map((id) => (
-            <SortableSectionShell key={id} id={id} reorderMode={reorderMode}>
-              {renderSection(id)}
-            </SortableSectionShell>
-          ))}
-        </div>
-      </SortableContext>
+      {reorderMode ? (
+        <SortableContext items={sectionOrder} strategy={rectSortingStrategy}>
+          {sections}
+        </SortableContext>
+      ) : (
+        sections
+      )}
 
       <DragOverlay dropAnimation={dropAnimation}>
         {activeType === "section" && overlayLabel ? (

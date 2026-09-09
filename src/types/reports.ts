@@ -65,6 +65,8 @@ export interface AnalyticsQuestionDetail {
   surveyName: string;
   questionId: string;
   question: string;
+  /** Question helper text / instruction (not the survey name) */
+  description?: string;
   type: string;
   answered: number;
   unanswered: number;
@@ -131,10 +133,21 @@ export interface AnalyticsInsight {
   message: string;
 }
 
+export interface AnalyticsSurveyDates {
+  createdAt: string | null;
+  scheduledAt: string | null;
+  startAt: string | null;
+  endAt: string | null;
+  callWindowStart?: string | null;
+  callWindowEnd?: string | null;
+  schedulingStatus?: string;
+}
+
 export interface AnalyticsMeta {
   dateRange: { from: string; to: string };
   surveyId: string | "all";
   surveyName?: string;
+  surveyDates?: AnalyticsSurveyDates | null;
 }
 
 /** GET /analytics/kpis */
@@ -142,25 +155,10 @@ export interface AnalyticsKpisData extends AnalyticsMeta {
   kpis: ReportKpi[];
 }
 
-/** GET /analytics/breakdowns */
+/** GET /analytics/breakdowns — survey-status pie + disconnect-reason pie */
 export interface AnalyticsBreakdownsData extends AnalyticsMeta {
-  responsesBySurvey: AnalyticsSurveyBreakdown[];
   surveyStatusBreakdown: ReportPieSlice[];
-  callOutcomeBreakdown: ReportPieSlice[];
-  survey: AnalyticsSurveyCounts;
-  calls: AnalyticsCallCounts;
-  duration: AnalyticsDuration;
-  recording: {
-    withRecording: number;
-    withoutRecording: number;
-    coverageRate: number;
-  };
-}
-
-/** GET /analytics/trends */
-export interface AnalyticsTrendsData extends AnalyticsMeta {
-  completionTrend: ChartDataPoint[];
-  callsOverTime: ChartDataPoint[];
+  reasonBreakdown: ReportPieSlice[];
 }
 
 export interface ReportsData {
@@ -183,6 +181,7 @@ export interface ReportsData {
   campaignBreakdown: ReportPieSlice[];
   callOutcomeBreakdown: ReportPieSlice[];
   surveyStatusBreakdown: ReportPieSlice[];
+  reasonBreakdown: ReportPieSlice[];
   hangupBreakdown: ReportPieSlice[];
   sentimentBreakdown: ReportPieSlice[];
   questions: AnalyticsQuestionDetail[];

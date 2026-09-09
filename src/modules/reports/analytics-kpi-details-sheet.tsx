@@ -26,6 +26,7 @@ import {
   type AnalyticsKpiFilterId,
 } from "@/modules/reports/analytics-kpi-filter";
 import type { AnalyticsDetailRow, ReportKpi } from "@/types/reports";
+import { KPI_HINT } from "@/modules/reports/analytics-theme";
 
 const OUTCOME_STYLE: Record<string, string> = {
   connected: "bg-emerald-500/12 text-emerald-700 dark:text-emerald-300",
@@ -40,14 +41,14 @@ const SURVEY_STYLE: Record<string, string> = {
 };
 
 const METRIC_HINT: Record<AnalyticsKpiFilterId, string> = {
-  total_calls: "All clients in this period",
-  connected: "Clients with a connected call",
-  survey_complete: "All required questions answered",
-  survey_partial: "Some questions answered, not finished",
-  survey_incomplete: "Missed call or no answers collected",
-  survey_missed: "Missed call — survey never started",
+  total_calls: KPI_HINT.total_calls,
+  connected: KPI_HINT.connected,
+  survey_complete: KPI_HINT.survey_complete,
+  survey_partial: KPI_HINT.survey_partial,
+  survey_incomplete: KPI_HINT.survey_incomplete,
+  survey_missed: KPI_HINT.missed,
+  missed: KPI_HINT.missed,
   avg_duration: "Calls ranked by duration",
-  missed: "Clients with a missed call",
   recording: "Calls that have a recording",
 };
 

@@ -133,15 +133,15 @@ export function DataPagination({
   const shell =
     variant === "sticky"
       ? "sticky bottom-0 z-10 -mx-1 mt-2 border-t border-border/50 bg-linear-to-t from-background via-background/95 to-background/80 px-1 pt-4 pb-1 backdrop-blur-sm"
-      : "mt-2";
+      : "mt-0";
 
   return (
     <div className={cn(shell, className)}>
-      <div className="flex flex-col gap-3 rounded-[6px] border border-border/50 bg-card/90 px-4 py-3 shadow-card sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-3 rounded-[6px] border border-border/40 bg-muted/15 px-3 py-2.5 sm:flex-row sm:items-center sm:justify-between sm:px-4">
         <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
           <div className="space-y-0.5">
             <p className="text-sm font-medium text-foreground">
-              Page {page} of {totalPages}
+              Page {page} of {Math.max(totalPages, 1)}
             </p>
             <p className="text-xs text-muted-foreground">
               Showing{" "}

@@ -53,18 +53,23 @@ export function analyticsQuestionsHref(query: AnalyticsQuery) {
   return qs ? `/analytics/questions?${qs}` : "/analytics/questions";
 }
 
-/** Survey breakdown → full surveys page */
-export function analyticsSurveysHref(query: Pick<AnalyticsQuery, "from" | "to" | "surveyId">) {
-  const params = new URLSearchParams();
-  appendCommon(params, query);
-  const qs = params.toString();
-  return qs ? `/analytics/surveys?${qs}` : "/analytics/surveys";
-}
-
-/** Back to main analytics with same filters */
+/** Back to this survey's analytics (or survey list if none) */
 export function analyticsHomeHref(query: Pick<AnalyticsQuery, "from" | "to" | "surveyId">) {
   const params = new URLSearchParams();
-  appendCommon(params, query);
+  if (query.from) params.set("from", query.from);
+  if (query.to) params.set("to", query.to);
   const qs = params.toString();
-  return qs ? `/analytics?${qs}` : "/analytics";
+  if (query.surveyId && query.surveyId !== "all") {
+    return qs
+      ? `/survey/${query.surveyId}/analytics?${qs}`
+      : `/survey/${query.surveyId}/analytics`;
+  }
+  return "/survey";
+}
+
+/** @deprecated By-survey report removed — opens My Surveys */
+export function analyticsSurveysHref(
+  _query?: Pick<AnalyticsQuery, "from" | "to" | "surveyId">
+) {
+  return "/survey";
 }

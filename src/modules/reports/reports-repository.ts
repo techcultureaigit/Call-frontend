@@ -116,12 +116,13 @@ export function generateReportsData(
   return {
     kpis: [
       {
-        id: "total-calls",
+        id: "total_calls",
         label: "Total Calls",
         value: totalCalls.toLocaleString(),
         change: campaignId === "all" ? 12.4 : 8.2,
         changeLabel: "vs prior period",
         trend: "up",
+        icon: "phone",
       },
       {
         id: "connected",
@@ -130,30 +131,16 @@ export function generateReportsData(
         change: 62,
         changeLabel: "% of calls",
         trend: "up",
-      },
-      {
-        id: "missed",
-        label: "Missed",
-        value: String(Math.round(totalCalls * 0.38)),
-        change: 38,
-        changeLabel: "% of calls",
-        trend: "down",
-      },
-      {
-        id: "survey_complete",
-        label: "Survey Complete",
-        value: `${Math.round(totalCalls * 0.45)}/${totalCalls}`,
-        change: avgSuccess,
-        changeLabel: `${avgSuccess.toFixed(1)}% complete`,
-        trend: "up",
+        icon: "connected",
       },
       {
         id: "avg_duration",
         label: "Avg Duration",
         value: "4m 18s",
-        change: -2.3,
-        changeLabel: "vs prior period",
-        trend: "down",
+        change: 0,
+        changeLabel: `avg of ${Math.round(totalCalls * 0.62)} connected`,
+        trend: "neutral",
+        icon: "clock",
       },
     ],
     calls: {
@@ -221,6 +208,7 @@ export function generateReportsData(
     campaignBreakdown,
     callOutcomeBreakdown: emptyPie,
     surveyStatusBreakdown: sentimentBreakdown,
+    reasonBreakdown: emptyPie,
     hangupBreakdown: emptyPie,
     sentimentBreakdown,
     questions: [],

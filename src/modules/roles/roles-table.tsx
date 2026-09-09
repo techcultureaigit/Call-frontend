@@ -191,6 +191,7 @@ export function RolesTable({
   return (
     <DataTable
       embedded={embedded}
+      fillHeight
       columnLayoutKey="roles"
       columns={columns}
       data={roles}
@@ -200,7 +201,6 @@ export function RolesTable({
       emptyIcon={Shield}
       emptyTitle="No roles found"
       emptyDescription="Try a different search term or create a new role."
-      footerHint="Click a role to open its permissions page."
       minWidthClassName="min-w-190"
       getRowAccentClassName={() => TABLE_ROW_ACCENT_CLASS}
       skeletonRows={4}

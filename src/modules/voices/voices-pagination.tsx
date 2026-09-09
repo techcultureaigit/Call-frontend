@@ -7,6 +7,7 @@ interface VoicesPaginationProps {
   meta: PaginatedMeta;
   onPageChange: (page: number) => void;
   onLimitChange?: (limit: number) => void;
+  className?: string;
 }
 
 /** Thin wrapper — shared DataPagination (same as DataTable pattern). */
@@ -14,6 +15,7 @@ export function VoicesPagination({
   meta,
   onPageChange,
   onLimitChange,
+  className,
 }: VoicesPaginationProps) {
   return (
     <DataPagination
@@ -22,6 +24,7 @@ export function VoicesPagination({
       onLimitChange={onLimitChange}
       itemLabel="voices"
       variant="inline"
+      className={className}
     />
   );
 }

@@ -1,63 +1,96 @@
 /**
  * reports-export.ts
- * Export analytics to a formatted PDF report (client-side).
- * Uses Noto Sans Devanagari so Hindi / Unicode question text renders correctly.
+ * Analytics PDF — Helvetica for English, Noto Sans Devanagari for Hindi only.
+ * Layout mirrors the analytics page: KPIs, status, disconnect reason, questions.
  */
 import { jsPDF } from "jspdf";
 import { autoTable } from "jspdf-autotable";
-import type { ReportsData } from "@/types/reports";
+import type {
+  AnalyticsQuestionDetail,
+  AnalyticsSurveyDates,
+  ReportKpi,
+  ReportPieSlice,
+} from "@/types/reports";
 import { withGlobalLoader } from "@/components/shared/api-loading.store";
+import { STATUS_HINT_SHORT } from "@/modules/reports/analytics-theme";
+
+export type AnalyticsPdfData = {
+  dateRange: { from: string; to: string };
+  surveyName?: string;
+  campaignName?: string;
+  surveyDates?: AnalyticsSurveyDates | null;
+  kpis: ReportKpi[];
+  surveyStatusBreakdown: ReportPieSlice[];
+  reasonBreakdown: ReportPieSlice[];
+  questions: AnalyticsQuestionDetail[];
+  totalQuestions?: number;
+  totalAnswers?: number;
+};
 
 const MARGIN = 12;
-const FOOTER_SPACE = 10;
-const BRAND: [number, number, number] = [13, 148, 136];
-const BRAND_DARK: [number, number, number] = [15, 118, 110];
-const QUESTION_BATCH_SIZE = 40;
-const UNICODE_FONT = "NotoSansDevanagari";
-const UNICODE_FONT_FILE = "NotoSansDevanagari-Regular.ttf";
-const UNICODE_FONT_URL = "/fonts/NotoSansDevanagari-Regular.ttf";
+const FOOTER = 10;
+const NAVY: [number, number, number] = [44, 59, 89];
+const INK: [number, number, number] = [26, 34, 51];
+const MUTED: [number, number, number] = [107, 119, 140];
+const LINE: [number, number, number] = [226, 230, 237];
+const ALT: [number, number, number] = [248, 249, 252];
+const WHITE: [number, number, number] = [255, 255, 255];
+
+const UI = "helvetica";
+const HI = "NotoSansDevanagari";
+const HI_FILE = "NotoSansDevanagari-Regular.ttf";
+const HI_URL = "/fonts/NotoSansDevanagari-Regular.ttf";
+
+const STATUS_ORDER = [
+  "Complete",
+  "Partially complete",
+  "Incomplete",
+  "Missed",
+];
+
+const REASON_MEANING: Record<string, string> = {
+  "Disconnected by caller": "Caller hung up",
+  "Disconnected by agent": "Agent or system ended the call",
+  Unknown: "No reason recorded",
+};
 
 type PdfDoc = jsPDF & { lastAutoTable?: { finalY: number } };
 
-let unicodeFontBase64: string | null = null;
+let hiFontB64: string | null = null;
 
-function arrayBufferToBase64(buffer: ArrayBuffer) {
+function toB64(buffer: ArrayBuffer) {
   const bytes = new Uint8Array(buffer);
-  const chunk = 0x8000;
   let binary = "";
-  for (let i = 0; i < bytes.length; i += chunk) {
-    binary += String.fromCharCode(...bytes.subarray(i, i + chunk));
+  for (let i = 0; i < bytes.length; i += 0x8000) {
+    binary += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
   }
   return btoa(binary);
 }
 
-async function loadUnicodeFontBase64() {
-  if (unicodeFontBase64) return unicodeFontBase64;
-  const res = await fetch(UNICODE_FONT_URL);
-  if (!res.ok) {
-    throw new Error("Failed to load PDF Unicode font");
-  }
-  unicodeFontBase64 = arrayBufferToBase64(await res.arrayBuffer());
-  return unicodeFontBase64;
+async function loadHiFont() {
+  if (hiFontB64) return hiFontB64;
+  const res = await fetch(HI_URL);
+  if (!res.ok) throw new Error("Failed to load PDF Hindi font");
+  hiFontB64 = toB64(await res.arrayBuffer());
+  return hiFontB64;
 }
 
-function registerUnicodeFont(doc: jsPDF, base64: string) {
-  doc.addFileToVFS(UNICODE_FONT_FILE, base64);
-  doc.addFont(UNICODE_FONT_FILE, UNICODE_FONT, "normal");
-  doc.addFont(UNICODE_FONT_FILE, UNICODE_FONT, "bold");
-  doc.setFont(UNICODE_FONT, "normal");
+function registerHiFont(doc: jsPDF, b64: string) {
+  doc.addFileToVFS(HI_FILE, b64);
+  doc.addFont(HI_FILE, HI, "normal");
+  doc.addFont(HI_FILE, HI, "bold");
 }
 
-function formatChange(change: number) {
-  if (!Number.isFinite(change) || change === 0) return "No change";
-  return `${change > 0 ? "+" : ""}${change}% vs prior period`;
+function hasHindi(text: string) {
+  return /[\u0900-\u097F]/.test(text);
 }
 
-function formatPeriod(from: string, to: string) {
-  const fmt = (value: string) => {
-    const d = new Date(`${value}T00:00:00`);
-    if (Number.isNaN(d.getTime())) return value;
-    return d.toLocaleDateString("en-IN", {
+function period(from: string, to: string) {
+  if (!from && !to) return "All time";
+  const fmt = (v: string) => {
+    const d = new Date(`${v}T00:00:00`);
+    if (Number.isNaN(d.getTime())) return v;
+    return d.toLocaleDateString("en-GB", {
       day: "2-digit",
       month: "short",
       year: "numeric",
@@ -66,420 +99,461 @@ function formatPeriod(from: string, to: string) {
   return `${fmt(from)} – ${fmt(to)}`;
 }
 
+function formatMetaDateTime(value?: string | null) {
+  if (!value) return "—";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "—";
+  const day = date.toLocaleDateString("en-GB", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  });
+  const time = date.toLocaleTimeString("en-GB", {
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: true,
+  });
+  return `${day}, ${time}`;
+}
+
 function pct(part: number, total: number) {
   if (!total) return "0%";
   return `${Math.round((part / total) * 1000) / 10}%`;
 }
 
-function pageWidth(doc: jsPDF) {
+function sliceCount(row: ReportPieSlice) {
+  return Number(row.count ?? 0);
+}
+
+function sliceShare(row: ReportPieSlice, total: number) {
+  const count = sliceCount(row);
+  if (
+    typeof row.value === "number" &&
+    Number.isFinite(row.value) &&
+    (row.value > 0 || count === 0)
+  ) {
+    return `${row.value}%`;
+  }
+  return pct(count, total);
+}
+
+function pw(doc: jsPDF) {
   return doc.internal.pageSize.getWidth();
 }
-
-function pageHeight(doc: jsPDF) {
+function ph(doc: jsPDF) {
   return doc.internal.pageSize.getHeight();
 }
-
-function usableWidth(doc: jsPDF) {
-  return pageWidth(doc) - MARGIN * 2;
+function uw(doc: jsPDF) {
+  return pw(doc) - MARGIN * 2;
+}
+function bottom(doc: jsPDF) {
+  return ph(doc) - MARGIN - FOOTER;
 }
 
-function contentBottom(doc: jsPDF) {
-  return pageHeight(doc) - MARGIN - FOOTER_SPACE;
-}
-
-function ensureSpace(doc: PdfDoc, y: number, needed: number) {
-  if (y + needed > contentBottom(doc)) {
+function ensure(doc: PdfDoc, y: number, need: number) {
+  if (y + need > bottom(doc)) {
     doc.addPage();
     return MARGIN;
   }
   return y;
 }
 
-/** Distribute column widths as fractions of usable page width. */
-function colWidths(doc: jsPDF, fractions: number[]) {
-  const total = usableWidth(doc);
-  const sum = fractions.reduce((a, b) => a + b, 0) || 1;
-  return fractions.map((f) => Math.round(((f / sum) * total) * 100) / 100);
+function cols(doc: jsPDF, fracs: number[]) {
+  const total = uw(doc);
+  const sum = fracs.reduce((a, b) => a + b, 0) || 1;
+  return fracs.map((f) => Math.round((f / sum) * total * 100) / 100);
 }
 
-function drawSectionTitle(doc: jsPDF, y: number, title: string) {
-  doc.setFont(UNICODE_FONT, "bold");
-  doc.setFontSize(9);
-  doc.setTextColor(...BRAND_DARK);
-  doc.text(title.toUpperCase(), MARGIN, y);
-  return y + 5;
+function kpiShare(kpi: ReportKpi) {
+  if (kpi.id === "total_calls" || kpi.id === "avg_duration") {
+    return kpi.changeLabel || "";
+  }
+  const n = Number(kpi.change);
+  if (Number.isFinite(n) && kpi.changeLabel?.includes("%")) {
+    return kpi.changeLabel;
+  }
+  if (Number.isFinite(n) && n > 0) return `${n}% of calls`;
+  return kpi.changeLabel || "";
 }
 
-function tableStyles() {
-  return {
-    theme: "grid" as const,
-    tableWidth: "auto" as const,
-    styles: {
-      font: UNICODE_FONT,
-      fontStyle: "normal" as const,
-      fontSize: 8,
-      cellPadding: 2.5,
-      overflow: "linebreak" as const,
-      valign: "middle" as const,
-      lineColor: [229, 231, 235] as [number, number, number],
-      lineWidth: 0.1,
-      textColor: [17, 24, 39] as [number, number, number],
-    },
-    headStyles: {
-      font: UNICODE_FONT,
-      fontStyle: "bold" as const,
-      fillColor: BRAND,
-      textColor: 255,
-      fontSize: 8,
-    },
-    alternateRowStyles: {
-      fillColor: [252, 252, 253] as [number, number, number],
-    },
-    margin: { left: MARGIN, right: MARGIN },
-  };
+function typeLabel(type?: string) {
+  const raw = (type || "").trim();
+  if (!raw) return "—";
+  if (/yes.?no/i.test(raw) || raw.toLowerCase() === "boolean") return "YES/NO";
+  if (/text|open/i.test(raw)) return "TEXT";
+  return raw.replace(/_/g, " ").toUpperCase();
 }
 
-function drawHeader(doc: jsPDF, data: ReportsData) {
-  const surveyLabel = data.surveyName ?? data.campaignName ?? "All Surveys";
-
-  doc.setFillColor(...BRAND);
-  doc.rect(0, 0, pageWidth(doc), 2.5, "F");
-
-  let y = MARGIN + 2;
-  doc.setFont(UNICODE_FONT, "bold");
-  doc.setFontSize(8);
-  doc.setTextColor(...BRAND_DARK);
-  doc.text("AI AGENT - TECHCULTURE", MARGIN, y);
-
-  y += 6;
-  doc.setFontSize(18);
-  doc.setTextColor(17, 24, 39);
-  doc.text("Analytics Report", MARGIN, y);
-
-  y += 7;
-  doc.setFont(UNICODE_FONT, "normal");
+function section(doc: jsPDF, y: number, title: string) {
+  doc.setFont(UI, "bold");
   doc.setFontSize(10);
-  doc.setTextColor(107, 114, 128);
-  doc.text(
-    `${formatPeriod(data.dateRange.from, data.dateRange.to)} · ${surveyLabel}`,
-    MARGIN,
-    y
+  doc.setTextColor(...NAVY);
+  doc.text(title, MARGIN, y);
+  doc.setDrawColor(...LINE);
+  doc.setLineWidth(0.4);
+  doc.line(MARGIN, y + 1.8, pw(doc) - MARGIN, y + 1.8);
+  return y + 6;
+}
+
+function statusRowsForPdf(rows: ReportPieSlice[]) {
+  const byName = new Map(rows.map((row) => [row.name, row]));
+  return STATUS_ORDER.map((name) => {
+    const row = byName.get(name);
+    return {
+      name,
+      count: row ? sliceCount(row) : 0,
+      value: row?.value ?? 0,
+      fill: row?.fill ?? "",
+    } satisfies ReportPieSlice;
+  });
+}
+
+function drawHeader(doc: jsPDF, data: AnalyticsPdfData) {
+  const survey = data.surveyName ?? data.campaignName ?? "Survey";
+  const totalCalls = Number(
+    data.kpis.find((kpi) => kpi.id === "total_calls")?.value ?? 0
   );
 
-  return y + 10;
+  doc.setFillColor(...NAVY);
+  doc.rect(0, 0, pw(doc), 22, "F");
+
+  doc.setFont(UI, "bold");
+  doc.setFontSize(7);
+  doc.setTextColor(180, 190, 210);
+  doc.text("TECHCALL  |  AI VOICE & SURVEY CRM", MARGIN, 8);
+
+  doc.setFontSize(14);
+  doc.setTextColor(...WHITE);
+  doc.text("Analytics Report", MARGIN, 16);
+
+  doc.setFont(UI, "normal");
+  doc.setFontSize(8);
+  doc.setTextColor(210, 218, 230);
+  doc.text(period(data.dateRange.from, data.dateRange.to), pw(doc) - MARGIN, 8, {
+    align: "right",
+  });
+  doc.setFont(UI, "bold");
+  doc.setFontSize(10);
+  doc.setTextColor(...WHITE);
+  doc.text(
+    `${Number.isFinite(totalCalls) ? totalCalls : 0} calls`,
+    pw(doc) - MARGIN,
+    16,
+    { align: "right" }
+  );
+
+  let y = 28;
+  if (hasHindi(survey)) {
+    doc.setFont(HI, "normal");
+  } else {
+    doc.setFont(UI, "bold");
+  }
+  doc.setFontSize(11);
+  doc.setTextColor(...INK);
+  const lines = doc.splitTextToSize(survey, uw(doc));
+  doc.text(lines, MARGIN, y);
+  y += lines.length * 5 + 3;
+
+  const dates = data.surveyDates;
+  if (dates) {
+    const start = dates.startAt
+      ? formatMetaDateTime(dates.startAt)
+      : dates.scheduledAt
+        ? formatMetaDateTime(dates.scheduledAt)
+        : "—";
+    const end = dates.endAt ? formatMetaDateTime(dates.endAt) : "—";
+    const window =
+      dates.callWindowStart || dates.callWindowEnd
+        ? `${dates.callWindowStart || "—"} – ${dates.callWindowEnd || "—"}`
+        : "—";
+
+    const meta = [
+      `Created: ${formatMetaDateTime(dates.createdAt)}`,
+      `Schedule: ${start} → ${end}`,
+      `Call window: ${window}`,
+    ];
+    doc.setFont(UI, "normal");
+    doc.setFontSize(7.5);
+    doc.setTextColor(...MUTED);
+    doc.text(meta.join("   ·   "), MARGIN, y);
+    y += 5;
+  }
+
+  return y;
 }
 
-function buildAnalyticsPdf(data: ReportsData, fontBase64: string): jsPDF {
+function drawKpis(doc: PdfDoc, y: number, kpis: ReportKpi[]) {
+  if (!kpis.length) return y;
+  y = section(doc, y, "Key metrics");
+  const gap = 2.5;
+  const n = Math.min(3, kpis.length);
+  const cardW = (uw(doc) - gap * (n - 1)) / n;
+  const cardH = 16;
+
+  kpis.forEach((kpi, i) => {
+    const col = i % n;
+    const row = Math.floor(i / n);
+    const x = MARGIN + col * (cardW + gap);
+    const cy = y + row * (cardH + gap);
+
+    doc.setDrawColor(...LINE);
+    doc.setFillColor(...WHITE);
+    doc.setLineWidth(0.3);
+    doc.roundedRect(x, cy, cardW, cardH, 1.2, 1.2, "FD");
+
+    doc.setFont(UI, "normal");
+    doc.setFontSize(7);
+    doc.setTextColor(...MUTED);
+    doc.text(kpi.label, x + 2.5, cy + 4.5);
+
+    doc.setFont(UI, "bold");
+    doc.setFontSize(12);
+    doc.setTextColor(...INK);
+    doc.text(String(kpi.value), x + 2.5, cy + 10);
+
+    doc.setFont(UI, "normal");
+    doc.setFontSize(6.5);
+    doc.setTextColor(...MUTED);
+    doc.text(kpiShare(kpi), x + 2.5, cy + 13.8);
+  });
+
+  return y + Math.ceil(kpis.length / n) * (cardH + gap) + 2;
+}
+
+function drawBreakdownTable(
+  doc: PdfDoc,
+  y: number,
+  title: string,
+  hint: string,
+  head: string[],
+  body: string[][],
+  fracs: number[]
+) {
+  y = ensure(doc, y, 28);
+  y = section(doc, y, title);
+  doc.setFont(UI, "normal");
+  doc.setFontSize(7);
+  doc.setTextColor(...MUTED);
+  doc.text(hint, MARGIN, y);
+  y += 3;
+
+  const widths = cols(doc, fracs);
+  autoTable(doc, {
+    startY: y,
+    theme: "plain",
+    margin: { left: MARGIN, right: MARGIN },
+    head: [head],
+    body,
+    styles: {
+      font: UI,
+      fontSize: 8.5,
+      cellPadding: 2.2,
+      textColor: INK,
+      lineColor: LINE,
+      lineWidth: 0.2,
+      valign: "middle",
+    },
+    headStyles: {
+      font: UI,
+      fontStyle: "bold",
+      fillColor: NAVY,
+      textColor: WHITE,
+      fontSize: 8,
+      cellPadding: 2.4,
+    },
+    alternateRowStyles: { fillColor: ALT },
+    columnStyles: {
+      0: { cellWidth: widths[0], fontStyle: "bold" },
+      1: { cellWidth: widths[1], textColor: MUTED, fontSize: 8 },
+      2: { cellWidth: widths[2], halign: "right", fontStyle: "bold" },
+      3: { cellWidth: widths[3], halign: "right" },
+    },
+  });
+  return (doc.lastAutoTable?.finalY ?? y) + 6;
+}
+
+function buildPdf(data: AnalyticsPdfData, fontB64: string) {
   const doc = new jsPDF({
     unit: "mm",
     format: "a4",
     orientation: "portrait",
   }) as PdfDoc;
-  registerUnicodeFont(doc, fontBase64);
+  registerHiFont(doc, fontB64);
 
   let y = drawHeader(doc, data);
-  const w = (fractions: number[]) => colWidths(doc, fractions);
+  y = drawKpis(doc, y, data.kpis ?? []);
 
-  y = drawSectionTitle(doc, y, "Key metrics");
-  {
-    const [c0, c1, c2] = w([50, 20, 30]);
+  const statusRows = statusRowsForPdf(data.surveyStatusBreakdown ?? []);
+  const statusTotal =
+    statusRows.reduce((sum, row) => sum + sliceCount(row), 0) ||
+    Number(data.kpis.find((kpi) => kpi.id === "total_calls")?.value ?? 0);
+  if (statusRows.some((row) => sliceCount(row) > 0) || statusTotal > 0) {
+    y = drawBreakdownTable(
+      doc,
+      y,
+      "Survey status",
+      "Missed = did not pick up  ·  Incomplete = picked up, no answers",
+      ["Status", "Meaning", "Count", "Share"],
+      statusRows.map((row) => [
+        row.name,
+        STATUS_HINT_SHORT[row.name] || "Survey status",
+        String(sliceCount(row)),
+        sliceShare(row, statusTotal),
+      ]),
+      [26, 44, 15, 15]
+    );
+  }
+
+  const reasonRows = (data.reasonBreakdown ?? []).filter(
+    (row) => sliceCount(row) > 0
+  );
+  const reasonTotal = reasonRows.reduce((sum, row) => sum + sliceCount(row), 0);
+  if (reasonRows.length) {
+    y = drawBreakdownTable(
+      doc,
+      y,
+      "Disconnect reason",
+      "Who ended the connected call  ·  from Reason key",
+      ["Reason", "Meaning", "Count", "Share"],
+      reasonRows.map((row) => [
+        row.name,
+        REASON_MEANING[row.name] ||
+          STATUS_HINT_SHORT[row.name] ||
+          "Recorded hangup reason",
+        String(sliceCount(row)),
+        sliceShare(row, reasonTotal),
+      ]),
+      [40, 30, 15, 15]
+    );
+  }
+
+  const questions = [...(data.questions ?? [])].sort(
+    (a, b) =>
+      (b.usersAnswered ?? b.answered) - (a.usersAnswered ?? a.answered)
+  );
+  const avgRate = questions.length
+    ? Math.round(
+        questions.reduce((s, q) => s + (q.answerRate ?? 0), 0) / questions.length
+      )
+    : 0;
+  const answers =
+    data.totalAnswers ??
+    questions.reduce((s, q) => s + (q.usersAnswered ?? q.answered ?? 0), 0);
+  const questionCount = data.totalQuestions ?? questions.length;
+
+  if (questions.length) {
+    y = ensure(doc, y, 24);
+    y = section(doc, y, "Question analytics");
+    doc.setFont(UI, "normal");
+    doc.setFontSize(7.5);
+    doc.setTextColor(...MUTED);
+    doc.text(
+      `${questionCount} questions  ·  ${avgRate}% avg answer rate  ·  ${answers} answers`,
+      MARGIN,
+      y
+    );
+    y += 3;
+
+    const [c0, c1, c2, c3, c4, c5] = cols(doc, [6, 50, 12, 10, 10, 12]);
     autoTable(doc, {
-      ...tableStyles(),
       startY: y,
-      head: [["Metric", "Value", "Change"]],
-      body: data.kpis.map((k) => [k.label, String(k.value), formatChange(k.change)]),
+      theme: "plain",
+      margin: { left: MARGIN, right: MARGIN },
+      showHead: "everyPage",
+      head: [["#", "Question", "Type", "Ans", "Skip", "Rate"]],
+      body: questions.map((q, i) => [
+        String(i + 1).padStart(2, "0"),
+        (q.question || "").trim() || `Question ${i + 1}`,
+        typeLabel(q.type),
+        String(q.usersAnswered ?? q.answered ?? 0),
+        String(q.usersSkipped ?? q.unanswered ?? 0),
+        `${Math.round(q.answerRate ?? 0)}%`,
+      ]),
+      styles: {
+        font: UI,
+        fontSize: 8.5,
+        cellPadding: { top: 2.4, right: 2, bottom: 2.4, left: 2 },
+        textColor: INK,
+        lineColor: LINE,
+        lineWidth: 0.2,
+        overflow: "linebreak",
+        valign: "top",
+      },
+      headStyles: {
+        font: UI,
+        fontStyle: "bold",
+        fillColor: NAVY,
+        textColor: WHITE,
+        fontSize: 8,
+        cellPadding: 2.4,
+        valign: "middle",
+      },
+      alternateRowStyles: { fillColor: ALT },
       columnStyles: {
-        0: { cellWidth: c0 },
-        1: { cellWidth: c1, halign: "right" },
-        2: { cellWidth: c2 },
+        0: { cellWidth: c0, halign: "right", textColor: MUTED, fontSize: 8 },
+        1: { cellWidth: c1, fontSize: 10 },
+        2: { cellWidth: c2, fontSize: 7.5, textColor: MUTED },
+        3: { cellWidth: c3, halign: "right", fontStyle: "bold" },
+        4: { cellWidth: c4, halign: "right" },
+        5: { cellWidth: c5, halign: "right", fontStyle: "bold" },
+      },
+      didParseCell: (hook) => {
+        if (hook.section !== "body" || hook.column.index !== 1) return;
+        const text = String(hook.cell.raw ?? "");
+        if (hasHindi(text)) {
+          hook.cell.styles.font = HI;
+          hook.cell.styles.fontStyle = "normal";
+          hook.cell.styles.fontSize = 10;
+        }
       },
     });
-  }
-  y = (doc.lastAutoTable?.finalY ?? y) + 8;
-
-  const totalCalls = data.calls?.total ?? 0;
-  const surveyTotal =
-    data.survey?.total ??
-    (data.survey?.complete ?? 0) +
-      (data.survey?.incomplete ?? 0) +
-      (data.survey?.partially_complete ?? 0) +
-      (data.survey?.missed ?? 0);
-
-  y = ensureSpace(doc, y, 40);
-  y = drawSectionTitle(doc, y, "Call outcomes");
-  {
-    const [c0, c1, c2] = w([45, 27.5, 27.5]);
-    autoTable(doc, {
-      ...tableStyles(),
-      startY: y,
-      head: [["Outcome", "Count", "Share"]],
-      body: [
-        [
-          "Connected",
-          (data.calls?.connected ?? 0).toLocaleString(),
-          pct(data.calls?.connected ?? 0, totalCalls),
-        ],
-        [
-          "Missed",
-          (data.calls?.missed ?? 0).toLocaleString(),
-          pct(data.calls?.missed ?? 0, totalCalls),
-        ],
-        ["Total", totalCalls.toLocaleString(), "100%"],
-      ],
-      columnStyles: {
-        0: { cellWidth: c0 },
-        1: { cellWidth: c1, halign: "right" },
-        2: { cellWidth: c2, halign: "right" },
-      },
-    });
-  }
-  y = (doc.lastAutoTable?.finalY ?? y) + 8;
-
-  y = ensureSpace(doc, y, 40);
-  y = drawSectionTitle(doc, y, "Survey status");
-  {
-    const [c0, c1, c2] = w([45, 27.5, 27.5]);
-    autoTable(doc, {
-      ...tableStyles(),
-      startY: y,
-      head: [["Status", "Count", "Share"]],
-      body: [
-        [
-          "Complete",
-          (data.survey?.complete ?? 0).toLocaleString(),
-          pct(data.survey?.complete ?? 0, surveyTotal),
-        ],
-        [
-          "Partially complete",
-          (data.survey?.partially_complete ?? 0).toLocaleString(),
-          pct(data.survey?.partially_complete ?? 0, surveyTotal),
-        ],
-        [
-          "Incomplete",
-          (data.survey?.incomplete ?? 0).toLocaleString(),
-          pct(data.survey?.incomplete ?? 0, surveyTotal),
-        ],
-      ],
-      columnStyles: {
-        0: { cellWidth: c0 },
-        1: { cellWidth: c1, halign: "right" },
-        2: { cellWidth: c2, halign: "right" },
-      },
-    });
-  }
-  y = (doc.lastAutoTable?.finalY ?? y) + 4;
-
-  doc.setFont(UNICODE_FONT, "normal");
-  doc.setFontSize(8);
-  doc.setTextColor(107, 114, 128);
-  doc.text(`Progress: ${data.survey?.counting ?? "—"}`, MARGIN, y + 4);
-  y += 10;
-
-  y = ensureSpace(doc, y, 24);
-  y = drawSectionTitle(doc, y, "Duration summary");
-  {
-    const [c0, c1, c2] = w([1, 1, 1]);
-    autoTable(doc, {
-      ...tableStyles(),
-      startY: y,
-      head: [["Average", "Median", "Sample size"]],
-      body: [
-        [
-          data.duration?.averageLabel ?? "—",
-          data.duration?.medianLabel ?? "—",
-          (data.duration?.sampleSize ?? 0).toLocaleString(),
-        ],
-      ],
-      columnStyles: {
-        0: { cellWidth: c0 },
-        1: { cellWidth: c1 },
-        2: { cellWidth: c2, halign: "right" },
-      },
-    });
-  }
-  y = (doc.lastAutoTable?.finalY ?? y) + 8;
-
-  const surveys = data.responsesBySurvey ?? [];
-  if (surveys.length > 0) {
-    y = ensureSpace(doc, y, 20);
-    y = drawSectionTitle(doc, y, `By survey (${surveys.length})`);
-    {
-      const [c0, c1, c2, c3, c4, c5] = w([38, 12, 12, 12, 12, 12]);
-      autoTable(doc, {
-        ...tableStyles(),
-        startY: y,
-        showHead: "everyPage",
-        head: [
-          [
-            "Survey",
-            "Total",
-            "Complete",
-            "Partial",
-            "Incomplete",
-            "Rate",
-          ],
-        ],
-        body: surveys.map((row) => [
-          row.name,
-          row.total.toLocaleString(),
-          row.complete.toLocaleString(),
-          row.partially_complete.toLocaleString(),
-          row.incomplete.toLocaleString(),
-          `${row.completionRate}%`,
-        ]),
-        columnStyles: {
-          0: { cellWidth: c0 },
-          1: { cellWidth: c1, halign: "right" },
-          2: { cellWidth: c2, halign: "right" },
-          3: { cellWidth: c3, halign: "right" },
-          4: { cellWidth: c4, halign: "right" },
-          5: { cellWidth: c5, halign: "right" },
-        },
-      });
-    }
-    y = (doc.lastAutoTable?.finalY ?? y) + 8;
+    y = (doc.lastAutoTable?.finalY ?? y) + 5;
   }
 
-  const trendRows = (data.callsOverTime ?? []).slice(-10);
-  if (trendRows.length > 0) {
-    y = ensureSpace(doc, y, 20);
-    y = drawSectionTitle(doc, y, "Recent call activity");
-    {
-      const [c0, c1, c2, c3] = w([34, 22, 22, 22]);
-      autoTable(doc, {
-        ...tableStyles(),
-        startY: y,
-        head: [["Date", "Calls", "Connected", "Missed"]],
-        body: trendRows.map((point) => [
-          point.label,
-          String(point.calls ?? point.value ?? 0),
-          String(point.connected ?? "—"),
-          String(point.missed ?? "—"),
-        ]),
-        columnStyles: {
-          0: { cellWidth: c0 },
-          1: { cellWidth: c1, halign: "right" },
-          2: { cellWidth: c2, halign: "right" },
-          3: { cellWidth: c3, halign: "right" },
-        },
-      });
-    }
-    y = (doc.lastAutoTable?.finalY ?? y) + 8;
-  }
-
-  // Prefer detailed questions list when available (correct Hindi text)
-  const detailQuestions = data.questions ?? [];
-  const questionBars = data.questionBars ?? [];
-  const questionRows =
-    detailQuestions.length > 0
-      ? detailQuestions.map((q, index) => ({
-          index: index + 1,
-          text: (q.question || "").trim() || `Question ${index + 1}`,
-          answered: q.usersAnswered ?? q.answered ?? 0,
-          skipped: q.usersSkipped ?? q.unanswered ?? 0,
-          rate: Math.round(q.answerRate ?? 0),
-        }))
-      : questionBars.map((q, index) => {
-          const answered = q.answered ?? 0;
-          const unanswered = q.unanswered ?? 0;
-          const total = answered + unanswered;
-          const rate =
-            q.answerRate ??
-            (total ? Math.round((answered / total) * 1000) / 10 : 0);
-          return {
-            index: index + 1,
-            text: (q.fullLabel || q.label || "").trim() || `Question ${index + 1}`,
-            answered,
-            skipped: unanswered,
-            rate,
-          };
-        });
-
-  if (questionRows.length > 0) {
-    for (
-      let offset = 0;
-      offset < questionRows.length;
-      offset += QUESTION_BATCH_SIZE
-    ) {
-      const batch = questionRows.slice(offset, offset + QUESTION_BATCH_SIZE);
-      const batchEnd = offset + batch.length;
-      const title =
-        offset === 0
-          ? `Question analytics (${questionRows.length})`
-          : `Question analytics (${offset + 1}–${batchEnd} of ${questionRows.length})`;
-
-      y = ensureSpace(doc, y, 20);
-      y = drawSectionTitle(doc, y, title);
-      {
-        const [c0, c1, c2, c3, c4] = w([8, 58, 12, 12, 10]);
-        autoTable(doc, {
-          ...tableStyles(),
-          startY: y,
-          showHead: "everyPage",
-          head: [["#", "Question", "Answered", "Skipped", "Rate"]],
-          body: batch.map((q) => [
-            String(q.index),
-            q.text,
-            String(q.answered),
-            String(q.skipped),
-            `${q.rate}%`,
-          ]),
-          columnStyles: {
-            0: { cellWidth: c0, halign: "right" },
-            1: { cellWidth: c1 },
-            2: { cellWidth: c2, halign: "right" },
-            3: { cellWidth: c3, halign: "right" },
-            4: { cellWidth: c4, halign: "right" },
-          },
-          didParseCell: (hookData) => {
-            // Keep Unicode font on every cell (Hindi questions)
-            hookData.cell.styles.font = UNICODE_FONT;
-          },
-        });
-      }
-      y = (doc.lastAutoTable?.finalY ?? y) + 8;
-    }
-  }
-
-  const generatedAt = new Date().toLocaleString("en-IN", {
+  const when = new Date().toLocaleString("en-IN", {
     day: "2-digit",
     month: "short",
     year: "numeric",
     hour: "2-digit",
     minute: "2-digit",
   });
+  y = ensure(doc, y, 6);
+  doc.setFont(UI, "normal");
+  doc.setFontSize(7);
+  doc.setTextColor(...MUTED);
+  doc.text(`Generated ${when}`, pw(doc) / 2, y, { align: "center" });
 
-  y = ensureSpace(doc, y, 8);
-  doc.setFont(UNICODE_FONT, "normal");
-  doc.setFontSize(8);
-  doc.setTextColor(156, 163, 175);
-  doc.text(`Generated ${generatedAt}`, pageWidth(doc) / 2, y, {
-    align: "center",
-  });
-
-  const totalPages = doc.getNumberOfPages();
-  for (let i = 1; i <= totalPages; i += 1) {
+  const pages = doc.getNumberOfPages();
+  for (let i = 1; i <= pages; i += 1) {
     doc.setPage(i);
-    doc.setFont(UNICODE_FONT, "normal");
-    doc.setFontSize(8);
-    doc.setTextColor(156, 163, 175);
-    doc.text(
-      `Ai Agent - TechCulture · Page ${i} of ${totalPages}`,
-      pageWidth(doc) / 2,
-      pageHeight(doc) - 6,
-      { align: "center" }
-    );
+    doc.setDrawColor(...LINE);
+    doc.setLineWidth(0.25);
+    doc.line(MARGIN, ph(doc) - 7.5, pw(doc) - MARGIN, ph(doc) - 7.5);
+    doc.setFont(UI, "normal");
+    doc.setFontSize(7);
+    doc.setTextColor(...MUTED);
+    doc.text("TechCall CRM", MARGIN, ph(doc) - 4);
+    doc.text(`Page ${i} of ${pages}`, pw(doc) - MARGIN, ph(doc) - 4, {
+      align: "right",
+    });
   }
 
   return doc;
 }
 
-export async function exportReportsPdf(data: ReportsData) {
+function fileSafe(v: string) {
+  return v.replace(/[^a-zA-Z0-9._-]+/g, "-").replace(/-+/g, "-").slice(0, 40);
+}
+
+export async function exportReportsPdf(data: AnalyticsPdfData) {
   await withGlobalLoader(
     async () => {
-      const fontBase64 = await loadUnicodeFontBase64();
-      const doc = buildAnalyticsPdf(data, fontBase64);
-      doc.save(`crm-analytics-${data.dateRange.from}-${data.dateRange.to}.pdf`);
+      const font = await loadHiFont();
+      const doc = buildPdf(data, font);
+      const from = data.dateRange.from || "all";
+      const to = data.dateRange.to || "time";
+      const survey = fileSafe(data.surveyName || data.campaignName || "survey");
+      doc.save(`analytics-${survey}-${from}-${to}.pdf`);
     },
     { label: "Exporting", hint: "Preparing your report" }
   );

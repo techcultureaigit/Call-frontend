@@ -17,30 +17,26 @@ export type AnalyticsTrendMode = "all" | "connected" | "missed" | "completion";
 export const KPI_FILTER_LABELS: Record<AnalyticsKpiFilterId, string> = {
   total_calls: "All calls",
   connected: "Connected calls",
-  survey_complete: "Survey complete",
+  survey_complete: "Complete",
   survey_incomplete: "Incomplete",
   survey_partial: "Partially complete",
-  survey_missed: "Survey missed",
+  survey_missed: "Missed",
   avg_duration: "Avg duration",
-  missed: "Missed calls",
+  missed: "Missed",
   recording: "Recording coverage",
 };
 
 /** Map donut slice name → KPI filter for popup details */
 export function sliceToKpiFilter(
-  variant: "call" | "survey",
+  variant: "survey" | "reason",
   sliceName: string
 ): AnalyticsKpiFilterId | null {
   const name = sliceName.trim().toLowerCase();
-  if (variant === "call") {
-    if (name === "connected") return "connected";
-    if (name === "missed") return "missed";
-  }
   if (variant === "survey") {
     if (name === "complete") return "survey_complete";
     if (name === "incomplete") return "survey_incomplete";
     if (name === "partially complete") return "survey_partial";
-    if (name === "missed") return "survey_incomplete";
+    if (name === "missed") return "missed";
   }
   return null;
 }
@@ -59,7 +55,6 @@ export function applyKpiFilter(
   filter: AnalyticsKpiFilterId
 ): FilteredAnalyticsView {
   const callsOverTime = data.callsOverTime ?? [];
-  const completionTrend = data.completionTrend ?? data.successRateTrend ?? [];
 
   if (filter === "connected") {
     return {
@@ -92,17 +87,16 @@ export function applyKpiFilter(
   }
 
   if (filter === "survey_complete") {
-    const mapped = completionTrend.map((row) => ({
+    const mapped = callsOverTime.map((row) => ({
       label: row.label,
       calls: Number(row.complete ?? 0),
       value: Number(row.complete ?? 0),
       connected: Number(row.complete ?? 0),
       missed: Math.max(
         0,
-        Number(row.total ?? 0) - Number(row.complete ?? 0)
+        Number(row.calls ?? row.total ?? 0) - Number(row.complete ?? 0)
       ),
-      success: Number(row.success ?? row.value ?? 0),
-      total: Number(row.total ?? 0),
+      total: Number(row.calls ?? row.total ?? 0),
       complete: Number(row.complete ?? 0),
     }));
 

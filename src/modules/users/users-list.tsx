@@ -194,7 +194,7 @@ export function UsersListView() {
             hint="Fetching latest data"
           />
         ) : (
-          <ListTableCard>
+          <ListTableCard className="flex flex-col overflow-hidden">
             <UsersListToolbar
               embedded
               search={search}
@@ -217,15 +217,14 @@ export function UsersListView() {
               isTogglingId={togglingId}
               onColumnsControlReady={setColumnsControl}
             />
+            {meta.total > 0 ? (
+              <UsersPagination
+                meta={meta}
+                onPageChange={setPage}
+                onLimitChange={setPageSize}
+              />
+            ) : null}
           </ListTableCard>
-        )}
-
-        {!showLoader && meta.total > 0 && (
-          <UsersPagination
-            meta={meta}
-            onPageChange={setPage}
-            onLimitChange={setPageSize}
-          />
         )}
       </motion.div>
 

@@ -125,7 +125,7 @@ export function RolesListView() {
             hint="Fetching latest data"
           />
         ) : (
-          <ListTableCard>
+          <ListTableCard className="flex flex-col overflow-hidden">
             <RolesToolbar
               filtersOnly
               search={search}

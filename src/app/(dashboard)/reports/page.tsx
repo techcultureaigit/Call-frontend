@@ -1,18 +1,15 @@
 import { redirect } from "next/navigation";
 
-export default function ReportsRedirectPage({
-  searchParams,
-}: {
-  searchParams: Record<string, string | string[] | undefined>;
-}) {
-  const query = new URLSearchParams();
-  for (const [key, value] of Object.entries(searchParams)) {
-    if (Array.isArray(value)) {
-      value.forEach((v) => query.append(key, v));
-    } else if (value != null) {
-      query.set(key, value);
-    }
+interface PageProps {
+  searchParams: Promise<{ surveyId?: string | string[] }>;
+}
+
+export default async function ReportsRedirectPage({ searchParams }: PageProps) {
+  const params = await searchParams;
+  const raw = params.surveyId;
+  const surveyId = Array.isArray(raw) ? raw[0] : raw;
+  if (surveyId && surveyId !== "all") {
+    redirect(`/survey/${surveyId}/analytics`);
   }
-  const qs = query.toString();
-  redirect(qs ? `/analytics?${qs}` : "/analytics");
+  redirect("/survey");
 }

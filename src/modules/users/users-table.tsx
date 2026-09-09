@@ -247,6 +247,7 @@ export function UsersTable({
   return (
     <DataTable
       embedded={embedded}
+      fillHeight
       columnLayoutKey="users"
       columns={columns}
       data={users}
@@ -258,7 +259,6 @@ export function UsersTable({
       emptyIcon={Users}
       emptyTitle="No users found"
       emptyDescription="Try adjusting your search or filters, or create a new user."
-      footerHint="Click a row to edit. Use the menu for more actions."
       minWidthClassName="min-w-200"
       getRowAccentClassName={() => TABLE_ROW_ACCENT_CLASS}
       skeletonRows={8}

@@ -37,7 +37,7 @@ export function AnalyticsKpiSparkline({
       viewBox={`0 0 ${width} ${height}`}
       preserveAspectRatio="none"
       className={cn(
-        "pointer-events-none absolute inset-x-0 bottom-0 h-8 w-full opacity-40",
+        "pointer-events-none absolute bottom-0 left-0 h-8 w-full opacity-40",
         className
       )}
     >

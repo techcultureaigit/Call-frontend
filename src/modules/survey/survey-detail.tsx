@@ -30,7 +30,7 @@ import {
 } from "@/modules/voices/voice-playback";
 import type { Agent as Survey } from "@/types/agent";
 import { motion } from "framer-motion";
-import { ArrowLeft, CalendarClock, Clock, Copy, FileUp, Globe, MessageSquare, Mic, Pencil, Volume2, Bot } from "lucide-react";
+import { ArrowLeft, BarChart3, CalendarClock, Clock, Copy, FileUp, Globe, MessageSquare, Mic, Pencil, Volume2, Bot } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -135,6 +135,7 @@ export function SurveyDetailView({ survey }: { survey: Survey }) {
     isReady,
     canCreateSurvey,
     canUpdateSurvey,
+    canReadReports,
   } = usePermissions();
   const locked = isSurveyCompleted(currentSurvey);
   const canSchedule =
@@ -252,6 +253,24 @@ export function SurveyDetailView({ survey }: { survey: Survey }) {
             </div>
 
             <div className="flex shrink-0 flex-wrap gap-2 sm:justify-end">
+              {locked && canReadReports ? (
+                <Button
+                  asChild
+                  className="rounded-[6px] bg-[#2c3b59] text-white hover:bg-[#24314a]"
+                >
+                  <Link href={`/survey/${currentSurvey.id}/analytics`}>
+                    <BarChart3 className="size-4" />
+                    Analytics
+                  </Link>
+                </Button>
+              ) : null}
+              {locked ? (
+                <Button asChild variant="outline" className="rounded-[6px]">
+                  <Link href={`/survey/${currentSurvey.id}/results`}>
+                    Response
+                  </Link>
+                </Button>
+              ) : null}
               {canSchedule ? (
                 <Button
                   type="button"
@@ -432,106 +451,185 @@ export function SurveyDetailView({ survey }: { survey: Survey }) {
                     No questions added.
                   </p>
                 ) : (
-                  <ul className="space-y-1.5">
-                    {questions.map((q, i) => {
-                      const text =
-                        (typeof q.question === "string" && q.question.trim()) ||
-                        Object.entries(q)
-                          .filter(
-                            ([k, v]) =>
-                              ![
-                                "id",
-                                "_id",
-                                "type",
-                                "options",
-                                "instruction",
-                                "conditions",
-                                "__v",
-                              ].includes(k) &&
-                              typeof v === "string" &&
-                              v.trim()
-                          )
-                          .map(([, v]) => String(v))[0] ||
-                        "Untitled row";
-                      const instruction =
-                        (typeof q.instruction === "string" &&
-                          q.instruction.trim()) ||
-                        "";
-                      const conditions = Array.isArray(q.conditions)
-                        ? q.conditions.filter((row) => {
-                            if (!row || typeof row !== "object") return false;
-                            if (Array.isArray(row.thenShowQuestions)) {
-                              return row.thenShowQuestions.some((item) =>
-                                String(item?.question || "").trim()
-                              );
-                            }
-                            const legacy = row as {
-                              thenShowQuestion?: string;
-                              thenShowQuestionId?: string;
-                            };
-                            return Boolean(
-                              String(
-                                legacy.thenShowQuestion ||
-                                  legacy.thenShowQuestionId ||
-                                  ""
-                              ).trim()
-                            );
-                          })
-                        : [];
+                  (() => {
+                    const nestedTotal = questions.reduce((sum, q) => {
+                      if (!Array.isArray(q.conditions)) return sum;
                       return (
-                        <li key={q.id} className="text-sm">
-                          <span className="font-medium text-muted-foreground">
-                            {i + 1}.
-                          </span>{" "}
-                          {text}
-                          {q.type ? (
-                            <span className="ml-1 text-xs text-muted-foreground">
-                              ({String(q.type)})
-                            </span>
-                          ) : null}
-                          {instruction ? (
-                            <p className="mt-0.5 pl-5 text-xs text-muted-foreground">
-                              {instruction}
-                            </p>
-                          ) : null}
-                          {conditions.length > 0 ? (
-                            <p className="mt-0.5 pl-5 text-xs text-muted-foreground">
-                              {conditions
-                                .map((row) => {
-                                  const answer = String(row.ifAnswer || "").trim();
+                        sum +
+                        q.conditions.reduce((n, row) => {
+                          if (Array.isArray(row.thenShowQuestions)) {
+                            return (
+                              n +
+                              row.thenShowQuestions.filter((item) =>
+                                String(item?.question || "").trim()
+                              ).length
+                            );
+                          }
+                          const legacy = row as {
+                            thenShowQuestion?: string;
+                            thenShowQuestionId?: string;
+                          };
+                          return (
+                            n +
+                            (String(
+                              legacy.thenShowQuestion ||
+                                legacy.thenShowQuestionId ||
+                                ""
+                            ).trim()
+                              ? 1
+                              : 0)
+                          );
+                        }, 0)
+                      );
+                    }, 0);
+
+                    return (
+                      <div className="space-y-2.5">
+                        <p className="text-xs text-muted-foreground">
+                          {questions.length} question
+                          {questions.length === 1 ? "" : "s"}
+                          {nestedTotal > 0
+                            ? ` · ${questions.length + nestedTotal} total (incl. ${nestedTotal} nested)`
+                            : ""}
+                        </p>
+                        <ul className="space-y-2">
+                          {questions.map((q, i) => {
+                            const text =
+                              (typeof q.question === "string" &&
+                                q.question.trim()) ||
+                              Object.entries(q)
+                                .filter(
+                                  ([k, v]) =>
+                                    ![
+                                      "id",
+                                      "_id",
+                                      "type",
+                                      "options",
+                                      "instruction",
+                                      "conditions",
+                                      "__v",
+                                    ].includes(k) &&
+                                    typeof v === "string" &&
+                                    v.trim()
+                                )
+                                .map(([, v]) => String(v))[0] ||
+                              "Untitled row";
+                            const instruction =
+                              (typeof q.instruction === "string" &&
+                                q.instruction.trim()) ||
+                              "";
+                            const conditions = Array.isArray(q.conditions)
+                              ? q.conditions
+                              : [];
+                            let nestedIndex = 0;
+
+                            return (
+                              <li
+                                key={q.id || `q-${i}`}
+                                className="rounded-[6px] border border-border/50 bg-background/60 p-3"
+                              >
+                                <p className="text-sm">
+                                  <span className="font-medium text-muted-foreground">
+                                    {i + 1}.
+                                  </span>{" "}
+                                  {text}
+                                  {q.type ? (
+                                    <span className="ml-1 text-xs text-muted-foreground">
+                                      ({String(q.type)})
+                                    </span>
+                                  ) : null}
+                                </p>
+                                {instruction ? (
+                                  <p className="mt-0.5 pl-5 text-xs text-muted-foreground">
+                                    {instruction}
+                                  </p>
+                                ) : null}
+
+                                {conditions.map((row, ci) => {
+                                  const answer = String(
+                                    row.ifAnswer || ""
+                                  ).trim();
                                   const followUps = Array.isArray(
                                     row.thenShowQuestions
                                   )
-                                    ? row.thenShowQuestions
-                                        .map((item) =>
-                                          String(item?.question || "").trim()
-                                        )
-                                        .filter(Boolean)
-                                    : [
-                                        String(
-                                          (
-                                            row as {
-                                              thenShowQuestion?: string;
-                                              thenShowQuestionId?: string;
-                                            }
-                                          ).thenShowQuestion ||
-                                            (
-                                              row as {
-                                                thenShowQuestionId?: string;
-                                              }
-                                            ).thenShowQuestionId ||
+                                    ? row.thenShowQuestions.filter((item) =>
+                                        String(item?.question || "").trim()
+                                      )
+                                    : (() => {
+                                        const legacy = row as {
+                                          thenShowQuestion?: string;
+                                          thenShowQuestionId?: string;
+                                        };
+                                        const t = String(
+                                          legacy.thenShowQuestion ||
+                                            legacy.thenShowQuestionId ||
                                             ""
-                                        ).trim(),
-                                      ].filter(Boolean);
-                                  return `If ${answer} → ${followUps.join(" | ")}`;
-                                })
-                                .join("; ")}
-                            </p>
-                          ) : null}
-                        </li>
-                      );
-                    })}
-                  </ul>
+                                        ).trim();
+                                        return t
+                                          ? [{ question: t } as {
+                                              question: string;
+                                              type?: string;
+                                              instruction?: string;
+                                              id?: string;
+                                            }]
+                                          : [];
+                                      })();
+                                  if (!answer || followUps.length === 0)
+                                    return null;
+
+                                  return (
+                                    <div
+                                      key={`${q.id}-cond-${ci}`}
+                                      className="mt-2 space-y-1 border-t border-border/40 pt-2 pl-5"
+                                    >
+                                      <p className="text-[11px] font-semibold text-muted-foreground">
+                                        If {answer}:
+                                      </p>
+                                      {followUps.map((item, fi) => {
+                                        nestedIndex += 1;
+                                        const qText = String(
+                                          item?.question || ""
+                                        ).trim();
+                                        const qInstr = String(
+                                          item?.instruction || ""
+                                        ).trim();
+                                        return (
+                                          <div
+                                            key={
+                                              item?.id ||
+                                              `${q.id}-${ci}-${fi}`
+                                            }
+                                            className="rounded-[4px] bg-muted/40 px-2.5 py-1.5"
+                                          >
+                                            <p className="text-sm">
+                                              <span className="font-medium text-primary">
+                                                {i + 1}.{nestedIndex}
+                                              </span>{" "}
+                                              {qText}
+                                              {item?.type ? (
+                                                <span className="ml-1 text-xs text-muted-foreground">
+                                                  ({String(item.type)})
+                                                </span>
+                                              ) : null}
+                                            </p>
+                                            {qInstr ? (
+                                              <p className="mt-0.5 text-xs text-muted-foreground">
+                                                {qInstr}
+                                              </p>
+                                            ) : null}
+                                          </div>
+                                        );
+                                      })}
+                                    </div>
+                                  );
+                                })}
+                              </li>
+                            );
+                          })}
+                        </ul>
+                      </div>
+                    );
+                  })()
                 )}
               </div>
             </StepSection>

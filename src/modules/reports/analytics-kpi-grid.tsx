@@ -3,14 +3,12 @@
 import {
   CheckCircle2,
   CircleDashed,
+  Clock,
   GripVertical,
-  Minus,
   Phone,
   PhoneMissed,
   PhoneOutgoing,
   Split,
-  TrendingDown,
-  TrendingUp,
   type LucideIcon,
 } from "lucide-react";
 import {
@@ -22,10 +20,13 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import type { ReportKpi } from "@/types/reports";
 import type { AnalyticsKpiFilterId } from "@/modules/reports/analytics-kpi-filter";
+import { DEFAULT_KPI_ORDER } from "@/modules/reports/analytics-report-layout";
+import { KPI_HINT, KPI_TONE, TONE } from "@/modules/reports/analytics-theme";
 
 const KPI_ICONS: Record<string, LucideIcon> = {
   phone: Phone,
   connected: PhoneOutgoing,
+  clock: Clock,
   missed: PhoneMissed,
   check: CheckCircle2,
   partial: Split,
@@ -35,45 +36,12 @@ const KPI_ICONS: Record<string, LucideIcon> = {
 const KPI_ICON_KEY: Record<string, string> = {
   total_calls: "phone",
   connected: "connected",
+  avg_duration: "clock",
   missed: "missed",
   survey_complete: "check",
   survey_partial: "partial",
   survey_incomplete: "incomplete",
 };
-
-function TrendCaption({ kpi }: { kpi: ReportKpi }) {
-  const isMissed = kpi.id === "missed" || kpi.id === "survey_incomplete";
-  const positive = isMissed ? kpi.change <= 0 : kpi.trend !== "down";
-  const TrendIcon =
-    kpi.trend === "up"
-      ? TrendingUp
-      : kpi.trend === "down"
-        ? TrendingDown
-        : Minus;
-
-  const showSigned =
-    kpi.id === "total_calls" ||
-    kpi.id === "avg_duration" ||
-    kpi.changeLabel.includes("vs prior");
-
-  return (
-    <p
-      className={cn(
-        "mt-1 flex flex-wrap items-center gap-x-1 gap-y-0 text-[10px] font-medium leading-snug",
-        positive ? "text-[#2c3b59]/80" : "text-[#dc2626]"
-      )}
-    >
-      <TrendIcon className="size-3 shrink-0" />
-      {showSigned ? (
-        <span className="shrink-0 tabular-nums">
-          {kpi.change > 0 ? "+" : ""}
-          {kpi.change}%
-        </span>
-      ) : null}
-      <span className="text-muted-foreground">{kpi.changeLabel}</span>
-    </p>
-  );
-}
 
 export function KpiCardBody({
   kpi,
@@ -90,24 +58,23 @@ export function KpiCardBody({
 }) {
   const iconKey = kpi.icon ?? KPI_ICON_KEY[kpi.id] ?? "phone";
   const Icon = KPI_ICONS[iconKey] ?? Phone;
+  const tone = KPI_TONE[kpi.id] ?? TONE.navy;
+  const share = kpi.id === "total_calls" ? 0 : Number(kpi.change) || 0;
 
   return (
     <div
       className={cn(
-        "flex min-h-[92px] w-full min-w-0 items-stretch gap-2 rounded-[6px] border bg-card px-3 py-3.5 shadow-subtle sm:px-3.5",
+        "relative h-[88px] overflow-hidden rounded-[6px] border border-border/70 bg-card px-3.5 py-3",
+        "shadow-[0_4px_18px_rgba(44,59,89,0.05)] transition-shadow hover:shadow-elevated",
         isSelected
-          ? "border-[#2c3b59]/30 ring-1 ring-[#2c3b59]/15"
-          : "border-border/60",
-        reorderMode && "ring-1 ring-border/50",
-        isDragging && "border-[#2c3b59]/40 shadow-elevated ring-2 ring-[#2c3b59]/20"
+          ? "border-[#2c3b59]/30 ring-1 ring-[#2c3b59]/12"
+          : "border-border/70",
+        isDragging && "shadow-elevated"
       )}
     >
       {reorderMode ? (
-        <span
-          className="inline-flex size-8 shrink-0 items-center justify-center self-center rounded-[6px] text-muted-foreground"
-          aria-hidden
-        >
-          <GripVertical className="size-4" />
+        <span className="absolute right-1.5 top-1.5 z-10 text-muted-foreground">
+          <GripVertical className="size-3.5" />
         </span>
       ) : null}
 
@@ -118,27 +85,37 @@ export function KpiCardBody({
           onSelect?.(kpi.id as AnalyticsKpiFilterId);
         }}
         disabled={reorderMode}
-        title={reorderMode ? "Drag to reorder" : "Click to open details"}
+        title={KPI_HINT[kpi.id] || kpi.label}
         className={cn(
-          "flex min-w-0 flex-1 items-center justify-between gap-2 text-left",
-          !reorderMode && "hover:opacity-90",
+          "flex h-full w-full items-center justify-between gap-3 text-left",
           "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2c3b59]/25",
           reorderMode && "pointer-events-none"
         )}
       >
-        <div className="min-w-0 flex-1">
-          <p className="text-xl font-semibold tabular-nums leading-none tracking-tight text-foreground">
-            {kpi.value}
-          </p>
-          <p className="mt-1.5 text-[11px] font-medium leading-tight text-muted-foreground">
+        <div className="min-w-0">
+          <p
+            className="truncate text-[11px] font-medium leading-tight text-muted-foreground"
+            title={kpi.label}
+          >
             {kpi.label}
           </p>
-          <TrendCaption kpi={kpi} />
+          <p className="mt-1.5 font-sans text-[22px] font-semibold tabular-nums leading-none tracking-tight text-foreground">
+            {kpi.value}
+          </p>
+          <p className="mt-1.5 truncate text-[10px] tabular-nums text-muted-foreground">
+              {kpi.id === "total_calls" || kpi.id === "avg_duration"
+                ? kpi.changeLabel
+                : `${share}% of calls`}
+            </p>
         </div>
-
-        <div className="flex size-9 shrink-0 items-center justify-center self-center rounded-[6px] bg-[#2c3b59]/10 text-[#2c3b59]">
-          <Icon className="size-[17px]" strokeWidth={2} />
-        </div>
+        <span
+          className={cn(
+            "flex size-9 shrink-0 items-center justify-center rounded-full",
+            tone.iconBg
+          )}
+        >
+          <Icon className="size-3.5" strokeWidth={2} />
+        </span>
       </button>
     </div>
   );
@@ -166,7 +143,7 @@ function SortableKpiCard({
     <div
       ref={setNodeRef}
       className={cn(
-        "min-w-0 w-full max-w-full touch-none overflow-hidden",
+        "min-w-0",
         reorderMode && "cursor-grab active:cursor-grabbing",
         isDragging && "opacity-35"
       )}
@@ -183,19 +160,17 @@ function SortableKpiCard({
   );
 }
 
+const KPI_IDS = new Set<string>(DEFAULT_KPI_ORDER);
+
 function orderKpis(
   kpis: ReportKpi[],
   order?: AnalyticsKpiFilterId[]
 ): ReportKpi[] {
-  if (!order?.length) return kpis.slice(0, 8);
-  return [
-    ...order
-      .map((id) => kpis.find((kpi) => kpi.id === id))
-      .filter((kpi): kpi is ReportKpi => Boolean(kpi)),
-    ...kpis.filter(
-      (kpi) => !order.includes(kpi.id as AnalyticsKpiFilterId)
-    ),
-  ].slice(0, 8);
+  const visible = kpis.filter((kpi) => KPI_IDS.has(kpi.id));
+  if (!order?.length) return visible;
+  return order
+    .map((id) => visible.find((kpi) => kpi.id === id))
+    .filter((kpi): kpi is ReportKpi => Boolean(kpi));
 }
 
 export function AnalyticsKpiGrid({
@@ -211,7 +186,6 @@ export function AnalyticsKpiGrid({
   selectedId?: string;
   onSelect?: (id: AnalyticsKpiFilterId) => void;
   order?: AnalyticsKpiFilterId[];
-  /** When true, cards are sortable under the parent report DndContext. */
   reorderMode?: boolean;
 }) {
   const orderedKpis = orderKpis(kpis, order);
@@ -219,46 +193,27 @@ export function AnalyticsKpiGrid({
 
   if (isLoading) {
     return (
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
-        {Array.from({ length: 6 }).map((_, i) => (
-          <div
-            key={i}
-            className="flex min-h-[92px] items-center justify-between gap-2 rounded-[6px] border border-border/50 bg-card px-3.5 py-3.5"
-          >
-            <div className="min-w-0 flex-1 space-y-2">
-              <Skeleton className="h-6 w-10" />
-              <Skeleton className="h-3 w-20" />
-              <Skeleton className="h-2.5 w-24" />
-            </div>
-            <Skeleton className="size-9 shrink-0 rounded-[6px]" />
-          </div>
+      <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-3">
+        {Array.from({ length: 3 }).map((_, i) => (
+          <Skeleton key={i} className="h-[88px] rounded-[6px]" />
         ))}
       </div>
     );
   }
 
-  const grid = (
-    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
-      {orderedKpis.map((kpi) => (
-        <SortableKpiCard
-          key={kpi.id}
-          kpi={kpi}
-          isSelected={selectedId === kpi.id}
-          reorderMode={reorderMode}
-          onSelect={onSelect}
-        />
-      ))}
-    </div>
-  );
-
-  if (!reorderMode) {
-    return grid;
-  }
-
-  // SortableContext only — parent AnalyticsReportSections owns DndContext
   return (
     <SortableContext items={itemIds} strategy={rectSortingStrategy}>
-      {grid}
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+        {orderedKpis.map((kpi) => (
+          <SortableKpiCard
+            key={kpi.id}
+            kpi={kpi}
+            isSelected={selectedId === kpi.id}
+            reorderMode={reorderMode}
+            onSelect={onSelect}
+          />
+        ))}
+      </div>
     </SortableContext>
   );
 }

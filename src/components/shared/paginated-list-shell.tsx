@@ -4,7 +4,6 @@ import type { ReactNode } from "react";
 import { DataPagination } from "@/components/shared/data-pagination";
 import { ListTableCard } from "@/components/shared/list-table-card";
 import { ListToolbar } from "@/components/shared/list-toolbar";
-import { cn } from "@/lib/utils";
 import type { PaginatedMeta } from "@/types";
 
 export interface PaginatedListShellProps {
@@ -20,21 +19,16 @@ export interface PaginatedListShellProps {
   toolbarDisabled?: boolean;
   meta: PaginatedMeta;
   onPageChange: (page: number) => void;
-  /** Passes selected rows-per-page limit to the list fetch. */
   onLimitChange?: (limit: number) => void;
   limitOptions?: readonly number[];
   itemLabel?: string;
   children: ReactNode;
-  /** Full-height layout with toolbar + table as separate cards */
   unified?: boolean;
-  /**
-   * Lock table area to remaining viewport and scroll inside (for large page sizes).
-   * Default false — table grows with rows; page scrolls if needed.
-   */
+  /** @deprecated Kept for API compat — height is content-driven + max scroll. */
   constrainHeight?: boolean;
 }
 
-/** Shared list layout: search bar + content + pagination (DRY for survey list & response). */
+/** Shared list layout: toolbar + table (max ~10 rows, then scroll) + pagination flush under rows. */
 export function PaginatedListShell({
   search,
   onSearchChange,
@@ -53,7 +47,6 @@ export function PaginatedListShell({
   itemLabel = "items",
   children,
   unified = false,
-  constrainHeight = false,
 }: PaginatedListShellProps) {
   const toolbar = (
     <ListToolbar
@@ -80,68 +73,37 @@ export function PaginatedListShell({
       limitOptions={limitOptions}
       itemLabel={itemLabel}
       variant="inline"
-      className="shrink-0"
+      className="shrink-0 border-t border-border/50 bg-card px-3 py-2.5 sm:px-4"
     />
   );
 
   if (unified) {
     return (
-      <div
-        className={cn(
-          "flex min-w-0 flex-col gap-4",
-          constrainHeight && "min-h-0 flex-1 overflow-hidden"
-        )}
-      >
-        <ListTableCard
-          className={cn(
-            "flex flex-col",
-            constrainHeight && "min-h-0 flex-1"
-          )}
-        >
-          <ListToolbar
-            className="shrink-0"
-            variant="embedded"
-            search={search}
-            onSearchChange={onSearchChange}
-            searchPlaceholder={searchPlaceholder}
-            searchAriaLabel={searchAriaLabel}
-            searchClassName={searchClassName}
-            alignControlsEnd={alignControlsEnd}
-            columnsControl={columnsControl}
-            filters={filters}
-            actions={actions}
-            disabled={toolbarDisabled}
-          />
-          <div
-            className={cn(
-              "flex min-w-0 flex-col",
-              constrainHeight && "min-h-0 flex-1 overflow-hidden"
-            )}
-          >
-            {children}
-          </div>
-        </ListTableCard>
+      <ListTableCard className="flex flex-col overflow-hidden">
+        <ListToolbar
+          className="shrink-0"
+          variant="embedded"
+          search={search}
+          onSearchChange={onSearchChange}
+          searchPlaceholder={searchPlaceholder}
+          searchAriaLabel={searchAriaLabel}
+          searchClassName={searchClassName}
+          alignControlsEnd={alignControlsEnd}
+          columnsControl={columnsControl}
+          filters={filters}
+          actions={actions}
+          disabled={toolbarDisabled}
+        />
+        <div className="min-w-0">{children}</div>
         {pagination}
-      </div>
+      </ListTableCard>
     );
   }
 
   return (
-    <div
-      className={cn(
-        "flex min-w-0 flex-col gap-4",
-        constrainHeight && "min-h-0 flex-1 overflow-hidden"
-      )}
-    >
+    <div className="flex min-w-0 flex-col gap-3">
       {toolbar}
-      <div
-        className={cn(
-          "flex min-w-0 flex-col",
-          constrainHeight && "min-h-0 flex-1 overflow-hidden"
-        )}
-      >
-        {children}
-      </div>
+      <div className="min-w-0">{children}</div>
       {pagination}
     </div>
   );

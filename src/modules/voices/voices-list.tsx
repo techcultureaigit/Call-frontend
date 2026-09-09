@@ -218,7 +218,7 @@ export function VoicesListView() {
                     hint="Fetching voice catalog"
                   />
                 ) : (
-                  <ListTableCard>
+                  <ListTableCard className="flex flex-col overflow-hidden">
                     <VoiceFiltersSidebar
                       embedded
                       filters={filters}
@@ -232,17 +232,17 @@ export function VoicesListView() {
                       isLoading={isRefreshing}
                       onColumnsControlReady={setColumnsControl}
                     />
+                    {!showInitialLoader && meta.total > 0 ? (
+                      <VoicesPagination
+                        meta={meta}
+                        onPageChange={setPage}
+                        onLimitChange={setPageSize}
+                        className="shrink-0 border-t border-border/50 bg-card px-3 py-2.5 sm:px-4"
+                      />
+                    ) : null}
                   </ListTableCard>
                 )}
               </>
-            )}
-
-            {!showInitialLoader && !isError && meta.total > 0 && (
-              <VoicesPagination
-                meta={meta}
-                onPageChange={setPage}
-                onLimitChange={setPageSize}
-              />
             )}
           </div>
 

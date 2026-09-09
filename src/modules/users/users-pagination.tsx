@@ -22,6 +22,7 @@ export function UsersPagination({
       onLimitChange={onLimitChange}
       itemLabel="users"
       variant="inline"
+      className="shrink-0 border-t border-border/50 bg-card px-3 py-2.5 sm:px-4"
     />
   );
 }

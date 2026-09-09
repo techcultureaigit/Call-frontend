@@ -1,28 +1,15 @@
-import type { Metadata } from "next";
-import { Suspense } from "react";
-import { ReportsView } from "@/modules/reports";
-import { Skeleton } from "@/components/ui/skeleton";
+import { redirect } from "next/navigation";
 
-export const metadata: Metadata = {
-  title: "Analytics Report",
-};
+interface PageProps {
+  searchParams: Promise<{ surveyId?: string | string[] }>;
+}
 
-export default function AnalyticsPage() {
-  return (
-    <Suspense
-      fallback={
-        <div className="space-y-4 p-6">
-          <Skeleton className="h-10 w-64" />
-          <Skeleton className="h-28 w-full" />
-          <div className="grid gap-4 sm:grid-cols-3">
-            <Skeleton className="h-28" />
-            <Skeleton className="h-28" />
-            <Skeleton className="h-28" />
-          </div>
-        </div>
-      }
-    >
-      <ReportsView />
-    </Suspense>
-  );
+export default async function AnalyticsRedirectPage({ searchParams }: PageProps) {
+  const params = await searchParams;
+  const raw = params.surveyId;
+  const surveyId = Array.isArray(raw) ? raw[0] : raw;
+  if (surveyId && surveyId !== "all") {
+    redirect(`/survey/${surveyId}/analytics`);
+  }
+  redirect("/survey");
 }

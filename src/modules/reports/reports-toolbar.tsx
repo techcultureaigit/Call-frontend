@@ -1,84 +1,99 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
 import {
-  CalendarDays,
-  ChevronDown,
-  ChevronLeft,
-  ChevronRight,
-  FileText,
-  GripVertical,
+  ArrowLeft,
+  BarChart3,
+  CalendarCheck2,
+  CalendarPlus,
+  CalendarRange,
+  Download,
+  ListFilter,
+  MessagesSquare,
   RotateCcw,
+  type LucideIcon,
 } from "lucide-react";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { SearchableSelect } from "@/components/ui/searchable-select";
-import { PAGE_TITLE_CLASS } from "@/components/shared/page-heading";
 import { cn } from "@/lib/utils";
+import type { AnalyticsSurveyDates } from "@/types/reports";
 
-const WEEKDAYS = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
-
-function toKey(date: Date) {
-  const y = date.getFullYear();
-  const m = String(date.getMonth() + 1).padStart(2, "0");
-  const d = String(date.getDate()).padStart(2, "0");
-  return `${y}-${m}-${d}`;
+function formatMetaDateTime(value?: string | null) {
+  if (!value) return "—";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "—";
+  const day = date.toLocaleDateString("en-GB", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  });
+  const time = date.toLocaleTimeString("en-GB", {
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: true,
+  });
+  return `${day}, ${time}`;
 }
 
-function parseKey(value: string) {
-  const [y, m, d] = value.split("-").map(Number);
-  return new Date(y, m - 1, d);
+function formatSurveyPeriod(dates?: AnalyticsSurveyDates | null) {
+  if (dates?.callWindowStart || dates?.callWindowEnd) {
+    return `${dates.callWindowStart || "—"} – ${dates.callWindowEnd || "—"}`;
+  }
+  return "—";
 }
 
-function formatShortDate(value: string) {
-  const date = parseKey(value);
-  if (Number.isNaN(date.getTime())) return value;
-  return date
-    .toLocaleDateString("en-GB", {
-      day: "2-digit",
-      month: "short",
-      year: "numeric",
-    })
-    .replace(/ /g, "-");
+function scheduledLabel(dates?: AnalyticsSurveyDates | null) {
+  if (!dates?.startAt && !dates?.endAt && !dates?.scheduledAt) {
+    if (
+      dates?.schedulingStatus !== "scheduled" &&
+      dates?.schedulingStatus !== "completed"
+    ) {
+      return "Not scheduled";
+    }
+  }
+  const start = dates?.startAt
+    ? formatMetaDateTime(dates.startAt)
+    : dates?.scheduledAt
+      ? formatMetaDateTime(dates.scheduledAt)
+      : "—";
+  const end = dates?.endAt ? formatMetaDateTime(dates.endAt) : "—";
+  return `Start: ${start}\nEnd: ${end}`;
 }
 
-function sameDay(a: Date, b: Date) {
+function DateTile({
+  icon: Icon,
+  label,
+  value,
+}: {
+  icon: LucideIcon;
+  label: string;
+  value: string;
+}) {
   return (
-    a.getFullYear() === b.getFullYear() &&
-    a.getMonth() === b.getMonth() &&
-    a.getDate() === b.getDate()
+    <div className="flex min-w-0 items-center gap-2.5 rounded-[6px] border border-border/50 bg-card px-3 py-2 shadow-subtle">
+      <span className="flex size-8 shrink-0 items-center justify-center rounded-[6px] bg-[#2c3b59]/10 text-[#2c3b59]">
+        <Icon className="size-3.5" aria-hidden />
+      </span>
+      <div className="min-w-0 leading-tight">
+        <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+          {label}
+        </p>
+        <p
+          className="whitespace-pre-line text-[12px] font-semibold tabular-nums text-foreground sm:text-[13px]"
+          title={value}
+        >
+          {value}
+        </p>
+      </div>
+    </div>
   );
 }
 
-function getMonthCells(view: Date) {
-  const year = view.getFullYear();
-  const month = view.getMonth();
-  const first = new Date(year, month, 1);
-  const startPad = first.getDay();
-  const daysInMonth = new Date(year, month + 1, 0).getDate();
-  const cells: (Date | null)[] = [];
-
-  for (let i = 0; i < startPad; i++) cells.push(null);
-  for (let day = 1; day <= daysInMonth; day++) {
-    cells.push(new Date(year, month, day));
-  }
-  while (cells.length % 7 !== 0) cells.push(null);
-  return cells;
-}
-
 interface ReportsToolbarProps {
-  dateFrom: string;
-  dateTo: string;
-  onDateFromChange: (v: string) => void;
-  onDateToChange: (v: string) => void;
   surveyId: string;
   surveyName?: string;
-  onSurveyChange: (v: string) => void;
-  surveys: { id: string; name: string }[];
+  totalCalls?: number;
+  surveyDates?: AnalyticsSurveyDates | null;
+  lockedSurveyId?: string;
   onExportPdf: () => void;
   isExporting?: boolean;
   reorderMode?: boolean;
@@ -87,285 +102,121 @@ interface ReportsToolbarProps {
 }
 
 export function ReportsToolbar({
-  dateFrom,
-  dateTo,
-  onDateFromChange,
-  onDateToChange,
-  surveyId,
+  surveyId: _surveyId,
   surveyName,
-  onSurveyChange,
-  surveys,
+  totalCalls,
+  surveyDates,
+  lockedSurveyId,
   onExportPdf,
   isExporting,
   reorderMode = false,
   onReorderModeChange,
   onResetLayout,
 }: ReportsToolbarProps) {
-  const today = useMemo(() => {
-    const d = new Date();
-    d.setHours(0, 0, 0, 0);
-    return d;
-  }, []);
-
-  const [open, setOpen] = useState(false);
-  const [draftFrom, setDraftFrom] = useState(dateFrom);
-  const [draftTo, setDraftTo] = useState(dateTo);
-  const [picking, setPicking] = useState<"from" | "to">("from");
-  const [viewMonth, setViewMonth] = useState(() => parseKey(dateTo || dateFrom));
-
-  const surveyOptions = useMemo(
-    () => [
-      { label: "All Surveys", value: "all" },
-      ...surveys.map((s) => ({ label: s.name, value: s.id })),
-    ],
-    [surveys]
-  );
-
-  const cells = useMemo(() => getMonthCells(viewMonth), [viewMonth]);
-  const monthLabel = viewMonth.toLocaleDateString("en-US", {
-    month: "long",
-    year: "numeric",
-  });
-
-  const rangeStart = useMemo(() => parseKey(draftFrom), [draftFrom]);
-  const rangeEnd = useMemo(() => parseKey(draftTo), [draftTo]);
-
-  useEffect(() => {
-    if (!open) return;
-    setDraftFrom(dateFrom);
-    setDraftTo(dateTo);
-    setPicking("from");
-    setViewMonth(parseKey(dateTo || dateFrom));
-  }, [open, dateFrom, dateTo]);
-
-  const applyRange = (from: string, to: string) => {
-    const start = parseKey(from);
-    const end = parseKey(to);
-    if (start.getTime() > end.getTime()) {
-      onDateFromChange(to);
-      onDateToChange(from);
-    } else {
-      onDateFromChange(from);
-      onDateToChange(to);
-    }
-    setOpen(false);
-  };
-
-  const handleDayClick = (day: Date) => {
-    const key = toKey(day);
-
-    if (picking === "from") {
-      setDraftFrom(key);
-      if (parseKey(draftTo).getTime() < day.getTime()) {
-        setDraftTo(key);
-      }
-      setPicking("to");
-      return;
-    }
-
-    if (day.getTime() < rangeStart.getTime()) {
-      setDraftFrom(key);
-      setDraftTo(draftFrom);
-      setPicking("from");
-      return;
-    }
-
-    setDraftTo(key);
-    applyRange(draftFrom, key);
-  };
-
-  const inRange = (day: Date) => {
-    const t = day.getTime();
-    return t >= rangeStart.getTime() && t <= rangeEnd.getTime();
-  };
-
   return (
-    <div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-start sm:justify-between">
-      <div className="min-w-0">
-        <h1 className={PAGE_TITLE_CLASS}>
-          Analytics Report
-        </h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Call performance, survey insights, and response analytics
-        </p>
-        {surveyId !== "all" && surveyName ? (
-          <span className="mt-2 inline-flex rounded-[6px] border border-[#2c3b59]/15 bg-[#2c3b59]/6 px-2 py-0.5 text-[10px] font-medium text-[#2c3b59]">
-            {surveyName}
-          </span>
-        ) : null}
-      </div>
-
-      <div className="flex min-w-0 flex-wrap items-center gap-2">
-        <DropdownMenu open={open} onOpenChange={setOpen}>
-          <DropdownMenuTrigger asChild>
-            <button
-              type="button"
-              className={cn(
-                "inline-flex h-8 items-center gap-2 rounded-[6px] border border-border/60 bg-card px-2.5",
-                "text-sm font-medium text-foreground shadow-subtle outline-none",
-                "transition-colors hover:border-brand/30",
-                "focus-visible:ring-2 focus-visible:ring-brand/25",
-                open && "border-brand/40"
-              )}
-              aria-label="Select date range"
-            >
-              <CalendarDays className="size-3.5 shrink-0 text-[#2c3b59]" />
-              <span className="whitespace-nowrap tabular-nums">
-                {formatShortDate(dateFrom)} – {formatShortDate(dateTo)}
-              </span>
-              <ChevronDown
-                className={cn(
-                  "size-3.5 opacity-50 transition-transform",
-                  open && "rotate-180"
-                )}
-              />
-            </button>
-          </DropdownMenuTrigger>
-
-          <DropdownMenuContent
-            align="end"
-            className="w-[300px] rounded-[6px] p-3"
-            onCloseAutoFocus={(e) => e.preventDefault()}
+    <div className="flex shrink-0 flex-col gap-2.5">
+      <div className="flex flex-wrap items-start justify-between gap-x-6 gap-y-3">
+        <div className="flex min-w-0 max-w-2xl items-start gap-3">
+          <Button
+            asChild
+            variant="outline"
+            size="icon"
+            className="mt-0.5 size-9 shrink-0"
           >
-            <div className="mb-3 flex items-center justify-between gap-2">
-              <button
-                type="button"
-                className="inline-flex size-8 items-center justify-center rounded-[6px] text-muted-foreground hover:bg-muted hover:text-foreground"
-                onClick={() =>
-                  setViewMonth(
-                    new Date(viewMonth.getFullYear(), viewMonth.getMonth() - 1, 1)
-                  )
-                }
-                aria-label="Previous month"
-              >
-                <ChevronLeft className="size-4" />
-              </button>
-              <p className="text-sm font-semibold text-foreground">{monthLabel}</p>
-              <button
-                type="button"
-                className="inline-flex size-8 items-center justify-center rounded-[6px] text-muted-foreground hover:bg-muted hover:text-foreground"
-                onClick={() =>
-                  setViewMonth(
-                    new Date(viewMonth.getFullYear(), viewMonth.getMonth() + 1, 1)
-                  )
-                }
-                aria-label="Next month"
-              >
-                <ChevronRight className="size-4" />
-              </button>
-            </div>
+            <Link
+              href={lockedSurveyId ? `/survey/${lockedSurveyId}` : "/survey"}
+              aria-label="Back to survey"
+            >
+              <ArrowLeft className="size-4" />
+            </Link>
+          </Button>
+          <div className="mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-[6px] bg-[#2c3b59]/10 text-[#2c3b59]">
+            <BarChart3 className="size-4" />
+          </div>
+          <div className="min-w-0">
+            <h1 className="font-sans text-[22px] font-semibold tracking-tight text-[#1a2233]">
+              Analytics
+            </h1>
+            <p className="mt-0.5 truncate text-[13px] text-muted-foreground">
+              {surveyName
+                ? `${surveyName}${
+                    typeof totalCalls === "number"
+                      ? ` · ${totalCalls.toLocaleString()} Calls`
+                      : ""
+                  }`
+                : "Survey performance, missed calls, and completion"}
+            </p>
+          </div>
+        </div>
 
-            <div className="mb-1 grid grid-cols-7 gap-1">
-              {WEEKDAYS.map((day) => (
-                <div
-                  key={day}
-                  className="py-1 text-center text-[10px] font-semibold uppercase tracking-wide text-muted-foreground"
-                >
-                  {day}
-                </div>
-              ))}
-            </div>
+        <div className="flex shrink-0 flex-wrap items-center gap-2">
+          {lockedSurveyId ? (
+            <Button
+              asChild
+              variant="outline"
+              size="sm"
+              className="h-9 gap-1.5 px-3 text-sm"
+            >
+              <Link href={`/survey/${lockedSurveyId}/results`}>
+                <MessagesSquare className="size-3.5" />
+                Responses
+              </Link>
+            </Button>
+          ) : null}
 
-            <div className="grid grid-cols-7 gap-1">
-              {cells.map((day, index) => {
-                if (!day) {
-                  return <div key={`empty-${index}`} className="size-8" />;
-                }
-
-                const isStart = sameDay(day, rangeStart);
-                const isEnd = sameDay(day, rangeEnd);
-                const isSelected = isStart || isEnd;
-                const isToday = sameDay(day, today);
-                const isFuture = day > today;
-                const isInRange = inRange(day) && !isSelected;
-
-                return (
-                  <button
-                    key={toKey(day)}
-                    type="button"
-                    disabled={isFuture}
-                    onClick={() => handleDayClick(day)}
-                    className={cn(
-                      "size-8 rounded-[6px] text-[12px] font-medium tabular-nums transition-colors",
-                      isFuture && "cursor-not-allowed opacity-30",
-                      !isFuture &&
-                        !isSelected &&
-                        !isInRange &&
-                        "text-foreground hover:bg-brand/10 hover:text-brand",
-                      isToday && !isSelected && "ring-1 ring-brand/30",
-                      isInRange && "bg-brand/10 text-brand",
-                      isSelected &&
-                        "bg-brand text-brand-foreground shadow-brand hover:bg-brand"
-                    )}
-                  >
-                    {day.getDate()}
-                  </button>
-                );
-              })}
-            </div>
-
-            <div className="mt-3 flex items-center justify-between border-t border-border/50 pt-3">
-              <p className="text-[10px] text-muted-foreground">
-                {picking === "from" ? "Select start date" : "Select end date"}
-              </p>
-              <Button
-                type="button"
-                size="sm"
-                className="h-7 px-2.5 text-xs"
-                onClick={() => applyRange(draftFrom, draftTo)}
-              >
-                Apply
-              </Button>
-            </div>
-          </DropdownMenuContent>
-        </DropdownMenu>
-
-        <SearchableSelect
-          value={surveyId}
-          onChange={onSurveyChange}
-          options={surveyOptions}
-          placeholder="All Surveys"
-          searchPlaceholder="Search surveys…"
-          emptyMessage="No surveys found"
-          aria-label="Filter by survey"
-          className="h-8 w-[min(200px,40vw)] text-sm"
-        />
-
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => onReorderModeChange?.(!reorderMode)}
-          className={cn(
-            "h-8 gap-1.5 px-2.5 text-sm",
-            reorderMode && "border-brand/40 bg-brand/5 text-brand"
-          )}
-        >
-          <GripVertical className="size-3.5" />
-          {reorderMode ? "Done" : "Reorder"}
-        </Button>
-
-        {reorderMode && onResetLayout ? (
           <Button
             variant="outline"
             size="sm"
-            onClick={onResetLayout}
-            className="h-8 gap-1.5 px-2.5 text-sm"
+            onClick={() => onReorderModeChange?.(!reorderMode)}
+            className={cn(
+              "h-9 gap-1.5 px-3 text-sm",
+              reorderMode && "border-brand/40 bg-brand/5 text-brand"
+            )}
           >
-            <RotateCcw className="size-3.5" />
-            Reset
+            <ListFilter className="size-3.5" />
+            {reorderMode ? "Done" : "Reorder"}
           </Button>
-        ) : null}
 
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={onExportPdf}
-          disabled={isExporting}
-          className="h-8 gap-1.5 px-2.5 text-sm"
-        >
-          <FileText className="size-3.5" />
-          Export PDF
-        </Button>
+          {reorderMode && onResetLayout ? (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={onResetLayout}
+              className="h-9 gap-1.5 px-3 text-sm"
+            >
+              <RotateCcw className="size-3.5" />
+              Reset
+            </Button>
+          ) : null}
+
+          <Button
+            size="sm"
+            onClick={onExportPdf}
+            disabled={isExporting}
+            className="h-9 gap-1.5 bg-[#2c3b59] px-3.5 text-sm text-white hover:bg-[#24314a]"
+          >
+            <Download className="size-3.5" />
+            Export PDF
+          </Button>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+        <DateTile
+          icon={CalendarPlus}
+          label="Created"
+          value={formatMetaDateTime(surveyDates?.createdAt)}
+        />
+        <DateTile
+          icon={CalendarCheck2}
+          label="Scheduled"
+          value={scheduledLabel(surveyDates)}
+        />
+        <DateTile
+          icon={CalendarRange}
+          label="Call window"
+          value={formatSurveyPeriod(surveyDates)}
+        />
       </div>
     </div>
   );

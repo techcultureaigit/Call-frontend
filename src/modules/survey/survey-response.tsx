@@ -30,31 +30,24 @@ import { SurveyFetchLoader } from "./survey-by-id";
 import type { SurveyDisplayStatus } from "./survey-lib";
 import { SurveyStatusBadge } from "./survey-dialogs";
 import { PageContainer } from "@/components/layout";
-import { DataPagination } from "@/components/shared/data-pagination";
 import {
+  DataTable,
   DataTableActionButton,
   DataTableMetaChip,
   DataTableSortHeader,
   TableReadMore,
-  TABLE_ROW_ACCENT_CLASS,
+  type DataTableColumn,
 } from "@/components/shared/data-table";
-import {
-  TableColumnsBar,
-  TableColumnDnd,
-  SortableColumnTh,
-  applyColumnLayout,
-  resolveColumnPin,
-  useTableColumnLayout,
-  TABLE_HEAD_ROW_CLASS,
-  TABLE_BODY_ROW_CLASS,
-  TABLE_BODY_CELL_CLASS,
-} from "@/components/shared/table-column-layout";
-import { ListToolbar } from "@/components/shared/list-toolbar";
+import { PaginatedListShell } from "@/components/shared/paginated-list-shell";
 import { PAGE_TITLE_CLASS } from "@/components/shared/page-heading";
-import { TOOLBAR_SEARCH_WIDTH_CLASS, TOOLBAR_FILTER_SELECT_CLASS } from "@/components/shared/toolbar-styles";
+import {
+  TOOLBAR_SEARCH_WIDTH_CLASS,
+  TOOLBAR_FILTER_SELECT_CLASS,
+  TOOLBAR_ACTION_BUTTON_CLASS,
+} from "@/components/shared/toolbar-styles";
 import { AppLoader, AppLoaderSpinner } from "@/components/shared/app-loader";
 import { Button } from "@/components/ui/button";
-import { Select } from "@/components/ui/select";
+import { SearchableSelect } from "@/components/ui/searchable-select";
 import {
   Dialog,
   DialogContent,
@@ -69,7 +62,15 @@ import { formatAgentCreatedAt as formatSurveyCreatedAt } from "@/lib/utils/date"
 import { motion } from "framer-motion";
 import { ArrowLeft, Bot, CalendarClock, Clock3, Download, Eye, FileSpreadsheet, FileText, HelpCircle, MessageSquareText, Phone, Sparkles, UserRound, Users, MessageCircle, Pause, Play, Radio } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useMemo, useRef, useState, type MouseEvent } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type MouseEvent,
+  type ReactNode,
+} from "react";
 import { toast } from "sonner";
 
 /** Round speech bubble — classic “chat” look (WhatsApp / Messenger style) */
@@ -1113,7 +1114,7 @@ function CallStatusPill({ status }: { status?: string }) {
   );
 }
 
-/** Results table — same shell/pattern as My Surveys DataTable */
+/** Results table — shared DataTable (same shell as My Surveys). */
 function ResultsInlineQaTable({
   rows,
   questionColumns,
@@ -1121,10 +1122,9 @@ function ResultsInlineQaTable({
   surveyId,
   sorting,
   onSortingChange,
-  statusFilter,
-  onStatusFilterChange,
-  statusOptions,
   fillHeight = false,
+  embedded = false,
+  onColumnsControlReady,
 }: {
   rows: SurveyResultRow[];
   questionColumns: { id: string; question: string }[];
@@ -1132,11 +1132,10 @@ function ResultsInlineQaTable({
   surveyId: string;
   sorting: ResultsSortState;
   onSortingChange: (next: ResultsSortState) => void;
-  statusFilter: string;
-  onStatusFilterChange: (value: string) => void;
-  statusOptions: { label: string; value: string }[];
   /** When true, table body scrolls inside the viewport (does not clip rows). */
   fillHeight?: boolean;
+  embedded?: boolean;
+  onColumnsControlReady?: (control: ReactNode | null) => void;
 }) {
   const [questionPopup, setQuestionPopup] = useState<{
     number: number;
@@ -1145,409 +1144,256 @@ function ResultsInlineQaTable({
   const [detailsRow, setDetailsRow] = useState<SurveyResultRow | null>(null);
   const [chatRow, setChatRow] = useState<SurveyResultRow | null>(null);
 
-  const callColumns = useMemo(
-    () => CALL_EXACT_FIELDS.map((key) => ({ key, label: CALL_FIELD_LABELS[key] || key })),
-    []
-  );
+  const columns = useMemo<DataTableColumn<SurveyResultRow>[]>(() => {
+    const callColumns = CALL_EXACT_FIELDS.map((key) => ({
+      key,
+      label: CALL_FIELD_LABELS[key] || key,
+    }));
 
-  const layoutItems = useMemo(
-    () => [
+    const cols: DataTableColumn<SurveyResultRow>[] = [
       {
         id: "actions",
         label: "Action",
-        hideable: false as const,
-        pin: "start" as const,
+        hideable: false,
+        pin: "start",
+        showAccent: true,
+        header: "Action",
+        cell: (row) => (
+          <div className="flex items-center gap-1.5" data-row-ignore-click>
+            <DataTableActionButton
+              label="View response details"
+              onClick={() => setDetailsRow(row)}
+            >
+              <Eye className="size-3.5" />
+            </DataTableActionButton>
+            <button
+              type="button"
+              onClick={() => setChatRow(row)}
+              className={cn(
+                "inline-flex size-7 shrink-0 items-center justify-center rounded-full transition-all",
+                "hover:scale-105 active:scale-95",
+                row.has_transcription
+                  ? "bg-brand text-white shadow-[0_6px_14px_-8px_#2983ad] hover:bg-[#247399]"
+                  : "bg-brand/15 text-brand ring-1 ring-brand/25 hover:bg-brand/25"
+              )}
+              aria-label={
+                row.has_transcription
+                  ? "View call conversation"
+                  : "Open call conversation"
+              }
+              title={
+                row.has_transcription
+                  ? "View call conversation"
+                  : "Open conversation (no transcript yet)"
+              }
+            >
+              <ChatBubbleIcon className="size-[15px]" />
+            </button>
+          </div>
+        ),
       },
-      { id: "phone", label: "Phone" },
-      { id: "date", label: "Date" },
-      { id: "status", label: "Status" },
-      { id: "duration", label: "Duration" },
+      {
+        id: "phone",
+        header: "Phone",
+        cell: (row) => (
+          <DataTableMetaChip
+            icon={Phone}
+            label={row.customer_number || "—"}
+            tabular
+            className="max-w-none font-semibold text-foreground"
+          />
+        ),
+      },
+      {
+        id: "date",
+        header: (
+          <ResultsColumnSortHeader
+            label="Date"
+            columnId="date"
+            sorting={sorting}
+            onSortingChange={onSortingChange}
+          />
+        ),
+        label: "Date",
+        cell: (row) => (
+          <DataTableMetaChip
+            icon={CalendarClock}
+            label={
+              row.extracted_at ? formatSurveyCreatedAt(row.extracted_at) : "—"
+            }
+          />
+        ),
+      },
+      {
+        id: "status",
+        header: "Status",
+        cell: (row) => <CallStatusPill status={resolveRowStatus(row)} />,
+      },
+      {
+        id: "duration",
+        header: (
+          <ResultsColumnSortHeader
+            label="Duration"
+            columnId="duration"
+            sorting={sorting}
+            onSortingChange={onSortingChange}
+          />
+        ),
+        label: "Duration",
+        cell: (row) => (
+          <DataTableMetaChip
+            icon={Clock3}
+            label={formatDurationLabel(row.call?.duration)}
+            tabular
+          />
+        ),
+      },
       ...callColumns.map((col) => ({
         id: `call:${col.key}`,
         label: CALL_FIELD_LABELS[col.key] || col.label,
+        header: RESULTS_SORTABLE_IDS.has(`call:${col.key}`) ? (
+          <ResultsColumnSortHeader
+            label={CALL_FIELD_LABELS[col.key] || col.label}
+            columnId={`call:${col.key}`}
+            sorting={sorting}
+            onSortingChange={onSortingChange}
+          />
+        ) : (
+          CALL_FIELD_LABELS[col.key] || col.label
+        ),
+        cellClassName: "max-w-[14rem]",
+        cell: (row: SurveyResultRow) => {
+          const value = getCallFieldValue(row.call, col.key);
+          return <TableReadMore text={value || "---"} />;
+        },
       })),
-      ...questionColumns.map((col, index) => ({
-        id: `q:${col.id}`,
-        label: `Q${index + 1}`,
-      })),
-      { id: "audio", label: "Audio" },
-    ],
-    [callColumns, questionColumns]
-  );
+      ...questionColumns.map((col, index) => {
+        const number = index + 1;
+        const needsTruncate = col.question.length > 28;
+        const label = needsTruncate
+          ? `${col.question.slice(0, 28).trimEnd()}…`
+          : col.question;
+        return {
+          id: `q:${col.id}`,
+          label: `Q${number}`,
+          headerClassName: "min-w-[8rem] max-w-[12rem] text-center",
+          cellClassName: "max-w-[14rem] text-center",
+          header: (
+            <div className="flex max-w-[11rem] items-center justify-center gap-1.5 normal-case tracking-normal">
+              <button
+                type="button"
+                onClick={() =>
+                  setQuestionPopup({
+                    number,
+                    question: col.question,
+                  })
+                }
+                onPointerDown={(e) => e.stopPropagation()}
+                onMouseDown={(e) => e.stopPropagation()}
+                className="inline-flex size-5 shrink-0 items-center justify-center rounded-full border border-primary/20 bg-primary/10 text-[10px] font-bold tabular-nums text-primary hover:bg-primary/15"
+                title="View full question"
+                aria-label={`View question ${number}`}
+              >
+                {number}
+              </button>
+              <span
+                className="min-w-0 truncate text-[10px] font-medium text-foreground/80"
+                title={col.question}
+              >
+                {label}
+              </span>
+              {needsTruncate ? (
+                <button
+                  type="button"
+                  onClick={() =>
+                    setQuestionPopup({
+                      number,
+                      question: col.question,
+                    })
+                  }
+                  onPointerDown={(e) => e.stopPropagation()}
+                  onMouseDown={(e) => e.stopPropagation()}
+                  className="shrink-0 text-[10px] font-semibold text-primary hover:underline"
+                >
+                  More
+                </button>
+              ) : null}
+            </div>
+          ),
+          cell: (row: SurveyResultRow) => {
+            const answer = row.answers.find((a) => a.questionId === col.id);
+            const value = answer?.answer?.trim() ? answer.answer : "---";
+            return <TableReadMore text={value} className="mx-auto" />;
+          },
+        };
+      }),
+      {
+        id: "audio",
+        header: "Audio",
+        headerClassName: "text-center",
+        cellClassName: "min-w-55",
+        cell: (row) => {
+          const rowRecording =
+            row.recording_url ||
+            row.answers
+              .map((a) => resolveAnswerRecordingUrl(a, null))
+              .find(Boolean) ||
+            null;
+          return (
+            <div className="flex items-center gap-2" data-row-ignore-click>
+              {rowRecording ? (
+                <InlineRecordingPlayer
+                  src={rowRecording}
+                  durationSeconds={row.recording_duration_seconds ?? null}
+                />
+              ) : (
+                <span className="block text-center text-xs text-muted-foreground">
+                  ---
+                </span>
+              )}
+              <button
+                type="button"
+                onClick={() => setChatRow(row)}
+                className={cn(
+                  "inline-flex h-8 shrink-0 items-center justify-center rounded-full px-3 text-[11px] font-semibold tracking-wide transition-all",
+                  "hover:scale-[1.02] active:scale-[0.98]",
+                  row.has_transcription
+                    ? "bg-brand text-white shadow-[0_6px_14px_-8px_#2983ad] hover:bg-[#247399]"
+                    : "bg-brand/15 text-brand ring-1 ring-brand/25 hover:bg-brand/25"
+                )}
+                aria-label="View transcription"
+                title={
+                  row.has_transcription
+                    ? "View transcription"
+                    : "Open transcription (no transcript yet)"
+                }
+              >
+                Transcription
+              </button>
+            </div>
+          );
+        },
+      },
+    ];
 
-  const {
-    layout,
-    pickerItems,
-    hidden,
-    toggleHidden,
-    reorder,
-    reset,
-    lockedIds,
-  } = useTableColumnLayout(layoutKey, layoutItems);
-
-  const visibleItems = useMemo(
-    () =>
-      applyColumnLayout(
-        layoutItems,
-        layout,
-        (item) => item.id,
-        (item) => resolveColumnPin(item, layoutItems[0]?.id)
-      ),
-    [layoutItems, layout]
-  );
+    return cols;
+  }, [questionColumns, sorting, onSortingChange]);
 
   return (
     <>
-      <div
-        className={cn(
-          "flex min-w-0 flex-col rounded-[6px] border border-border/60 bg-card shadow-card",
-          fillHeight && "min-h-0 flex-1 overflow-hidden"
-        )}
-      >
-        <div className="shrink-0">
-          <TableColumnsBar
-            items={pickerItems}
-            hidden={hidden}
-            onToggle={toggleHidden}
-            onReorder={reorder}
-            onReset={reset}
-            leading={
-              <Select
-                value={statusFilter}
-                onChange={(e) => onStatusFilterChange(e.target.value)}
-                options={statusOptions}
-                className={cn(TOOLBAR_FILTER_SELECT_CLASS, "h-9")}
-                aria-label="Filter by response status"
-              />
-            }
-          />
-        </div>
-
-        <div
-          className={cn(
-            "min-w-0",
-            fillHeight
-              ? "min-h-0 flex-1 overflow-auto overscroll-contain"
-              : "overflow-x-auto"
-          )}
-        >
-          <TableColumnDnd
-            ids={visibleItems.map((col) => col.id)}
-            lockedIds={lockedIds}
-            onReorder={reorder}
-          >
-          <table className={cn("w-full border-collapse", "min-w-[720px]")}>
-            <thead>
-                <tr className={cn(TABLE_HEAD_ROW_CLASS, "[&_th]:sticky [&_th]:top-0 [&_th]:z-20 [&_th]:bg-card")}>
-                  {visibleItems.map((col) => {
-                    if (col.id === "actions") {
-                      return (
-                        <SortableColumnTh
-                          key={col.id}
-                          id={col.id}
-                          className="sticky left-0 z-30 min-w-28 bg-card shadow-[2px_0_6px_-2px_rgba(15,23,42,0.12)]"
-                        >
-                          Action
-                        </SortableColumnTh>
-                      );
-                    }
-                    if (col.id.startsWith("q:")) {
-                      const qid = col.id.slice(2);
-                      const qIndex = questionColumns.findIndex(
-                        (q) => q.id === qid
-                      );
-                      const question = questionColumns[qIndex];
-                      if (!question) return null;
-                      const number = qIndex + 1;
-                      const needsTruncate = question.question.length > 28;
-                      const label = needsTruncate
-                        ? `${question.question.slice(0, 28).trimEnd()}…`
-                        : question.question;
-                      return (
-                        <SortableColumnTh
-                          key={col.id}
-                          id={col.id}
-                          className="min-w-[8rem] max-w-[12rem] text-center"
-                        >
-                          <div className="flex max-w-[11rem] items-center justify-center gap-1.5 normal-case tracking-normal">
-                            <button
-                              type="button"
-                              onClick={() =>
-                                setQuestionPopup({
-                                  number,
-                                  question: question.question,
-                                })
-                              }
-                              onPointerDown={(e) => e.stopPropagation()}
-                              onMouseDown={(e) => e.stopPropagation()}
-                              className="inline-flex size-5 shrink-0 items-center justify-center rounded-full border border-primary/20 bg-primary/10 text-[10px] font-bold tabular-nums text-primary hover:bg-primary/15"
-                              title="View full question"
-                              aria-label={`View question ${number}`}
-                            >
-                              {number}
-                            </button>
-                            <span
-                              className="min-w-0 truncate text-[10px] font-medium text-foreground/80"
-                              title={question.question}
-                            >
-                              {label}
-                            </span>
-                            {needsTruncate ? (
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  setQuestionPopup({
-                                    number,
-                                    question: question.question,
-                                  })
-                                }
-                                onPointerDown={(e) => e.stopPropagation()}
-                                onMouseDown={(e) => e.stopPropagation()}
-                                className="shrink-0 text-[10px] font-semibold text-primary hover:underline"
-                              >
-                                More
-                              </button>
-                            ) : null}
-                          </div>
-                        </SortableColumnTh>
-                      );
-                    }
-                    return (
-                      <SortableColumnTh
-                        key={col.id}
-                        id={col.id}
-                        className={cn(col.id === "audio" && "text-center")}
-                      >
-                        {RESULTS_SORTABLE_IDS.has(col.id) ? (
-                          <ResultsColumnSortHeader
-                            label={col.label}
-                            columnId={col.id}
-                            sorting={sorting}
-                            onSortingChange={onSortingChange}
-                          />
-                        ) : (
-                          col.label
-                        )}
-                      </SortableColumnTh>
-                    );
-                  })}
-                </tr>
-            </thead>
-            <tbody>
-              {rows.map((row, rowIndex) => {
-                const answerMap = new Map(
-                  row.answers.map((a) => [a.questionId, a])
-                );
-                const rowRecording =
-                  row.recording_url ||
-                  row.answers
-                    .map((a) => resolveAnswerRecordingUrl(a, null))
-                    .find(Boolean) ||
-                  null;
-
-                return (
-                  <motion.tr
-                    key={row.id}
-                    initial={{ opacity: 0, y: 6 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: rowIndex * 0.03, duration: 0.22 }}
-                    className={TABLE_BODY_ROW_CLASS}
-                  >
-                    {visibleItems.map((col) => {
-                      if (col.id === "actions") {
-                        return (
-                          <td
-                            key={col.id}
-                            className={cn(
-                              TABLE_BODY_CELL_CLASS,
-                              "relative sticky left-0 z-10 min-w-28 bg-card shadow-[2px_0_6px_-2px_rgba(15,23,42,0.08)]"
-                            )}
-                          >
-                            <span
-                              aria-hidden
-                              className={cn(
-                                "pointer-events-none absolute inset-y-2 left-0 w-1 rounded-r-full opacity-80 transition-opacity group-hover:opacity-100",
-                                TABLE_ROW_ACCENT_CLASS
-                              )}
-                            />
-                            <div className="flex items-center gap-1.5">
-                              <DataTableActionButton
-                                label="View response details"
-                                onClick={() => setDetailsRow(row)}
-                              >
-                                <Eye className="size-3.5" />
-                              </DataTableActionButton>
-                              <button
-                                type="button"
-                                onClick={() => setChatRow(row)}
-                                className={cn(
-                                  "inline-flex size-7 shrink-0 items-center justify-center rounded-full transition-all",
-                                  "hover:scale-105 active:scale-95",
-                                  row.has_transcription
-                                    ? "bg-brand text-white shadow-[0_6px_14px_-8px_#2983ad] hover:bg-[#247399]"
-                                    : "bg-brand/15 text-brand ring-1 ring-brand/25 hover:bg-brand/25"
-                                )}
-                                aria-label={
-                                  row.has_transcription
-                                    ? "View call conversation"
-                                    : "Open call conversation"
-                                }
-                                title={
-                                  row.has_transcription
-                                    ? "View call conversation"
-                                    : "Open conversation (no transcript yet)"
-                                }
-                              >
-                                <ChatBubbleIcon className="size-[15px]" />
-                              </button>
-                            </div>
-                          </td>
-                        );
-                      }
-                      if (col.id === "phone") {
-                        return (
-                          <td
-                            key={col.id}
-                            className="whitespace-nowrap px-4 py-3.5 align-middle"
-                          >
-                            <DataTableMetaChip
-                              icon={Phone}
-                              label={row.customer_number || "—"}
-                              tabular
-                              className="max-w-none font-semibold text-foreground"
-                            />
-                          </td>
-                        );
-                      }
-                      if (col.id === "date") {
-                        return (
-                          <td
-                            key={col.id}
-                            className="whitespace-nowrap px-4 py-3.5 align-middle"
-                          >
-                            <DataTableMetaChip
-                              icon={CalendarClock}
-                              label={
-                                row.extracted_at
-                                  ? formatSurveyCreatedAt(row.extracted_at)
-                                  : "—"
-                              }
-                            />
-                          </td>
-                        );
-                      }
-                      if (col.id === "status") {
-                        return (
-                          <td
-                            key={col.id}
-                            className="whitespace-nowrap px-4 py-3.5 align-middle"
-                          >
-                            <CallStatusPill status={resolveRowStatus(row)} />
-                          </td>
-                        );
-                      }
-                      if (col.id === "duration") {
-                        return (
-                          <td
-                            key={col.id}
-                            className="whitespace-nowrap px-4 py-3.5 align-middle"
-                          >
-                            <DataTableMetaChip
-                              icon={Clock3}
-                              label={formatDurationLabel(row.call?.duration)}
-                              tabular
-                            />
-                          </td>
-                        );
-                      }
-                      if (col.id.startsWith("call:")) {
-                        const key = col.id.slice(5);
-                        const value = getCallFieldValue(row.call, key);
-                        const display = value || "---";
-                        return (
-                          <td
-                            key={col.id}
-                            className={cn(TABLE_BODY_CELL_CLASS, "max-w-[14rem]")}
-                          >
-                            <TableReadMore text={display} />
-                          </td>
-                        );
-                      }
-                      if (col.id.startsWith("q:")) {
-                        const answer = answerMap.get(col.id.slice(2));
-                        const value = answer?.answer?.trim()
-                          ? answer.answer
-                          : "---";
-                        return (
-                          <td
-                            key={col.id}
-                            className={cn(
-                              TABLE_BODY_CELL_CLASS,
-                              "max-w-[14rem] text-center"
-                            )}
-                          >
-                            <TableReadMore text={value} className="mx-auto" />
-                          </td>
-                        );
-                      }
-                      if (col.id === "audio") {
-                        return (
-                          <td
-                            key={col.id}
-                            className="min-w-55 px-4 py-3.5 align-middle"
-                          >
-                            <div className="flex items-center gap-2">
-                              {rowRecording ? (
-                                <InlineRecordingPlayer
-                                  src={rowRecording}
-                                  durationSeconds={
-                                    row.recording_duration_seconds ?? null
-                                  }
-                                />
-                              ) : (
-                                <span className="block text-center text-xs text-muted-foreground">
-                                  ---
-                                </span>
-                              )}
-                              <button
-                                type="button"
-                                onClick={() => setChatRow(row)}
-                                className={cn(
-                                  "inline-flex h-8 shrink-0 items-center justify-center rounded-full px-3 text-[11px] font-semibold tracking-wide transition-all",
-                                  "hover:scale-[1.02] active:scale-[0.98]",
-                                  row.has_transcription
-                                    ? "bg-brand text-white shadow-[0_6px_14px_-8px_#2983ad] hover:bg-[#247399]"
-                                    : "bg-brand/15 text-brand ring-1 ring-brand/25 hover:bg-brand/25"
-                                )}
-                                aria-label="View transcription"
-                                title={
-                                  row.has_transcription
-                                    ? "View transcription"
-                                    : "Open transcription (no transcript yet)"
-                                }
-                              >
-                                Transcription
-                              </button>
-                            </div>
-                          </td>
-                        );
-                      }
-                      return null;
-                    })}
-                  </motion.tr>
-                );
-              })}
-            </tbody>
-          </table>
-          </TableColumnDnd>
-        </div>
-
-        <div className="shrink-0 border-t border-border/40 bg-muted/20 px-5 py-2.5">
-          <p className="text-[11px] text-muted-foreground">
-            Chat icon opens conversation · eye icon opens recording &amp; Q&amp;A
-          </p>
-        </div>
-      </div>
+      <DataTable
+        columnLayoutKey={layoutKey}
+        columns={columns}
+        data={rows}
+        getRowId={(row) => row.id}
+        emptyIcon={Users}
+        emptyTitle="No responses found"
+        emptyDescription="Results will appear after calls complete."
+        minWidthClassName="min-w-[720px]"
+        fillHeight={fillHeight}
+        embedded={embedded}
+        onColumnsControlReady={onColumnsControlReady}
+      />
 
       <QuestionNumberPopup
         open={Boolean(questionPopup)}
@@ -1580,34 +1426,24 @@ function StatCard({
   label,
   value,
   icon: Icon,
-  glowClass,
 }: {
   label: string;
   value: string | number;
   icon: typeof Users;
-  glowClass: string;
+  glowClass?: string;
 }) {
   return (
-    <div className="group relative overflow-hidden rounded-[10px] border border-border/40 bg-card/95 px-4 py-3.5 shadow-sm">
-      <div
-        aria-hidden
-        className={cn(
-          "pointer-events-none absolute -right-4 -top-4 size-20 rounded-full opacity-70 blur-2xl transition-opacity group-hover:opacity-100",
-          glowClass
-        )}
-      />
-      <div className="relative flex items-start justify-between gap-3">
-        <div>
-          <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
-            {label}
-          </p>
-          <p className="mt-1.5 font-display text-2xl font-semibold tabular-nums tracking-tight text-foreground">
-            {value}
-          </p>
-        </div>
-        <span className="flex size-9 items-center justify-center rounded-[8px] border border-primary/15 bg-primary/10">
-          <Icon className="size-4 text-primary" />
-        </span>
+    <div className="flex min-w-0 items-center gap-3 rounded-[6px] border border-border/50 bg-card px-3 py-2 shadow-subtle">
+      <span className="flex size-8 shrink-0 items-center justify-center rounded-[6px] bg-[#2c3b59]/10 text-[#2c3b59]">
+        <Icon className="size-3.5" />
+      </span>
+      <div className="min-w-0 leading-tight">
+        <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+          {label}
+        </p>
+        <p className="text-lg font-semibold tabular-nums text-foreground">
+          {value}
+        </p>
       </div>
     </div>
   );
@@ -1628,6 +1464,7 @@ export function SurveyResponseView({ surveyId }: SurveyResultsViewProps) {
   const [exporting, setExporting] = useState(false);
   const [responseStatus, setResponseStatus] = useState("all");
   const [sorting, setSorting] = useState<ResultsSortState>(DEFAULT_RESULTS_SORT);
+  const [columnsControl, setColumnsControl] = useState<ReactNode>(null);
 
   const fetchPage = useCallback(
     async ({
@@ -1671,7 +1508,6 @@ export function SurveyResponseView({ surveyId }: SurveyResultsViewProps) {
     meta,
     isLoading: loading,
     isRefreshing,
-    reload,
   } = usePaginatedList<SurveyResultRow>({
     pageSize: 10,
     fetchPage,
@@ -1766,35 +1602,14 @@ export function SurveyResponseView({ surveyId }: SurveyResultsViewProps) {
 
   const status = (survey?.scheduling_status ?? "completed") as SurveyDisplayStatus;
 
-  // Only lock page height when there are enough rows to need an inner scroll.
-  // pageSize > 10 alone was clipping rows (overflow hidden, no vertical scroll).
-  const useTableScroll = pageSize > 10 && sortedRows.length > 10;
+  // Same as My Surveys: standard ~10-row table height; pageSize 100 scrolls inside.
   const showLoader = loading || isRefreshing;
 
   return (
-    <div
-      className={cn(
-        "min-w-0 bg-linear-to-b from-brand/5 to-transparent",
-        useTableScroll &&
-          "flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden"
-      )}
-    >
-      <PageContainer
-        size="full"
-        fullHeight={useTableScroll}
-        className={
-          useTableScroll
-            ? "flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden"
-            : undefined
-        }
-      >
-        <div
-          className={cn(
-            "flex min-w-0 flex-col gap-4",
-            useTableScroll && "min-h-0 flex-1 overflow-hidden"
-          )}
-        >
-          <div className="flex shrink-0 flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+    <div className="min-w-0 bg-background">
+      <PageContainer size="full">
+        <div className="flex min-w-0 flex-col gap-3">
+          <div className="flex shrink-0 flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex min-w-0 items-start gap-3">
               <Button
                 type="button"
@@ -1828,11 +1643,10 @@ export function SurveyResponseView({ surveyId }: SurveyResultsViewProps) {
               {canReadReports ? (
                 <Button
                   type="button"
-                  variant="outline"
-                  className="h-11 shrink-0 rounded-[6px] gap-1.5 border-border/50 bg-background/80 shadow-subtle hover:border-primary/30"
+                  className="h-9 shrink-0 rounded-[6px] gap-1.5 bg-[#2c3b59] px-3 text-white hover:bg-[#24314a]"
                   onClick={() =>
                     router.push(
-                      `/analytics?surveyId=${encodeURIComponent(surveyId)}`
+                      `/survey/${encodeURIComponent(surveyId)}/analytics`
                     )
                   }
                 >
@@ -1843,14 +1657,49 @@ export function SurveyResponseView({ surveyId }: SurveyResultsViewProps) {
             </div>
           </div>
 
-          <ListToolbar
-            className="shrink-0"
+          {/* Compact stats above table card */}
+          {!error && meta.total > 0 ? (
+            <div className="grid shrink-0 grid-cols-3 gap-2">
+              <StatCard
+                label="Responses"
+                value={meta.total}
+                icon={Users}
+              />
+              <StatCard
+                label="Questions"
+                value={questions.length || "—"}
+                icon={HelpCircle}
+              />
+              <StatCard
+                label="On this page"
+                value={enrichedRows.length}
+                icon={MessageSquareText}
+              />
+            </div>
+          ) : null}
+
+          <div className="flex min-w-0 flex-col">
+          <PaginatedListShell
+            unified
             search={search}
             onSearchChange={setSearch}
             searchPlaceholder="Search phone, session, or call sid…"
             searchAriaLabel="Search responses"
             searchClassName={TOOLBAR_SEARCH_WIDTH_CLASS}
             alignControlsEnd
+            columnsControl={columnsControl}
+            toolbarDisabled={showLoader && sortedRows.length === 0}
+            filters={
+              <SearchableSelect
+                value={responseStatus}
+                onChange={setResponseStatus}
+                options={RESULTS_STATUS_OPTIONS}
+                searchPlaceholder="Search statuses…"
+                className={TOOLBAR_FILTER_SELECT_CLASS}
+                disabled={showLoader && sortedRows.length === 0}
+                aria-label="Filter by response status"
+              />
+            }
             actions={
               canExportSurvey ? (
                 <DropdownMenu>
@@ -1858,7 +1707,7 @@ export function SurveyResponseView({ surveyId }: SurveyResultsViewProps) {
                     <Button
                       type="button"
                       variant="outline"
-                      className="h-11 shrink-0 rounded-[6px] gap-1.5 border-border/50 bg-background/80 shadow-subtle hover:border-primary/30"
+                      className={TOOLBAR_ACTION_BUTTON_CLASS}
                       disabled={exporting || meta.total === 0}
                     >
                       {exporting ? (
@@ -1890,36 +1739,10 @@ export function SurveyResponseView({ surveyId }: SurveyResultsViewProps) {
                 </DropdownMenu>
               ) : null
             }
-          />
-
-          {!error && meta.total > 0 ? (
-            <div className="grid shrink-0 gap-3 sm:grid-cols-3">
-              <StatCard
-                label="Responses"
-                value={meta.total}
-                icon={Users}
-                glowClass="bg-primary/25"
-              />
-              <StatCard
-                label="Questions"
-                value={questions.length || "—"}
-                icon={HelpCircle}
-                glowClass="bg-sky-400/25"
-              />
-              <StatCard
-                label="On this page"
-                value={enrichedRows.length}
-                icon={MessageSquareText}
-                glowClass="bg-emerald-400/25"
-              />
-            </div>
-          ) : null}
-
-          <div
-            className={cn(
-              "flex min-w-0 flex-col",
-              useTableScroll && "min-h-0 flex-1 overflow-hidden"
-            )}
+            meta={meta}
+            itemLabel="responses"
+            onPageChange={setPage}
+            onLimitChange={setPageSize}
           >
             {showLoader ? (
               loading ? (
@@ -1931,25 +1754,29 @@ export function SurveyResponseView({ surveyId }: SurveyResultsViewProps) {
                   hint="Fetching latest data"
                 />
               )
-            ) : error ? (
-              <div className="rounded-[10px] border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive">
+            ) : null}
+
+            {!showLoader && error ? (
+              <div className="m-4 rounded-[10px] border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive">
                 {error}
               </div>
-            ) : enrichedRows.length === 0 ? (
-              <div className="rounded-[12px] border border-dashed border-border/60 bg-card/80 px-6 py-14 text-center">
-                <div className="mx-auto flex size-14 items-center justify-center rounded-full bg-primary/10">
-                  <Users className="size-7 text-primary" />
+            ) : null}
+
+            {!showLoader && !error && sortedRows.length === 0 ? (
+              <div className="flex flex-1 flex-col items-center justify-center px-6 py-20 text-center">
+                <div className="mb-4 flex size-16 items-center justify-center rounded-[6px] bg-primary/10">
+                  <Users className="size-8 text-primary" />
                 </div>
-                <p className="mt-4 text-base font-semibold text-foreground">
-                  No responses found
-                </p>
-                <p className="mt-1 text-sm text-muted-foreground">
+                <h3 className="text-lg font-semibold">No responses found</h3>
+                <p className="mt-2 max-w-sm text-sm text-muted-foreground">
                   {debouncedSearch || responseStatus !== "all"
                     ? "Try a different phone, session id, or status filter."
                     : "Results will appear after calls complete."}
                 </p>
               </div>
-            ) : (
+            ) : null}
+
+            {!showLoader && !error && sortedRows.length > 0 ? (
               <ResultsInlineQaTable
                 rows={sortedRows}
                 questionColumns={questionColumns}
@@ -1957,25 +1784,13 @@ export function SurveyResponseView({ surveyId }: SurveyResultsViewProps) {
                 surveyId={surveyId}
                 sorting={sorting}
                 onSortingChange={setSorting}
-                statusFilter={responseStatus}
-                onStatusFilterChange={setResponseStatus}
-                statusOptions={RESULTS_STATUS_OPTIONS}
-                fillHeight={useTableScroll}
+                fillHeight
+                embedded
+                onColumnsControlReady={setColumnsControl}
               />
-            )}
+            ) : null}
+          </PaginatedListShell>
           </div>
-
-          {!error && meta.total > 0 ? (
-            <DataPagination
-              meta={meta}
-              onPageChange={setPage}
-              onLimitChange={setPageSize}
-              disabled={isRefreshing}
-              itemLabel="responses"
-              variant="inline"
-              className="shrink-0"
-            />
-          ) : null}
         </div>
       </PageContainer>
     </div>

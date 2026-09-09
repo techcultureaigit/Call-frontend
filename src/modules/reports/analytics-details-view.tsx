@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
@@ -13,12 +13,22 @@ import {
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { PageContainer } from "@/components/layout";
-import { DataPagination } from "@/components/shared/data-pagination";
-import { ListToolbar } from "@/components/shared/list-toolbar";
-import { TOOLBAR_SEARCH_WIDTH_CLASS, TOOLBAR_FILTER_SELECT_CLASS } from "@/components/shared/toolbar-styles";
+import {
+  DataTable,
+  DataTableMetaChip,
+  TABLE_PRIMARY_TEXT_CLASS,
+  TABLE_SUBTEXT_CLASS,
+  type DataTableColumn,
+} from "@/components/shared/data-table";
+import { PaginatedListShell } from "@/components/shared/paginated-list-shell";
+import {
+  TOOLBAR_SEARCH_WIDTH_CLASS,
+  TOOLBAR_FILTER_SELECT_CLASS,
+  TOOLBAR_ACTION_BUTTON_CLASS,
+} from "@/components/shared/toolbar-styles";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
-import { Select } from "@/components/ui/select";
+import { SearchableSelect } from "@/components/ui/searchable-select";
 import {
   Dialog,
   DialogContent,
@@ -42,6 +52,7 @@ import {
   analyticsHomeHref,
   parseAnalyticsMetric,
 } from "@/modules/reports/analytics-nav";
+import { KPI_HINT } from "@/modules/reports/analytics-theme";
 import type {
   AnalyticsClientQuestion,
   AnalyticsDetailRow,
@@ -63,14 +74,14 @@ const SURVEY_STYLE: Record<string, string> = {
 };
 
 const METRIC_HINT: Record<AnalyticsKpiFilterId, string> = {
-  total_calls: "All clients in this period",
-  connected: "Clients with a connected call",
-  survey_complete: "All required questions answered",
-  survey_partial: "Some questions answered, not finished",
-  survey_incomplete: "Missed call or no answers collected",
-  survey_missed: "Missed call — survey never started",
+  total_calls: KPI_HINT.total_calls,
+  connected: KPI_HINT.connected,
+  survey_complete: KPI_HINT.survey_complete,
+  survey_partial: KPI_HINT.survey_partial,
+  survey_incomplete: KPI_HINT.survey_incomplete,
+  survey_missed: KPI_HINT.missed,
+  missed: KPI_HINT.missed,
   avg_duration: "Calls ranked by duration",
-  missed: "Clients with a missed call",
   recording: "Calls that have a recording",
 };
 
@@ -85,6 +96,7 @@ const SURVEY_STATUS_OPTIONS = [
   { label: "Complete", value: "complete" },
   { label: "Partially complete", value: "partially_complete" },
   { label: "Incomplete", value: "incomplete" },
+  { label: "Missed", value: "missed" },
 ];
 
 function formatDate(value: string | null) {
@@ -458,120 +470,144 @@ function ClientsTable({
   onSelect,
   page,
   pageSize,
+  embedded = false,
+  fillHeight = false,
+  onColumnsControlReady,
 }: {
   rows: AnalyticsDetailRow[];
   onSelect: (row: AnalyticsDetailRow) => void;
   page: number;
   pageSize: number;
+  embedded?: boolean;
+  fillHeight?: boolean;
+  onColumnsControlReady?: (control: ReactNode | null) => void;
 }) {
   const startIndex = (page - 1) * pageSize;
 
+  const columns = useMemo<DataTableColumn<AnalyticsDetailRow>[]>(
+    () => [
+      {
+        id: "index",
+        label: "#",
+        hideable: false,
+        pin: "start",
+        showAccent: true,
+        header: "#",
+        cell: (_row, index) => (
+          <span className="inline-flex size-7 items-center justify-center rounded-[6px] bg-muted/60 text-[11px] font-bold tabular-nums text-muted-foreground">
+            {startIndex + index + 1}
+          </span>
+        ),
+      },
+      {
+        id: "phone",
+        header: "Phone",
+        hideable: false,
+        pin: "start",
+        cell: (row) => (
+          <div className="min-w-0">
+            <p className={cn(TABLE_PRIMARY_TEXT_CLASS, "tabular-nums")}>
+              {row.phone}
+            </p>
+            {row.hasRecording ? (
+              <p className={cn(TABLE_SUBTEXT_CLASS, "inline-flex items-center gap-1")}>
+                <Mic className="size-3" />
+                Recording
+              </p>
+            ) : null}
+          </div>
+        ),
+      },
+      {
+        id: "survey",
+        header: "Survey",
+        cell: (row) => (
+          <p className="line-clamp-2 text-sm font-medium leading-snug text-foreground/85" title={row.surveyName}>
+            {row.surveyName}
+          </p>
+        ),
+      },
+      {
+        id: "call",
+        header: "Call",
+        cell: (row) => (
+          <StatusBadge label={row.callOutcome} tone={OUTCOME_STYLE} />
+        ),
+      },
+      {
+        id: "status",
+        header: "Status",
+        cell: (row) => (
+          <StatusBadge label={row.surveyStatus} tone={SURVEY_STYLE} />
+        ),
+      },
+      {
+        id: "duration",
+        header: "Duration",
+        align: "right",
+        cell: (row) => (
+          <DataTableMetaChip
+            icon={Clock}
+            label={row.durationLabel}
+            tabular
+            className="ml-auto"
+          />
+        ),
+      },
+      {
+        id: "answers",
+        header: "Answers",
+        align: "right",
+        cell: (row) => (
+          <div className="flex justify-end">
+            <AnswerProgress progress={row.progress} />
+          </div>
+        ),
+      },
+      {
+        id: "when",
+        header: "When",
+        cell: (row) => (
+          <div className="min-w-0">
+            <p className={cn(TABLE_PRIMARY_TEXT_CLASS, "tabular-nums")}>
+              {row.extractedAt
+                ? new Date(row.extractedAt).toLocaleDateString("en-IN", {
+                    day: "2-digit",
+                    month: "short",
+                    year: "numeric",
+                  })
+                : "—"}
+            </p>
+            <p className={cn(TABLE_SUBTEXT_CLASS, "tabular-nums")}>
+              {row.extractedAt
+                ? new Date(row.extractedAt).toLocaleTimeString("en-IN", {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })
+                : ""}
+            </p>
+          </div>
+        ),
+      },
+    ],
+    [startIndex]
+  );
+
   return (
-    <div className="overflow-hidden rounded-[6px] border border-border/60 bg-card shadow-card">
-      <div className="w-full overflow-x-auto">
-        <table className="w-full min-w-[720px] table-fixed text-left">
-          <colgroup>
-            <col className="w-[6%]" />
-            <col className="w-[16%]" />
-            <col className="w-[22%]" />
-            <col className="w-[12%]" />
-            <col className="w-[14%]" />
-            <col className="w-[10%]" />
-            <col className="w-[8%]" />
-            <col className="w-[12%]" />
-          </colgroup>
-          <thead className="sticky top-0 z-10 bg-muted/95 backdrop-blur-sm">
-            <tr className="border-b border-border/55 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-              <th className="px-3 py-3.5">#</th>
-              <th className="px-3 py-3.5">Phone</th>
-              <th className="px-3 py-3.5">Survey</th>
-              <th className="px-3 py-3.5">Call</th>
-              <th className="px-3 py-3.5">Status</th>
-              <th className="px-3 py-3.5 text-right">Duration</th>
-              <th className="px-3 py-3.5 text-right">Answers</th>
-              <th className="px-3 py-3.5">When</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((row, i) => (
-              <tr
-                key={row.id}
-                onClick={() => onSelect(row)}
-                className="group cursor-pointer border-b border-border/35 transition-colors last:border-b-0 hover:bg-[#2c3b59]/4"
-              >
-                <td className="px-3 py-3.5 align-middle">
-                  <span className="font-display inline-flex size-7 items-center justify-center rounded-[6px] bg-muted/60 text-[11px] font-bold tabular-nums text-muted-foreground group-hover:bg-brand/10 group-hover:text-brand">
-                    {startIndex + i + 1}
-                  </span>
-                </td>
-                <td className="px-3 py-3.5 align-middle">
-                  <div className="flex min-w-0 items-center gap-2.5">
-                    <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-brand/10 text-brand">
-                      <Phone className="size-3.5" />
-                    </span>
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-semibold tabular-nums leading-none text-foreground">
-                        {row.phone}
-                      </p>
-                      {row.hasRecording ? (
-                        <p className="mt-1 inline-flex items-center gap-1 text-[10px] text-muted-foreground">
-                          <Mic className="size-3" />
-                          Recording
-                        </p>
-                      ) : null}
-                    </div>
-                  </div>
-                </td>
-                <td className="px-3 py-3.5 align-middle">
-                  <p
-                    className="line-clamp-2 break-words text-xs font-medium leading-snug text-foreground/80"
-                    title={row.surveyName}
-                  >
-                    {row.surveyName}
-                  </p>
-                </td>
-                <td className="px-3 py-3.5 align-middle">
-                  <StatusBadge label={row.callOutcome} tone={OUTCOME_STYLE} />
-                </td>
-                <td className="px-3 py-3.5 align-middle">
-                  <StatusBadge label={row.surveyStatus} tone={SURVEY_STYLE} />
-                </td>
-                <td className="px-3 py-3.5 align-middle text-right">
-                  <span className="inline-flex items-center justify-end gap-1 text-sm tabular-nums text-foreground">
-                    <Clock className="size-3 shrink-0 text-muted-foreground/60" />
-                    {row.durationLabel}
-                  </span>
-                </td>
-                <td className="px-3 py-3.5 align-middle">
-                  <div className="flex justify-end">
-                    <AnswerProgress progress={row.progress} />
-                  </div>
-                </td>
-                <td className="px-3 py-3.5 align-middle">
-                  <p className="truncate text-xs font-medium tabular-nums text-foreground">
-                    {row.extractedAt
-                      ? new Date(row.extractedAt).toLocaleDateString("en-IN", {
-                          day: "2-digit",
-                          month: "short",
-                          year: "numeric",
-                        })
-                      : "—"}
-                  </p>
-                  <p className="mt-0.5 truncate text-[10px] tabular-nums text-muted-foreground">
-                    {row.extractedAt
-                      ? new Date(row.extractedAt).toLocaleTimeString("en-IN", {
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })
-                      : ""}
-                  </p>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </div>
+    <DataTable
+      columnLayoutKey="analytics-details"
+      columns={columns}
+      data={rows}
+      getRowId={(row) => row.id}
+      onRowClick={onSelect}
+      emptyIcon={Phone}
+      emptyTitle="No clients found"
+      emptyDescription="Try another card, search, or filter."
+      minWidthClassName="min-w-[720px]"
+      fillHeight={fillHeight}
+      embedded={embedded}
+      onColumnsControlReady={onColumnsControlReady}
+    />
   );
 }
 
@@ -593,6 +629,7 @@ export function AnalyticsDetailsView() {
 
   const [search, setSearch] = useState(searchFromUrl);
   const debouncedSearch = useDebounce(search, 300);
+  const [columnsControl, setColumnsControl] = useState<ReactNode>(null);
 
   const [selectedRow, setSelectedRow] = useState<AnalyticsDetailRow | null>(
     null
@@ -632,8 +669,8 @@ export function AnalyticsDetailsView() {
   const { applyMeta, resetPageMeta } = usePageMeta({
     title: KPI_FILTER_LABELS[metric],
     breadcrumbs: [
-      { label: "Insights", href: "/analytics" },
-      { label: "Analytics Report", href: backHref },
+      { label: "My Surveys", href: "/survey" },
+      { label: "Analytics", href: backHref },
       { label: KPI_FILTER_LABELS[metric] },
     ],
   });
@@ -685,18 +722,22 @@ export function AnalyticsDetailsView() {
     [kpisData?.kpis, metric]
   );
 
-  const pagination = useMemo(
-    () =>
-      data?.pagination ?? {
-        page: 1,
-        limit,
-        total: 0,
-        totalPages: 1,
-        hasNextPage: false,
-        hasPreviousPage: false,
-      },
-    [data?.pagination, limit]
-  );
+  const pagination = useMemo(() => {
+    const p = data?.pagination;
+    const total = p?.total ?? data?.total ?? 0;
+    const pageSize = p?.limit ?? limit;
+    const current = p?.page ?? page;
+    const totalPages =
+      p?.totalPages ?? Math.max(1, Math.ceil(total / pageSize) || 1);
+    return {
+      page: current,
+      limit: pageSize,
+      total,
+      totalPages,
+      hasNextPage: p?.hasNextPage ?? current < totalPages,
+      hasPreviousPage: p?.hasPreviousPage ?? current > 1,
+    };
+  }, [data?.pagination, data?.total, limit, page]);
 
   const setPage = (nextPage: number) => {
     const params = new URLSearchParams(searchParams.toString());
@@ -715,15 +756,18 @@ export function AnalyticsDetailsView() {
     router.push(`/analytics/details?${params.toString()}`);
   };
 
+  const rows = data?.rows ?? [];
+  const showLoader = isLoading || isFetching;
+
   return (
     <PageContainer size="full" className="pb-8 pt-4 lg:px-8">
       <motion.div
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3 }}
-        className="space-y-5"
+        className="flex min-w-0 flex-col gap-4"
       >
-        <div className="flex flex-wrap items-start justify-between gap-4">
+        <div className="flex shrink-0 flex-wrap items-start justify-between gap-4">
           <div className="min-w-0">
             <Link
               href={backHref}
@@ -739,121 +783,119 @@ export function AnalyticsDetailsView() {
               {METRIC_HINT[metric]}
             </p>
             <p className="mt-2 text-xs text-muted-foreground">
-              {dateFrom && dateTo ? `${dateFrom} — ${dateTo}` : "Selected period"}
+              {dateFrom && dateTo ? `${dateFrom} — ${dateTo}` : "All time"}
               {data?.total != null
                 ? ` · ${data.total.toLocaleString()} clients`
                 : ""}
-              {kpisData?.surveyName
-                ? ` · ${kpisData.surveyName}`
-                : ""}
+              {kpisData?.surveyName ? ` · ${kpisData.surveyName}` : ""}
             </p>
           </div>
-          {activeKpi ? (
-            <div className="rounded-[6px] border border-border/60 bg-muted/30 px-4 py-3 text-right">
-              <p className="font-display text-xl font-semibold tabular-nums leading-none text-foreground">
-                {activeKpi.value}
-              </p>
-              <p className="mt-1.5 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
-                {activeKpi.label}
-              </p>
-            </div>
-          ) : null}
-        </div>
-
-        <div className="flex min-h-0 flex-col rounded-[6px] border border-border/60 bg-card p-4 shadow-card sm:p-5">
-          <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-            <div>
-              <p className="text-sm font-semibold text-foreground">
-                Matching clients
-              </p>
-              {data?.total != null ? (
-                <p className="mt-0.5 text-xs text-muted-foreground">
-                  {data.total.toLocaleString()} result
-                  {data.total === 1 ? "" : "s"}
-                  {hasActiveFilters ? " · filtered" : ""}
+          <div className="flex shrink-0 flex-wrap items-center gap-2">
+            {activeKpi ? (
+              <div className="rounded-[6px] border border-border/60 bg-muted/30 px-4 py-3 text-right">
+                <p className="font-display text-xl font-semibold tabular-nums leading-none text-foreground">
+                  {activeKpi.value}
                 </p>
-              ) : null}
-            </div>
-            {data?.rows.length ? (
-              <span className="rounded-[6px] border border-border/50 bg-muted/40 px-2.5 py-1 text-[11px] font-medium tabular-nums text-muted-foreground">
-                Page {pagination.page} · {data.rows.length} shown
-              </span>
+                <p className="mt-1.5 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+                  {activeKpi.label}
+                </p>
+              </div>
+            ) : null}
+            {surveyId !== "all" ? (
+              <Link
+                href={`/survey/${surveyId}/results`}
+                className="inline-flex h-9 items-center gap-1.5 rounded-[6px] border border-border/50 bg-card px-3 text-xs font-medium text-foreground shadow-subtle hover:border-brand/30"
+              >
+                Open all responses
+                <ExternalLink className="size-3.5" />
+              </Link>
             ) : null}
           </div>
+        </div>
 
-          <ListToolbar
-            className="mb-4"
-            search={search}
-            onSearchChange={setSearch}
-            searchPlaceholder="Search phone or survey…"
-            searchAriaLabel="Search clients"
-            disabled={isLoading}
-            searchClassName={TOOLBAR_SEARCH_WIDTH_CLASS}
-            alignControlsEnd
-            filters={
-              <>
-                <Select
-                  value={callOutcome}
-                  onChange={(e) =>
-                    updateParams({ callOutcome: e.target.value }, true)
-                  }
-                  options={CALL_OUTCOME_OPTIONS}
-                  className={TOOLBAR_FILTER_SELECT_CLASS}
-                  aria-label="Filter by call outcome"
-                />
-                <Select
-                  value={surveyStatus}
-                  onChange={(e) =>
-                    updateParams({ surveyStatus: e.target.value }, true)
-                  }
-                  options={SURVEY_STATUS_OPTIONS}
-                  className={cn(TOOLBAR_FILTER_SELECT_CLASS, "lg:w-40")}
-                  aria-label="Filter by survey status"
-                />
-              </>
-            }
-            actions={
-              hasActiveFilters ? (
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={clearFilters}
-                  className="h-11 shrink-0 rounded-[6px] gap-1.5 border-border/50 bg-background/80 shadow-subtle"
-                >
-                  <X className="size-4" />
-                  Clear
-                </Button>
-              ) : null
-            }
-          />
-
-          {isLoading ? (
-            <div className="max-h-[min(65vh,560px)] overflow-hidden rounded-[6px] border border-border/55 bg-card">
-              <div className="space-y-0 divide-y divide-border/40 p-2">
-                {Array.from({ length: 8 }).map((_, i) => (
-                  <Skeleton key={i} className="h-12 w-full rounded-[4px]" />
-                ))}
-              </div>
+        <PaginatedListShell
+          unified
+          search={search}
+          onSearchChange={setSearch}
+          searchPlaceholder="Search phone or survey…"
+          searchAriaLabel="Search clients"
+          searchClassName={TOOLBAR_SEARCH_WIDTH_CLASS}
+          alignControlsEnd
+          columnsControl={columnsControl}
+          toolbarDisabled={isLoading && rows.length === 0}
+          filters={
+            <>
+              <SearchableSelect
+                value={callOutcome}
+                onChange={(value) =>
+                  updateParams({ callOutcome: value }, true)
+                }
+                options={CALL_OUTCOME_OPTIONS}
+                searchPlaceholder="Search outcomes…"
+                className={TOOLBAR_FILTER_SELECT_CLASS}
+                disabled={isLoading && rows.length === 0}
+                aria-label="Filter by call outcome"
+              />
+              <SearchableSelect
+                value={surveyStatus}
+                onChange={(value) =>
+                  updateParams({ surveyStatus: value }, true)
+                }
+                options={SURVEY_STATUS_OPTIONS}
+                searchPlaceholder="Search statuses…"
+                className={cn(TOOLBAR_FILTER_SELECT_CLASS, "lg:w-44")}
+                disabled={isLoading && rows.length === 0}
+                aria-label="Filter by survey status"
+              />
+            </>
+          }
+          actions={
+            hasActiveFilters ? (
+              <Button
+                type="button"
+                variant="outline"
+                onClick={clearFilters}
+                className={TOOLBAR_ACTION_BUTTON_CLASS}
+              >
+                <X className="size-4" />
+                Clear
+              </Button>
+            ) : null
+          }
+          meta={pagination}
+          itemLabel="clients"
+          onPageChange={setPage}
+          onLimitChange={setLimit}
+        >
+          {showLoader && rows.length === 0 ? (
+            <div className="space-y-0 divide-y divide-border/40 p-2">
+              {Array.from({ length: 8 }).map((_, i) => (
+                <Skeleton key={i} className="h-12 w-full rounded-[4px]" />
+              ))}
             </div>
-          ) : !data?.rows.length ? (
-            <div className="flex flex-col items-center justify-center rounded-[6px] border border-border/55 bg-card py-20 text-center">
-              <Phone className="size-10 text-muted-foreground/40" />
-              <p className="mt-3 text-sm font-medium text-foreground">
+          ) : null}
+
+          {!showLoader && rows.length === 0 ? (
+            <div className="flex flex-1 flex-col items-center justify-center px-6 py-20 text-center">
+              <div className="mb-4 flex size-16 items-center justify-center rounded-[6px] bg-primary/10">
+                <Phone className="size-8 text-primary" />
+              </div>
+              <h3 className="text-lg font-semibold">
                 {hasActiveFilters
                   ? "No clients match your search or filters"
                   : `No records for ${KPI_FILTER_LABELS[metric]}`}
-              </p>
-              <p className="mt-1 text-xs text-muted-foreground">
+              </h3>
+              <p className="mt-2 max-w-sm text-sm text-muted-foreground">
                 {hasActiveFilters
                   ? "Try different keywords or clear filters."
-                  : "Try another card, date range, or survey filter."}
+                  : "Try another card or survey."}
               </p>
               {hasActiveFilters ? (
                 <Button
                   type="button"
                   variant="outline"
                   onClick={clearFilters}
-                  className="mt-4 h-9 rounded-[6px] text-xs"
+                  className="mt-4 rounded-[6px]"
                 >
                   Clear filters
                 </Button>
@@ -866,33 +908,23 @@ export function AnalyticsDetailsView() {
                 </Link>
               )}
             </div>
-          ) : (
-            <div
-              className={cn(
-                "rounded-[8px]",
-                limit > 10
-                  ? "max-h-[min(65vh,560px)] overflow-y-auto overscroll-contain"
-                  : "overflow-x-auto"
-              )}
-            >
-              <ClientsTable
-                rows={data.rows}
-                page={pagination.page}
-                pageSize={pagination.limit}
-                onSelect={(row) => {
-                  setSelectedRow(row);
-                  setPopupOpen(true);
-                }}
-              />
-            </div>
-          )}
-
-          {isFetching && !isLoading ? (
-            <p className="mt-2 text-center text-[11px] text-muted-foreground">
-              Updating…
-            </p>
           ) : null}
-        </div>
+
+          {rows.length > 0 ? (
+            <ClientsTable
+              rows={rows}
+              page={pagination.page}
+              pageSize={pagination.limit}
+              embedded
+              fillHeight
+              onColumnsControlReady={setColumnsControl}
+              onSelect={(row) => {
+                setSelectedRow(row);
+                setPopupOpen(true);
+              }}
+            />
+          ) : null}
+        </PaginatedListShell>
 
         <ClientDetailPopup
           row={selectedRow}
@@ -902,28 +934,6 @@ export function AnalyticsDetailsView() {
             if (!open) setSelectedRow(null);
           }}
         />
-
-        {(data?.rows.length || pagination.total > 0) ? (
-          <div className="flex flex-col gap-3 border-t border-border/50 pt-4 sm:flex-row sm:items-center sm:justify-between">
-            <DataPagination
-              meta={pagination}
-              onPageChange={setPage}
-              onLimitChange={setLimit}
-              itemLabel="clients"
-              variant="inline"
-              className="flex-1"
-            />
-            {surveyId !== "all" ? (
-              <Link
-                href={`/survey/${surveyId}/results`}
-                className="inline-flex items-center gap-1.5 text-xs font-medium text-brand hover:underline"
-              >
-                Open all responses
-                <ExternalLink className="size-3.5" />
-              </Link>
-            ) : null}
-          </div>
-        ) : null}
       </motion.div>
     </PageContainer>
   );

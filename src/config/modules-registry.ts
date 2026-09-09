@@ -4,7 +4,6 @@
  */
 import type { LucideIcon } from "lucide-react";
 import {
-  BarChart3,
   Bell,
   ClipboardList,
   LayoutDashboard,
@@ -80,19 +79,6 @@ export const moduleNavSections: ModuleNavSection[] = [
         icon: Cpu,
         module: "providers",
         description: "Type + provider + models for survey speech pipeline.",
-      },
-    ],
-  },
-  {
-    id: "insights",
-    label: "Insights",
-    items: [
-      {
-        id: "reports",
-        title: "Analytics Report",
-        href: "/analytics",
-        icon: BarChart3,
-        module: "reports",
       },
     ],
   },

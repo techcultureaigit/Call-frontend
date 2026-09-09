@@ -210,6 +210,7 @@ export function VoicesTable({
   return (
     <DataTable
       embedded={embedded}
+      fillHeight
       columnLayoutKey="voices"
       columns={columns}
       data={voices}
@@ -218,7 +219,6 @@ export function VoicesTable({
       emptyIcon={Volume2}
       emptyTitle="No voices found"
       emptyDescription="Try adjusting your filters or search term."
-      footerHint="Play and compare voice samples directly in the table."
       minWidthClassName="min-w-200"
       getRowAccentClassName={() => TABLE_ROW_ACCENT_CLASS}
       skeletonRows={6}

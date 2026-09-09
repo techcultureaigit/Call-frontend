@@ -1,14 +1,16 @@
 import type { AnalyticsKpiFilterId } from "@/modules/reports/analytics-kpi-filter";
 
-/** Bumped to v2 — charts split into independent cards for free grid reorder. */
-export const ANALYTICS_REPORT_LAYOUT_KEY = "analytics-report-layout-v2";
-const LEGACY_LAYOUT_KEY = "analytics-report-layout-v1";
+/** v10 — KPI row is total / connected / avg duration (status counts stay on pie). */
+export const ANALYTICS_REPORT_LAYOUT_KEY = "analytics-report-layout-v10";
+const LEGACY_LAYOUT_KEYS: string[] = [
+  "analytics-report-layout-v9",
+  "analytics-report-layout-v8",
+];
 
 export const ANALYTICS_SECTION_IDS = [
   "kpis",
   "survey_status",
-  "completion_trend",
-  "survey_breakdown",
+  "disconnect_reason",
   "question_analytics",
 ] as const;
 
@@ -17,8 +19,7 @@ export type AnalyticsSectionId = (typeof ANALYTICS_SECTION_IDS)[number];
 export const ANALYTICS_SECTION_LABELS: Record<AnalyticsSectionId, string> = {
   kpis: "KPI cards",
   survey_status: "Survey status",
-  completion_trend: "Completion trend",
-  survey_breakdown: "By survey",
+  disconnect_reason: "Disconnect reason",
   question_analytics: "Question analytics",
 };
 
@@ -26,18 +27,45 @@ export const ANALYTICS_SECTION_LABELS: Record<AnalyticsSectionId, string> = {
 export const ANALYTICS_SECTION_SPAN: Record<AnalyticsSectionId, 1 | 2> = {
   kpis: 2,
   survey_status: 1,
-  completion_trend: 1,
-  survey_breakdown: 2,
+  disconnect_reason: 1,
   question_analytics: 2,
 };
+
+const PAIRABLE_SECTIONS = new Set<AnalyticsSectionId>([
+  "survey_status",
+  "disconnect_reason",
+]);
+
+/** Adjacent status + reason pies sit side by side. */
+export function groupAnalyticsSections(
+  order: AnalyticsSectionId[]
+): AnalyticsSectionId[][] {
+  const rows: AnalyticsSectionId[][] = [];
+  let pair: AnalyticsSectionId[] = [];
+
+  const flushPair = () => {
+    if (!pair.length) return;
+    rows.push(pair);
+    pair = [];
+  };
+
+  for (const id of order) {
+    if (PAIRABLE_SECTIONS.has(id)) {
+      pair.push(id);
+      if (pair.length === 2) flushPair();
+      continue;
+    }
+    flushPair();
+    rows.push([id]);
+  }
+  flushPair();
+  return rows;
+}
 
 export const DEFAULT_KPI_ORDER: AnalyticsKpiFilterId[] = [
   "total_calls",
   "connected",
-  "missed",
-  "survey_complete",
-  "survey_partial",
-  "survey_incomplete",
+  "avg_duration",
 ];
 
 export type AnalyticsReportLayout = {
@@ -79,18 +107,24 @@ function normalizeOrder<T extends string>(
   return normalized;
 }
 
-/** Migrate v1 `charts` → `survey_status` + `completion_trend`. */
+const REMOVED_SECTIONS = new Set([
+  "overview",
+  "charts",
+  "completion_trend",
+  "survey_breakdown",
+  "call_outcomes",
+  "call_performance",
+]);
+
 function migrateLegacySections(raw: string[] | undefined): string[] {
   if (!raw?.length) return [...ANALYTICS_SECTION_IDS];
-  const next: string[] = [];
-  for (const id of raw) {
-    if (id === "charts") {
-      next.push("survey_status", "completion_trend");
-      continue;
-    }
-    next.push(id);
+  const filtered = raw.filter((id) => !REMOVED_SECTIONS.has(id));
+  if (!filtered.includes("disconnect_reason")) {
+    const idx = filtered.indexOf("survey_status");
+    if (idx >= 0) filtered.splice(idx + 1, 0, "disconnect_reason");
+    else filtered.push("disconnect_reason");
   }
-  return next;
+  return filtered;
 }
 
 export function loadAnalyticsReportLayout(): AnalyticsReportLayout {
@@ -99,7 +133,10 @@ export function loadAnalyticsReportLayout(): AnalyticsReportLayout {
   try {
     const raw =
       window.localStorage.getItem(ANALYTICS_REPORT_LAYOUT_KEY) ??
-      window.localStorage.getItem(LEGACY_LAYOUT_KEY);
+      LEGACY_LAYOUT_KEYS.map((key) => window.localStorage.getItem(key)).find(
+        Boolean
+      ) ??
+      null;
     if (!raw) return DEFAULT_ANALYTICS_REPORT_LAYOUT;
 
     const parsed = JSON.parse(raw) as Partial<AnalyticsReportLayout>;
@@ -112,7 +149,6 @@ export function loadAnalyticsReportLayout(): AnalyticsReportLayout {
       kpis: normalizeOrder(parsed.kpis, DEFAULT_KPI_ORDER, isKpiId),
     };
 
-    // Persist migrated layout under v2 key
     window.localStorage.setItem(
       ANALYTICS_REPORT_LAYOUT_KEY,
       JSON.stringify(layout)

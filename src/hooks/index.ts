@@ -21,7 +21,6 @@ export { useRoles, useRoleMutations, useRoleDetail } from "@/modules/roles/use-r
 export {
   useAnalyticsKpis,
   useAnalyticsBreakdowns,
-  useAnalyticsTrends,
   useReports,
   useReportCampaigns,
 } from "@/modules/reports/use-reports";

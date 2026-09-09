@@ -13,7 +13,6 @@ import type {
   AnalyticsClientDetail,
   AnalyticsDetailsData,
   AnalyticsKpisData,
-  AnalyticsTrendsData,
   QuestionAnalyticsData,
   ReportsData,
 } from "@/types/reports";
@@ -25,12 +24,11 @@ export type { ReportsParams };
 const KPI_ICON: Record<string, string> = {
   total_calls: "phone",
   connected: "connected",
+  avg_duration: "clock",
   missed: "missed",
   survey_complete: "check",
   survey_partial: "partial",
   survey_incomplete: "incomplete",
-  avg_duration: "clock",
-  recording: "mic",
 };
 
 function normalizeReportsData(data: ReportsData): ReportsData {
@@ -43,6 +41,7 @@ function normalizeReportsData(data: ReportsData): ReportsData {
     callsOverTime: data.callsOverTime ?? [],
     callOutcomeBreakdown: data.callOutcomeBreakdown ?? [],
     surveyStatusBreakdown: data.surveyStatusBreakdown ?? [],
+    reasonBreakdown: data.reasonBreakdown ?? [],
     hangupBreakdown: data.hangupBreakdown ?? [],
     questions: data.questions ?? [],
     questionBars: data.questionBars ?? [],
@@ -54,8 +53,8 @@ const reportsCall = createModuleApiCall("reports");
 
 function buildSurveyQuery(params: ReportsParams = {}) {
   return {
-    from: params.from,
-    to: params.to,
+    ...(params.from ? { from: params.from } : {}),
+    ...(params.to ? { to: params.to } : {}),
     surveyId:
       params.surveyId && params.surveyId !== "all"
         ? params.surveyId
@@ -102,28 +101,17 @@ export async function getAnalyticsBreakdowns(params: ReportsParams = {}) {
     "GET",
     "/api/analytics/breakdowns",
     async () => {
-      return await unwrapData(
+      const data = await unwrapData(
         apiGet<ApiResponse<AnalyticsBreakdownsData>>(
           "/api/analytics/breakdowns",
           query
         )
       );
-    },
-    query
-  );
-}
-
-/** getAnalyticsTrends() → GET /api/analytics/trends */
-export async function getAnalyticsTrends(params: ReportsParams = {}) {
-  const query = buildSurveyQuery(params);
-  return reportsCall(
-    "getAnalyticsTrends",
-    "GET",
-    "/api/analytics/trends",
-    async () => {
-      return await unwrapData(
-        apiGet<ApiResponse<AnalyticsTrendsData>>("/api/analytics/trends", query)
-      );
+      return {
+        ...data,
+        surveyStatusBreakdown: data.surveyStatusBreakdown ?? [],
+        reasonBreakdown: data.reasonBreakdown ?? [],
+      };
     },
     query
   );
@@ -279,7 +267,6 @@ export async function getAnalyticsClientDetail(resultId: string) {
 export const reportsApi = {
   getKpis: getAnalyticsKpis,
   getBreakdowns: getAnalyticsBreakdowns,
-  getTrends: getAnalyticsTrends,
   getData: getReports,
   getCampaigns: getReportCampaigns,
   getSurveyAnalytics,

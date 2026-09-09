@@ -142,7 +142,7 @@ export function ProvidersListView() {
         {isLoading ? (
           <AppLoader variant="section" label="Loading" hint="Fetching providers" />
         ) : (
-          <ListTableCard>
+          <ListTableCard className="flex flex-col overflow-hidden">
             <ProviderToolbar
               filtersOnly
               search={search}

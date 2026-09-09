@@ -107,6 +107,7 @@ export function SurveysTable({
     canCreateSurvey,
     canUpdateSurvey,
     canDeleteSurvey,
+    canReadReports,
   } = usePermissions();
 
   const allSelected =
@@ -230,13 +231,24 @@ export function SurveysTable({
           return (
             <div className="flex items-center justify-end gap-2">
               {locked ? (
-                <Link
-                  href={`/survey/${survey.id}/results`}
-                  className="inline-flex h-8 items-center gap-1.5 rounded-[6px] border border-[#2c3b59]/25 bg-[#2c3b59]/8 px-2.5 text-[11px] font-medium text-[#2c3b59] shadow-subtle transition-all duration-200 hover:border-[#2c3b59]/40 hover:bg-[#2c3b59]/14 hover:shadow-brand"
-                  aria-label="View responses"
-                >
-                  Response
-                </Link>
+                <div className="flex items-center gap-2">
+                  {canReadReports ? (
+                    <Link
+                      href={`/survey/${survey.id}/analytics`}
+                      className="inline-flex h-8 items-center gap-1.5 rounded-[6px] bg-[#2c3b59] px-2.5 text-[11px] font-medium text-white shadow-subtle transition-all duration-200 hover:bg-[#24314a] hover:shadow-brand"
+                      aria-label="View analytics"
+                    >
+                      Analytics
+                    </Link>
+                  ) : null}
+                  <Link
+                    href={`/survey/${survey.id}/results`}
+                    className="inline-flex h-8 items-center gap-1.5 rounded-[6px] border border-[#2c3b59]/25 bg-[#2c3b59]/8 px-2.5 text-[11px] font-medium text-[#2c3b59] shadow-subtle transition-all duration-200 hover:border-[#2c3b59]/40 hover:bg-[#2c3b59]/14"
+                    aria-label="View responses"
+                  >
+                    Response
+                  </Link>
+                </div>
               ) : null}
 
               <DataTableActionGroup>
@@ -325,6 +337,7 @@ export function SurveysTable({
       canCreateSurvey,
       canUpdateSurvey,
       canDeleteSurvey,
+      canReadReports,
     ]
   );
 
@@ -633,33 +646,11 @@ export function SurveyListView() {
   const showLoader = isLoading || isRefreshing;
   const hasActiveFilters =
     Boolean(search.trim()) || language !== "all" || status !== "all";
-  /** Inner table scroll only when user asks for more than default 10 rows. */
-  const useTableScroll = pageSize > 10;
 
   return (
-    <div
-      className={cn(
-        "min-w-0 bg-background",
-        useTableScroll &&
-          "flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden"
-      )}
-    >
-      <PageContainer
-        size="full"
-        fullHeight={useTableScroll}
-        className={
-          useTableScroll
-            ? "flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden"
-            : undefined
-        }
-      >
-        <div
-          className={cn(
-            "flex min-w-0 flex-col gap-4",
-            useTableScroll &&
-              "min-h-0 flex-1 overflow-hidden"
-          )}
-        >
+    <div className="min-w-0 bg-background">
+      <PageContainer size="full">
+        <div className="flex min-w-0 flex-col gap-4">
           <div className="flex shrink-0 items-start justify-between gap-4">
             <div>
               <h1 className={PAGE_TITLE_CLASS}>
@@ -772,7 +763,6 @@ export function SurveyListView() {
             itemLabel="surveys"
             onPageChange={setPage}
             onLimitChange={setPageSize}
-            constrainHeight={useTableScroll}
           >
           {showLoader ? (
             <AppLoader
@@ -831,7 +821,7 @@ export function SurveyListView() {
                 onUnschedule={handleUnschedule}
                 unschedulingId={unschedulingId}
                 embedded
-                fillHeight={useTableScroll}
+                fillHeight
                 onColumnsControlReady={setColumnsControl}
               />
           ) : null}

@@ -5,7 +5,6 @@ import { queryKeys } from "@/lib/constants/query-keys";
 import {
   getAnalyticsBreakdowns,
   getAnalyticsKpis,
-  getAnalyticsTrends,
   getReportCampaigns,
   getReports,
   getAnalyticsDetails,
@@ -37,17 +36,7 @@ export function useAnalyticsBreakdowns(params: ReportsParams) {
   });
 }
 
-export function useAnalyticsTrends(params: ReportsParams) {
-  return useQuery({
-    queryKey: queryKeys.reports.trends(params as Record<string, unknown>),
-    queryFn: () => getAnalyticsTrends(params),
-    placeholderData: (prev) => prev,
-    staleTime: STALE,
-    refetchOnWindowFocus: true,
-  });
-}
-
-/** @deprecated Prefer useAnalyticsKpis + useAnalyticsBreakdowns + useAnalyticsTrends */
+/** @deprecated Prefer useAnalyticsKpis + useAnalyticsBreakdowns */
 export function useReports(params: ReportsParams) {
   return useQuery({
     queryKey: queryKeys.reports.data(params as Record<string, unknown>),

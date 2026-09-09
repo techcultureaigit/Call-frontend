@@ -140,6 +140,7 @@ export function ProviderTable({
   return (
     <DataTable
       embedded={embedded}
+      fillHeight
       columnLayoutKey="providers"
       columns={columns}
       data={items}
@@ -149,7 +150,6 @@ export function ProviderTable({
       emptyIcon={Cpu}
       emptyTitle="No providers found"
       emptyDescription="Add a provider with its models."
-      footerHint="Type tells which pipeline stage this provider belongs to."
       minWidthClassName="min-w-[52rem]"
       skeletonRows={4}
       onColumnsControlReady={onColumnsControlReady}

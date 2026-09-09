@@ -25,6 +25,7 @@ import {
   TABLE_FONT_CLASS,
   TABLE_STATUS_BADGE_CLASS,
   TABLE_CHIP_CLASS,
+  TABLE_SCROLL_BODY_CLASS,
   type TableColumnLayoutItem,
 } from "@/components/shared/table-column-layout";
 import { cn } from "@/lib/utils";
@@ -53,6 +54,7 @@ export {
   TABLE_SUBTEXT_CLASS,
   TABLE_STATUS_BADGE_CLASS,
   TABLE_CHIP_CLASS,
+  TABLE_SCROLL_BODY_CLASS,
 } from "@/components/shared/table-column-layout";
 
 export interface DataTableProps<T> {
@@ -73,7 +75,10 @@ export interface DataTableProps<T> {
   skeletonRows?: number;
   /** Persist show/hide + reorder for this table (localStorage). */
   columnLayoutKey?: string;
-  /** Fill parent height and scroll inside the table (sticky header). */
+  /**
+   * Fill parent height and scroll inside (pagination stays visible on the card).
+   * Same visual height whether pageSize is 10 or 100.
+   */
   fillHeight?: boolean;
   /** Render inside a parent card — no outer border or shadow */
   embedded?: boolean;
@@ -177,16 +182,13 @@ export function DataTable<T>({
     return () => onColumnsControlReadyRef.current?.(null);
   }, []);
 
-  const constrainsHeight = fillHeight && data.length > 10;
+  const usesStandardScroll = Boolean(fillHeight);
 
   const tableShellClass = cn(
     "relative min-w-0 font-sans text-sm leading-snug",
     embedded
-      ? constrainsHeight
-        ? "flex min-h-0 flex-1 flex-col overflow-hidden"
-        : "flex flex-col"
-      : "overflow-hidden rounded-[6px] border border-border/60 bg-card/95 shadow-elevated backdrop-blur-sm",
-    !embedded && constrainsHeight && "flex min-h-0 flex-1 flex-col"
+      ? "flex flex-col overflow-hidden"
+      : "overflow-hidden rounded-[6px] border border-border/60 bg-card/95 shadow-elevated backdrop-blur-sm"
   );
 
   if (isLoading) {
@@ -218,10 +220,7 @@ export function DataTable<T>({
       <div
         className={cn(
           "relative min-w-0",
-          // Vertical scroll only when more than a page of default rows (10+)
-          constrainsHeight
-            ? "min-h-0 flex-1 overflow-auto overscroll-contain"
-            : "overflow-x-auto"
+          usesStandardScroll ? TABLE_SCROLL_BODY_CLASS : "overflow-x-auto"
         )}
       >
         <TableColumnDnd
@@ -240,7 +239,7 @@ export function DataTable<T>({
               <tr
                 className={cn(
                   TABLE_HEAD_ROW_CLASS,
-                  constrainsHeight &&
+                  usesStandardScroll &&
                     "[&_th]:sticky [&_th]:top-0 [&_th]:z-20 [&_th]:bg-card"
                 )}
               >

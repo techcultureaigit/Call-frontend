@@ -86,7 +86,7 @@ function AnswerRateRing({ rate }: { rate: number }) {
   const offset = c - (rate / 100) * c;
 
   return (
-    <div className="relative size-24 shrink-0">
+    <div className="relative size-[72px] shrink-0">
       <svg className="size-full -rotate-90" viewBox="0 0 88 88">
         <circle
           cx="44"
@@ -134,9 +134,9 @@ function SummaryStrip({
 }) {
   if (isLoading) {
     return (
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        {Array.from({ length: 4 }).map((_, i) => (
-          <Skeleton key={i} className="h-[76px] rounded-[8px]" />
+      <div className="grid grid-cols-3 gap-2">
+        {Array.from({ length: 3 }).map((_, i) => (
+          <Skeleton key={i} className="h-[58px] rounded-[6px]" />
         ))}
       </div>
     );
@@ -164,32 +164,25 @@ function SummaryStrip({
       accent: rateTone(avgRate),
       bg: rateIconBg(avgRate),
     },
-    {
-      label: "In list",
-      value: String(totalQuestions ?? 0),
-      icon: Users,
-      accent: "text-brand",
-      bg: "bg-brand/10",
-    },
   ];
 
   return (
-    <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+    <div className="grid grid-cols-3 gap-2">
       {items.map((item) => {
         const Icon = item.icon;
         return (
           <div
             key={item.label}
-            className="flex items-center gap-3 rounded-[6px] border border-border/60 bg-card px-4 py-3.5 shadow-card"
+            className="flex items-center gap-2.5 rounded-[6px] border border-border/60 bg-card px-3 py-2 shadow-card"
           >
             <span
               className={cn(
-                "flex size-10 shrink-0 items-center justify-center rounded-[6px]",
+                "flex size-8 shrink-0 items-center justify-center rounded-[6px]",
                 item.bg,
                 item.accent
               )}
             >
-              <Icon className="size-[18px]" strokeWidth={2} />
+              <Icon className="size-4" strokeWidth={2} />
             </span>
             <div className="min-w-0">
               <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
@@ -197,7 +190,7 @@ function SummaryStrip({
               </p>
               <p
                 className={cn(
-                  "font-display mt-0.5 text-xl font-semibold tabular-nums leading-none",
+                  "font-display mt-0.5 text-lg font-semibold tabular-nums leading-none",
                   item.accent.includes("text-") ? item.accent : "text-foreground"
                 )}
               >
@@ -231,7 +224,7 @@ function QuestionListItem({
       type="button"
       onClick={onSelect}
       className={cn(
-        "relative flex w-full gap-3 border-b border-border/40 px-4 py-3.5 text-left transition-all last:border-b-0",
+        "relative flex w-full gap-3 border-b border-border/40 px-3.5 py-2.5 text-left transition-all last:border-b-0",
         selected
           ? "bg-[#2c3b59]/6 before:absolute before:inset-y-0 before:left-0 before:w-[3px] before:bg-[#2c3b59]"
           : "hover:bg-muted/25"
@@ -248,12 +241,15 @@ function QuestionListItem({
         {index + 1}
       </span>
       <div className="min-w-0 flex-1">
-        <p className="line-clamp-2 text-sm font-medium leading-snug text-foreground">
+        <p className="font-hindi line-clamp-2 text-sm font-medium leading-snug text-foreground">
           {question.question}
         </p>
-        {question.surveyName ? (
-          <p className="mt-1 truncate text-[11px] text-muted-foreground">
-            {question.surveyName}
+        {question.description?.trim() ? (
+          <p
+            className="mt-1 line-clamp-2 text-[11px] text-muted-foreground"
+            title={question.description}
+          >
+            {question.description}
           </p>
         ) : null}
         <div className="mt-2.5 flex items-center gap-2">
@@ -374,14 +370,14 @@ function QuestionDetailPanel({
       initial={{ opacity: 0, y: 6 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.25 }}
-      className="overflow-hidden rounded-[6px] border border-border/60 bg-card shadow-card"
+      className="flex h-full min-h-0 flex-col overflow-hidden rounded-[6px] border border-border/60 bg-card shadow-card"
     >
       {/* Header */}
-      <div className="border-b border-border/45 bg-muted/15 px-5 py-5 sm:px-6">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+      <div className="shrink-0 border-b border-border/45 bg-muted/15 px-4 py-3 sm:px-5">
+        <div className="flex items-start justify-between gap-3">
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-2">
-              <span className="font-display inline-flex size-9 items-center justify-center rounded-[6px] bg-[#2c3b59] text-sm font-bold text-white shadow-sm">
+              <span className="font-display inline-flex size-8 items-center justify-center rounded-[6px] bg-[#2c3b59] text-sm font-bold text-white shadow-sm">
                 Q{index + 1}
               </span>
               {question.type ? (
@@ -390,12 +386,15 @@ function QuestionDetailPanel({
                 </span>
               ) : null}
             </div>
-            <h2 className="mt-3 text-base font-semibold leading-relaxed text-foreground sm:text-lg">
+            <h2 className="font-hindi mt-2 text-sm font-semibold leading-snug text-foreground sm:text-[15px]">
               {question.question}
             </h2>
-            {question.surveyName ? (
-              <p className="mt-2 inline-flex items-center rounded-[5px] bg-muted/50 px-2 py-1 text-xs text-muted-foreground">
-                {question.surveyName}
+            {question.description?.trim() ? (
+              <p
+                className="mt-1.5 text-[12px] leading-snug text-muted-foreground"
+                title={question.description}
+              >
+                {question.description}
               </p>
             ) : null}
           </div>
@@ -404,7 +403,7 @@ function QuestionDetailPanel({
       </div>
 
       {/* Stats row */}
-      <div className="grid grid-cols-2 gap-px bg-border/45 sm:grid-cols-4">
+      <div className="grid shrink-0 grid-cols-2 gap-px bg-border/45 sm:grid-cols-4">
         {[
           {
             label: "Answered",
@@ -435,7 +434,7 @@ function QuestionDetailPanel({
           return (
             <div
               key={stat.label}
-              className="flex items-center gap-3 bg-card px-4 py-3.5"
+              className="flex items-center gap-2.5 bg-card px-3 py-2.5"
             >
               <Icon className={cn("size-4 shrink-0 opacity-70", stat.color)} />
               <div>
@@ -451,14 +450,14 @@ function QuestionDetailPanel({
         })}
       </div>
 
-      <div className="border-b border-border/45 px-5 py-4 sm:px-6">
+      <div className="shrink-0 border-b border-border/45 px-4 py-2.5 sm:px-5">
         <AnsweredSkippedBar answered={answered} skipped={skipped} total={total} />
       </div>
 
-      <div className="grid gap-6 p-5 sm:grid-cols-2 sm:p-6">
+      <div className="grid min-h-0 flex-1 gap-4 overflow-hidden p-4 sm:grid-cols-2 sm:p-5">
         {/* Top answers */}
-        <div className="sm:col-span-1">
-          <div className="mb-4 flex items-center justify-between">
+        <div className="flex min-h-0 flex-col">
+          <div className="mb-3 flex shrink-0 items-center justify-between">
             <div className="flex items-center gap-2">
               <MessageSquare className="size-4 text-muted-foreground" />
               <p className="text-sm font-semibold text-foreground">Top answers</p>
@@ -471,7 +470,7 @@ function QuestionDetailPanel({
           </div>
 
           {answers.length ? (
-            <div className="space-y-3.5">
+            <div className="min-h-0 flex-1 space-y-2 overflow-y-auto overscroll-contain pr-0.5">
               {answers.map((ans, i) => (
                 <div
                   key={`${ans.name}-${i}`}
@@ -517,8 +516,8 @@ function QuestionDetailPanel({
         </div>
 
         {/* Users table */}
-        <div className="sm:col-span-1">
-          <div className="mb-3 flex items-center justify-between gap-2">
+        <div className="flex min-h-0 flex-col">
+          <div className="mb-2 flex shrink-0 items-center justify-between gap-2">
             <div className="flex items-center gap-2">
               <Phone className="size-4 text-muted-foreground" />
               <p className="text-sm font-semibold text-foreground">Users who answered</p>
@@ -533,8 +532,8 @@ function QuestionDetailPanel({
           </div>
 
           {users.length ? (
-            <>
-              <div className="relative mb-3">
+            <div className="flex min-h-0 flex-1 flex-col">
+              <div className="relative mb-2 shrink-0">
                 <Search className="absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
                 <input
                   type="search"
@@ -546,7 +545,7 @@ function QuestionDetailPanel({
               </div>
 
               {filteredUsers.length ? (
-            <div className="max-h-[420px] overflow-auto rounded-[8px] border border-border/55">
+            <div className="min-h-0 flex-1 overflow-auto overscroll-contain rounded-[8px] border border-border/55">
               <table className="w-full min-w-[280px] text-left text-xs">
                 <thead className="sticky top-0 z-10 bg-muted/95 backdrop-blur-sm">
                   <tr className="border-b border-border/55 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
@@ -581,14 +580,14 @@ function QuestionDetailPanel({
               </table>
             </div>
               ) : (
-                <div className="flex flex-col items-center justify-center rounded-[8px] border border-dashed border-border/55 py-10 text-center">
+                <div className="flex min-h-0 flex-1 flex-col items-center justify-center rounded-[8px] border border-dashed border-border/55 text-center">
                   <Search className="size-7 text-muted-foreground/30" />
                   <p className="mt-2 text-sm text-muted-foreground">
                     No users match your search
                   </p>
                 </div>
               )}
-            </>
+            </div>
           ) : (
             <div className="flex flex-col items-center justify-center rounded-[8px] border border-dashed border-border/55 py-12 text-center">
               <Phone className="size-8 text-muted-foreground/30" />
@@ -621,8 +620,8 @@ export function AnalyticsQuestionsView() {
   const { applyMeta, resetPageMeta } = usePageMeta({
     title: "Question analytics",
     breadcrumbs: [
-      { label: "Insights", href: "/analytics" },
-      { label: "Analytics Report", href: backHref },
+      { label: "My Surveys", href: "/survey" },
+      { label: "Analytics", href: backHref },
       { label: "Questions" },
     ],
   });
@@ -652,7 +651,7 @@ export function AnalyticsQuestionsView() {
     return questions.filter(
       (item) =>
         item.question.toLowerCase().includes(q) ||
-        item.surveyName?.toLowerCase().includes(q) ||
+        item.description?.toLowerCase().includes(q) ||
         item.type?.toLowerCase().includes(q)
     );
   }, [questions, search]);
@@ -705,33 +704,32 @@ export function AnalyticsQuestionsView() {
   };
 
   return (
-    <PageContainer size="full" className="pb-8 pt-4 lg:px-8">
+    <PageContainer size="full" fullHeight className="py-3 lg:px-8">
       <motion.div
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3 }}
-        className="space-y-5"
+        className="flex min-h-0 flex-1 flex-col gap-3 overflow-hidden"
       >
-        <div>
-          <Link
-            href={backHref}
-            className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
-          >
-            <ArrowLeft className="size-3.5" />
-            Back to analytics
-          </Link>
-          <h1 className={cn(PAGE_TITLE_CLASS, "mt-2")}>
-            Question analytics
-          </h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Browse questions, answer breakdown, and user responses
-          </p>
-          <div className="mt-2 flex flex-wrap items-center gap-2">
+        <div className="flex shrink-0 items-start justify-between gap-3">
+          <div className="min-w-0">
+            <Link
+              href={backHref}
+              className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
+            >
+              <ArrowLeft className="size-3.5" />
+              Back to analytics
+            </Link>
+            <h1 className={cn(PAGE_TITLE_CLASS, "mt-1")}>
+              Question analytics
+            </h1>
+          </div>
+          <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
             <span className="rounded-[5px] border border-border/55 bg-muted/30 px-2 py-1 text-xs text-muted-foreground">
-              {dateFrom && dateTo ? `${dateFrom} — ${dateTo}` : "Selected period"}
+              {dateFrom && dateTo ? `${dateFrom} — ${dateTo}` : "All time"}
             </span>
             {data?.surveyName ? (
-              <span className="rounded-[6px] border border-border/55 bg-muted/30 px-2 py-1 text-xs font-medium text-foreground">
+              <span className="max-w-[220px] truncate rounded-[6px] border border-border/55 bg-muted/30 px-2 py-1 text-xs font-medium text-foreground">
                 {data.surveyName}
               </span>
             ) : (
@@ -742,20 +740,22 @@ export function AnalyticsQuestionsView() {
           </div>
         </div>
 
-        <SummaryStrip
-          totalQuestions={data?.totalQuestions}
-          totalAnswers={data?.totalAnswers}
-          avgRate={avgRate}
-          isLoading={isLoading}
-        />
+        <div className="shrink-0">
+          <SummaryStrip
+            totalQuestions={data?.totalQuestions}
+            totalAnswers={data?.totalAnswers}
+            avgRate={avgRate}
+            isLoading={isLoading}
+          />
+        </div>
 
         {isLoading ? (
-          <div className="grid gap-4 lg:grid-cols-12">
-            <Skeleton className="h-[560px] rounded-[10px] lg:col-span-4" />
-            <Skeleton className="h-[560px] rounded-[10px] lg:col-span-8" />
+          <div className="grid min-h-0 flex-1 gap-3 lg:grid-cols-12">
+            <Skeleton className="h-full min-h-[240px] rounded-[6px] lg:col-span-4" />
+            <Skeleton className="h-full min-h-[240px] rounded-[6px] lg:col-span-8" />
           </div>
         ) : !questions.length ? (
-          <div className="flex flex-col items-center justify-center rounded-[6px] border border-border/60 bg-card py-20 text-center shadow-card">
+          <div className="flex min-h-0 flex-1 flex-col items-center justify-center rounded-[6px] border border-border/60 bg-card text-center shadow-card">
             <HelpCircle className="size-10 text-muted-foreground/40" />
             <p className="mt-3 text-sm font-medium text-foreground">
               No question data for this period
@@ -768,10 +768,9 @@ export function AnalyticsQuestionsView() {
             </Link>
           </div>
         ) : (
-          <div className="grid gap-4 lg:grid-cols-12 lg:items-start">
-            {/* Question list */}
-            <div className="overflow-hidden rounded-[6px] border border-border/60 bg-card shadow-card lg:col-span-4">
-              <div className="border-b border-border/45 bg-muted/15 px-4 py-3.5">
+          <div className="grid min-h-0 flex-1 gap-3 overflow-hidden lg:grid-cols-12">
+            <div className="flex min-h-0 flex-col overflow-hidden rounded-[6px] border border-border/60 bg-card shadow-card lg:col-span-4">
+              <div className="shrink-0 border-b border-border/45 bg-muted/15 px-4 py-2.5">
                 <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
                   All questions
                 </p>
@@ -779,18 +778,18 @@ export function AnalyticsQuestionsView() {
                   {filteredQuestions.length}
                   {search ? ` of ${questions.length}` : ""} questions
                 </p>
-                <div className="relative mt-3">
+                <div className="relative mt-2">
                   <Search className="absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
                   <input
                     type="search"
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
                     placeholder="Search question or survey..."
-                    className="h-9 w-full rounded-[6px] border border-border/55 bg-card pl-8 pr-3 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-brand/25"
+                    className="h-8 w-full rounded-[6px] border border-border/55 bg-card pl-8 pr-3 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-brand/25"
                   />
                 </div>
               </div>
-              <div className="max-h-[min(72vh,640px)] overflow-y-auto overscroll-contain">
+              <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
                 {filteredQuestions.length ? (
                   filteredQuestions.map((q, index) => (
                     <QuestionListItem
@@ -809,12 +808,11 @@ export function AnalyticsQuestionsView() {
               </div>
             </div>
 
-            {/* Detail panel */}
-            <div className="lg:col-span-8 lg:sticky lg:top-4">
+            <div className="min-h-0 lg:col-span-8">
               {selected ? (
                 <QuestionDetailPanel question={selected} index={selectedIndex} />
               ) : (
-                <div className="flex flex-col items-center justify-center rounded-[10px] border border-dashed border-border/55 bg-card py-24 text-center">
+                <div className="flex h-full flex-col items-center justify-center rounded-[6px] border border-dashed border-border/55 bg-card text-center">
                   <HelpCircle className="size-10 text-muted-foreground/30" />
                   <p className="mt-3 text-sm text-muted-foreground">
                     Select a question from the list

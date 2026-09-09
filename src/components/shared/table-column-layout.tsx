@@ -579,6 +579,13 @@ export const TABLE_BODY_CELL_CLASS =
   "relative px-3 py-2 align-middle font-sans text-xs leading-snug text-foreground";
 export const TABLE_SELECT_CELL_CLASS = "w-10 px-2.5";
 
+/**
+ * Standard list scroll: grow with rows, cap at ~10 visible rows, then scroll.
+ * Keeps pagination flush under the last row (no empty white gap).
+ */
+export const TABLE_SCROLL_BODY_CLASS =
+  "max-h-[min(36rem,calc(100svh-16rem))] overflow-auto overscroll-contain";
+
 const ColumnLockContext = createContext<Set<string>>(new Set());
 
 export function TableColumnDnd({

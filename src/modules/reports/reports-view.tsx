@@ -1,7 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useCallback, useEffect, useMemo } from "react";
+import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 import { PageContainer } from "@/components/layout";
@@ -9,21 +9,16 @@ import { usePageMeta } from "@/hooks";
 import {
   useAnalyticsBreakdowns,
   useAnalyticsKpis,
-  useAnalyticsTrends,
-  useReportCampaigns,
   useQuestionAnalytics,
 } from "@/modules/reports/use-reports";
 import { exportReportsPdf } from "@/modules/reports/reports-export";
 import {
   analyticsDetailsHref,
   analyticsQuestionsHref,
-  analyticsSurveysHref,
 } from "@/modules/reports/analytics-nav";
 import { ReportsToolbar } from "./reports-toolbar";
 import { ReportDashboardDonut } from "./report-dashboard-donut";
-import { ReportAreaChart } from "./report-area-chart";
 import { ReportQuestionAnalytics } from "./report-question-analytics";
-import { ReportSurveyBreakdown } from "./report-survey-breakdown";
 import { AnalyticsReportSections } from "./analytics-report-sections";
 import { useAnalyticsReportLayout } from "./use-analytics-report-layout";
 import type { AnalyticsSectionId } from "./analytics-report-layout";
@@ -34,34 +29,8 @@ import {
   findOrderedKpi,
 } from "@/modules/reports/analytics-kpi-grid";
 
-function toLocalDateKey(date: Date) {
-  const y = date.getFullYear();
-  const m = String(date.getMonth() + 1).padStart(2, "0");
-  const d = String(date.getDate()).padStart(2, "0");
-  return `${y}-${m}-${d}`;
-}
-
-function defaultDates() {
-  const to = new Date();
-  const from = new Date();
-  from.setDate(from.getDate() - 30);
-  return {
-    from: toLocalDateKey(from),
-    to: toLocalDateKey(to),
-  };
-}
-
-export function ReportsView() {
+export function ReportsView({ lockedSurveyId }: { lockedSurveyId: string }) {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const defaults = defaultDates();
-  const [dateFrom, setDateFrom] = useState(
-    searchParams.get("from") || defaults.from
-  );
-  const [dateTo, setDateTo] = useState(searchParams.get("to") || defaults.to);
-  const [surveyId, setSurveyId] = useState(
-    searchParams.get("surveyId") || "all"
-  );
 
   const {
     layout,
@@ -73,9 +42,7 @@ export function ReportsView() {
   } = useAnalyticsReportLayout();
 
   const filterParams = {
-    from: dateFrom,
-    to: dateTo,
-    surveyId: surveyId === "all" ? undefined : surveyId,
+    surveyId: lockedSurveyId,
   };
 
   const {
@@ -93,22 +60,6 @@ export function ReportsView() {
     error: breakdownsErr,
   } = useAnalyticsBreakdowns(filterParams);
 
-  /** By-survey table always compares all surveys — not scoped to the toolbar filter */
-  const {
-    data: surveysBreakdownData,
-    isLoading: surveysBreakdownLoading,
-  } = useAnalyticsBreakdowns({
-    from: dateFrom,
-    to: dateTo,
-  });
-
-  const {
-    data: trendsData,
-    isLoading: trendsLoading,
-    isError: trendsError,
-    error: trendsErr,
-  } = useAnalyticsTrends(filterParams);
-
   const {
     data: questionData,
     isLoading: questionsLoading,
@@ -116,17 +67,22 @@ export function ReportsView() {
     error: questionsErr,
   } = useQuestionAnalytics(filterParams);
 
-  const { data: surveys = [] } = useReportCampaigns();
-
-  const isLoading = kpisLoading || breakdownsLoading || trendsLoading;
+  const isLoading = kpisLoading || breakdownsLoading;
   const isFetching = kpisFetching;
   const surveyName = kpisData?.surveyName ?? breakdownsData?.surveyName;
+  const totalCalls = Number(
+    kpisData?.kpis?.find((kpi) => kpi.id === "total_calls")?.value ?? NaN
+  );
 
   const { applyMeta, resetPageMeta } = usePageMeta({
-    title: "Analytics Report",
+    title: surveyName ? `${surveyName} · Analytics` : "Survey analytics",
     breadcrumbs: [
-      { label: "Insights", href: "/analytics" },
-      { label: "Analytics Report" },
+      { label: "My Surveys", href: "/survey" },
+      {
+        label: surveyName || "Survey",
+        href: `/survey/${lockedSurveyId}`,
+      },
+      { label: "Analytics" },
     ],
   });
 
@@ -148,18 +104,10 @@ export function ReportsView() {
       toast.error(
         breakdownsErr instanceof Error
           ? breakdownsErr.message
-          : "Failed to load survey breakdown"
+          : "Failed to load analytics"
       );
     }
   }, [breakdownsError, breakdownsErr]);
-
-  useEffect(() => {
-    if (trendsError) {
-      toast.error(
-        trendsErr instanceof Error ? trendsErr.message : "Failed to load trends"
-      );
-    }
-  }, [trendsError, trendsErr]);
 
   useEffect(() => {
     if (questionsError) {
@@ -172,84 +120,43 @@ export function ReportsView() {
   }, [questionsError, questionsErr]);
 
   const exportPayload = useMemo(() => {
-    if (!kpisData || !breakdownsData || !trendsData) return null;
-    const questions = questionData?.questions ?? [];
+    if (!kpisData || !breakdownsData) return null;
     return {
       dateRange: kpisData.dateRange,
-      surveyId: kpisData.surveyId,
       surveyName: kpisData.surveyName,
-      kpis: kpisData.kpis,
-      calls: breakdownsData.calls,
-      survey: breakdownsData.survey,
-      duration: breakdownsData.duration,
-      recording: breakdownsData.recording,
-      callsOverTime: trendsData.callsOverTime,
-      completionTrend: trendsData.completionTrend,
-      successRateTrend: trendsData.completionTrend,
-      responsesBySurvey: surveysBreakdownData?.responsesBySurvey ?? breakdownsData.responsesBySurvey,
-      responsesByCampaign: [],
-      callOutcomeBreakdown: breakdownsData.callOutcomeBreakdown,
-      surveyStatusBreakdown: breakdownsData.surveyStatusBreakdown,
-      campaignBreakdown: breakdownsData.responsesBySurvey.slice(0, 8).map((row, i) => ({
-        name: row.name,
-        value: row.completionRate,
-        count: row.total,
-        fill: `var(--chart-${(i % 5) + 1})`,
-      })),
-      hangupBreakdown: [],
-      sentimentBreakdown: breakdownsData.surveyStatusBreakdown,
-      insights: [],
-      questions,
-      questionBars: questions.map((q, i) => ({
-        label: `Q${i + 1}`,
-        fullLabel: q.question,
-        questionId: q.questionId,
-        answered: q.answered,
-        unanswered: q.unanswered,
-        value: q.answered,
-        counting: q.counting,
-        answerRate: q.answerRate,
-      })),
+      surveyDates: kpisData.surveyDates ?? null,
+      kpis: kpisData.kpis ?? [],
+      surveyStatusBreakdown: breakdownsData.surveyStatusBreakdown ?? [],
+      reasonBreakdown: breakdownsData.reasonBreakdown ?? [],
+      questions: questionData?.questions ?? [],
+      totalQuestions: questionData?.totalQuestions,
+      totalAnswers: questionData?.totalAnswers,
     };
-  }, [kpisData, breakdownsData, trendsData, questionData, surveysBreakdownData]);
+  }, [kpisData, breakdownsData, questionData]);
 
   const openMetricPage = useCallback(
     (id: AnalyticsKpiFilterId) => {
       router.push(
         analyticsDetailsHref({
           metric: id,
-          from: dateFrom,
-          to: dateTo,
-          surveyId,
+          surveyId: lockedSurveyId,
         })
       );
     },
-    [router, dateFrom, dateTo, surveyId]
+    [router, lockedSurveyId]
   );
 
   const openQuestionsPage = useCallback(
     (questionId?: string) => {
       router.push(
         analyticsQuestionsHref({
-          from: dateFrom,
-          to: dateTo,
-          surveyId,
+          surveyId: lockedSurveyId,
           questionId,
         })
       );
     },
-    [router, dateFrom, dateTo, surveyId]
+    [router, lockedSurveyId]
   );
-
-  const openSurveysPage = useCallback(() => {
-    router.push(
-      analyticsSurveysHref({
-        from: dateFrom,
-        to: dateTo,
-        surveyId,
-      })
-    );
-  }, [router, dateFrom, dateTo, surveyId]);
 
   const handleExportPdf = useCallback(async () => {
     if (!exportPayload) {
@@ -289,20 +196,12 @@ export function ReportsView() {
               onSliceSelect={reorderMode ? undefined : openMetricPage}
             />
           );
-        case "completion_trend":
+        case "disconnect_reason":
           return (
-            <ReportAreaChart
-              data={trendsData?.completionTrend ?? []}
-              isLoading={trendsLoading}
-            />
-          );
-        case "survey_breakdown":
-          return (
-            <ReportSurveyBreakdown
-              data={surveysBreakdownData?.responsesBySurvey ?? []}
-              isLoading={surveysBreakdownLoading}
-              onSurveySelect={reorderMode ? undefined : setSurveyId}
-              onOpenFullPage={reorderMode ? undefined : openSurveysPage}
+            <ReportDashboardDonut
+              data={breakdownsData?.reasonBreakdown ?? []}
+              isLoading={breakdownsLoading}
+              variant="reason"
             />
           );
         case "question_analytics":
@@ -311,7 +210,7 @@ export function ReportsView() {
               data={questionData?.questions ?? []}
               totalQuestions={questionData?.totalQuestions}
               totalAnswers={questionData?.totalAnswers}
-              surveyId={surveyId}
+              surveyId={lockedSurveyId}
               isLoading={questionsLoading}
               onOpenFullPage={reorderMode ? undefined : openQuestionsPage}
               onQuestionOpen={reorderMode ? undefined : openQuestionsPage}
@@ -323,44 +222,37 @@ export function ReportsView() {
     },
     [
       breakdownsData?.surveyStatusBreakdown,
+      breakdownsData?.reasonBreakdown,
       breakdownsLoading,
       kpisData?.kpis,
       kpisLoading,
       layout.kpis,
+      lockedSurveyId,
       openMetricPage,
       openQuestionsPage,
-      openSurveysPage,
       questionData?.questions,
       questionData?.totalAnswers,
       questionData?.totalQuestions,
       questionsLoading,
       reorderMode,
-      surveysBreakdownData?.responsesBySurvey,
-      surveysBreakdownLoading,
-      surveyId,
-      trendsData?.completionTrend,
-      trendsLoading,
     ]
   );
 
   return (
-    <PageContainer size="full" className="pb-5 pt-4 lg:px-8">
+    <PageContainer size="full" fullHeight className="relative py-2.5 lg:px-8">
       <motion.div
-        initial={{ opacity: 0, y: 8 }}
+        initial={{ opacity: 0, y: 6 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.35, ease: "easeOut" }}
-        className="space-y-5"
+        transition={{ duration: 0.28, ease: "easeOut" }}
+        className="flex min-h-0 flex-1 flex-col gap-2.5 overflow-hidden font-sans"
         id="reports-export-root"
       >
         <ReportsToolbar
-          dateFrom={dateFrom}
-          dateTo={dateTo}
-          onDateFromChange={setDateFrom}
-          onDateToChange={setDateTo}
-          surveyId={surveyId}
+          surveyId={lockedSurveyId}
           surveyName={surveyName}
-          onSurveyChange={setSurveyId}
-          surveys={surveys}
+          surveyDates={kpisData?.surveyDates}
+          totalCalls={Number.isFinite(totalCalls) ? totalCalls : undefined}
+          lockedSurveyId={lockedSurveyId}
           onExportPdf={handleExportPdf}
           reorderMode={reorderMode}
           onReorderModeChange={setReorderMode}
@@ -369,13 +261,14 @@ export function ReportsView() {
 
         {reorderMode ? (
           <p className="rounded-[6px] border border-dashed border-brand/25 bg-brand/5 px-3 py-2 text-xs text-muted-foreground">
-            Use the dashed bar grip to move a whole block. Drag inside KPI cards to
+            Use the dashed bar grip to move a whole block. Drag KPI cards to
             swap them. Click{" "}
             <span className="font-medium text-foreground">Done</span> when finished.
           </p>
         ) : null}
 
         <AnalyticsReportSections
+          fillHeight
           sectionOrder={layout.sections}
           reorderMode={reorderMode}
           onReorderSections={reorderSections}
@@ -389,18 +282,16 @@ export function ReportsView() {
             );
             if (!kpi) return null;
             return (
-              <div className="w-[min(240px,28vw)] cursor-grabbing">
+              <div className="w-[min(220px,30vw)] cursor-grabbing">
                 <KpiCardBody kpi={kpi} reorderMode isDragging />
               </div>
             );
           }}
         />
 
-        {isFetching && !isLoading && (
-          <div className="flex justify-center">
-            <div className="size-1.5 animate-pulse rounded-full bg-brand" />
-          </div>
-        )}
+        {isFetching && !isLoading ? (
+          <div className="pointer-events-none absolute right-6 top-3 size-1.5 animate-pulse rounded-full bg-brand" />
+        ) : null}
       </motion.div>
     </PageContainer>
   );
