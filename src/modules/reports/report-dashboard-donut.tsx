@@ -20,6 +20,12 @@ import {
 import { useMounted } from "@/hooks";
 import { ChartSkeleton } from "@/modules/dashboard/dashboard-skeleton";
 import { AnalyticsCard } from "@/modules/reports/analytics-card";
+import {
+  Tooltip as UiTooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import type { ReportPieSlice } from "@/types/reports";
 import type { AnalyticsKpiFilterId } from "@/modules/reports/analytics-kpi-filter";
@@ -89,7 +95,15 @@ const CENTER_LABEL: Record<string, string> = {
   Unknown: "Unknown",
 };
 
-/** Left of chart / right of chart for survey status. */
+/** Display order for compact 2×2 survey tiles (narrow cards / tablet). */
+const SURVEY_TILE_ORDER = [
+  "Complete",
+  "Partially complete",
+  "Incomplete",
+  "Missed",
+];
+
+/** Left of chart / right of chart for survey status (wide cards). */
 const SURVEY_LEFT_ORDER = ["Complete", "Incomplete"];
 const SURVEY_RIGHT_ORDER = ["Partially complete", "Missed"];
 
@@ -113,13 +127,13 @@ function DonutTooltip({
   const value = payload[0]?.value ?? row?.value ?? 0;
 
   return (
-    <div className="pointer-events-none z-50 min-w-[120px] rounded-[6px] border border-border/60 bg-popover px-3 py-2 shadow-elevated">
+    <div className="pointer-events-none z-[80] w-max max-w-[240px] whitespace-normal rounded-[6px] border border-border/60 bg-popover px-3 py-2 shadow-elevated">
       <p className="text-xs font-semibold leading-tight text-foreground">{name}</p>
       <p className="mt-0.5 text-xs tabular-nums leading-tight text-muted-foreground">
         {row?.count ?? 0} · {value}%
       </p>
       {STATUS_HINT[name] ? (
-        <p className="mt-1 max-w-[200px] text-[10px] leading-snug text-muted-foreground">
+        <p className="mt-1 text-[10px] leading-snug text-muted-foreground">
           {STATUS_HINT[name]}
         </p>
       ) : null}
@@ -132,77 +146,106 @@ function StatusTile({
   isActive,
   isTop,
   onSelect,
+  compact = false,
 }: {
   item: ReportPieSlice & { fill: string };
   isActive: boolean;
   isTop: boolean;
   onSelect: () => void;
+  compact?: boolean;
 }) {
   const hint = STATUS_HINT_SHORT[item.name] ?? STATUS_HINT[item.name];
+  const fullHint = STATUS_HINT[item.name];
   const emphasis = EMPHASIS.has(item.name);
 
   return (
-    <button
-      type="button"
-      title={STATUS_HINT[item.name]}
-      onClick={onSelect}
-      className={cn(
-        "w-full rounded-[6px] border px-2.5 py-1.5 text-left transition-all",
-        "hover:shadow-subtle",
-        emphasis ? "border-transparent" : "border-transparent hover:bg-muted/40",
-        item.name === "Complete" && "ring-1 ring-[#60a5fa]/25",
-        item.name === "Partially complete" && "ring-1 ring-[#fbbf24]/30",
-        isActive && "ring-1 ring-[#2c3b59]/25"
-      )}
-      style={
-        emphasis
-          ? {
-              background: `linear-gradient(135deg, ${item.fill}12 0%, transparent 70%)`,
-            }
-          : undefined
-      }
-    >
-      <div className="flex items-start justify-between gap-2">
-        <div className="min-w-0">
-          <div className="flex min-w-0 items-center gap-1.5">
-            <span
-              className="size-2 shrink-0 rounded-full"
-              style={{ backgroundColor: item.fill }}
-            />
-            <span className="truncate text-[12px] font-semibold text-foreground">
-              {item.name}
-            </span>
-            {isTop ? (
-              <span className="rounded-full bg-amber-400/20 px-1.5 py-px text-[9px] font-semibold text-amber-700">
-                Highest
+    <UiTooltip delayDuration={150}>
+      <TooltipTrigger asChild>
+        <button
+          type="button"
+          onClick={onSelect}
+          className={cn(
+            "w-full min-w-0 rounded-[6px] border text-left transition-all",
+            compact ? "px-1.5 py-1" : "px-2 py-1.5",
+            "hover:shadow-subtle",
+            emphasis ? "border-transparent" : "border-transparent hover:bg-muted/40",
+            item.name === "Complete" && "ring-1 ring-[#60a5fa]/25",
+            item.name === "Partially complete" && "ring-1 ring-[#fbbf24]/30",
+            isActive && "ring-1 ring-[#2c3b59]/25"
+          )}
+          style={
+            emphasis
+              ? {
+                  background: `linear-gradient(135deg, ${item.fill}12 0%, transparent 70%)`,
+                }
+              : undefined
+          }
+        >
+          <div className="flex min-w-0 items-start justify-between gap-1">
+            <div className="min-w-0 flex-1">
+              <div className="flex min-w-0 items-center gap-1">
+                <span
+                  className="size-2 shrink-0 rounded-full"
+                  style={{ backgroundColor: item.fill }}
+                />
+                <span className="min-w-0 truncate text-[10px] font-semibold leading-snug text-foreground sm:text-[11px]">
+                  {compact && item.name === "Partially complete"
+                    ? "Partial"
+                    : item.name}
+                </span>
+                {isTop ? (
+                  <span className="hidden shrink-0 rounded-full bg-amber-400/20 px-1 py-px text-[7px] font-semibold text-amber-700 @[420px]/donut:inline">
+                    Highest
+                  </span>
+                ) : null}
+              </div>
+              {hint && !compact ? (
+                <p className="mt-0.5 line-clamp-2 pl-3.5 text-[8px] leading-snug text-muted-foreground sm:text-[9px]">
+                  {hint}
+                </p>
+              ) : null}
+            </div>
+            <span className="shrink-0 text-right tabular-nums">
+              <span className="block text-[11px] font-semibold leading-none text-foreground sm:text-[12px]">
+                {item.count ?? 0}
               </span>
-            ) : null}
+              <span className="mt-0.5 block text-[8px] font-medium text-muted-foreground sm:text-[9px]">
+                {item.value}%
+              </span>
+            </span>
           </div>
-          {hint ? (
-            <p className="mt-0.5 pl-3.5 text-[10px] leading-snug text-muted-foreground">
-              {hint}
-            </p>
-          ) : null}
-        </div>
-        <span className="shrink-0 text-right tabular-nums">
-          <span className="block text-[14px] font-semibold leading-none text-foreground">
-            {item.count ?? 0}
-          </span>
-          <span className="mt-0.5 block text-[10px] font-medium text-muted-foreground">
-            {item.value}%
-          </span>
-        </span>
-      </div>
-      <div className="mt-1.5 h-1 overflow-hidden rounded-full bg-muted/60">
-        <div
-          className="h-full rounded-full transition-all duration-700"
-          style={{
-            width: `${item.value}%`,
-            backgroundColor: item.fill,
-          }}
-        />
-      </div>
-    </button>
+          <div
+            className={cn(
+              "h-1 overflow-hidden rounded-full bg-muted/60",
+              compact ? "mt-1" : "mt-1.5"
+            )}
+          >
+            <div
+              className="h-full rounded-full transition-all duration-700"
+              style={{
+                width: `${item.value}%`,
+                backgroundColor: item.fill,
+              }}
+            />
+          </div>
+        </button>
+      </TooltipTrigger>
+      <TooltipContent
+        side="top"
+        collisionPadding={12}
+        className="z-[90] max-w-[240px] space-y-1 px-3 py-2"
+      >
+        <p className="text-xs font-semibold text-popover-foreground">{item.name}</p>
+        <p className="text-[11px] tabular-nums text-muted-foreground">
+          {item.count ?? 0} · {item.value}%
+        </p>
+        {fullHint ? (
+          <p className="text-[11px] leading-snug text-muted-foreground">
+            {fullHint}
+          </p>
+        ) : null}
+      </TooltipContent>
+    </UiTooltip>
   );
 }
 
@@ -250,7 +293,7 @@ export function ReportDashboardDonut({
   const description =
     variant === "reason"
       ? "Who ended the connected call — caller or agent"
-      : "Missed = not picked up · Incomplete = picked up, no answers";
+      : "Complete = all answers · Partial = some · Incomplete = picked up, none · Missed = not picked up";
   const HeaderIcon = variant === "survey" ? Clock3 : PhoneOff;
   const emptyCopy =
     variant === "reason"
@@ -303,192 +346,263 @@ export function ReportDashboardDonut({
     variant === "survey"
       ? SURVEY_RIGHT_ORDER.map((n) => byName[n]).filter(Boolean)
       : [];
+  const surveyTiles =
+    variant === "survey"
+      ? SURVEY_TILE_ORDER.map((n) => byName[n]).filter(Boolean)
+      : [];
+
+  const renderTile = (
+    item: ReportPieSlice & { fill: string },
+    compact?: boolean
+  ) => {
+    const filter = sliceToKpiFilter(variant, item.name);
+    return (
+      <StatusTile
+        key={item.name}
+        item={item}
+        isActive={Boolean(filter && activeFilter === filter)}
+        isTop={item.name === centerSlice?.name}
+        onSelect={() => handleSelect(item.name)}
+        compact={compact}
+      />
+    );
+  };
 
   return (
-    <AnalyticsCard
-      title={title}
-      description={description}
-      icon={HeaderIcon}
-      action={totalLabel}
-      compact
-      className="overflow-hidden shadow-[0_4px_18px_rgba(44,59,89,0.05)]"
-      contentClassName="pt-2"
-    >
-      {variant === "survey" ? (
-        <div className="grid items-center gap-3 lg:grid-cols-[1fr_auto_1fr]">
-          <div className="flex min-w-0 flex-col gap-1.5">
-            {leftItems.map((item) => {
-              const filter = sliceToKpiFilter(variant, item.name);
-              return (
-                <StatusTile
-                  key={item.name}
-                  item={item}
-                  isActive={Boolean(filter && activeFilter === filter)}
-                  isTop={item.name === centerSlice?.name}
-                  onSelect={() => handleSelect(item.name)}
-                />
-              );
-            })}
-          </div>
+    <TooltipProvider delayDuration={150}>
+      <AnalyticsCard
+        title={title}
+        description={description}
+        icon={HeaderIcon}
+        action={totalLabel}
+        compact
+        className="h-full overflow-visible shadow-[0_4px_18px_rgba(44,59,89,0.05)]"
+        contentClassName="flex flex-1 flex-col justify-center overflow-visible pt-2"
+      >
+        <div className="@container/donut flex min-h-0 w-full min-w-0 flex-1 flex-col justify-center overflow-visible">
+          {variant === "survey" ? (
+            <>
+              {/* Wide card: left | donut | right */}
+              <div className="hidden w-full grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-2 @[520px]/donut:grid">
+                <div className="flex min-w-0 flex-col gap-1 overflow-visible">
+                  {leftItems.map((item) => renderTile(item))}
+                </div>
 
-          <div className="relative mx-auto size-[132px] shrink-0">
-            <div
-              className="pointer-events-none absolute inset-[-6px] rounded-full opacity-40 blur-[10px]"
-              style={{
-                background: `radial-gradient(circle, ${centerFill}55 0%, transparent 70%)`,
-              }}
-            />
-            {mounted && (
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={styled}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={42}
-                    outerRadius={58}
-                    paddingAngle={3}
-                    dataKey="value"
-                    strokeWidth={3}
-                    stroke="var(--card)"
-                    cornerRadius={5}
-                    className="cursor-pointer outline-none [&_path]:outline-none"
-                    isAnimationActive
-                    animationBegin={80}
-                    animationDuration={900}
-                    animationEasing="ease-out"
-                    onMouseEnter={() => setSliceHover(true)}
-                    onMouseLeave={() => setSliceHover(false)}
-                    onClick={(_, index) => {
-                      const name = styled[index]?.name;
-                      if (name) handleSelect(name);
-                    }}
-                  >
-                    {styled.map((entry) => (
-                      <Cell
-                        key={entry.name}
-                        fill={entry.fill}
-                        className="cursor-pointer outline-none transition-opacity"
-                        stroke="var(--card)"
+                <div className="relative mx-auto flex size-[124px] shrink-0 items-center justify-center overflow-visible">
+                  <div className="relative size-[112px] overflow-visible">
+                    <div
+                      className="pointer-events-none absolute inset-[-4px] rounded-full opacity-40 blur-[10px]"
+                      style={{
+                        background: `radial-gradient(circle, ${centerFill}55 0%, transparent 70%)`,
+                      }}
+                    />
+                    {mounted && (
+                      <ResponsiveContainer width="100%" height="100%">
+                        <PieChart margin={{ top: 4, right: 4, bottom: 4, left: 4 }}>
+                          <Pie
+                            data={styled}
+                            cx="50%"
+                            cy="50%"
+                            innerRadius={34}
+                            outerRadius={48}
+                            paddingAngle={3}
+                            dataKey="value"
+                            strokeWidth={3}
+                            stroke="var(--card)"
+                            cornerRadius={5}
+                            className="cursor-pointer outline-none [&_path]:outline-none"
+                            isAnimationActive
+                            animationBegin={80}
+                            animationDuration={900}
+                            animationEasing="ease-out"
+                            onMouseEnter={() => setSliceHover(true)}
+                            onMouseLeave={() => setSliceHover(false)}
+                            onClick={(_, index) => {
+                              const name = styled[index]?.name;
+                              if (name) handleSelect(name);
+                            }}
+                          >
+                            {styled.map((entry) => (
+                              <Cell
+                                key={entry.name}
+                                fill={entry.fill}
+                                className="cursor-pointer outline-none transition-opacity"
+                                stroke="var(--card)"
+                                strokeWidth={3}
+                                style={{
+                                  filter: EMPHASIS.has(entry.name)
+                                    ? "drop-shadow(0 1px 3px rgba(44,59,89,0.08))"
+                                    : undefined,
+                                  opacity: 1,
+                                }}
+                              />
+                            ))}
+                          </Pie>
+                          <Tooltip
+                            content={<DonutTooltip />}
+                            cursor={false}
+                            wrapperStyle={{
+                              outline: "none",
+                              zIndex: 80,
+                              overflow: "visible",
+                              pointerEvents: "none",
+                            }}
+                            allowEscapeViewBox={{ x: true, y: true }}
+                            offset={16}
+                          />
+                        </PieChart>
+                      </ResponsiveContainer>
+                    )}
+                    {!sliceHover ? (
+                      <div className="pointer-events-none absolute inset-0 z-[1] flex flex-col items-center justify-center px-3">
+                        <p
+                          className="font-sans text-[16px] font-semibold tabular-nums leading-none tracking-tight"
+                          style={{ color: centerFill }}
+                        >
+                          {centerPct}%
+                        </p>
+                        <p className="mt-1 max-w-[80px] text-center text-[8px] font-semibold uppercase leading-tight tracking-[0.12em] text-muted-foreground">
+                          {centerLabel}
+                        </p>
+                      </div>
+                    ) : null}
+                  </div>
+                </div>
+
+                <div className="flex min-w-0 flex-col gap-1 overflow-visible">
+                  {rightItems.map((item) => renderTile(item))}
+                </div>
+              </div>
+
+              {/* Narrow card (768 / 1024 half-width): donut + 2×2 tiles */}
+              <div className="flex w-full flex-col items-center gap-2 overflow-visible @[520px]/donut:hidden">
+                <div className="relative flex size-[112px] shrink-0 items-center justify-center overflow-visible">
+                  <div className="relative size-[100px] overflow-visible">
+                    <div
+                      className="pointer-events-none absolute inset-[-4px] rounded-full opacity-35 blur-[8px]"
+                      style={{
+                        background: `radial-gradient(circle, ${centerFill}55 0%, transparent 70%)`,
+                      }}
+                    />
+                    {mounted && (
+                      <ResponsiveContainer width="100%" height="100%">
+                        <PieChart margin={{ top: 4, right: 4, bottom: 4, left: 4 }}>
+                          <Pie
+                            data={styled}
+                            cx="50%"
+                            cy="50%"
+                            innerRadius={30}
+                            outerRadius={42}
+                            paddingAngle={3}
+                            dataKey="value"
+                            strokeWidth={3}
+                            stroke="var(--card)"
+                            cornerRadius={5}
+                            isAnimationActive
+                            animationDuration={800}
+                            onClick={(_, index) => {
+                              const name = styled[index]?.name;
+                              if (name) handleSelect(name);
+                            }}
+                          >
+                            {styled.map((entry) => (
+                              <Cell
+                                key={entry.name}
+                                fill={entry.fill}
+                                stroke="var(--card)"
+                                strokeWidth={3}
+                              />
+                            ))}
+                          </Pie>
+                        </PieChart>
+                      </ResponsiveContainer>
+                    )}
+                    <div className="pointer-events-none absolute inset-0 z-[1] flex flex-col items-center justify-center px-2">
+                      <p
+                        className="font-sans text-[15px] font-semibold tabular-nums leading-none"
+                        style={{ color: centerFill }}
+                      >
+                        {centerPct}%
+                      </p>
+                      <p className="mt-0.5 text-center text-[7px] font-semibold uppercase tracking-wider text-muted-foreground">
+                        {centerLabel}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                <div className="grid w-full grid-cols-2 gap-1 overflow-visible">
+                  {surveyTiles.map((item) => renderTile(item, true))}
+                </div>
+              </div>
+            </>
+          ) : (
+            <div className="flex h-full min-w-0 flex-1 flex-col items-center gap-2 overflow-visible @[380px]/donut:flex-row @[380px]/donut:items-center @[380px]/donut:gap-3">
+              <div className="relative mx-auto size-[100px] shrink-0 overflow-visible @[380px]/donut:size-[112px]">
+                {mounted && (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart margin={{ top: 4, right: 4, bottom: 4, left: 4 }}>
+                      <Pie
+                        data={styled}
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={34}
+                        outerRadius={48}
+                        paddingAngle={2.5}
+                        dataKey="value"
                         strokeWidth={3}
-                        style={{
-                          filter: EMPHASIS.has(entry.name)
-                            ? "drop-shadow(0 1px 3px rgba(44,59,89,0.08))"
-                            : undefined,
-                          opacity: 1,
+                        stroke="var(--card)"
+                        cornerRadius={4}
+                        isAnimationActive
+                        animationDuration={800}
+                        onMouseEnter={() => setSliceHover(true)}
+                        onMouseLeave={() => setSliceHover(false)}
+                        onClick={(_, index) => {
+                          const name = styled[index]?.name;
+                          if (name) handleSelect(name);
                         }}
+                      >
+                        {styled.map((entry) => (
+                          <Cell
+                            key={entry.name}
+                            fill={entry.fill}
+                            stroke="var(--card)"
+                            strokeWidth={3}
+                          />
+                        ))}
+                      </Pie>
+                      <Tooltip
+                        content={<DonutTooltip />}
+                        cursor={false}
+                        wrapperStyle={{
+                          outline: "none",
+                          zIndex: 80,
+                          overflow: "visible",
+                          pointerEvents: "none",
+                        }}
+                        allowEscapeViewBox={{ x: true, y: true }}
+                        offset={16}
                       />
-                    ))}
-                  </Pie>
-                  <Tooltip
-                    content={<DonutTooltip />}
-                    cursor={false}
-                    wrapperStyle={{ outline: "none", zIndex: 50 }}
-                    allowEscapeViewBox={{ x: true, y: true }}
-                    offset={12}
-                  />
-                </PieChart>
-              </ResponsiveContainer>
-            )}
-            {!sliceHover ? (
-              <div className="pointer-events-none absolute inset-0 z-[1] flex flex-col items-center justify-center px-3">
-                <p
-                  className="font-sans text-[20px] font-semibold tabular-nums leading-none tracking-tight"
-                  style={{ color: centerFill }}
-                >
-                  {centerPct}%
-                </p>
-                <p className="mt-1 max-w-[80px] text-center text-[8px] font-semibold uppercase leading-tight tracking-[0.12em] text-muted-foreground">
-                  {centerLabel}
-                </p>
+                    </PieChart>
+                  </ResponsiveContainer>
+                )}
+                {!sliceHover ? (
+                  <div className="pointer-events-none absolute inset-0 z-[1] flex flex-col items-center justify-center">
+                    <p className="text-base font-semibold tabular-nums">
+                      {centerPct}%
+                    </p>
+                    <p className="text-[8px] font-semibold uppercase tracking-wider text-muted-foreground">
+                      {centerLabel}
+                    </p>
+                  </div>
+                ) : null}
               </div>
-            ) : null}
-          </div>
-
-          <div className="flex min-w-0 flex-col gap-1.5">
-            {rightItems.map((item) => {
-              const filter = sliceToKpiFilter(variant, item.name);
-              return (
-                <StatusTile
-                  key={item.name}
-                  item={item}
-                  isActive={Boolean(filter && activeFilter === filter)}
-                  isTop={item.name === centerSlice?.name}
-                  onSelect={() => handleSelect(item.name)}
-                />
-              );
-            })}
-          </div>
-        </div>
-      ) : (
-        <div className="flex items-center gap-4">
-          <div className="relative mx-auto size-[128px] shrink-0">
-            {mounted && (
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={styled}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={40}
-                    outerRadius={56}
-                    paddingAngle={2.5}
-                    dataKey="value"
-                    strokeWidth={3}
-                    stroke="var(--card)"
-                    cornerRadius={4}
-                    isAnimationActive
-                    animationDuration={800}
-                    onMouseEnter={() => setSliceHover(true)}
-                    onMouseLeave={() => setSliceHover(false)}
-                    onClick={(_, index) => {
-                      const name = styled[index]?.name;
-                      if (name) handleSelect(name);
-                    }}
-                  >
-                    {styled.map((entry) => (
-                      <Cell
-                        key={entry.name}
-                        fill={entry.fill}
-                        stroke="var(--card)"
-                        strokeWidth={3}
-                      />
-                    ))}
-                  </Pie>
-                  <Tooltip content={<DonutTooltip />} cursor={false} />
-                </PieChart>
-              </ResponsiveContainer>
-            )}
-            {!sliceHover ? (
-              <div className="pointer-events-none absolute inset-0 z-[1] flex flex-col items-center justify-center">
-                <p className="text-lg font-semibold tabular-nums">{centerPct}%</p>
-                <p className="text-[8px] font-semibold uppercase tracking-wider text-muted-foreground">
-                  {centerLabel}
-                </p>
+              <div className="grid min-w-0 w-full flex-1 grid-cols-1 gap-1.5 overflow-visible">
+                {styled.map((item) => renderTile(item))}
               </div>
-            ) : null}
-          </div>
-          <div
-            className={cn(
-              "grid min-w-0 flex-1 gap-1.5",
-              variant === "reason" ? "grid-cols-1" : "grid-cols-2"
-            )}
-          >
-            {styled.map((item) => {
-              const filter = sliceToKpiFilter(variant, item.name);
-              return (
-                <StatusTile
-                  key={item.name}
-                  item={item}
-                  isActive={Boolean(filter && activeFilter === filter)}
-                  isTop={item.name === centerSlice?.name}
-                  onSelect={() => handleSelect(item.name)}
-                />
-              );
-            })}
-          </div>
+            </div>
+          )}
         </div>
-      )}
-    </AnalyticsCard>
+      </AnalyticsCard>
+    </TooltipProvider>
   );
 }

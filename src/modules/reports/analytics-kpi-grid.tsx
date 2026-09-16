@@ -64,7 +64,7 @@ export function KpiCardBody({
   return (
     <div
       className={cn(
-        "relative h-[88px] overflow-hidden rounded-[6px] border border-border/70 bg-card px-3.5 py-3",
+        "relative h-[76px] overflow-hidden rounded-[6px] border border-border/70 bg-card px-3 py-2.5",
         "shadow-[0_4px_18px_rgba(44,59,89,0.05)] transition-shadow hover:shadow-elevated",
         isSelected
           ? "border-[#2c3b59]/30 ring-1 ring-[#2c3b59]/12"
@@ -94,15 +94,15 @@ export function KpiCardBody({
       >
         <div className="min-w-0">
           <p
-            className="truncate text-[11px] font-medium leading-tight text-muted-foreground"
+            className="truncate text-[10px] font-medium leading-tight text-muted-foreground"
             title={kpi.label}
           >
             {kpi.label}
           </p>
-          <p className="mt-1.5 font-sans text-[22px] font-semibold tabular-nums leading-none tracking-tight text-foreground">
+          <p className="mt-1 font-sans text-[18px] font-semibold tabular-nums leading-none tracking-tight text-foreground">
             {kpi.value}
           </p>
-          <p className="mt-1.5 truncate text-[10px] tabular-nums text-muted-foreground">
+          <p className="mt-1 truncate text-[9px] tabular-nums text-muted-foreground">
               {kpi.id === "total_calls" || kpi.id === "avg_duration"
                 ? kpi.changeLabel
                 : `${share}% of calls`}
@@ -110,7 +110,7 @@ export function KpiCardBody({
         </div>
         <span
           className={cn(
-            "flex size-9 shrink-0 items-center justify-center rounded-full",
+            "flex size-8 shrink-0 items-center justify-center rounded-full",
             tone.iconBg
           )}
         >
@@ -195,7 +195,7 @@ export function AnalyticsKpiGrid({
     return (
       <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-3">
         {Array.from({ length: 3 }).map((_, i) => (
-          <Skeleton key={i} className="h-[88px] rounded-[6px]" />
+          <Skeleton key={i} className="h-[76px] rounded-[6px]" />
         ))}
       </div>
     );

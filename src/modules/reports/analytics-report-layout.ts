@@ -1,8 +1,9 @@
 import type { AnalyticsKpiFilterId } from "@/modules/reports/analytics-kpi-filter";
 
-/** v10 — KPI row is total / connected / avg duration (status counts stay on pie). */
-export const ANALYTICS_REPORT_LAYOUT_KEY = "analytics-report-layout-v10";
+/** v11 — reset local layout cache if reorder left sections unpaired (charts stacked). */
+export const ANALYTICS_REPORT_LAYOUT_KEY = "analytics-report-layout-v11";
 const LEGACY_LAYOUT_KEYS: string[] = [
+  "analytics-report-layout-v10",
   "analytics-report-layout-v9",
   "analytics-report-layout-v8",
 ];
@@ -127,6 +128,26 @@ function migrateLegacySections(raw: string[] | undefined): string[] {
   return filtered;
 }
 
+/** Keep survey status + disconnect side-by-side (live layout). */
+function ensureAdjacentChartPair(
+  sections: AnalyticsSectionId[]
+): AnalyticsSectionId[] {
+  const statusIdx = sections.indexOf("survey_status");
+  const reasonIdx = sections.indexOf("disconnect_reason");
+  if (statusIdx < 0 || reasonIdx < 0) return sections;
+  if (Math.abs(statusIdx - reasonIdx) === 1) return sections;
+
+  const rest = sections.filter(
+    (id): id is AnalyticsSectionId =>
+      id !== "survey_status" && id !== "disconnect_reason"
+  );
+  const kpiIdx = rest.indexOf("kpis");
+  const insertAt = kpiIdx >= 0 ? kpiIdx + 1 : 0;
+  const next: AnalyticsSectionId[] = [...rest];
+  next.splice(insertAt, 0, "survey_status", "disconnect_reason");
+  return next;
+}
+
 export function loadAnalyticsReportLayout(): AnalyticsReportLayout {
   if (typeof window === "undefined") return DEFAULT_ANALYTICS_REPORT_LAYOUT;
 
@@ -141,10 +162,12 @@ export function loadAnalyticsReportLayout(): AnalyticsReportLayout {
 
     const parsed = JSON.parse(raw) as Partial<AnalyticsReportLayout>;
     const layout: AnalyticsReportLayout = {
-      sections: normalizeOrder(
-        migrateLegacySections(parsed.sections as string[] | undefined),
-        ANALYTICS_SECTION_IDS,
-        isSectionId
+      sections: ensureAdjacentChartPair(
+        normalizeOrder(
+          migrateLegacySections(parsed.sections as string[] | undefined),
+          ANALYTICS_SECTION_IDS,
+          isSectionId
+        )
       ),
       kpis: normalizeOrder(parsed.kpis, DEFAULT_KPI_ORDER, isKpiId),
     };

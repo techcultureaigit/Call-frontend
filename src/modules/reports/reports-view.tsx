@@ -239,12 +239,16 @@ export function ReportsView({ lockedSurveyId }: { lockedSurveyId: string }) {
   );
 
   return (
-    <PageContainer size="full" fullHeight className="relative py-2.5 lg:px-8">
+    <PageContainer
+      size="full"
+      fullHeight
+      className="relative w-full max-w-none overflow-y-auto overscroll-contain px-3 py-2 md:overflow-hidden lg:px-5"
+    >
       <motion.div
         initial={{ opacity: 0, y: 6 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.28, ease: "easeOut" }}
-        className="flex min-h-0 flex-1 flex-col gap-2.5 overflow-y-auto overflow-x-hidden overscroll-contain font-sans lg:overflow-hidden"
+        className="flex w-full min-w-0 flex-col gap-1.5 font-sans text-[13px] md:min-h-0 md:flex-1 md:overflow-hidden"
         id="reports-export-root"
       >
         <ReportsToolbar
@@ -260,7 +264,7 @@ export function ReportsView({ lockedSurveyId }: { lockedSurveyId: string }) {
         />
 
         {reorderMode ? (
-          <p className="rounded-[6px] border border-dashed border-brand/25 bg-brand/5 px-3 py-2 text-xs text-muted-foreground">
+          <p className="shrink-0 rounded-[6px] border border-dashed border-brand/25 bg-brand/5 px-3 py-2 text-xs text-muted-foreground">
             Use the dashed bar grip to move a whole block. Drag KPI cards to
             swap them. Click{" "}
             <span className="font-medium text-foreground">Done</span> when finished.

@@ -429,7 +429,6 @@ export function SurveyListView() {
     data: surveys,
     meta,
     isLoading,
-    isRefreshing,
     reload,
   } = usePaginatedList<Survey>({
     pageSize: PAGE_SIZE,
@@ -643,8 +642,8 @@ export function SurveyListView() {
     }
   };
 
-  /** Same card loader for first load, search, and pagination refresh. */
-  const showLoader = isLoading || isRefreshing;
+  /** Block UI only on first empty load — keep table visible while refreshing. */
+  const showBlockingLoader = isLoading && surveys.length === 0;
   const hasActiveFilters =
     Boolean(search.trim()) || language !== "all" || status !== "all";
 
@@ -679,7 +678,7 @@ export function SurveyListView() {
             searchClassName={TOOLBAR_SEARCH_WIDTH_CLASS}
             alignControlsEnd
             columnsControl={columnsControl}
-            toolbarDisabled={showLoader && surveys.length === 0}
+            toolbarDisabled={showBlockingLoader}
             filters={
               <>
                 <SearchableSelect
@@ -688,7 +687,7 @@ export function SurveyListView() {
                   options={SURVEY_STATUS_FILTER_OPTIONS}
                   searchPlaceholder="Search statuses…"
                   className={TOOLBAR_FILTER_SELECT_CLASS}
-                  disabled={showLoader && surveys.length === 0}
+                  disabled={showBlockingLoader}
                   aria-label="Filter by status"
                 />
                 <SearchableSelect
@@ -697,7 +696,7 @@ export function SurveyListView() {
                   options={LANGUAGE_FILTER_OPTIONS}
                   searchPlaceholder="Search languages…"
                   className={cn(TOOLBAR_FILTER_SELECT_CLASS, "lg:w-40")}
-                  disabled={showLoader && surveys.length === 0}
+                  disabled={showBlockingLoader}
                   aria-label="Filter by language"
                 />
               </>
@@ -713,7 +712,7 @@ export function SurveyListView() {
                         className={TOOLBAR_ACTION_BUTTON_CLASS}
                         disabled={
                           isExporting ||
-                          (showLoader && surveys.length === 0) ||
+                          showBlockingLoader ||
                           meta.total === 0
                         }
                       >
@@ -745,7 +744,7 @@ export function SurveyListView() {
                     </DropdownMenuContent>
                   </DropdownMenu>
                 ) : null}
-                {!isReady || (showLoader && surveys.length === 0) ? (
+                {!isReady || showBlockingLoader ? (
                   <Skeleton className="h-9 w-36 shrink-0 rounded-[6px] xl:h-10" />
                 ) : canCreateSurvey ? (
                   <Button
@@ -765,14 +764,14 @@ export function SurveyListView() {
             onPageChange={setPage}
             onLimitChange={setPageSize}
           >
-          {showLoader ? (
+          {showBlockingLoader ? (
             <AppLoader
-              variant="section"
+              variant="compact"
               label="Loading surveys"
               hint="Fetching latest data"
             />
           ) : null}
-          {!showLoader && surveys.length === 0 ? (
+          {!showBlockingLoader && surveys.length === 0 ? (
             <div className="flex flex-1 flex-col items-center justify-center px-6 py-20 text-center">
               <div className="mb-4 flex size-16 items-center justify-center rounded-[6px] bg-primary/10">
                 <Bot className="size-8 text-primary" />

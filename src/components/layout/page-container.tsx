@@ -26,7 +26,7 @@ export function PageContainer({
       className={cn(
         "mx-auto min-w-0 w-full px-4 lg:px-8",
         fullHeight
-          ? "flex min-h-0 flex-1 flex-col overflow-hidden py-4"
+          ? "flex min-h-0 w-full flex-1 flex-col overflow-hidden py-2"
           : "pt-6 pb-6",
         sizeClasses[size],
         className

@@ -74,11 +74,11 @@ function DateTile({
         <Icon className="size-3.5" aria-hidden />
       </span>
       <div className="min-w-0 leading-tight">
-        <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+        <p className="text-[9px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
           {label}
         </p>
         <p
-          className="whitespace-pre-line text-[12px] font-semibold tabular-nums text-foreground sm:text-[13px]"
+          className="whitespace-pre-line text-[11px] font-semibold tabular-nums text-foreground sm:text-[12px]"
           title={value}
         >
           {value}
@@ -134,10 +134,10 @@ export function ReportsToolbar({
             <BarChart3 className="size-4" />
           </div>
           <div className="min-w-0">
-            <h1 className="font-sans text-[22px] font-semibold tracking-tight text-[#1a2233]">
+            <h1 className="font-sans text-[18px] font-semibold tracking-tight text-[#1a2233] sm:text-[20px]">
               Analytics
             </h1>
-            <p className="mt-0.5 truncate text-[13px] text-muted-foreground">
+            <p className="mt-0.5 truncate text-[12px] text-muted-foreground">
               {surveyName
                 ? `${surveyName}${
                     typeof totalCalls === "number"
@@ -155,7 +155,7 @@ export function ReportsToolbar({
               asChild
               variant="outline"
               size="sm"
-              className="h-9 gap-1.5 px-3 text-sm"
+              className="h-8 gap-1.5 px-2.5 text-xs"
             >
               <Link href={`/survey/${lockedSurveyId}/results`}>
                 <MessagesSquare className="size-3.5" />
@@ -169,7 +169,7 @@ export function ReportsToolbar({
             size="sm"
             onClick={() => onReorderModeChange?.(!reorderMode)}
             className={cn(
-              "h-9 gap-1.5 px-3 text-sm",
+              "h-8 gap-1.5 px-2.5 text-xs",
               reorderMode && "border-brand/40 bg-brand/5 text-brand"
             )}
           >
@@ -182,7 +182,7 @@ export function ReportsToolbar({
               variant="outline"
               size="sm"
               onClick={onResetLayout}
-              className="h-9 gap-1.5 px-3 text-sm"
+              className="h-8 gap-1.5 px-2.5 text-xs"
             >
               <RotateCcw className="size-3.5" />
               Reset
@@ -193,7 +193,7 @@ export function ReportsToolbar({
             size="sm"
             onClick={onExportPdf}
             disabled={isExporting}
-            className="h-9 gap-1.5 bg-[#2c3b59] px-3.5 text-sm text-white hover:bg-[#24314a]"
+            className="h-8 gap-1.5 bg-[#2c3b59] px-3 text-xs text-white hover:bg-[#24314a]"
           >
             <Download className="size-3.5" />
             Export PDF
