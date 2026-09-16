@@ -53,8 +53,10 @@ export function isSurveyCompleted(survey: Survey): boolean {
   return getSchedulingStatus(survey) === "completed";
 }
 
+/** Live schedule — can unschedule (scheduled or actively processing) */
 export function isSurveyScheduled(survey: Survey): boolean {
-  return getSchedulingStatus(survey) === "scheduled";
+  const status = getSchedulingStatus(survey);
+  return status === "scheduled" || status === "processing";
 }
 
 /** Badge / label — mirrors backend `scheduling_status` only */

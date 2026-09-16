@@ -41,14 +41,15 @@ function clampNoiseVolume(value: unknown): number {
 
 function mapSchedulingStatus(s: BackendSurvey): SurveySchedulingStatus {
   const raw = s.scheduling_status ?? s.status;
+  if (raw === "incomplete") return "completed";
   if (
     raw === "draft" ||
     raw === "scheduled" ||
+    raw === "processing" ||
     raw === "completed"
   ) {
     return raw;
   }
-  if (raw === "processing") return "scheduled";
   return "draft";
 }
 

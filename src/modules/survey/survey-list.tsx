@@ -372,6 +372,7 @@ const SURVEY_STATUS_FILTER_OPTIONS = [
   { label: "All statuses", value: "all" },
   { label: "Draft", value: "draft" },
   { label: "Scheduled", value: "scheduled" },
+  { label: "Processing", value: "processing" },
   { label: "Completed", value: "completed" },
 ];
 
@@ -530,7 +531,7 @@ export function SurveyListView() {
     }
     if (deletable.length < selectedIds.size) {
       toast.warning(
-        `${selectedIds.size - deletable.length} completed survey(s) will be skipped`
+        `${selectedIds.size - deletable.length} locked survey(s) will be skipped`
       );
     }
     setSelectedIds(new Set(deletable.map((a) => a.id)));

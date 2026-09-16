@@ -58,6 +58,22 @@ function RateRing({ value }: { value: number }) {
   );
 }
 
+function AnswerRateBar({ rate }: { rate: number }) {
+  return (
+    <div className="flex min-w-0 items-center gap-2">
+      <div className="h-1.5 min-w-0 flex-1 overflow-hidden rounded-full bg-[#2c3b59]/10">
+        <div
+          className="h-full rounded-full bg-[#2c3b59]"
+          style={{ width: `${rate}%` }}
+        />
+      </div>
+      <span className="w-8 shrink-0 text-right text-[12px] font-semibold tabular-nums text-foreground">
+        {rate}%
+      </span>
+    </div>
+  );
+}
+
 export function ReportQuestionAnalytics({
   data,
   totalQuestions,
@@ -96,7 +112,7 @@ export function ReportQuestionAnalytics({
 
   return (
     <section className="flex h-full min-h-0 flex-col overflow-hidden rounded-[6px] border border-border/70 bg-card shadow-[0_4px_18px_rgba(44,59,89,0.05)]">
-      <header className="flex shrink-0 flex-wrap items-center justify-between gap-2 border-b border-border/40 px-3.5 py-1.5">
+      <header className="flex shrink-0 flex-wrap items-center justify-between gap-2 border-b border-border/40 px-3 py-1.5 sm:px-3.5">
         <div className="flex min-w-0 items-baseline gap-2">
           <h2 className="font-sans text-[13px] font-semibold tracking-tight text-foreground">
             Question analytics
@@ -141,24 +157,25 @@ export function ReportQuestionAnalytics({
         </div>
       ) : (
         <div className="flex min-h-0 flex-1 flex-col">
+          {/* Desktop / tablet table header */}
           <div
             className={cn(
-              "grid shrink-0 items-center gap-2 border-b border-border/30 px-3.5 py-1 text-[10px] font-semibold uppercase tracking-[0.06em] text-muted-foreground",
+              "hidden shrink-0 items-center gap-2 border-b border-border/30 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.06em] text-muted-foreground md:grid md:px-3.5",
               isAllSurveys
-                ? "grid-cols-[28px_minmax(0,1fr)_88px_72px_64px_56px_140px]"
-                : "grid-cols-[28px_minmax(0,1fr)_88px_72px_56px_140px]"
+                ? "md:grid-cols-[28px_minmax(0,1.6fr)_minmax(72px,0.7fr)_72px_64px_56px_minmax(96px,140px)] lg:grid-cols-[28px_minmax(0,1fr)_88px_72px_64px_56px_140px]"
+                : "md:grid-cols-[28px_minmax(0,1.8fr)_72px_64px_56px_minmax(96px,140px)] lg:grid-cols-[28px_minmax(0,1fr)_88px_72px_56px_140px]"
             )}
           >
             <span>#</span>
             <span>Question</span>
-            {isAllSurveys ? <span>Survey</span> : null}
+            {isAllSurveys ? <span className="truncate">Survey</span> : null}
             <span>Type</span>
             <span className="text-right">Answered</span>
             <span className="text-right">Skipped</span>
             <span>Answer rate</span>
           </div>
 
-          <div className="flex min-h-0 flex-1 flex-col">
+          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
             {sorted.map((row, index) => {
               const answered = row.usersAnswered ?? row.answered;
               const skipped = row.usersSkipped ?? row.unanswered;
@@ -169,52 +186,71 @@ export function ReportQuestionAnalytics({
                   type="button"
                   onClick={() => onQuestionOpen?.(row.questionId)}
                   className={cn(
-                    "grid min-h-0 flex-1 items-center gap-2 border-t border-border/30 px-3.5 text-left transition-colors",
+                    "w-full border-t border-border/30 text-left transition-colors first:border-t-0",
                     "hover:bg-[#2c3b59]/3",
-                    index === 0 && "border-t-0",
+                    // Mobile: stacked card
+                    "flex flex-col gap-2 px-3 py-2.5",
+                    // md+: table row with natural height (no flex-1 crush)
+                    "md:grid md:items-start md:gap-2 md:px-3.5 md:py-2.5",
                     isAllSurveys
-                      ? "grid-cols-[28px_minmax(0,1fr)_88px_72px_64px_56px_140px]"
-                      : "grid-cols-[28px_minmax(0,1fr)_88px_72px_56px_140px]"
+                      ? "md:grid-cols-[28px_minmax(0,1.6fr)_minmax(72px,0.7fr)_72px_64px_56px_minmax(96px,140px)] lg:grid-cols-[28px_minmax(0,1fr)_88px_72px_64px_56px_140px]"
+                      : "md:grid-cols-[28px_minmax(0,1.8fr)_72px_64px_56px_minmax(96px,140px)] lg:grid-cols-[28px_minmax(0,1fr)_88px_72px_56px_140px]"
                   )}
                 >
-                  <span className="text-[11px] tabular-nums text-muted-foreground">
-                    {String(index + 1).padStart(2, "0")}
-                  </span>
-                  <p
-                    className="font-hindi line-clamp-2 min-w-0 wrap-break-word text-[16px] font-medium leading-snug text-foreground"
-                    title={row.question}
-                  >
-                    {row.question}
-                  </p>
+                  {/* Mobile header row */}
+                  <div className="flex items-start gap-2.5 md:contents">
+                    <span className="mt-0.5 text-[11px] tabular-nums text-muted-foreground md:mt-0">
+                      {String(index + 1).padStart(2, "0")}
+                    </span>
+                    <p className="font-hindi min-w-0 flex-1 whitespace-normal wrap-break-word text-[14px] font-medium leading-[1.55] text-foreground sm:text-[15px] md:flex-none">
+                      {row.question}
+                    </p>
+                  </div>
+
                   {isAllSurveys ? (
-                    <span className="truncate text-[11px] text-muted-foreground">
+                    <span className="hidden truncate text-[11px] text-muted-foreground md:block">
                       {row.surveyName || "—"}
                     </span>
                   ) : null}
-                  <span
-                    className={cn(
-                      "inline-flex w-fit rounded-full px-1.5 py-px text-[9px] font-semibold tracking-wide",
-                      typeBadge(row.type)
-                    )}
-                  >
-                    {typeLabel(row.type)}
-                  </span>
-                  <span className="text-right text-[13px] font-semibold tabular-nums text-foreground">
-                    {answered}
-                  </span>
-                  <span className="text-right text-[13px] font-semibold tabular-nums text-foreground">
-                    {skipped}
-                  </span>
-                  <div className="flex items-center gap-2">
-                    <div className="h-1.5 min-w-0 flex-1 overflow-hidden rounded-full bg-[#2c3b59]/10">
-                      <div
-                        className="h-full rounded-full bg-[#2c3b59]"
-                        style={{ width: `${rate}%` }}
-                      />
-                    </div>
-                    <span className="w-8 text-right text-[12px] font-semibold tabular-nums text-foreground">
-                      {rate}%
+
+                  {/* Mobile meta + desktop cells */}
+                  <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 pl-7 md:contents md:pl-0">
+                    <span
+                      className={cn(
+                        "inline-flex w-fit rounded-full px-1.5 py-px text-[9px] font-semibold tracking-wide",
+                        typeBadge(row.type)
+                      )}
+                    >
+                      {typeLabel(row.type)}
                     </span>
+
+                    {isAllSurveys ? (
+                      <span className="truncate text-[11px] text-muted-foreground md:hidden">
+                        {row.surveyName || "—"}
+                      </span>
+                    ) : null}
+
+                    <span className="text-[12px] tabular-nums text-muted-foreground md:hidden">
+                      <span className="font-semibold text-foreground">
+                        {answered}
+                      </span>{" "}
+                      ans ·{" "}
+                      <span className="font-semibold text-foreground">
+                        {skipped}
+                      </span>{" "}
+                      skip
+                    </span>
+
+                    <span className="hidden text-right text-[13px] font-semibold tabular-nums text-foreground md:block">
+                      {answered}
+                    </span>
+                    <span className="hidden text-right text-[13px] font-semibold tabular-nums text-foreground md:block">
+                      {skipped}
+                    </span>
+
+                    <div className="w-full min-w-0 md:w-auto">
+                      <AnswerRateBar rate={rate} />
+                    </div>
                   </div>
                 </button>
               );

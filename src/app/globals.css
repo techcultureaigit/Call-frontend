@@ -243,6 +243,10 @@
 
   .font-hindi {
     font-family: var(--font-devanagari), var(--font-sans), system-ui, sans-serif;
+    /* Devanagari glyphs need extra vertical room to avoid line overlap */
+    line-height: 1.55;
+    overflow-wrap: anywhere;
+    word-break: break-word;
   }
 
   .glass {

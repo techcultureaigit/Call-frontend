@@ -90,7 +90,9 @@ function SortableSectionShell({
         fillHeight && id === "kpis" && "shrink-0",
         fillHeight && id === "survey_status" && "shrink-0",
         fillHeight && id === "disconnect_reason" && "shrink-0",
-        fillHeight && id === "question_analytics" && "min-h-0 flex-1",
+        fillHeight &&
+          id === "question_analytics" &&
+          "min-h-[220px] flex-none lg:min-h-0 lg:flex-1",
         isDragging && "opacity-35"
       )}
       style={
@@ -203,18 +205,20 @@ export function AnalyticsReportSections({
   }, [activeId, activeType]);
 
   const gridClassName = fillHeight
-    ? "flex min-h-0 flex-1 flex-col gap-2 overflow-hidden"
+    ? "flex min-h-0 flex-1 flex-col gap-2 overflow-visible lg:overflow-hidden"
     : "grid grid-cols-1 items-stretch gap-4 overflow-hidden lg:grid-cols-2";
 
   const sectionClass = (id: AnalyticsSectionId) =>
     fillHeight
       ? cn(
-          "min-h-0 min-w-0 w-full overflow-hidden",
+          "min-w-0 w-full overflow-hidden",
           (id === "kpis" ||
             id === "survey_status" ||
             id === "disconnect_reason") &&
             "shrink-0",
-          id === "question_analytics" && "min-h-0 flex-1"
+          /* On small screens grow with content; lock height only on lg+ */
+          id === "question_analytics" &&
+            "min-h-[220px] flex-none lg:min-h-0 lg:flex-1"
         )
       : "min-w-0 w-full max-w-full overflow-hidden";
 

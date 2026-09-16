@@ -36,6 +36,12 @@ const STATUS_STYLES: Record<
       "border-emerald-500/20 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400",
     dotClassName: "bg-emerald-500",
   },
+  processing: {
+    label: "Processing",
+    className:
+      "border-sky-500/20 bg-sky-500/10 text-sky-700 dark:text-sky-400",
+    dotClassName: "bg-sky-500",
+  },
   completed: {
     label: "Completed",
     className:

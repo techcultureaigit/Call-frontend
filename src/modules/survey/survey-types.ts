@@ -42,6 +42,7 @@ export interface SurveyResultCallData {
 
 export type SurveyResultStatus =
   | "missed"
+  | "incomplete"
   | "completed"
   | "partially completed";
 
@@ -49,7 +50,7 @@ export interface SurveyResultRow {
   id: string;
   customer_number: string;
   extracted_at: string | null;
-  /** missed | completed | partially completed — empty treated as missed */
+  /** missed | incomplete | completed | partially completed — empty treated as missed */
   status?: SurveyResultStatus | string;
   /** Optional raw map — prefer `answers` when present */
   extracted_data?: Record<string, unknown>;

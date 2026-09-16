@@ -126,10 +126,10 @@ export function SurveyCreateEditLoader({ id }: { id: string }) {
                 <div className="mb-4 flex size-14 items-center justify-center rounded-[6px] bg-primary/10">
                   <Bot className="size-7 text-primary" />
                 </div>
-                <h2 className="text-lg font-semibold">Survey is completed</h2>
+                <h2 className="text-lg font-semibold">Survey is locked</h2>
                 <p className="mt-2 text-sm text-muted-foreground">
-                  Completed surveys cannot be edited. View details or copy to
-                  create a new draft.
+                  Completed surveys cannot be edited. View details
+                  or copy to create a new draft.
                 </p>
                 <div className="mt-5 flex flex-wrap justify-center gap-2">
                   <Button

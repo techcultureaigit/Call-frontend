@@ -244,7 +244,7 @@ export function ReportsView({ lockedSurveyId }: { lockedSurveyId: string }) {
         initial={{ opacity: 0, y: 6 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.28, ease: "easeOut" }}
-        className="flex min-h-0 flex-1 flex-col gap-2.5 overflow-hidden font-sans"
+        className="flex min-h-0 flex-1 flex-col gap-2.5 overflow-y-auto overflow-x-hidden overscroll-contain font-sans lg:overflow-hidden"
         id="reports-export-root"
       >
         <ReportsToolbar

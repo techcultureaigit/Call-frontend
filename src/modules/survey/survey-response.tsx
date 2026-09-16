@@ -1452,6 +1452,7 @@ function StatCard({
 const RESULTS_STATUS_OPTIONS = [
   { label: "All statuses", value: "all" },
   { label: "Missed", value: "missed" },
+  { label: "Incomplete", value: "incomplete" },
   { label: "Completed", value: "completed" },
   { label: "Partially completed", value: "partially completed" },
 ];

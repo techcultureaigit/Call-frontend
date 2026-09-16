@@ -241,7 +241,7 @@ function QuestionListItem({
         {index + 1}
       </span>
       <div className="min-w-0 flex-1">
-        <p className="font-hindi line-clamp-2 text-sm font-medium leading-snug text-foreground">
+        <p className="font-hindi text-sm font-medium leading-[1.55] text-foreground">
           {question.question}
         </p>
         {question.description?.trim() ? (

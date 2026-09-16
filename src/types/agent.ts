@@ -222,6 +222,7 @@ export interface AgentConfig {
 export type AgentSchedulingStatus =
   | "draft"
   | "scheduled"
+  | "processing"
   | "completed";
 
 export interface Agent extends Timestamps {
