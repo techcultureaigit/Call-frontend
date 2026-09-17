@@ -18,6 +18,7 @@ import type {
 } from "@/types/reports";
 import type { ReportsParams } from "./reports-types";
 import type { AnalyticsKpiFilterId } from "./analytics-kpi-filter";
+import { withPieFills } from "./analytics-theme";
 
 export type { ReportsParams };
 
@@ -31,8 +32,24 @@ const KPI_ICON: Record<string, string> = {
   survey_incomplete: "incomplete",
 };
 
-function normalizeReportsData(data: ReportsData): ReportsData {
+function paintBreakdowns<
+  T extends {
+    surveyStatusBreakdown?: ReportsData["surveyStatusBreakdown"];
+    reasonBreakdown?: ReportsData["reasonBreakdown"];
+  },
+>(data: T): T {
   return {
+    ...data,
+    surveyStatusBreakdown: withPieFills(
+      data.surveyStatusBreakdown ?? [],
+      "survey"
+    ),
+    reasonBreakdown: withPieFills(data.reasonBreakdown ?? [], "reason"),
+  };
+}
+
+function normalizeReportsData(data: ReportsData): ReportsData {
+  return paintBreakdowns({
     ...data,
     kpis: (data.kpis ?? []).map((kpi) => ({
       ...kpi,
@@ -46,7 +63,7 @@ function normalizeReportsData(data: ReportsData): ReportsData {
     questions: data.questions ?? [],
     questionBars: data.questionBars ?? [],
     insights: data.insights ?? [],
-  };
+  });
 }
 
 const reportsCall = createModuleApiCall("reports");
@@ -107,11 +124,11 @@ export async function getAnalyticsBreakdowns(params: ReportsParams = {}) {
           query
         )
       );
-      return {
+      return paintBreakdowns({
         ...data,
         surveyStatusBreakdown: data.surveyStatusBreakdown ?? [],
         reasonBreakdown: data.reasonBreakdown ?? [],
-      };
+      });
     },
     query
   );
@@ -159,12 +176,17 @@ export async function getSurveyAnalytics(
     "GET",
     `/api/analytics/surveys/${surveyId}`,
     async () => {
-      return await unwrapData(
+      const data = await unwrapData(
         apiGet<ApiResponse<ReportsData>>(
           `/api/analytics/surveys/${surveyId}`,
           params
         )
       );
+      return normalizeReportsData({
+        ...data,
+        campaignId: data.surveyId,
+        campaignName: data.surveyName,
+      } as ReportsData);
     },
     params
   );

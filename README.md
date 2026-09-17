@@ -59,7 +59,7 @@ Call-frontend/
 │   ├── services/           # Module services (surveys, roles, …)
 │   ├── stores/             # Zustand stores (auth, etc.)
 │   ├── types/
-│   └── middleware.ts       # Cookie-based auth gate
+│   └── proxy.ts            # Cookie-based auth gate
 ├── .env.example
 ├── next.config.ts
 └── package.json

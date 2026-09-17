@@ -98,6 +98,31 @@ export const REASON_EXTRA_FILLS = [
   "#7dd3fc",
 ] as const;
 
+type PieSliceInput = {
+  name: string;
+  value: number;
+  count?: number;
+  fill?: string;
+};
+
+/** Chart colors live on the frontend — backend only sends name / count / share. */
+export function withPieFills<T extends PieSliceInput>(
+  slices: T[],
+  variant: "survey" | "reason"
+): Array<T & { fill: string }> {
+  let extraIndex = 0;
+  return slices.map((slice) => {
+    const known =
+      SURVEY_SLICE_TONE[slice.name]?.fill ?? REASON_SLICE_TONE[slice.name]?.fill;
+    let fill = known;
+    if (!fill && variant === "reason") {
+      fill = REASON_EXTRA_FILLS[extraIndex % REASON_EXTRA_FILLS.length];
+      extraIndex += 1;
+    }
+    return { ...slice, fill: fill ?? TONE.navy.fill };
+  });
+}
+
 /** One-line meaning — Missed ≠ Incomplete. */
 export const STATUS_HINT: Record<string, string> = {
   Complete: "Picked up and finished every required question",

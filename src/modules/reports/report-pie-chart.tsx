@@ -86,7 +86,7 @@ export function ReportPieChart({
                   stroke="var(--card)"
                 >
                   {data.map((entry) => (
-                    <Cell key={entry.name} fill={entry.fill} />
+                    <Cell key={entry.name} fill={entry.fill ?? "#2c3b59"} />
                   ))}
                 </Pie>
                 <Tooltip
@@ -122,7 +122,7 @@ export function ReportPieChart({
             >
               <span
                 className="size-2.5 shrink-0 rounded-full ring-2 ring-background"
-                style={{ backgroundColor: item.fill }}
+                style={{ backgroundColor: item.fill ?? "#2c3b59" }}
               />
               <span className="min-w-0 flex-1 truncate text-xs text-foreground">
                 {item.name}

@@ -15,7 +15,7 @@ const authRoutes: ReadonlySet<string> = new Set([
   routePaths.auth.resetPassword,
 ]);
 
-export function middleware(request: NextRequest) {
+export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const token = request.cookies.get(authConfig.tokenKey)?.value;
   const isAuthenticated = Boolean(token);

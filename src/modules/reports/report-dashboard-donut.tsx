@@ -277,7 +277,7 @@ export function ReportDashboardDonut({
       fill = REASON_EXTRA_FILLS[extraReasonIndex % REASON_EXTRA_FILLS.length];
       extraReasonIndex += 1;
     }
-    return { ...d, fill: fill ?? d.fill };
+    return { ...d, fill: fill ?? TONE.navy.fill };
   });
 
   const byName = Object.fromEntries(styled.map((d) => [d.name, d]));

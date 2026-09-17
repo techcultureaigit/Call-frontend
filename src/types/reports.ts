@@ -15,7 +15,7 @@ export interface ReportPieSlice {
   name: string;
   value: number;
   count?: number;
-  fill: string;
+  fill?: string;
 }
 
 export interface AnalyticsCallCounts {
