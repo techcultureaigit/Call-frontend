@@ -583,8 +583,16 @@ export const TABLE_SELECT_CELL_CLASS = "w-10 px-2.5";
  * Standard list scroll: grow with rows, cap at ~10 visible rows, then scroll.
  * Keeps pagination flush under the last row (no empty white gap).
  */
+/** Default list tables (My Surveys, Users, …) — ~header + toolbar + pagination. */
 export const TABLE_SCROLL_BODY_CLASS =
   "max-h-[min(36rem,calc(100svh-16rem))] overflow-auto overscroll-contain";
+
+/**
+ * Survey results — extra title row + KPI strip, so reserve more chrome.
+ * Keeps the page fitting at 100% (no outer scroller); at 110–150% the shell can scroll.
+ */
+export const RESULTS_TABLE_SCROLL_BODY_CLASS =
+  "max-h-[min(36rem,calc(100svh-22rem))] overflow-auto overscroll-contain";
 
 const ColumnLockContext = createContext<Set<string>>(new Set());
 

@@ -26,6 +26,7 @@ import {
   TABLE_STATUS_BADGE_CLASS,
   TABLE_CHIP_CLASS,
   TABLE_SCROLL_BODY_CLASS,
+  RESULTS_TABLE_SCROLL_BODY_CLASS,
   type TableColumnLayoutItem,
 } from "@/components/shared/table-column-layout";
 import { cn } from "@/lib/utils";
@@ -55,6 +56,7 @@ export {
   TABLE_STATUS_BADGE_CLASS,
   TABLE_CHIP_CLASS,
   TABLE_SCROLL_BODY_CLASS,
+  RESULTS_TABLE_SCROLL_BODY_CLASS,
 } from "@/components/shared/table-column-layout";
 
 export interface DataTableProps<T> {
@@ -80,6 +82,8 @@ export interface DataTableProps<T> {
    * Same visual height whether pageSize is 10 or 100.
    */
   fillHeight?: boolean;
+  /** Override the default fillHeight scroll body max-height. */
+  scrollBodyClassName?: string;
   /** Render inside a parent card — no outer border or shadow */
   embedded?: boolean;
   /** Renders Columns control in the list toolbar (removes the extra table row). */
@@ -105,6 +109,7 @@ export function DataTable<T>({
   skeletonRows = 5,
   columnLayoutKey,
   fillHeight = false,
+  scrollBodyClassName,
   embedded = false,
   onColumnsControlReady,
 }: DataTableProps<T>) {
@@ -220,7 +225,9 @@ export function DataTable<T>({
       <div
         className={cn(
           "relative min-w-0",
-          usesStandardScroll ? TABLE_SCROLL_BODY_CLASS : "overflow-x-auto"
+          usesStandardScroll
+            ? (scrollBodyClassName ?? TABLE_SCROLL_BODY_CLASS)
+            : "overflow-x-auto"
         )}
       >
         <TableColumnDnd

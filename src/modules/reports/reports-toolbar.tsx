@@ -114,9 +114,9 @@ export function ReportsToolbar({
   onResetLayout,
 }: ReportsToolbarProps) {
   return (
-    <div className="flex shrink-0 flex-col gap-2.5">
-      <div className="flex flex-wrap items-start justify-between gap-x-6 gap-y-3">
-        <div className="flex min-w-0 max-w-2xl items-start gap-3">
+    <div className="flex min-w-0 shrink-0 flex-col gap-4">
+      <div className="flex min-w-0 flex-wrap items-start justify-between gap-x-4 gap-y-3">
+        <div className="flex min-w-0 max-w-2xl flex-1 items-start gap-3">
           <Button
             asChild
             variant="outline"
@@ -149,7 +149,7 @@ export function ReportsToolbar({
           </div>
         </div>
 
-        <div className="flex shrink-0 flex-wrap items-center gap-2">
+        <div className="flex min-w-0 flex-wrap items-center gap-2">
           {lockedSurveyId ? (
             <Button
               asChild
@@ -201,7 +201,7 @@ export function ReportsToolbar({
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-3">
         <DateTile
           icon={CalendarPlus}
           label="Created"

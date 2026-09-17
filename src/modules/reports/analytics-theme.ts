@@ -85,10 +85,18 @@ export const SURVEY_SLICE_TONE: Record<string, AnalyticsTone> = {
 };
 
 export const REASON_SLICE_TONE: Record<string, AnalyticsTone> = {
-  "Disconnected by caller": TONE.red,
-  "Disconnected by agent": TONE.blue,
+  "Disconnected by caller": TONE.blue,
+  "Disconnected by agent": TONE.navy,
   Unknown: TONE.slate,
 };
+
+export const REASON_EXTRA_FILLS = [
+  "#93c5fd",
+  "#38bdf8",
+  "#818cf8",
+  "#2563eb",
+  "#7dd3fc",
+] as const;
 
 /** One-line meaning — Missed ≠ Incomplete. */
 export const STATUS_HINT: Record<string, string> = {

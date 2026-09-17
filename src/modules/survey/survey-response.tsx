@@ -35,6 +35,7 @@ import {
   DataTableActionButton,
   DataTableMetaChip,
   DataTableSortHeader,
+  RESULTS_TABLE_SCROLL_BODY_CLASS,
   TableReadMore,
   type DataTableColumn,
 } from "@/components/shared/data-table";
@@ -1391,6 +1392,7 @@ function ResultsInlineQaTable({
         emptyDescription="Results will appear after calls complete."
         minWidthClassName="min-w-[720px]"
         fillHeight={fillHeight}
+        scrollBodyClassName={RESULTS_TABLE_SCROLL_BODY_CLASS}
         embedded={embedded}
         onColumnsControlReady={onColumnsControlReady}
       />
@@ -1608,8 +1610,8 @@ export function SurveyResponseView({ surveyId }: SurveyResultsViewProps) {
 
   return (
     <div className="min-w-0 bg-background">
-      <PageContainer size="full">
-        <div className="flex min-w-0 flex-col gap-3">
+      <PageContainer size="full" className="pt-4 pb-4">
+        <div className="flex min-w-0 flex-col gap-2.5">
           <div className="flex shrink-0 flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex min-w-0 items-start gap-3">
               <Button

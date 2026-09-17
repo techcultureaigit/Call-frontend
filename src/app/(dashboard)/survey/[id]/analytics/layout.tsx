@@ -5,9 +5,9 @@ export default function SurveyAnalyticsLayout({
 }: {
   children: ReactNode;
 }) {
-  /* Mobile: this shell scrolls. Desktop: overflow locked so the page stays fitted. */
+  /* Fill the main pane (no leftover bottom gap) and still grow so 150% can scroll. */
   return (
-    <div className="flex min-h-0 w-full flex-1 flex-col overflow-y-auto overscroll-contain md:overflow-hidden">
+    <div className="flex min-h-full min-w-0 w-full flex-1 flex-col">
       {children}
     </div>
   );

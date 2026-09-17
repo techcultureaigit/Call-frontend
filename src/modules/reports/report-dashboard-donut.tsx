@@ -31,6 +31,7 @@ import type { ReportPieSlice } from "@/types/reports";
 import type { AnalyticsKpiFilterId } from "@/modules/reports/analytics-kpi-filter";
 import { sliceToKpiFilter } from "@/modules/reports/analytics-kpi-filter";
 import {
+  REASON_EXTRA_FILLS,
   REASON_SLICE_TONE,
   STATUS_HINT,
   STATUS_HINT_SHORT,
@@ -69,13 +70,13 @@ const SURVEY_STYLE: Record<string, SliceStyle> = {
 
 const REASON_STYLE: Record<string, SliceStyle> = {
   "Disconnected by caller": {
-    fill: TONE.red.fill,
-    text: TONE.red.text,
+    fill: TONE.blue.fill,
+    text: TONE.blue.text,
     icon: PhoneOff,
   },
   "Disconnected by agent": {
-    fill: TONE.blue.fill,
-    text: TONE.blue.text,
+    fill: TONE.navy.fill,
+    text: TONE.navy.text,
     icon: Headset,
   },
   Unknown: {
@@ -266,14 +267,18 @@ export function ReportDashboardDonut({
   const [sliceHover, setSliceHover] = useState(false);
   const styleMap = variant === "reason" ? REASON_STYLE : SURVEY_STYLE;
   const total = data.reduce((sum, d) => sum + (d.count ?? 0), 0);
-  const styled = data.map((d) => ({
-    ...d,
-    fill:
-      styleMap[d.name]?.fill ??
-      SURVEY_SLICE_TONE[d.name]?.fill ??
-      REASON_SLICE_TONE[d.name]?.fill ??
-      d.fill,
-  }));
+  let extraReasonIndex = 0;
+  const styled = data.map((d) => {
+    const mapped = styleMap[d.name]?.fill
+      ?? SURVEY_SLICE_TONE[d.name]?.fill
+      ?? REASON_SLICE_TONE[d.name]?.fill;
+    let fill = mapped;
+    if (!fill && variant === "reason") {
+      fill = REASON_EXTRA_FILLS[extraReasonIndex % REASON_EXTRA_FILLS.length];
+      extraReasonIndex += 1;
+    }
+    return { ...d, fill: fill ?? d.fill };
+  });
 
   const byName = Object.fromEntries(styled.map((d) => [d.name, d]));
 
@@ -284,8 +289,7 @@ export function ReportDashboardDonut({
   const centerLabel =
     CENTER_LABEL[centerSlice?.name ?? ""] ?? centerSlice?.name ?? "Status";
   const centerFill =
-    styleMap[centerSlice?.name ?? ""]?.fill ??
-    REASON_SLICE_TONE[centerSlice?.name ?? ""]?.fill ??
+    styled.find((slice) => slice.name === centerSlice?.name)?.fill ??
     TONE.navy.fill;
 
   const title =
@@ -317,6 +321,7 @@ export function ReportDashboardDonut({
         description={description}
         icon={HeaderIcon}
         compact
+        className="h-full w-full overflow-visible shadow-[0_4px_18px_rgba(44,59,89,0.05)]"
       >
         <ChartSkeleton height={140} />
       </AnalyticsCard>
@@ -330,6 +335,7 @@ export function ReportDashboardDonut({
         description={description}
         icon={HeaderIcon}
         compact
+        className="h-full w-full overflow-visible shadow-[0_4px_18px_rgba(44,59,89,0.05)]"
       >
         <p className="py-4 text-center text-sm text-muted-foreground">
           {emptyCopy}
@@ -376,8 +382,7 @@ export function ReportDashboardDonut({
         icon={HeaderIcon}
         action={totalLabel}
         compact
-        className="h-full overflow-visible shadow-[0_4px_18px_rgba(44,59,89,0.05)]"
-        contentClassName="flex flex-1 flex-col justify-center overflow-visible pt-2"
+        className="h-full w-full overflow-visible shadow-[0_4px_18px_rgba(44,59,89,0.05)]"
       >
         <div className="@container/donut flex min-h-0 w-full min-w-0 flex-1 flex-col justify-center overflow-visible">
           {variant === "survey" ? (
@@ -536,7 +541,7 @@ export function ReportDashboardDonut({
               </div>
             </>
           ) : (
-            <div className="flex h-full min-w-0 flex-1 flex-col items-center gap-2 overflow-visible @[380px]/donut:flex-row @[380px]/donut:items-center @[380px]/donut:gap-3">
+            <div className="flex min-h-0 w-full min-w-0 flex-1 flex-col items-center justify-center gap-2 overflow-visible @[380px]/donut:flex-row @[380px]/donut:items-center @[380px]/donut:gap-3">
               <div className="relative mx-auto size-[100px] shrink-0 overflow-visible @[380px]/donut:size-[112px]">
                 {mounted && (
                   <ResponsiveContainer width="100%" height="100%">

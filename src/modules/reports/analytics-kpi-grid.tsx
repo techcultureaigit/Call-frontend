@@ -193,7 +193,7 @@ export function AnalyticsKpiGrid({
 
   if (isLoading) {
     return (
-      <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-3">
+      <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 xl:grid-cols-3">
         {Array.from({ length: 3 }).map((_, i) => (
           <Skeleton key={i} className="h-[76px] rounded-[6px]" />
         ))}
@@ -203,7 +203,7 @@ export function AnalyticsKpiGrid({
 
   return (
     <SortableContext items={itemIds} strategy={rectSortingStrategy}>
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
         {orderedKpis.map((kpi) => (
           <SortableKpiCard
             key={kpi.id}

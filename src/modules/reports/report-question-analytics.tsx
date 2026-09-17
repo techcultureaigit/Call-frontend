@@ -111,11 +111,11 @@ export function ReportQuestionAnalytics({
   const showingAll = sorted.length >= questionCount;
 
   const colClass = isAllSurveys
-    ? "md:grid-cols-[24px_minmax(0,1fr)_minmax(64px,0.6fr)_64px_56px_48px_minmax(88px,1fr)] lg:grid-cols-[28px_minmax(0,1fr)_88px_72px_64px_56px_minmax(120px,160px)]"
-    : "md:grid-cols-[24px_minmax(0,1fr)_64px_56px_48px_minmax(88px,1fr)] lg:grid-cols-[28px_minmax(0,1fr)_88px_72px_56px_minmax(120px,160px)]";
+    ? "@[720px]/qa:grid-cols-[24px_minmax(0,1fr)_minmax(64px,0.6fr)_64px_56px_48px_minmax(88px,1fr)] @[960px]/qa:grid-cols-[28px_minmax(0,1fr)_88px_72px_64px_56px_minmax(120px,160px)]"
+    : "@[720px]/qa:grid-cols-[24px_minmax(0,1fr)_64px_56px_48px_minmax(88px,1fr)] @[960px]/qa:grid-cols-[28px_minmax(0,1fr)_88px_72px_56px_minmax(120px,160px)]";
 
   return (
-    <section className="flex w-full min-w-0 flex-col overflow-hidden rounded-[6px] border border-border/70 bg-card shadow-[0_4px_18px_rgba(44,59,89,0.05)] md:h-full md:min-h-0">
+    <section className="@container/qa flex w-full min-w-0 flex-col overflow-hidden rounded-[6px] border border-border/70 bg-card shadow-[0_4px_18px_rgba(44,59,89,0.05)]">
       <header className="flex shrink-0 flex-wrap items-center justify-between gap-2 border-b border-border/40 px-3 py-1.5 sm:px-3.5">
         <div className="flex min-w-0 items-baseline gap-2">
           <h2 className="font-sans text-[12px] font-semibold tracking-tight text-foreground">
@@ -160,10 +160,10 @@ export function ReportQuestionAnalytics({
           No question data for this period
         </div>
       ) : (
-        <div className="flex min-w-0 w-full flex-col md:min-h-0 md:flex-1">
+        <div className="min-w-0 w-full overflow-x-auto">
           <div
             className={cn(
-              "hidden shrink-0 items-center gap-2 border-b border-border/30 px-3 py-1.5 text-[9px] font-semibold uppercase tracking-[0.06em] text-muted-foreground md:grid md:px-3.5",
+              "hidden shrink-0 items-center gap-2 border-b border-border/30 px-3 py-1.5 text-[9px] font-semibold uppercase tracking-[0.06em] text-muted-foreground @[720px]/qa:grid sm:px-3.5",
               colClass
             )}
           >
@@ -176,8 +176,7 @@ export function ReportQuestionAnalytics({
             <span>Answer rate</span>
           </div>
 
-          {/* Mobile: page scrolls. Desktop: only the question list scrolls */}
-          <div className="min-w-0 w-full md:min-h-0 md:flex-1 md:overflow-x-hidden md:overflow-y-auto md:overscroll-contain">
+          <div className="min-w-0 w-full">
             {sorted.map((row, index) => {
               const answered = row.usersAnswered ?? row.answered;
               const skipped = row.usersSkipped ?? row.unanswered;
@@ -191,16 +190,16 @@ export function ReportQuestionAnalytics({
                     "box-border flex w-full min-h-[2.85rem] border-t border-border/30 text-left transition-colors first:border-t-0",
                     "hover:bg-[#2c3b59]/3",
                     "flex-col justify-center gap-1 px-3 py-1.5",
-                    "md:grid md:items-center md:gap-2 md:px-3.5 md:py-1.5",
+                    "@[720px]/qa:grid @[720px]/qa:items-center @[720px]/qa:gap-2 @[720px]/qa:px-3.5 @[720px]/qa:py-1.5",
                     colClass
                   )}
                 >
-                  <div className="flex items-start gap-2 md:contents">
-                    <span className="mt-0.5 text-[10px] tabular-nums text-muted-foreground md:mt-0">
+                  <div className="flex items-start gap-2 @[720px]/qa:contents">
+                    <span className="mt-0.5 text-[10px] tabular-nums text-muted-foreground @[720px]/qa:mt-0">
                       {String(index + 1).padStart(2, "0")}
                     </span>
                     <p
-                      className="font-hindi line-clamp-2 min-w-0 flex-1 whitespace-normal wrap-break-word text-[12px] font-medium leading-snug text-foreground md:flex-none"
+                      className="font-hindi line-clamp-2 min-w-0 flex-1 whitespace-normal wrap-break-word text-[12px] font-medium leading-snug text-foreground @[720px]/qa:flex-none"
                       title={row.question}
                     >
                       {row.question}
@@ -208,12 +207,12 @@ export function ReportQuestionAnalytics({
                   </div>
 
                   {isAllSurveys ? (
-                    <span className="hidden truncate text-[10px] text-muted-foreground md:block">
+                    <span className="hidden truncate text-[10px] text-muted-foreground @[720px]/qa:block">
                       {row.surveyName || "—"}
                     </span>
                   ) : null}
 
-                  <div className="flex flex-wrap items-center gap-x-3 gap-y-1 pl-6 md:contents md:pl-0">
+                  <div className="flex flex-wrap items-center gap-x-3 gap-y-1 pl-6 @[720px]/qa:contents @[720px]/qa:pl-0">
                     <span
                       className={cn(
                         "inline-flex w-fit rounded-full px-1.5 py-px text-[8px] font-semibold tracking-wide",
@@ -224,12 +223,12 @@ export function ReportQuestionAnalytics({
                     </span>
 
                     {isAllSurveys ? (
-                      <span className="truncate text-[10px] text-muted-foreground md:hidden">
+                      <span className="truncate text-[10px] text-muted-foreground @[720px]/qa:hidden">
                         {row.surveyName || "—"}
                       </span>
                     ) : null}
 
-                    <span className="text-[11px] tabular-nums text-muted-foreground md:hidden">
+                    <span className="text-[11px] tabular-nums text-muted-foreground @[720px]/qa:hidden">
                       <span className="font-semibold text-foreground">
                         {answered}
                       </span>{" "}
@@ -240,14 +239,14 @@ export function ReportQuestionAnalytics({
                       skip
                     </span>
 
-                    <span className="hidden text-right text-[12px] font-semibold tabular-nums text-foreground md:block">
+                    <span className="hidden text-right text-[12px] font-semibold tabular-nums text-foreground @[720px]/qa:block">
                       {answered}
                     </span>
-                    <span className="hidden text-right text-[12px] font-semibold tabular-nums text-foreground md:block">
+                    <span className="hidden text-right text-[12px] font-semibold tabular-nums text-foreground @[720px]/qa:block">
                       {skipped}
                     </span>
 
-                    <div className="w-full min-w-0 md:w-auto">
+                    <div className="w-full min-w-0 @[720px]/qa:w-auto">
                       <AnswerRateBar rate={rate} />
                     </div>
                   </div>

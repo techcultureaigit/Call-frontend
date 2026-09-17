@@ -242,13 +242,13 @@ export function ReportsView({ lockedSurveyId }: { lockedSurveyId: string }) {
     <PageContainer
       size="full"
       fullHeight
-      className="relative w-full max-w-none overflow-y-auto overscroll-contain px-3 py-2 md:overflow-hidden lg:px-5"
+      className="relative w-full max-w-none px-3 lg:px-5"
     >
       <motion.div
         initial={{ opacity: 0, y: 6 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.28, ease: "easeOut" }}
-        className="flex w-full min-w-0 flex-col gap-1.5 font-sans text-[13px] md:min-h-0 md:flex-1 md:overflow-hidden"
+        className="flex w-full min-w-0 flex-1 flex-col gap-4 pb-4 font-sans text-[13px]"
         id="reports-export-root"
       >
         <ReportsToolbar

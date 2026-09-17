@@ -86,14 +86,13 @@ function SortableSectionShell({
     <div
       ref={setNodeRef}
       className={cn(
-        "relative isolate flex min-w-0 w-full max-w-full flex-col gap-1.5",
-        fillHeight && "md:h-full md:overflow-hidden",
+        "relative isolate flex min-w-0 w-full max-w-full flex-col gap-2",
         fillHeight && id === "kpis" && "shrink-0",
-        fillHeight && id === "survey_status" && "shrink-0",
-        fillHeight && id === "disconnect_reason" && "shrink-0",
+        fillHeight && id === "survey_status" && "shrink-0 self-stretch",
+        fillHeight && id === "disconnect_reason" && "shrink-0 self-stretch",
         fillHeight &&
           id === "question_analytics" &&
-          "md:min-h-[calc(5*2.85rem)] md:flex-1 md:overflow-hidden",
+          "shrink-0",
         isDragging && "opacity-35"
       )}
       style={
@@ -125,9 +124,8 @@ function SortableSectionShell({
       <div
         className={cn(
           "min-w-0 w-full",
-          fillHeight
-            ? "md:min-h-0 md:flex-1 md:overflow-hidden"
-            : "min-h-0 flex-1 overflow-hidden",
+          (id === "survey_status" || id === "disconnect_reason") &&
+            "flex min-h-0 flex-col self-stretch [&>*]:min-h-0 [&>*]:flex-1",
           isDragging && "pointer-events-none"
         )}
       >
@@ -209,8 +207,8 @@ export function AnalyticsReportSections({
   }, [activeId, activeType]);
 
   const gridClassName = fillHeight
-    ? "flex w-full flex-col gap-1.5 md:min-h-0 md:flex-1 md:overflow-hidden"
-    : "grid w-full grid-cols-1 items-stretch gap-1.5 min-[640px]:grid-cols-2";
+    ? "flex w-full min-w-0 flex-col gap-2.5"
+    : "grid w-full min-w-0 grid-cols-1 items-stretch gap-2.5 min-[900px]:grid-cols-2";
 
   const sectionClass = (id: AnalyticsSectionId) =>
     fillHeight
@@ -221,10 +219,8 @@ export function AnalyticsReportSections({
             id === "disconnect_reason") &&
             "shrink-0",
           (id === "survey_status" || id === "disconnect_reason") &&
-            "md:h-full",
-          /* Desktop: fill leftover; mobile: natural height so page can scroll */
-          id === "question_analytics" &&
-            "md:min-h-[calc(5*2.85rem)] md:flex-1 md:overflow-hidden"
+            "flex min-h-0 flex-col self-stretch [&>*]:min-h-0 [&>*]:flex-1",
+          id === "question_analytics" && "shrink-0"
         )
       : "min-w-0 w-full max-w-full";
 
@@ -253,7 +249,7 @@ export function AnalyticsReportSections({
             ) : (
               <div
                 key={row.join("-")}
-                className="grid w-full shrink-0 grid-cols-1 items-stretch gap-1.5 min-[640px]:grid-cols-2"
+                className="grid w-full min-w-0 shrink-0 grid-cols-1 items-stretch gap-2.5 min-[900px]:grid-cols-2"
               >
                 {row.map((id) => renderFillItem(id))}
               </div>
