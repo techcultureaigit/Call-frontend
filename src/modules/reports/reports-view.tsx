@@ -248,20 +248,22 @@ export function ReportsView({ lockedSurveyId }: { lockedSurveyId: string }) {
         initial={{ opacity: 0, y: 6 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.28, ease: "easeOut" }}
-        className="flex w-full min-w-0 flex-1 flex-col gap-4 pb-4 font-sans text-[13px]"
+        className="flex min-h-0 w-full min-w-0 flex-1 flex-col gap-4 pb-4 font-sans text-[13px]"
         id="reports-export-root"
       >
-        <ReportsToolbar
-          surveyId={lockedSurveyId}
-          surveyName={surveyName}
-          surveyDates={kpisData?.surveyDates}
-          totalCalls={Number.isFinite(totalCalls) ? totalCalls : undefined}
-          lockedSurveyId={lockedSurveyId}
-          onExportPdf={handleExportPdf}
-          reorderMode={reorderMode}
-          onReorderModeChange={setReorderMode}
-          onResetLayout={resetLayout}
-        />
+        <div className="shrink-0">
+          <ReportsToolbar
+            surveyId={lockedSurveyId}
+            surveyName={surveyName}
+            surveyDates={kpisData?.surveyDates}
+            totalCalls={Number.isFinite(totalCalls) ? totalCalls : undefined}
+            lockedSurveyId={lockedSurveyId}
+            onExportPdf={handleExportPdf}
+            reorderMode={reorderMode}
+            onReorderModeChange={setReorderMode}
+            onResetLayout={resetLayout}
+          />
+        </div>
 
         {reorderMode ? (
           <p className="shrink-0 rounded-[6px] border border-dashed border-brand/25 bg-brand/5 px-3 py-2 text-xs text-muted-foreground">
@@ -271,27 +273,29 @@ export function ReportsView({ lockedSurveyId }: { lockedSurveyId: string }) {
           </p>
         ) : null}
 
-        <AnalyticsReportSections
-          fillHeight
-          sectionOrder={layout.sections}
-          reorderMode={reorderMode}
-          onReorderSections={reorderSections}
-          onReorderKpis={reorderKpis}
-          renderSection={renderSection}
-          renderKpiOverlay={(kpiId) => {
-            const kpi = findOrderedKpi(
-              kpisData?.kpis ?? [],
-              layout.kpis,
-              kpiId
-            );
-            if (!kpi) return null;
-            return (
-              <div className="w-[min(220px,30vw)] cursor-grabbing">
-                <KpiCardBody kpi={kpi} reorderMode isDragging />
-              </div>
-            );
-          }}
-        />
+        <div className="flex min-h-0 min-w-0 flex-1 flex-col">
+          <AnalyticsReportSections
+            fillHeight
+            sectionOrder={layout.sections}
+            reorderMode={reorderMode}
+            onReorderSections={reorderSections}
+            onReorderKpis={reorderKpis}
+            renderSection={renderSection}
+            renderKpiOverlay={(kpiId) => {
+              const kpi = findOrderedKpi(
+                kpisData?.kpis ?? [],
+                layout.kpis,
+                kpiId
+              );
+              if (!kpi) return null;
+              return (
+                <div className="w-[min(220px,30vw)] cursor-grabbing">
+                  <KpiCardBody kpi={kpi} reorderMode isDragging />
+                </div>
+              );
+            }}
+          />
+        </div>
 
         {isFetching && !isLoading ? (
           <div className="pointer-events-none absolute right-6 top-3 size-1.5 animate-pulse rounded-full bg-brand" />

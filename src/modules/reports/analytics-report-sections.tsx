@@ -92,7 +92,7 @@ function SortableSectionShell({
         fillHeight && id === "disconnect_reason" && "shrink-0 self-stretch",
         fillHeight &&
           id === "question_analytics" &&
-          "shrink-0",
+          "flex min-h-[calc(5*2.85rem)] flex-1 flex-col",
         isDragging && "opacity-35"
       )}
       style={
@@ -126,6 +126,9 @@ function SortableSectionShell({
           "min-w-0 w-full",
           (id === "survey_status" || id === "disconnect_reason") &&
             "flex min-h-0 flex-col self-stretch [&>*]:min-h-0 [&>*]:flex-1",
+          id === "question_analytics" &&
+            fillHeight &&
+            "flex min-h-0 flex-1 flex-col [&>*]:min-h-0 [&>*]:flex-1",
           isDragging && "pointer-events-none"
         )}
       >
@@ -207,7 +210,7 @@ export function AnalyticsReportSections({
   }, [activeId, activeType]);
 
   const gridClassName = fillHeight
-    ? "flex w-full min-w-0 flex-col gap-2.5"
+    ? "flex min-h-0 w-full min-w-0 flex-1 flex-col gap-2.5"
     : "grid w-full min-w-0 grid-cols-1 items-stretch gap-2.5 min-[900px]:grid-cols-2";
 
   const sectionClass = (id: AnalyticsSectionId) =>
@@ -220,7 +223,8 @@ export function AnalyticsReportSections({
             "shrink-0",
           (id === "survey_status" || id === "disconnect_reason") &&
             "flex min-h-0 flex-col self-stretch [&>*]:min-h-0 [&>*]:flex-1",
-          id === "question_analytics" && "shrink-0"
+          id === "question_analytics" &&
+            "flex min-h-[calc(5*2.85rem)] flex-1 flex-col [&>*]:min-h-0 [&>*]:flex-1"
         )
       : "min-w-0 w-full max-w-full";
 
@@ -284,42 +288,48 @@ export function AnalyticsReportSections({
   );
 
   return (
-    <DndContext
-      id="analytics-report-dnd"
-      sensors={sensors}
-      collisionDetection={typedCollision}
-      measuring={{ droppable: { strategy: MeasuringStrategy.Always } }}
-      onDragStart={handleDragStart}
-      onDragEnd={handleDragEnd}
-      onDragCancel={handleDragCancel}
-    >
-      {reorderMode ? (
-        <SortableContext items={sectionOrder} strategy={rectSortingStrategy}>
-          {sections}
-        </SortableContext>
-      ) : (
-        sections
+    <div
+      className={cn(
+        fillHeight && "flex min-h-0 min-w-0 w-full flex-1 flex-col"
       )}
+    >
+      <DndContext
+        id="analytics-report-dnd"
+        sensors={sensors}
+        collisionDetection={typedCollision}
+        measuring={{ droppable: { strategy: MeasuringStrategy.Always } }}
+        onDragStart={handleDragStart}
+        onDragEnd={handleDragEnd}
+        onDragCancel={handleDragCancel}
+      >
+        {reorderMode ? (
+          <SortableContext items={sectionOrder} strategy={rectSortingStrategy}>
+            {sections}
+          </SortableContext>
+        ) : (
+          sections
+        )}
 
-      <DragOverlay dropAnimation={dropAnimation}>
-        {activeType === "section" && overlayLabel ? (
-          <div className="w-[min(320px,70vw)] rounded-[8px] border border-brand/30 bg-card px-4 py-3 shadow-elevated">
-            <div className="flex items-center gap-2">
-              <GripVertical className="size-4 shrink-0 text-muted-foreground" />
-              <span className="truncate text-sm font-medium">{overlayLabel}</span>
+        <DragOverlay dropAnimation={dropAnimation}>
+          {activeType === "section" && overlayLabel ? (
+            <div className="w-[min(320px,70vw)] rounded-[8px] border border-brand/30 bg-card px-4 py-3 shadow-elevated">
+              <div className="flex items-center gap-2">
+                <GripVertical className="size-4 shrink-0 text-muted-foreground" />
+                <span className="truncate text-sm font-medium">{overlayLabel}</span>
+              </div>
+              <p className="mt-1 text-[10px] text-muted-foreground">
+                Drop to place · left / right / up / down
+              </p>
             </div>
-            <p className="mt-1 text-[10px] text-muted-foreground">
-              Drop to place · left / right / up / down
-            </p>
-          </div>
-        ) : null}
-        {activeType === "kpi" &&
-        activeId &&
-        isKpiId(activeId) &&
-        renderKpiOverlay
-          ? renderKpiOverlay(activeId)
-          : null}
-      </DragOverlay>
-    </DndContext>
+          ) : null}
+          {activeType === "kpi" &&
+          activeId &&
+          isKpiId(activeId) &&
+          renderKpiOverlay
+            ? renderKpiOverlay(activeId)
+            : null}
+        </DragOverlay>
+      </DndContext>
+    </div>
   );
 }
