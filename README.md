@@ -15,7 +15,7 @@ Pairs with the backend at `calling-crm-backend` (`/api/v1`).
 | State       | Zustand                              |
 | Charts      | Recharts                             |
 | Drag & drop | dnd-kit                              |
-| Uploads     | Cloudinary                           |
+| Uploads     | Backend S3 (survey files)            |
 | Language    | TypeScript                           |
 
 ## Features (by sidebar)
@@ -93,11 +93,13 @@ NEXT_PUBLIC_API_TIMEOUT=30000
 NEXT_PUBLIC_AUTH_TOKEN_KEY=crm_auth_token
 NEXT_PUBLIC_AUTH_REFRESH_KEY=crm_refresh_token
 
-# Cloudinary (survey contact file uploads)
+# Cloudinary (legacy local BFF upload — survey files use backend S3)
 CLOUDINARY_CLOUD_NAME=
 CLOUDINARY_API_KEY=
 CLOUDINARY_API_SECRET=
 CLOUDINARY_FOLDER=survey-contacts
+# Survey contact/questions uploads go to calling-crm-backend S3:
+# AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY / AWS_REGION / AWS_S3_BUCKET
 ```
 
 ### 3. Start the app
@@ -157,7 +159,7 @@ Creating or editing a survey uses step tabs, including:
 2. **Prompts** — conversation prompts  
 3. **Functions** — call functions / branching  
 4. **Survey questions** — manual questions and/or CSV/Excel upload (**any columns** saved as-is; no fixed `question` / `type` / `options` requirement)  
-5. **Client contact** — CSV/Excel upload to Cloudinary (**any columns** saved as-is; preview table is dynamic)  
+5. **Client contact** — CSV/Excel upload via backend to S3 (**any columns** saved as-is; preview table is dynamic)  
 6. **Schedule** — when to run the campaign  
 7. **Wisdom / Post-call** — additional agent steps  
 

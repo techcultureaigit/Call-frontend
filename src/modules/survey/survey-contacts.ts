@@ -216,7 +216,7 @@ function fileHintFromUrl(url: string): string {
 }
 
 /**
- * Fetch contact file from Cloudinary (or any) URL and parse rows.
+ * Fetch contact file from URL and parse rows.
  * Tries direct fetch first, then Next.js proxy if CORS blocks.
  */
 export async function fetchClientContactsFromUrl(

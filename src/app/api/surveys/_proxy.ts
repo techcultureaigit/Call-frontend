@@ -22,7 +22,7 @@ export function backendAuthHeaders(request: Request): HeadersInit {
   return headers;
 }
 
-export function surveysBackendUrl(path = ""): string {
+export function surveysBackendUrl(path = "") {
   return `${BACKEND}${path}`;
 }
 

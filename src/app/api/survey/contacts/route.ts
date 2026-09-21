@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import * as XLSX from "xlsx";
 
 /**
- * Proxy contact file fetch (Cloudinary etc.) to avoid browser CORS issues,
+ * Proxy contact file fetch to avoid browser CORS issues,
  * then parse CSV/Excel and return row objects for the client.
  */
 export async function GET(request: NextRequest) {
