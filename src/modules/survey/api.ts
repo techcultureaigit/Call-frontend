@@ -16,7 +16,7 @@
  * getSurveyResultTranscriptions GET /api/surveys/:id/results/:resultId/transcriptions
  * exportSurveyResults  GET    /api/surveys/:id/results/export
  * uploadSurveyContactFile   POST /api/surveys/:id/contact-file
- * uploadSurveyQuestionsFile POST /api/surveys/:id/questions-file
+ * getSurveyContacts         GET  /api/surveys/:id/contacts
  */
 import type { ApiResponse } from "@/types/api";
 import type { PaginatedMeta } from "@/types";
@@ -321,18 +321,24 @@ export async function uploadSurveyContactFile(
   }, { surveyId, fileName: file.name, size: file.size });
 }
 
-/** uploadSurveyQuestionsFile() → POST /api/surveys/:id/questions-file */
-export async function uploadSurveyQuestionsFile(
-  surveyId: string,
-  file: File
-): Promise<Survey> {
-  const url = `/api/surveys/${surveyId}/questions-file`;
-  return surveyCall("uploadSurveyQuestionsFile", "POST", url, async () => {
-    const fd = new FormData();
-    fd.append("file", file);
-    const res = await apiUpload<ApiResponse<BackendSurvey>>(url, fd);
-    return backendSurveyToAgent(res.data);
-  }, { surveyId, fileName: file.name, size: file.size });
+export type SurveyContactsResponse = {
+  contactFileUrl: string;
+  contactFileName: string;
+  contactCount: number;
+  contacts: { contact: string }[];
+};
+
+/** getSurveyContacts() → GET /api/surveys/:id/contacts — numbers from S3 file, not DB */
+export async function getSurveyContacts(
+  surveyId: string
+): Promise<SurveyContactsResponse> {
+  const url = `/api/surveys/${surveyId}/contacts`;
+  return surveyCall("getSurveyContacts", "GET", url, async () => {
+    return dedupeInflight(`GET ${url}`, async () => {
+      const res = await apiGet<ApiResponse<SurveyContactsResponse>>(url);
+      return res.data;
+    });
+  }, { surveyId });
 }
 
 /* ---------- namespace ---------- */
@@ -350,5 +356,5 @@ export const surveysApi = {
   getResultTranscriptions: getSurveyResultTranscriptions,
   exportResults: exportSurveyResults,
   uploadContactFile: uploadSurveyContactFile,
-  uploadQuestionsFile: uploadSurveyQuestionsFile,
+  getContacts: getSurveyContacts,
 };

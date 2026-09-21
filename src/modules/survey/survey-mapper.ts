@@ -147,18 +147,13 @@ export function backendSurveyToAgent(s: BackendSurvey): Survey {
     },
     surveyQuestions: {
       enabled: sq.enabled ?? true,
-      questionsFileUrl: sq.questionsFileUrl ?? "",
-      questionsFileName: sq.questionsFileName ?? "",
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       questions: (sq.questions ?? []).map((q: any) => ({ ...q })),
     },
     clientContact: {
       contactFileUrl: cc.contactFileUrl ?? "",
       contactFileName: cc.contactFileName ?? "",
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      contacts: (cc.contacts ?? [])
-        .filter((row: unknown) => row && typeof row === "object")
-        .map((row: any) => ({ ...row })),
+      contacts: [],
     },
     functions: DEFAULT_SURVEY_CONFIG.functions,
     wisdom: DEFAULT_SURVEY_CONFIG.wisdom,
@@ -251,8 +246,6 @@ export function agentToBackendPayload(
     },
     surveyQuestions: {
       enabled: c.surveyQuestions.enabled,
-      questionsFileUrl: c.surveyQuestions.questionsFileUrl ?? "",
-      questionsFileName: c.surveyQuestions.questionsFileName ?? "",
       questions: c.surveyQuestions.questions.map((q) => {
         const conditions = Array.isArray(q.conditions)
           ? q.conditions
@@ -369,7 +362,6 @@ export function agentToBackendPayload(
     clientContact: {
       contactFileUrl: c.clientContact.contactFileUrl,
       contactFileName: c.clientContact.contactFileName,
-      contacts: (c.clientContact.contacts ?? []).map((row) => ({ ...row })),
     },
   };
   if (survey.id) payload.id = survey.id;

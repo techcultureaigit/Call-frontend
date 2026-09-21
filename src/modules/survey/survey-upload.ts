@@ -1,8 +1,7 @@
 /**
  * survey-upload.ts
  * Parse and validate survey questions file — client-side only, no API.
- * Upload handled in survey-tabs.tsx:
- *   uploadSurveyQuestionsFile() → POST /api/surveys/:id/questions-file
+ * Parsed questions are saved via saveSurvey() with the rest of the survey.
  *
  * Columns:
  *   question, type, options, instruction (required headers: question, type)

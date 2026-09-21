@@ -164,9 +164,6 @@ export interface AgentSurveyQuestion {
 
 export interface AgentSurveyQuestionsConfig {
   enabled: boolean;
-  /** Only set when questions were uploaded via CSV/Excel */
-  questionsFileUrl?: string;
-  questionsFileName?: string;
   questions: AgentSurveyQuestion[];
 }
 
@@ -176,7 +173,6 @@ export type AgentClientContactRow = { contact: string };
 export interface AgentClientContactConfig {
   contactFileUrl: string;
   contactFileName: string;
-  /** Parsed contact numbers cached after upload */
   contacts?: AgentClientContactRow[];
 }
 

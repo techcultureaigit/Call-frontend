@@ -171,8 +171,6 @@ export function SurveyDetailView({ survey }: { survey: Survey }) {
   const farewell = currentSurvey.config.prompts.farewell?.trim() || "—";
   const description = currentSurvey.config.prompts.description?.trim() || "";
   const questions = currentSurvey.config.surveyQuestions.questions ?? [];
-  const questionsFileUrl = currentSurvey.config.surveyQuestions.questionsFileUrl ?? "";
-  const questionsFileName = currentSurvey.config.surveyQuestions.questionsFileName ?? "";
   const contact = currentSurvey.config.clientContact;
   const stt = persona.stt;
   const llm = persona.llm;
@@ -419,33 +417,6 @@ export function SurveyDetailView({ survey }: { survey: Survey }) {
                   {onOff(currentSurvey.config.surveyQuestions.enabled)}
                 </DetailField>
 
-                {questionsFileName || questionsFileUrl ? (
-                  <>
-                    <DetailField label="Questions file">
-                      <span className="inline-flex items-center gap-1.5">
-                        <FileUp className="size-3.5 text-primary" />
-                        {questionsFileName || "Uploaded file"}
-                      </span>
-                    </DetailField>
-                    {questionsFileUrl ? (
-                      <DetailField label="File URL">
-                        <a
-                          href={getContactFileOpenUrl(questionsFileUrl)}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="break-all text-brand hover:underline"
-                        >
-                          {getContactFileOpenUrl(questionsFileUrl)}
-                        </a>
-                      </DetailField>
-                    ) : null}
-                  </>
-                ) : (
-                  <p className="text-sm text-muted-foreground">
-                    No questions file uploaded (manual questions only).
-                  </p>
-                )}
-
                 {questions.length === 0 ? (
                   <p className="text-sm text-muted-foreground">
                     No questions added.
@@ -665,9 +636,10 @@ export function SurveyDetailView({ survey }: { survey: Survey }) {
                       </DetailField>
                     ) : null}
                     <ClientContactsPreview
+                      surveyId={currentSurvey.id}
                       fileUrl={contact.contactFileUrl}
-                      contacts={contact.contacts}
                       fileName={contact.contactFileName}
+                      preferUrlFetch
                     />
                   </>
                 ) : (

@@ -5,13 +5,13 @@
  * Create/edit form tabs — persona, prompts, questions, contacts, schedule.
  *
  * API calls in this file:
- *   uploadSurveyQuestionsFile() → POST /api/surveys/:id/questions-file
  *   uploadSurveyContactFile()   → POST /api/surveys/:id/contact-file
+ *   getSurveyContacts()         → GET  /api/surveys/:id/contacts
  */
 
 import {
-  uploadSurveyQuestionsFile,
   uploadSurveyContactFile,
+  getSurveyContacts,
 } from "./api";
 import { SurveyScheduleFields } from "./survey-dialogs";
 import type { ScheduleFormValues } from "./survey-dialogs";
@@ -41,7 +41,6 @@ import { cn } from "@/lib/utils";
 import {
   fetchClientContactsFromUrl,
   sanitizeContactRows,
-  parseAndValidateClientContactsFile,
 } from "./survey-contacts";
 import type { ClientContactRow } from "./survey-contacts";
 import { getContactFileOpenUrl } from "@/lib/utils/contact-file-url";
@@ -68,22 +67,17 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 
 interface ClientContactsPreviewProps {
-  /** File URL — used to fetch rows dynamically */
+  surveyId?: string;
   fileUrl?: string;
-  /** Exact uploaded file name shown in UI */
   fileName?: string;
-  /** Cached rows from upload parse (fallback / instant show) */
   contacts?: ClientContactRow[];
   className?: string;
   compact?: boolean;
-  /**
-   * When true and fileUrl is set, fetch rows from URL after mount
-   * (even if cached contacts exist). Cached rows show first, then URL data replaces.
-   */
   preferUrlFetch?: boolean;
 }
 
 export function ClientContactsPreview({
+  surveyId,
   fileUrl,
   fileName,
   contacts: initialContacts,
@@ -102,11 +96,13 @@ export function ClientContactsPreview({
 
   const displayName = fileName?.trim() || "Uploaded file";
 
-  const loadFromUrl = async (url: string) => {
+  const loadContacts = async () => {
     setLoading(true);
     setError("");
     try {
-      const parsed = await fetchClientContactsFromUrl(url);
+      const parsed = surveyId
+        ? (await getSurveyContacts(surveyId)).contacts
+        : await fetchClientContactsFromUrl(fileUrl || "");
       setRows(parsed);
       setFromUrl(true);
       if (parsed.length === 0) {
@@ -139,21 +135,21 @@ export function ClientContactsPreview({
       setError("");
     }
 
-    const url = fileUrl?.trim();
-    if (url && (preferUrlFetch || cachedContacts.length === 0)) {
-      void loadFromUrl(url);
+    const canFetch = Boolean(surveyId || fileUrl?.trim());
+    if (canFetch && (preferUrlFetch || cachedContacts.length === 0)) {
+      void loadContacts();
       return;
     }
 
-    if (cachedContacts.length === 0 && !url) {
+    if (cachedContacts.length === 0 && !canFetch) {
       setRows([]);
       setError("");
       setFromUrl(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [fileUrl, cachedContacts.length, preferUrlFetch]);
+  }, [surveyId, fileUrl, cachedContacts.length, preferUrlFetch]);
 
-  if (!fileUrl && cachedContacts.length === 0) {
+  if (!fileUrl && !surveyId && cachedContacts.length === 0) {
     return null;
   }
 
@@ -1754,7 +1750,6 @@ export function SurveyQuestionsTab({
   const [formatErrors, setFormatErrors] = useState<string[]>([]);
   const [activeQuestionIndex, setActiveQuestionIndex] = useState(0);
 
-  const fileUrl = getContactFileOpenUrl(values.questionsFileUrl || "");
   const questionCount = values.questions.length;
   const safeQuestionIndex = Math.min(
     activeQuestionIndex,
@@ -1782,8 +1777,6 @@ export function SurveyQuestionsTab({
   ) => {
     const next = {
       ...values,
-      questionsFileUrl: "",
-      questionsFileName: "",
       questions,
     };
     onChange(next);
@@ -1862,22 +1855,14 @@ export function SurveyQuestionsTab({
         throw new Error("Save previous steps first to upload questions");
       }
 
-      // API: uploadSurveyQuestionsFile() → POST /api/surveys/:id/questions-file
-      const uploaded = await uploadSurveyQuestionsFile(
-        surveyId,
-        file
-      );
-      const sq = uploaded.config.surveyQuestions;
       const nextValues = {
-        enabled: sq.enabled,
-        questionsFileUrl: sq.questionsFileUrl || "",
-        questionsFileName: sq.questionsFileName || file.name,
-        questions: sq.questions?.length ? sq.questions : validated.questions,
+        ...values,
+        questions: validated.questions,
       };
       onChange(nextValues);
       onPersist?.(nextValues);
       setFormatErrors([]);
-      toast.success(`Uploaded ${validated.questions.length} question(s)`);
+      toast.success(`Loaded ${validated.questions.length} question(s)`);
     } catch (error) {
       const msg =
         error instanceof Error ? error.message : "Failed to upload questions";
@@ -1893,8 +1878,6 @@ export function SurveyQuestionsTab({
     setFormatErrors([]);
     const next = {
       ...values,
-      questionsFileUrl: "",
-      questionsFileName: "",
       questions: [],
     };
     onChange(next);
@@ -2086,23 +2069,12 @@ export function SurveyQuestionsTab({
           </div>
         ) : null}
 
-        {values.questionsFileUrl || values.questionsFileName ? (
+        {values.questions.length > 0 ? (
           <div className="flex items-start gap-3 rounded-[8px] border border-border/60 bg-card px-3 py-3">
             <div className="min-w-0 flex-1 space-y-1">
               <p className="truncate text-sm font-semibold text-foreground">
-                {values.questionsFileName || "Uploaded file"}
+                Questions
               </p>
-              {fileUrl ? (
-                <a
-                  href={fileUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="inline-flex max-w-full items-center gap-1 text-[11px] text-brand hover:underline"
-                >
-                  <ExternalLink className="size-3 shrink-0" />
-                  <span className="truncate">{fileUrl}</span>
-                </a>
-              ) : null}
               <p className="text-[11px] text-muted-foreground">
                 {values.questions.length} question(s) loaded
               </p>
@@ -2454,13 +2426,6 @@ export function ClientContactTab({
     setUploading(true);
     setFormatErrors([]);
     try {
-      const validated = await parseAndValidateClientContactsFile(file);
-      if (!validated.ok) {
-        setFormatErrors(validated.errors);
-        toast.error("Invalid contact file — fix the errors and try again");
-        return;
-      }
-
       if (!surveyId) {
         throw new Error("Save previous steps first to upload contacts");
       }
@@ -2477,15 +2442,10 @@ export function ClientContactTab({
           values.contactFileUrl,
         contactFileName:
           uploadedSurvey.config.clientContact.contactFileName || file.name,
-        contacts:
-          uploadedSurvey.config.clientContact.contacts?.length
-            ? uploadedSurvey.config.clientContact.contacts
-            : validated.contacts,
+        contacts: [],
       });
       setFormatErrors([]);
-      toast.success(
-        `Uploaded ${validated.contacts.length} contact number(s)`
-      );
+      toast.success("Contact file uploaded");
     } catch (error) {
       const msg =
         error instanceof Error ? error.message : "Failed to upload file";
@@ -2639,9 +2599,7 @@ export function ClientContactTab({
                 </a>
               ) : null}
               <p className="text-[11px] text-muted-foreground">
-                {values.contacts?.length
-                  ? `${values.contacts.length} contact number(s) loaded`
-                  : "File uploaded"}
+                File uploaded
               </p>
             </div>
             <Button
@@ -2663,12 +2621,12 @@ export function ClientContactTab({
         </p>
       ) : null}
 
-      {values.contactFileUrl ||
-      (values.contacts && values.contacts.length > 0) ? (
+      {values.contactFileUrl ? (
         <ClientContactsPreview
+          surveyId={surveyId}
           fileUrl={values.contactFileUrl}
-          contacts={values.contacts}
           fileName={values.contactFileName}
+          preferUrlFetch
           compact
         />
       ) : null}

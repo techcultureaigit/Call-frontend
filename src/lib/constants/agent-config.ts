@@ -319,8 +319,6 @@ export const DEFAULT_AGENT_CONFIG: AgentConfig = {
   },
   surveyQuestions: {
     enabled: true,
-    questionsFileUrl: "",
-    questionsFileName: "",
     questions: [],
   },
   clientContact: {

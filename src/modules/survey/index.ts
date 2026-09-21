@@ -15,7 +15,7 @@
  *   getSurveyResultTranscriptions() GET /api/surveys/:id/results/:resultId/transcriptions
  *   exportSurveyResults()      GET    /api/surveys/:id/results/export
  *   uploadSurveyContactFile()  POST   /api/surveys/:id/contact-file
- *   uploadSurveyQuestionsFile() POST  /api/surveys/:id/questions-file
+ *   getSurveyContacts()        GET    /api/surveys/:id/contacts
  *
  * ── Files ─────────────────────────────────────────────────────
  *   api.ts              — all HTTP API functions
@@ -64,7 +64,7 @@ export {
   getSurveyResultTranscriptions,
   exportSurveyResults,
   uploadSurveyContactFile,
-  uploadSurveyQuestionsFile,
+  getSurveyContacts,
   surveysApi,
 } from "./api";
 
