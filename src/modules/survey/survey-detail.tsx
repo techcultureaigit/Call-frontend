@@ -7,13 +7,15 @@
  * API calls in this file:
  *   duplicateSurvey() → POST /api/surveys/:id/duplicate
  *   scheduleSurvey()  → POST /api/surveys/:id/schedule
+ *   getSurvey()       → GET  /api/surveys/:id  (while scheduled or processing)
  */
 
 import {
   duplicateSurvey,
+  getSurvey,
   scheduleSurvey,
 } from "./api";
-import { getSurveyDisplayStatus, getSurveySchedule, isSurveyCompleted, isSurveyReadyToSchedule, isSurveyScheduled } from "./survey-lib";
+import { canViewSurveyResults, formatRetryMissedCalls, getSurveyDisplayStatus, getSurveySchedule, isSurveyCompleted, isSurveyReadyToSchedule, isSurveyScheduled } from "./survey-lib";
 import { SurveyStatusBadge, ScheduleSurveyDialog } from "./survey-dialogs";
 import type { ScheduleSurveyPayload } from "./survey-dialogs";
 import { ClientContactsPreview } from "./survey-tabs";
@@ -138,6 +140,7 @@ export function SurveyDetailView({ survey }: { survey: Survey }) {
     canReadReports,
   } = usePermissions();
   const locked = isSurveyCompleted(currentSurvey);
+  const showInsights = canViewSurveyResults(currentSurvey);
   const canSchedule =
     canUpdateSurvey &&
     !locked &&
@@ -157,6 +160,17 @@ export function SurveyDetailView({ survey }: { survey: Survey }) {
   useEffect(() => {
     setCurrentAgent(survey);
   }, [survey]);
+
+  useEffect(() => {
+    if (!isSurveyScheduled(currentSurvey)) return;
+    const id = window.setInterval(() => {
+      if (document.hidden) return;
+      void getSurvey(currentSurvey.id)
+        .then((fresh) => setCurrentAgent(fresh))
+        .catch(() => undefined);
+    }, 8000);
+    return () => window.clearInterval(id);
+  }, [currentSurvey.id, currentSurvey.scheduling_status]);
 
   useEffect(() => {
     applyMeta();
@@ -251,7 +265,7 @@ export function SurveyDetailView({ survey }: { survey: Survey }) {
             </div>
 
             <div className="flex shrink-0 flex-wrap gap-2 sm:justify-end">
-              {locked && canReadReports ? (
+              {showInsights && canReadReports ? (
                 <Button
                   asChild
                   className="rounded-[6px] bg-[#2c3b59] text-white hover:bg-[#24314a]"
@@ -262,7 +276,7 @@ export function SurveyDetailView({ survey }: { survey: Survey }) {
                   </Link>
                 </Button>
               ) : null}
-              {locked ? (
+              {showInsights ? (
                 <Button asChild variant="outline" className="rounded-[6px]">
                   <Link href={`/survey/${currentSurvey.id}/results`}>
                     Response
@@ -631,7 +645,7 @@ export function SurveyDetailView({ survey }: { survey: Survey }) {
                           rel="noreferrer"
                           className="break-all text-brand hover:underline"
                         >
-                          {getContactFileOpenUrl(contact.contactFileUrl)}
+                          Open file
                         </a>
                       </DetailField>
                     ) : null}
@@ -667,6 +681,11 @@ export function SurveyDetailView({ survey }: { survey: Survey }) {
                   {getSurveySchedule(currentSurvey).endAt
                     ? formatSurveyCreatedAt(getSurveySchedule(currentSurvey).endAt!)
                     : "—"}
+                </DetailField>
+                <DetailField label="Retry missed calls">
+                  {formatRetryMissedCalls(
+                    getSurveySchedule(currentSurvey).retryMissedCalls
+                  )}
                 </DetailField>
               </div>
             </StepSection>

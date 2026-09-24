@@ -31,7 +31,7 @@ import {
 } from "./survey-dialogs";
 import { exportSurveys } from "./survey-export";
 import type { SurveysExportFormat } from "./survey-export";
-import { getSurveySchedule, getSurveyDisplayStatus, isSurveyCompleted, isSurveyReadyToSchedule, isSurveyScheduled } from "./survey-lib";
+import { canViewSurveyResults, getSurveySchedule, getSurveyDisplayStatus, isSurveyCompleted, isSurveyReadyToSchedule, isSurveyScheduled } from "./survey-lib";
 import { PageContainer } from "@/components/layout";
 import {
   DataTable,
@@ -63,7 +63,7 @@ import { cn } from "@/lib/utils";
 import { formatAgentCreatedAt as formatSurveyCreatedAt } from "@/lib/utils/date";
 import type { Agent as Survey } from "@/types/agent";
 import { AnimatePresence, motion } from "framer-motion";
-import { Ban, CalendarClock, ClipboardList, Clock3, Copy, Eye, Languages, MessagesSquare, Mic2, Pencil, Bot, Download, FileSpreadsheet, FileText, HelpCircle, Trash2, UserPlus, X } from "lucide-react";
+import { Ban, CalendarClock, ClipboardList, Clock3, Copy, Eye, Languages, Mic2, Pencil, Bot, Download, FileSpreadsheet, FileText, HelpCircle, Trash2, UserPlus, X } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useMemo, useCallback, type ReactNode } from "react";
@@ -202,13 +202,13 @@ export function SurveysTable({
         ),
       },
       {
-        id: "conversations",
-        header: "Conversations",
+        id: "contactCount",
+        header: "Total nos of contact",
         cell: (survey) => {
-          const count = survey.conversationCount;
+          const count = survey.contactCount;
           return (
             <span className="inline-flex items-center gap-1.5 font-sans text-sm tabular-nums text-foreground/85">
-              <MessagesSquare className="size-3.5 text-muted-foreground" />
+              <UserPlus className="size-3.5 text-muted-foreground" />
               {count}
             </span>
           );
@@ -222,6 +222,7 @@ export function SurveysTable({
         pin: "end",
         cell: (survey) => {
           const locked = isSurveyCompleted(survey);
+          const showInsights = canViewSurveyResults(survey);
           const canSchedule =
             canUpdateSurvey &&
             !locked &&
@@ -230,7 +231,7 @@ export function SurveysTable({
 
           return (
             <div className="flex items-center justify-end gap-2">
-              {locked ? (
+              {showInsights ? (
                 <div className="flex items-center gap-2">
                   {canReadReports ? (
                     <Link
@@ -391,6 +392,7 @@ export function SurveyListView() {
   const [unschedulingId, setUnschedulingId] = useState<string | null>(null);
   const [isExporting, setIsExporting] = useState(false);
   const [columnsControl, setColumnsControl] = useState<ReactNode | null>(null);
+  const [watchLive, setWatchLive] = useState(false);
 
   const fetchPage = useCallback(
     async ({
@@ -434,6 +436,7 @@ export function SurveyListView() {
     pageSize: PAGE_SIZE,
     fetchPage,
     resetPageWhen: [language, status],
+    refreshIntervalMs: watchLive ? 8000 : 0,
     onError: () => toast.error("Failed to load surveys"),
   });
 
@@ -446,6 +449,10 @@ export function SurveyListView() {
     applyMeta();
     return () => resetPageMeta();
   }, [applyMeta, resetPageMeta]);
+
+  useEffect(() => {
+    setWatchLive(surveys.some((survey) => isSurveyScheduled(survey)));
+  }, [surveys]);
 
   useEffect(() => {
     setSelectedIds(new Set());

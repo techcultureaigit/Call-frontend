@@ -8,5 +8,3 @@ export {
   apiUpload,
   unwrapData,
 } from "./http";
-export { uploadApi, uploadToCloudinary } from "./upload";
-export type { CloudinaryUploadResult } from "./upload";

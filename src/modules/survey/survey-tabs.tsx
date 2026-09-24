@@ -17,6 +17,11 @@ import { SurveyScheduleFields } from "./survey-dialogs";
 import type { ScheduleFormValues } from "./survey-dialogs";
 import { downloadSurveyQuestionsSample, parseAndValidateSurveyQuestionsFile, downloadClientContactsSample } from "./survey-upload";
 import { VoicePickerDialog } from "@/modules/voices/voice-picker-dialog";
+import {
+  getPlayingVoiceId,
+  subscribeVoicePlayback,
+  toggleVoiceRingtone,
+} from "@/modules/voices/voice-playback";
 import { AppLoader, AppLoaderSpinner } from "@/components/shared/app-loader";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -372,6 +377,20 @@ function FieldLabel({
   );
 }
 
+function withCurrentOption(
+  options: { label: string; value: string }[],
+  value?: string,
+  label?: string
+) {
+  if (!value) return options;
+  if (options.some((o) => o.value === value)) return options;
+  const row = { value, label: (label || value).trim() || value };
+  const insertAt = options[0]?.value === "" ? 1 : 0;
+  const next = options.slice();
+  next.splice(insertAt, 0, row);
+  return next;
+}
+
 function OptionListPicker({
   label,
   value,
@@ -454,7 +473,6 @@ function PipelineStage({
                 modelId: "",
                 provider: "",
                 model: "",
-                ...(stack.voice !== undefined ? { voice: "" } : {}),
               });
               return;
             }
@@ -465,7 +483,6 @@ function PipelineStage({
               modelId: "",
               provider: opt?.label ?? "",
               model: "",
-              ...(stack.voice !== undefined ? { voice: "" } : {}),
             });
           }}
         />
@@ -499,40 +516,79 @@ function PipelineStage({
 function VoiceSelectField({
   value,
   speed,
-  disabled,
+  voiceId,
+  previewUrl,
+  pickerDisabled,
   onOpen,
 }: {
   value: string;
   speed: number;
-  disabled?: boolean;
+  voiceId?: string;
+  previewUrl?: string;
+  pickerDisabled?: boolean;
   onOpen: () => void;
 }) {
+  const [playing, setPlaying] = useState(false);
+  const canPlay = Boolean(voiceId || previewUrl);
+
+  useEffect(() => {
+    return subscribeVoicePlayback((id) => {
+      setPlaying(Boolean(voiceId) && id === voiceId);
+    });
+  }, [voiceId]);
+
+  useEffect(() => {
+    setPlaying(Boolean(voiceId) && getPlayingVoiceId() === voiceId);
+  }, [voiceId]);
+
   return (
     <div className="space-y-1.5">
       <FieldLabel hint="Opens Voice Explorer — pick the voice and its speaking speed">
         Voice &amp; speed
       </FieldLabel>
-      <button
-        type="button"
-        disabled={disabled}
-        onClick={onOpen}
-        className={cn(
-          "flex h-10 w-full items-center justify-between rounded-[6px] border border-border bg-card px-3.5 text-left text-sm shadow-subtle transition-[color,box-shadow,border-color] duration-200 hover:border-border focus-visible:border-brand focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-brand/20 disabled:cursor-not-allowed disabled:opacity-50"
-        )}
-      >
-        <span className="flex min-w-0 items-center gap-2 truncate font-medium text-foreground">
-          <Volume2 className="size-3.5 shrink-0 text-muted-foreground" />
-          <span className="truncate">{value || "Select Voice"}</span>
-        </span>
-        <span className="flex shrink-0 items-center gap-2">
-          {value ? (
-            <span className="rounded-full bg-brand/10 px-2 py-0.5 text-[11px] font-semibold tabular-nums text-brand">
-              {getVoiceSpeedLabel(speed)}
+      <div className="flex items-center gap-2">
+        <button
+          type="button"
+          disabled={pickerDisabled}
+          onClick={onOpen}
+          className={cn(
+            "flex h-10 min-w-0 flex-1 items-center justify-between rounded-[6px] border border-border bg-card px-3.5 text-left text-sm shadow-subtle transition-[color,box-shadow,border-color] duration-200 hover:border-border focus-visible:border-brand focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-brand/20 disabled:cursor-not-allowed",
+            pickerDisabled && !value && "opacity-50"
+          )}
+        >
+          <span className="flex min-w-0 items-center gap-2 truncate font-medium text-foreground">
+            <Volume2 className="size-3.5 shrink-0 text-muted-foreground" />
+            <span className="truncate">
+              {value || (voiceId ? "Selected voice" : "Select Voice")}
             </span>
-          ) : null}
-          <ChevronDown className="size-4 shrink-0 text-muted-foreground" />
-        </span>
-      </button>
+          </span>
+          <span className="flex shrink-0 items-center gap-2">
+            {value || voiceId ? (
+              <span className="rounded-full bg-brand/10 px-2 py-0.5 text-[11px] font-semibold tabular-nums text-brand">
+                {getVoiceSpeedLabel(speed)}
+              </span>
+            ) : null}
+            <ChevronDown className="size-4 shrink-0 text-muted-foreground" />
+          </span>
+        </button>
+        <button
+          type="button"
+          onClick={() => {
+            if (!canPlay) return;
+            toggleVoiceRingtone(voiceId || value || "selected-voice", previewUrl);
+          }}
+          disabled={!canPlay}
+          className="inline-flex size-10 shrink-0 items-center justify-center rounded-[6px] border border-border/60 bg-muted/40 text-foreground transition-colors hover:border-brand/40 hover:bg-brand/10 hover:text-brand disabled:cursor-not-allowed disabled:opacity-40"
+          aria-label={playing ? "Pause voice preview" : "Play voice preview"}
+          title={playing ? "Pause preview" : "Play selected voice"}
+        >
+          {playing ? (
+            <Pause className="size-4" />
+          ) : (
+            <Play className="size-4" />
+          )}
+        </button>
+      </div>
     </div>
   );
 }
@@ -683,8 +739,7 @@ export function PersonaTab({
   const language = values.language;
   const ttsProviderKey =
     values.tts.provider ||
-    (ttsProviderId ? providerNameById(providers, ttsProviderId) : "google");
-  const hasVoiceSource = Boolean(ttsProviderId || values.tts.provider);
+    (ttsProviderId ? providerNameById(providers, ttsProviderId) : "");
 
   const onStackChange = (
     key: "stt" | "llm" | "tts",
@@ -701,9 +756,6 @@ export function PersonaTab({
         provider: name || next.provider,
         modelId,
         model: providerChanged ? "" : modelOpt?.label || next.model || "",
-        ...(key === "tts" && providerChanged
-          ? { voice: "", voiceName: "", tts_speed: DEFAULT_VOICE_SPEED }
-          : {}),
       });
       return;
     }
@@ -713,9 +765,6 @@ export function PersonaTab({
       modelId: "",
       provider: "",
       model: "",
-      ...(key === "tts"
-        ? { voice: "", voiceName: "", tts_speed: DEFAULT_VOICE_SPEED }
-        : {}),
     });
   };
 
@@ -862,8 +911,16 @@ export function PersonaTab({
             subtitle="Convert caller audio into text"
             icon={Mic}
             stack={values.stt}
-            providerOptions={sttProviders}
-            modelOptions={sttModels}
+            providerOptions={withCurrentOption(
+              sttProviders,
+              sttProviderId,
+              values.stt.provider
+            )}
+            modelOptions={withCurrentOption(
+              sttModels,
+              values.stt.modelId,
+              values.stt.model
+            )}
             onChange={(next) => onStackChange("stt", next)}
           />
           <PipelineStage
@@ -872,8 +929,16 @@ export function PersonaTab({
             subtitle="Decide what to say next"
             icon={BrainCircuit}
             stack={values.llm}
-            providerOptions={llmProviders}
-            modelOptions={llmModels}
+            providerOptions={withCurrentOption(
+              llmProviders,
+              llmProviderId,
+              values.llm.provider
+            )}
+            modelOptions={withCurrentOption(
+              llmModels,
+              values.llm.modelId,
+              values.llm.model
+            )}
             onChange={(next) => onStackChange("llm", next)}
           />
           <PipelineStage
@@ -882,14 +947,23 @@ export function PersonaTab({
             subtitle="Voice the survey’s reply"
             icon={Volume2}
             stack={values.tts}
-            providerOptions={ttsProviders}
-            modelOptions={ttsModels}
+            providerOptions={withCurrentOption(
+              ttsProviders,
+              ttsProviderId,
+              values.tts.provider
+            )}
+            modelOptions={withCurrentOption(
+              ttsModels,
+              values.tts.modelId,
+              values.tts.model
+            )}
             onChange={(next) => onStackChange("tts", next)}
             extra={
               <VoiceSelectField
                 value={values.tts.voiceName ?? ""}
                 speed={values.tts.tts_speed ?? DEFAULT_VOICE_SPEED}
-                disabled={!hasVoiceSource}
+                voiceId={values.tts.voice}
+                previewUrl={values.tts.voicePreviewUrl}
                 onOpen={() => setVoicePickerOpen(true)}
               />
             }
@@ -985,6 +1059,7 @@ export function PersonaTab({
             ...values.tts,
             voice: voice?.id ?? "",
             voiceName: voice?.name ?? "",
+            voicePreviewUrl: voice?.previewUrl ?? "",
             tts_speed: voice
               ? (speed ?? values.tts.tts_speed ?? DEFAULT_VOICE_SPEED)
               : DEFAULT_VOICE_SPEED,
@@ -2593,9 +2668,7 @@ export function ClientContactTab({
                   className="inline-flex max-w-full items-center gap-1 text-[11px] text-brand hover:underline"
                 >
                   <ExternalLink className="size-3 shrink-0" />
-                  <span className="truncate">
-                    {getContactFileOpenUrl(values.contactFileUrl)}
-                  </span>
+                  <span className="truncate">Open file</span>
                 </a>
               ) : null}
               <p className="text-[11px] text-muted-foreground">

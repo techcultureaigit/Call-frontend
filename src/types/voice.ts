@@ -16,7 +16,7 @@ export interface VoiceProfile {
   languageLabel: string;
   description: string;
   isCloned: boolean;
-  /** Cloudinary / provider preview audio URL */
+  /** S3 / provider preview audio URL */
   previewUrl?: string;
   voiceId?: string;
   source?: string;

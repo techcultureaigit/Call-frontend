@@ -128,6 +128,10 @@ export interface ScheduleSurveyInput {
   endAt?: string | null;
   callWindowStart?: string;
   callWindowEnd?: string;
+  retryMissedCalls?: {
+    mode: "after_every_connected" | "custom" | null;
+    hours: number | null;
+  };
 }
 
 export interface SurveysListResult {

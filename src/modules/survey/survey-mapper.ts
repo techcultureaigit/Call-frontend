@@ -16,7 +16,7 @@ import type {
 } from "@/types/agent";
 
 import type { SaveSurveyInput } from "./survey-types";
-import { DEFAULT_SURVEY_SCHEDULE } from "./survey-lib";
+import { DEFAULT_SURVEY_SCHEDULE, normalizeRetryMissedCalls } from "./survey-lib";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type BackendSurvey = Record<string, any>;
@@ -153,6 +153,7 @@ export function backendSurveyToAgent(s: BackendSurvey): Survey {
     clientContact: {
       contactFileUrl: cc.contactFileUrl ?? "",
       contactFileName: cc.contactFileName ?? "",
+      contactCount: Math.max(0, Number(cc.contactCount ?? s.contactCount) || 0),
       contacts: [],
     },
     functions: DEFAULT_SURVEY_CONFIG.functions,
@@ -170,6 +171,7 @@ export function backendSurveyToAgent(s: BackendSurvey): Survey {
           endAt: sch.endAt ?? null,
           callWindowStart: sch.callWindowStart ?? "09:00",
           callWindowEnd: sch.callWindowEnd ?? "18:00",
+          retryMissedCalls: normalizeRetryMissedCalls(sch.retryMissedCalls),
           lastScheduledAt: sch.lastScheduledAt ?? null,
         };
 
@@ -195,6 +197,10 @@ export function backendSurveyToAgent(s: BackendSurvey): Survey {
     modelMode: "pipeline",
     phone: null,
     conversationCount: s.conversationCount ?? 0,
+    contactCount: Math.max(
+      0,
+      Number(s.contactCount ?? cc.contactCount) || 0
+    ),
     config,
     schedule,
     progress: mappedProgress,
@@ -211,6 +217,10 @@ export function agentToBackendPayload(
     endAt?: string | null;
     callWindowStart?: string;
     callWindowEnd?: string;
+    retryMissedCalls?: {
+      mode: "after_every_connected" | "custom" | null;
+      hours: number | null;
+    };
   } | null
 ) {
   const c = survey.config;
@@ -224,12 +234,21 @@ export function agentToBackendPayload(
       callBargeInEnabled: Boolean(c.persona.callBargeInEnabled),
       stt: {
         modelId: c.persona.stt.modelId || null,
+        providerId: c.persona.stt.providerId || null,
+        provider: c.persona.stt.provider || "",
+        model: c.persona.stt.model || "",
       },
       llm: {
         modelId: c.persona.llm.modelId || null,
+        providerId: c.persona.llm.providerId || null,
+        provider: c.persona.llm.provider || "",
+        model: c.persona.llm.model || "",
       },
       tts: {
         modelId: c.persona.tts.modelId || null,
+        providerId: c.persona.tts.providerId || null,
+        provider: c.persona.tts.provider || "",
+        model: c.persona.tts.model || "",
         voice: c.persona.tts.voice || null,
         // Speed belongs to the voice — nothing is stored without one
         tts_speed: c.persona.tts.voice
@@ -373,6 +392,7 @@ export function agentToBackendPayload(
       endAt: schedule.endAt ?? null,
       callWindowStart: schedule.callWindowStart ?? "09:00",
       callWindowEnd: schedule.callWindowEnd ?? "18:00",
+      retryMissedCalls: normalizeRetryMissedCalls(schedule.retryMissedCalls),
     };
   }
   return payload;

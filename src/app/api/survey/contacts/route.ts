@@ -1,11 +1,16 @@
+import { getS3Object, getS3ObjectKey } from "@/lib/server/s3";
+import { unauthorizedIfNoSession } from "@/lib/server/require-session";
 import { NextRequest, NextResponse } from "next/server";
 import * as XLSX from "xlsx";
 
 /**
- * Proxy contact file fetch to avoid browser CORS issues,
- * then parse CSV/Excel and return row objects for the client.
+ * Proxy contact file fetch for logged-in users.
+ * Private S3 objects are read with server env credentials — never sent to the browser.
  */
 export async function GET(request: NextRequest) {
+  const denied = unauthorizedIfNoSession(request);
+  if (denied) return denied;
+
   const url = request.nextUrl.searchParams.get("url")?.trim();
 
   if (!url) {
@@ -33,24 +38,41 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const res = await fetch(url, {
-      headers: {
-        Accept:
-          "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel,text/csv,application/octet-stream,*/*",
-      },
-      cache: "no-store",
-    });
+    let buffer: Buffer;
+    let contentType = "";
 
-    if (!res.ok) {
-      return NextResponse.json(
-        { success: false, message: `Upstream returned ${res.status}` },
-        { status: 502 }
-      );
+    if (getS3ObjectKey(url)) {
+      const object = await getS3Object(url);
+      const bytes = await object.Body?.transformToByteArray();
+      if (!bytes) {
+        return NextResponse.json(
+          { success: false, message: "Empty S3 object" },
+          { status: 502 }
+        );
+      }
+      buffer = Buffer.from(bytes);
+      contentType = (object.ContentType || "").toLowerCase();
+    } else {
+      const res = await fetch(url, {
+        headers: {
+          Accept:
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel,text/csv,application/octet-stream,*/*",
+        },
+        cache: "no-store",
+      });
+
+      if (!res.ok) {
+        return NextResponse.json(
+          { success: false, message: `Upstream returned ${res.status}` },
+          { status: 502 }
+        );
+      }
+
+      buffer = Buffer.from(await res.arrayBuffer());
+      contentType = (res.headers.get("content-type") || "").toLowerCase();
     }
 
-    const buffer = Buffer.from(await res.arrayBuffer());
     const pathname = parsed.pathname.toLowerCase();
-    const contentType = (res.headers.get("content-type") || "").toLowerCase();
     const isCsv =
       pathname.endsWith(".csv") ||
       contentType.includes("csv") ||

@@ -50,7 +50,7 @@ export interface AgentStackConfig {
   voice?: string;
   /** Display name from the populated voice response */
   voiceName?: string;
-  /** Provider/Cloudinary audio preview from the populated voice response */
+  /** Provider audio preview from the populated voice response */
   voicePreviewUrl?: string;
   /** Speaking rate for the selected voice — 1 is normal */
   tts_speed?: number;
@@ -173,6 +173,7 @@ export type AgentClientContactRow = { contact: string };
 export interface AgentClientContactConfig {
   contactFileUrl: string;
   contactFileName: string;
+  contactCount?: number;
   contacts?: AgentClientContactRow[];
 }
 
@@ -184,6 +185,14 @@ export interface AgentSchedule {
   callWindowStart?: string;
   /** Daily call window end (HH:mm), default 18:00 */
   callWindowEnd?: string;
+  /**
+   * Optional. Omitted or mode null = do not retry (existing surveys stay as they are).
+   * custom hours: 1, 2, 4, 8, 16, or 24 (1 day).
+   */
+  retryMissedCalls?: {
+    mode: "after_every_connected" | "custom" | null;
+    hours: number | null;
+  };
   lastScheduledAt: string | null;
 }
 
@@ -230,6 +239,7 @@ export interface Agent extends Timestamps {
   modelMode: AgentModelMode;
   phone?: string | null;
   conversationCount: number;
+  contactCount: number;
   config: AgentConfig;
   schedule?: AgentSchedule | null;
   progress?: AgentProgress;

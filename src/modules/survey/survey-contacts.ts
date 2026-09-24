@@ -7,6 +7,7 @@
 import * as XLSX from "xlsx";
 import { parseCSV } from "@/lib/utils/csv";
 import { dedupeInflight } from "@/lib/api/module-helpers";
+import { isS3FileUrl, stripS3Query } from "@/lib/utils/s3-url";
 
 /** Contact row — only `contact` (phone number) */
 export type ClientContactRow = { contact: string };
@@ -230,23 +231,27 @@ export async function fetchClientContactsFromUrl(
 async function fetchClientContactsFromUrlOnce(
   url: string
 ): Promise<ClientContactRow[]> {
-  const hint = fileHintFromUrl(url);
+  const sourceUrl = isS3FileUrl(url) ? stripS3Query(url) : url;
+  const hint = fileHintFromUrl(sourceUrl);
 
-  try {
-    const res = await fetch(url, { mode: "cors" });
-    if (res.ok) {
-      const buffer = await res.arrayBuffer();
-      const raw = parseClientContactsFromBuffer(buffer, hint);
-      const result = validateContactRows(raw);
-      if (result.ok) return result.contacts;
-      return softMapLegacyContacts(raw);
+  // Private S3 objects are not browser-accessible — always use the server proxy.
+  if (!isS3FileUrl(sourceUrl)) {
+    try {
+      const res = await fetch(sourceUrl, { mode: "cors" });
+      if (res.ok) {
+        const buffer = await res.arrayBuffer();
+        const raw = parseClientContactsFromBuffer(buffer, hint);
+        const result = validateContactRows(raw);
+        if (result.ok) return result.contacts;
+        return softMapLegacyContacts(raw);
+      }
+    } catch {
+      // Fall through to proxy
     }
-  } catch {
-    // Fall through to proxy
   }
 
   const proxy = await fetch(
-    `/api/survey/contacts?url=${encodeURIComponent(url)}`
+    `/api/survey/contacts?url=${encodeURIComponent(sourceUrl)}`
   );
   const json = (await proxy.json()) as {
     success: boolean;

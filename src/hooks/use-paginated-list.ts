@@ -24,6 +24,11 @@ export interface UsePaginatedListOptions<T> {
   }) => Promise<{ data: T[]; meta: PaginatedMeta }>;
   /** Reset to page 1 + refetch when these change (e.g. filters) */
   resetPageWhen?: unknown[];
+  /**
+   * Quiet refetch while the list stays on screen.
+   * 0 or omitted keeps the existing one-shot load.
+   */
+  refreshIntervalMs?: number;
   onError?: (error: unknown) => void;
 }
 
@@ -33,6 +38,7 @@ export function usePaginatedList<T>({
   debounceMs = 300,
   fetchPage,
   resetPageWhen = [],
+  refreshIntervalMs = 0,
   onError,
 }: UsePaginatedListOptions<T>) {
   const [search, setSearch] = useState("");
@@ -68,12 +74,13 @@ export function usePaginatedList<T>({
     setPage(1);
   }, []);
 
-  const load = useCallback(async () => {
+  const load = useCallback(async (options?: { silent?: boolean }) => {
+    const silent = Boolean(options?.silent && hasLoadedRef.current);
     const requestId = ++requestIdRef.current;
     const firstLoad = !hasLoadedRef.current;
 
     if (firstLoad) setIsLoading(true);
-    else setIsRefreshing(true);
+    else if (!silent) setIsRefreshing(true);
 
     try {
       const result = await fetchPageRef.current({
@@ -87,6 +94,7 @@ export function usePaginatedList<T>({
       hasLoadedRef.current = true;
     } catch (error) {
       if (requestId !== requestIdRef.current) return;
+      if (silent) return;
       onErrorRef.current?.(error);
       setData([]);
       setMeta({ ...EMPTY_PAGE_META, limit: pageSize });
@@ -106,6 +114,15 @@ export function usePaginatedList<T>({
   useEffect(() => {
     void load();
   }, [load]);
+
+  useEffect(() => {
+    if (!refreshIntervalMs || refreshIntervalMs <= 0) return;
+    const id = window.setInterval(() => {
+      if (document.hidden) return;
+      void load({ silent: true });
+    }, refreshIntervalMs);
+    return () => window.clearInterval(id);
+  }, [refreshIntervalMs, load]);
 
   const reload = useCallback(async () => {
     await load();

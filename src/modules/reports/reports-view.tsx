@@ -51,6 +51,7 @@ export function ReportsView({ lockedSurveyId }: { lockedSurveyId: string }) {
     isFetching: kpisFetching,
     isError: kpisError,
     error: kpisErr,
+    refetch: refetchKpis,
   } = useAnalyticsKpis(filterParams);
 
   const {
@@ -58,6 +59,7 @@ export function ReportsView({ lockedSurveyId }: { lockedSurveyId: string }) {
     isLoading: breakdownsLoading,
     isError: breakdownsError,
     error: breakdownsErr,
+    refetch: refetchBreakdowns,
   } = useAnalyticsBreakdowns(filterParams);
 
   const {
@@ -65,7 +67,11 @@ export function ReportsView({ lockedSurveyId }: { lockedSurveyId: string }) {
     isLoading: questionsLoading,
     isError: questionsError,
     error: questionsErr,
+    refetch: refetchQuestions,
   } = useQuestionAnalytics(filterParams);
+
+  const liveProcessing =
+    kpisData?.surveyDates?.schedulingStatus === "processing";
 
   const isLoading = kpisLoading || breakdownsLoading;
   const isFetching = kpisFetching;
@@ -118,6 +124,17 @@ export function ReportsView({ lockedSurveyId }: { lockedSurveyId: string }) {
       );
     }
   }, [questionsError, questionsErr]);
+
+  useEffect(() => {
+    if (!liveProcessing) return;
+    const id = window.setInterval(() => {
+      if (document.hidden) return;
+      void refetchKpis();
+      void refetchBreakdowns();
+      void refetchQuestions();
+    }, 5000);
+    return () => window.clearInterval(id);
+  }, [liveProcessing, refetchKpis, refetchBreakdowns, refetchQuestions]);
 
   const exportPayload = useMemo(() => {
     if (!kpisData || !breakdownsData) return null;

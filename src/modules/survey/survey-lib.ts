@@ -7,12 +7,61 @@ import type { Agent as Survey, AgentConfig as SurveyConfig, AgentProgress as Sur
 
 /* ========== readiness ========== */
 
+/** Custom retry waits. 24 hours is shown as 1 day. */
+export const RETRY_MISSED_CALL_INTERVALS = [
+  { hours: 1, label: "1 hour" },
+  { hours: 2, label: "2 hours" },
+  { hours: 4, label: "4 hours" },
+  { hours: 8, label: "8 hours" },
+  { hours: 16, label: "16 hours" },
+  { hours: 24, label: "1 day" },
+] as const;
+
+export type RetryMissedCallsMode = "after_every_connected" | "custom";
+
+export const DEFAULT_RETRY_MISSED_CALLS = {
+  mode: null,
+  hours: null,
+} as const;
+
+export function normalizeRetryMissedCalls(raw?: {
+  mode?: string | null;
+  hours?: number | null;
+} | null): { mode: RetryMissedCallsMode | null; hours: number | null } {
+  const mode =
+    raw?.mode === "after_every_connected" || raw?.mode === "custom"
+      ? raw.mode
+      : null;
+  if (mode !== "custom") return { mode, hours: null };
+  const hours = Number(raw?.hours);
+  const allowed = RETRY_MISSED_CALL_INTERVALS.some((row) => row.hours === hours);
+  return { mode, hours: allowed ? hours : null };
+}
+
+export function formatRetryMissedCalls(raw?: {
+  mode?: string | null;
+  hours?: number | null;
+} | null): string {
+  const value = normalizeRetryMissedCalls(raw);
+  if (value.mode === "after_every_connected") {
+    return "After every call connected";
+  }
+  if (value.mode === "custom") {
+    const label = RETRY_MISSED_CALL_INTERVALS.find(
+      (row) => row.hours === value.hours
+    )?.label;
+    return label ? `Custom · ${label}` : "Custom interval";
+  }
+  return "None";
+}
+
 export const DEFAULT_SURVEY_SCHEDULE: SurveySchedule = {
   enabled: false,
   startAt: null,
   endAt: null,
   callWindowStart: "09:00",
   callWindowEnd: "18:00",
+  retryMissedCalls: { ...DEFAULT_RETRY_MISSED_CALLS },
   lastScheduledAt: null,
 };
 
@@ -57,6 +106,12 @@ export function isSurveyCompleted(survey: Survey): boolean {
 export function isSurveyScheduled(survey: Survey): boolean {
   const status = getSchedulingStatus(survey);
   return status === "scheduled" || status === "processing";
+}
+
+/** Response and Analytics — open once calls are running, and after they finish */
+export function canViewSurveyResults(survey: Survey): boolean {
+  const status = getSchedulingStatus(survey);
+  return status === "processing" || status === "completed";
 }
 
 /** Badge / label — mirrors backend `scheduling_status` only */

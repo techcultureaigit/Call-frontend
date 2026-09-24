@@ -7,6 +7,8 @@ export const metadata: Metadata = {
   title: "Survey analytics",
 };
 
+export const dynamic = "force-dynamic";
+
 interface PageProps {
   params: Promise<{ id: string }>;
 }

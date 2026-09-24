@@ -93,13 +93,14 @@ NEXT_PUBLIC_API_TIMEOUT=30000
 NEXT_PUBLIC_AUTH_TOKEN_KEY=crm_auth_token
 NEXT_PUBLIC_AUTH_REFRESH_KEY=crm_refresh_token
 
-# Cloudinary (legacy local BFF upload — survey files use backend S3)
-CLOUDINARY_CLOUD_NAME=
-CLOUDINARY_API_KEY=
-CLOUDINARY_API_SECRET=
-CLOUDINARY_FOLDER=survey-contacts
-# Survey contact/questions uploads go to calling-crm-backend S3:
-# AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY / AWS_REGION / AWS_S3_BUCKET
+# AWS S3 (private files — Next.js /api/s3/file uses these server-side)
+AWS_ACCESS_KEY_ID=
+AWS_SECRET_ACCESS_KEY=
+AWS_REGION=ap-south-1
+AWS_S3_BUCKET=voice-survey-files-techculture
+AWS_S3_CONTACTS_FOLDER=survey-contacts
+AWS_S3_VOICES_FOLDER=voice-previews
+NEXT_PUBLIC_AWS_S3_BUCKET=voice-survey-files-techculture
 ```
 
 ### 3. Start the app

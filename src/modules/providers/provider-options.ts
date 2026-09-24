@@ -37,9 +37,7 @@ export function resolveProviderId(
   const needle = (providerName || "").trim().toLowerCase();
   if (providerId) {
     const byId = rows.find((r) => r.id === providerId);
-    if (byId && byId.type === type) {
-      if (!needle || providerLabel(byId).toLowerCase() === needle) return providerId;
-    }
+    if (byId && byId.type === type) return providerId;
   }
   if (!needle) return "";
   return (

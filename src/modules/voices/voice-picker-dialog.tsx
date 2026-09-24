@@ -114,6 +114,14 @@ interface VoicePickerDialogProps {
   onSelect: (voice: VoiceProfile | null, speed?: number) => void;
 }
 
+function toVoiceSource(provider?: string): "google" | "elevenlabs" | "" {
+  const n = (provider || "").trim().toLowerCase().replace(/\s+/g, "");
+  if (!n) return "";
+  if (n.includes("eleven")) return "elevenlabs";
+  if (n.includes("google")) return "google";
+  return "";
+}
+
 export function VoicePickerDialog({
   open,
   onOpenChange,
@@ -129,8 +137,7 @@ export function VoicePickerDialog({
   const [page, setPage] = useState(1);
   const debouncedSearch = useDebounce(search, 300);
 
-  const sourceOk = provider === "google" || provider === "elevenlabs";
-  const source = sourceOk ? provider : "";
+  const source = toVoiceSource(provider);
 
   const [voices, setVoices] = useState<VoiceProfile[]>([]);
   const [meta, setMeta] = useState<PaginatedMeta | null>(null);
@@ -141,7 +148,7 @@ export function VoicePickerDialog({
   const prevFilterKeyRef = useRef(filterKey);
 
   useEffect(() => {
-    if (!open || !sourceOk) {
+    if (!open) {
       setVoices([]);
       setMeta(null);
       return;
@@ -198,7 +205,7 @@ export function VoicePickerDialog({
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, sourceOk, filterKey, page]);
+  }, [open, filterKey, page]);
 
   const activeSpeed = normalizeVoiceSpeed(speed);
 
@@ -343,9 +350,7 @@ export function VoicePickerDialog({
           isFetching && "opacity-70"
         )}
       >
-        {!sourceOk ? (
-          <EmptyState message="Choose Google or ElevenLabs as the TTS provider." />
-        ) : isLoading ? (
+        {isLoading ? (
           <div className="space-y-2 px-5 py-5 sm:px-6">
             {Array.from({ length: 8 }).map((_, i) => (
               <Skeleton key={i} className="h-14 w-full rounded-[6px]" />

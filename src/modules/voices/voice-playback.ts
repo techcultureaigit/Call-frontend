@@ -1,11 +1,14 @@
 "use client";
 
 import { DUMMY_VOICE_RINGTONE } from "@/modules/voices/voices-constants";
+import { getContactFileOpenUrl, isS3FileUrl } from "@/lib/utils/contact-file-url";
 
-/** Prefer Cloudinary / provider preview; else local sample tone */
+/** Prefer private S3 proxy / provider preview; else local sample tone */
 export function resolveVoicePreviewUrl(previewUrl?: string): string {
   const url = previewUrl?.trim();
-  return url || DUMMY_VOICE_RINGTONE;
+  if (!url) return DUMMY_VOICE_RINGTONE;
+  if (isS3FileUrl(url)) return getContactFileOpenUrl(url);
+  return url;
 }
 
 let sharedAudio: HTMLAudioElement | null = null;

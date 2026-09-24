@@ -6,7 +6,8 @@
  * No direct API calls — parent page calls deleteSurvey / scheduleSurvey.
  */
 
-import { DEFAULT_SURVEY_SCHEDULE, getSurveySchedule } from "./survey-lib";
+import { DEFAULT_SURVEY_SCHEDULE, getSurveySchedule, RETRY_MISSED_CALL_INTERVALS } from "./survey-lib";
+import type { RetryMissedCallsMode } from "./survey-lib";
 import type { SurveyDisplayStatus } from "./survey-lib";
 import { AppLoaderSpinner } from "@/components/shared/app-loader";
 import { Button } from "@/components/ui/button";
@@ -96,6 +97,20 @@ export interface ScheduleFormValues {
   endAt: string;
   callWindowStart: string;
   callWindowEnd: string;
+  /** Empty = don't retry missed calls */
+  retryMode: "" | RetryMissedCallsMode;
+  /** Used when retryMode is custom. 24 = 1 day. */
+  retryHours: number | null;
+}
+
+function retryPayload(values: Pick<ScheduleFormValues, "retryMode" | "retryHours">) {
+  if (values.retryMode === "after_every_connected") {
+    return { mode: "after_every_connected" as const, hours: null };
+  }
+  if (values.retryMode === "custom") {
+    return { mode: "custom" as const, hours: values.retryHours };
+  }
+  return { mode: null, hours: null };
 }
 
 function toLocalInputValue(iso: string | null | undefined): string {
@@ -154,6 +169,8 @@ export function createEmptyScheduleForm(): ScheduleFormValues {
     endAt: "",
     callWindowStart: CALL_WINDOW_DEFAULT_START,
     callWindowEnd: CALL_WINDOW_DEFAULT_END,
+    retryMode: "",
+    retryHours: null,
   };
 }
 
@@ -169,6 +186,9 @@ export function scheduleToFormValues(
     endAt: toLocalInputValue(s.endAt),
     callWindowStart: s.callWindowStart || CALL_WINDOW_DEFAULT_START,
     callWindowEnd: s.callWindowEnd || CALL_WINDOW_DEFAULT_END,
+    retryMode: s.retryMissedCalls?.mode || "",
+    retryHours:
+      s.retryMissedCalls?.mode === "custom" ? s.retryMissedCalls.hours : null,
   };
 }
 
@@ -185,6 +205,10 @@ export function parseScheduleForm(
         endAt: string | null;
         callWindowStart: string;
         callWindowEnd: string;
+        retryMissedCalls: {
+          mode: "after_every_connected" | "custom" | null;
+          hours: number | null;
+        };
       };
     }
   | { ok: false; error: string }
@@ -220,6 +244,15 @@ export function parseScheduleForm(
     return { ok: false, error: window.error };
   }
 
+  if (values.retryMode === "custom") {
+    const allowed = RETRY_MISSED_CALL_INTERVALS.some(
+      (row) => row.hours === values.retryHours
+    );
+    if (!allowed) {
+      return { ok: false, error: "Choose a retry interval for missed calls" };
+    }
+  }
+
   return {
     ok: true,
     payload: {
@@ -228,8 +261,109 @@ export function parseScheduleForm(
       endAt: endIso,
       callWindowStart: window.callWindowStart,
       callWindowEnd: window.callWindowEnd,
+      retryMissedCalls: retryPayload(values),
     },
   };
+}
+
+function RetryMissedCallsFields({
+  mode,
+  hours,
+  disabled,
+  idPrefix,
+  onChange,
+}: {
+  mode: ScheduleFormValues["retryMode"];
+  hours: number | null;
+  disabled?: boolean;
+  idPrefix: string;
+  onChange: (next: {
+    retryMode: ScheduleFormValues["retryMode"];
+    retryHours: number | null;
+  }) => void;
+}) {
+  return (
+    <div className="space-y-2">
+      <Label>Retry missed calls</Label>
+      <p className="text-[11px] text-muted-foreground">
+        Optional. Leave both unselected to do nothing.
+      </p>
+      <div className="space-y-2">
+        <label className="flex cursor-pointer items-start gap-2 rounded-[6px] border border-border/60 px-3 py-2 text-sm">
+          <input
+            type="radio"
+            name={`${idPrefix}-retry-mode`}
+            className="mt-0.5"
+            checked={mode === "after_every_connected"}
+            disabled={disabled}
+            onClick={() => {
+              if (mode !== "after_every_connected") return;
+              onChange({ retryMode: "", retryHours: null });
+            }}
+            onChange={() =>
+              onChange({ retryMode: "after_every_connected", retryHours: null })
+            }
+          />
+          <span>
+            <span className="font-medium">After every call connected</span>
+            <span className="mt-0.5 block text-[11px] text-muted-foreground">
+              Retry a missed number after each call that connects.
+            </span>
+          </span>
+        </label>
+        <label className="flex cursor-pointer items-start gap-2 rounded-[6px] border border-border/60 px-3 py-2 text-sm">
+          <input
+            type="radio"
+            name={`${idPrefix}-retry-mode`}
+            className="mt-0.5"
+            checked={mode === "custom"}
+            disabled={disabled}
+            onClick={() => {
+              if (mode !== "custom") return;
+              onChange({ retryMode: "", retryHours: null });
+            }}
+            onChange={() =>
+              onChange({
+                retryMode: "custom",
+                retryHours: hours ?? 1,
+              })
+            }
+          />
+          <span className="min-w-0">
+            <span className="font-medium">Custom interval</span>
+            <span className="mt-0.5 block text-[11px] text-muted-foreground">
+              Wait, then retry. 1, 2, 4, 8, or 16 hours, or 1 day.
+            </span>
+          </span>
+        </label>
+      </div>
+      {mode === "custom" ? (
+        <div className="flex flex-wrap gap-2 pl-1">
+          {RETRY_MISSED_CALL_INTERVALS.map((row) => {
+            const selected = hours === row.hours;
+            return (
+              <button
+                key={row.hours}
+                type="button"
+                disabled={disabled}
+                onClick={() =>
+                  onChange({ retryMode: "custom", retryHours: row.hours })
+                }
+                className={cn(
+                  "rounded-[6px] border px-2.5 py-1 text-xs font-medium",
+                  selected
+                    ? "border-primary bg-primary/10 text-primary"
+                    : "border-border/70 text-muted-foreground hover:bg-muted/60"
+                )}
+              >
+                {row.label}
+              </button>
+            );
+          })}
+        </div>
+      ) : null}
+    </div>
+  );
 }
 
 interface SurveyScheduleFieldsProps {
@@ -362,6 +496,17 @@ export function SurveyScheduleFields({
               </div>
             </div>
           </div>
+
+          <RetryMissedCallsFields
+            idPrefix="inline-schedule"
+            mode={values.retryMode}
+            hours={values.retryHours}
+            disabled={readOnly}
+            onChange={({ retryMode, retryHours }) => {
+              if (readOnly) return;
+              onChange({ ...values, retryMode, retryHours });
+            }}
+          />
         </div>
       ) : (
         <p className="text-xs text-muted-foreground">
@@ -377,6 +522,10 @@ export interface ScheduleSurveyPayload {
   endAt: string | null;
   callWindowStart: string;
   callWindowEnd: string;
+  retryMissedCalls: {
+    mode: "after_every_connected" | "custom" | null;
+    hours: number | null;
+  };
 }
 
 interface ScheduleSurveyDialogProps {
@@ -401,6 +550,8 @@ export function ScheduleSurveyDialog({
   const [endAt, setEndAt] = useState("");
   const [callWindowStart, setCallWindowStart] = useState(CALL_WINDOW_DEFAULT_START);
   const [callWindowEnd, setCallWindowEnd] = useState(CALL_WINDOW_DEFAULT_END);
+  const [retryMode, setRetryMode] = useState<ScheduleFormValues["retryMode"]>("");
+  const [retryHours, setRetryHours] = useState<number | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState("");
 
@@ -411,6 +562,12 @@ export function ScheduleSurveyDialog({
     setEndAt(toLocalInputValue(schedule.endAt));
     setCallWindowStart(schedule.callWindowStart || CALL_WINDOW_DEFAULT_START);
     setCallWindowEnd(schedule.callWindowEnd || CALL_WINDOW_DEFAULT_END);
+    setRetryMode(schedule.retryMissedCalls?.mode || "");
+    setRetryHours(
+      schedule.retryMissedCalls?.mode === "custom"
+        ? schedule.retryMissedCalls.hours
+        : null
+    );
     setError("");
     setIsSaving(false);
   }, [open, survey]);
@@ -449,6 +606,16 @@ export function ScheduleSurveyDialog({
       return;
     }
 
+    if (retryMode === "custom") {
+      const allowed = RETRY_MISSED_CALL_INTERVALS.some(
+        (row) => row.hours === retryHours
+      );
+      if (!allowed) {
+        setError("Choose a retry interval for missed calls");
+        return;
+      }
+    }
+
     setError("");
     setIsSaving(true);
     try {
@@ -457,6 +624,7 @@ export function ScheduleSurveyDialog({
         endAt: endIso,
         callWindowStart: window.callWindowStart,
         callWindowEnd: window.callWindowEnd,
+        retryMissedCalls: retryPayload({ retryMode, retryHours }),
       });
     } finally {
       setIsSaving(false);
@@ -532,6 +700,16 @@ export function ScheduleSurveyDialog({
               </div>
             </div>
           </div>
+
+          <RetryMissedCallsFields
+            idPrefix="dialog-schedule"
+            mode={retryMode}
+            hours={retryHours}
+            onChange={({ retryMode: nextMode, retryHours: nextHours }) => {
+              setRetryMode(nextMode);
+              setRetryHours(nextHours);
+            }}
+          />
 
           {error ? (
             <p className="text-sm text-destructive">{error}</p>

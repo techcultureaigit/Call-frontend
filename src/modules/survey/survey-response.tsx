@@ -1468,6 +1468,8 @@ export function SurveyResponseView({ surveyId }: SurveyResultsViewProps) {
   const [responseStatus, setResponseStatus] = useState("all");
   const [sorting, setSorting] = useState<ResultsSortState>(DEFAULT_RESULTS_SORT);
   const [columnsControl, setColumnsControl] = useState<ReactNode>(null);
+  const [watchLive, setWatchLive] = useState(false);
+  const watchLiveRef = useRef(false);
 
   const fetchPage = useCallback(
     async ({
@@ -1490,9 +1492,12 @@ export function SurveyResponseView({ surveyId }: SurveyResultsViewProps) {
           sortOrder: sorting.desc ? "desc" : "asc",
         });
         setSurvey(res.survey);
+        const live = res.survey?.scheduling_status === "processing";
+        watchLiveRef.current = live;
+        setWatchLive(live);
         return { data: res.data, meta: res.meta };
       } catch (error) {
-        setSurvey(null);
+        if (!watchLiveRef.current) setSurvey(null);
         throw error;
       }
     },
@@ -1515,6 +1520,7 @@ export function SurveyResponseView({ surveyId }: SurveyResultsViewProps) {
     pageSize: 10,
     fetchPage,
     resetPageWhen: [responseStatus, sorting.id, sorting.desc],
+    refreshIntervalMs: watchLive ? 5000 : 0,
     onError: (err) =>
       setError(err instanceof Error ? err.message : "Failed to load results"),
   });

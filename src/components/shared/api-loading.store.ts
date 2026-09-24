@@ -110,7 +110,6 @@ export function inferLoaderMessage(
 
   if (
     u.includes("upload") ||
-    u.includes("cloudinary") ||
     u.includes("contact-file")
   ) {
     return { label: "Uploading", hint: "Sending your file" };
