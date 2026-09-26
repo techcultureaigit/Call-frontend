@@ -1,5 +1,12 @@
+const upstreamBaseUrl =
+  process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000/api/v1";
+
 export const apiConfig = {
-  baseUrl: process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000/api/v1",
+  /**
+   * Browser calls this site (`/api/v1`), and Next forwards to the CRM API.
+   * That keeps login on one origin, so the API host's CORS headers are not required.
+   */
+  baseUrl: typeof window === "undefined" ? upstreamBaseUrl : "/api/v1",
   timeout: Number(process.env.NEXT_PUBLIC_API_TIMEOUT ?? 30000),
   headers: {
     "Content-Type": "application/json",
