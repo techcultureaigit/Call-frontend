@@ -381,6 +381,7 @@ export function agentToBackendPayload(
     clientContact: {
       contactFileUrl: c.clientContact.contactFileUrl,
       contactFileName: c.clientContact.contactFileName,
+      contactCount: Math.max(0, Number(c.clientContact.contactCount) || 0),
     },
   };
   if (survey.id) payload.id = survey.id;
