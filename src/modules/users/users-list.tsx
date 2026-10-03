@@ -92,7 +92,7 @@ export function UsersListView() {
     onError: () => toast.error("Failed to load users"),
   });
 
-  const showLoader = isLoading || isRefreshing;
+  const showBlockingLoader = (isLoading || isRefreshing) && users.length === 0;
 
   const { applyMeta, resetPageMeta } = usePageMeta({
     title: "Users",
@@ -187,24 +187,24 @@ export function UsersListView() {
           totalCount={meta.total}
         />
 
-        {showLoader ? (
-          <AppLoader
-            variant="section"
-            label="Loading users"
-            hint="Fetching latest data"
+        <ListTableCard className="flex flex-col overflow-hidden">
+          <UsersListToolbar
+            embedded
+            search={search}
+            onSearchChange={setSearch}
+            role={role}
+            onRoleChange={setRole}
+            status={status}
+            onStatusChange={setStatus}
+            columnsControl={columnsControl}
           />
-        ) : (
-          <ListTableCard className="flex flex-col overflow-hidden">
-            <UsersListToolbar
-              embedded
-              search={search}
-              onSearchChange={setSearch}
-              role={role}
-              onRoleChange={setRole}
-              status={status}
-              onStatusChange={setStatus}
-              columnsControl={columnsControl}
+          {showBlockingLoader ? (
+            <AppLoader
+              variant="compact"
+              label="Loading users"
+              hint="Fetching latest data"
             />
+          ) : (
             <UsersTable
               embedded
               users={users}
@@ -217,15 +217,15 @@ export function UsersListView() {
               isTogglingId={togglingId}
               onColumnsControlReady={setColumnsControl}
             />
-            {meta.total > 0 ? (
-              <UsersPagination
-                meta={meta}
-                onPageChange={setPage}
-                onLimitChange={setPageSize}
-              />
-            ) : null}
-          </ListTableCard>
-        )}
+          )}
+          {!showBlockingLoader && meta.total > 0 ? (
+            <UsersPagination
+              meta={meta}
+              onPageChange={setPage}
+              onLimitChange={setPageSize}
+            />
+          ) : null}
+        </ListTableCard>
       </motion.div>
 
       <DeleteUserDialog

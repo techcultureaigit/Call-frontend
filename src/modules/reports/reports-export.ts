@@ -412,8 +412,8 @@ function buildPdf(data: AnalyticsPdfData, fontB64: string) {
     y = drawBreakdownTable(
       doc,
       y,
-      "Disconnect reason",
-      "Who ended the connected call  ·  from Reason key",
+      "Hangup cause",
+      "Hangup cause description for every call",
       ["Reason", "Meaning", "Count", "Share"],
       reasonRows.map((row) => [
         row.name,

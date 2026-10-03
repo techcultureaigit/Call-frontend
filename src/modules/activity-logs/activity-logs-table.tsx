@@ -12,7 +12,7 @@ import {
   ScrollText,
 } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Skeleton } from "@/components/ui/skeleton";
+import { AppLoader } from "@/components/shared/app-loader";
 import { EmptyState } from "@/components/shared/empty-state";
 import {
   TableColumnsBar,
@@ -153,17 +153,11 @@ export function ActivityLogsTable({
 
   if (isLoading) {
     return (
-      <div className="overflow-hidden rounded-[6px] border border-border/60 bg-card shadow-card">
-        <div className="space-y-0 divide-y divide-border/50 p-4">
-          {Array.from({ length: 8 }).map((_, i) => (
-            <div key={i} className="flex gap-4 py-4">
-              <Skeleton className="h-4 w-20" />
-              <Skeleton className="size-8 rounded-full" />
-              <Skeleton className="h-4 flex-1" />
-            </div>
-          ))}
-        </div>
-      </div>
+      <AppLoader
+        variant="compact"
+        label="Loading activity"
+        hint="Fetching latest data"
+      />
     );
   }
 

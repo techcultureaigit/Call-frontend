@@ -34,8 +34,10 @@ export interface SurveyResultCallData {
   answer_stamp?: string;
   end_stamp?: string;
   caller_id_number?: string;
+  hangup_cause_code?: string;
   hangup_cause_description?: string;
-  reason_key?: string;
+  /** Long cause text for the info button. From Smartflo cause codes, with local fallbacks. */
+  hangup_cause_detail?: string;
 }
 
 export type SurveyResultStatus =

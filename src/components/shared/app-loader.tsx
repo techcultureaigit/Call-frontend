@@ -1,7 +1,5 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { createPortal } from "react-dom";
 import { cn } from "@/lib/utils";
 import {
   selectIsGlobalLoading,
@@ -20,8 +18,9 @@ interface AppLoaderProps {
   label?: string;
   hint?: string;
   /**
-   * page / section / global → same fixed center popup (portal to body).
-   * compact → local card | inline / overlay → small indicators
+   * page / section / compact / global → same content card (never the full viewport).
+   * global is positioned over the main content column only.
+   * inline / overlay → small indicators
    */
   variant?: AppLoaderVariant;
   className?: string;
@@ -106,47 +105,53 @@ function LoaderCard({
   );
 }
 
-/**
- * ONE fullscreen center popup for the whole app.
- * Portaled to document.body so parent transform/overflow never shifts it.
- */
-function CenteredPopupLoader({
+/** Same survey card, centered in whatever content box it is placed in. */
+function ContentLoader({
   label,
   hint,
+  className,
+  overlay = false,
 }: {
   label: string;
   hint?: string;
+  className?: string;
+  /** Cover the main content column only — sidebar and header stay visible. */
+  overlay?: boolean;
 }) {
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  if (!mounted) return null;
-
-  return createPortal(
+  return (
     <div
       role="status"
       aria-live="polite"
       aria-label={label}
-      className="fixed inset-0 z-[200] flex items-center justify-center bg-background/55 p-6 backdrop-blur-[6px]"
+      className={cn(
+        "flex items-center justify-center",
+        overlay
+          ? "absolute inset-0 z-40 bg-background/55 p-6 backdrop-blur-[6px]"
+          : "relative min-h-40 w-full flex-1 overflow-hidden rounded-[14px] p-4",
+        className
+      )}
     >
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,color-mix(in_oklch,var(--brand)_14%,transparent)_0%,transparent_68%)]"
-      />
+      {!overlay ? (
+        <div
+          aria-hidden
+          className="absolute inset-0 bg-background/50 backdrop-blur-[6px]"
+        />
+      ) : (
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,color-mix(in_oklch,var(--brand)_14%,transparent)_0%,transparent_68%)]"
+        />
+      )}
       <div className="relative z-10">
         <LoaderCard label={label} hint={hint} />
       </div>
-    </div>,
-    document.body
+    </div>
   );
 }
 
 /**
- * One loader design for the whole app.
- * Change this file once → page / section / global all update.
+ * One loader for the whole app. Page, section, compact, and global
+ * all render this same content card — never a viewport-fixed overlay.
  */
 export function AppLoader({
   label = "Loading",
@@ -185,36 +190,21 @@ export function AppLoader({
     );
   }
 
-  // compact: local in-panel card (tabs / nested panels)
-  if (variant === "compact") {
-    if (globalActive) {
-      return <div aria-hidden className={cn("min-h-40", className)} />;
-    }
-    return (
-      <div
-        role="status"
-        aria-live="polite"
-        aria-label={label}
-        className={cn(
-          "relative flex min-h-40 items-center justify-center overflow-hidden rounded-[14px]",
-          className
-        )}
-      >
-        <div
-          aria-hidden
-          className="absolute inset-0 bg-background/50 backdrop-blur-[6px]"
-        />
-        <div className="relative z-10 flex items-center justify-center p-4">
-          <LoaderCard label={label} hint={hint} />
-        </div>
-      </div>
-    );
-  }
-
-  // page | section | global → same body-portaled center popup
   if (variant !== "global" && globalActive) {
-    return null;
+    return <div aria-hidden className={cn("min-h-40", className)} />;
   }
 
-  return <CenteredPopupLoader label={label} hint={hint} />;
+  return (
+    <ContentLoader
+      label={label}
+      hint={hint}
+      overlay={variant === "global"}
+      className={cn(
+        variant === "page" || variant === "section"
+          ? "min-h-[min(70svh,36rem)]"
+          : undefined,
+        className
+      )}
+    />
+  );
 }

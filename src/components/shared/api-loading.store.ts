@@ -80,6 +80,7 @@ export function shouldSkipGlobalLoader(path: string, method = "GET"): boolean {
       url.includes("/users") ||
       url.includes("/roles") ||
       url.includes("/voices") ||
+      url.includes("/providers") ||
       url.includes("/dashboard") ||
       url.includes("/analytics") ||
       url.includes("/reports") ||

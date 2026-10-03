@@ -47,7 +47,6 @@ export function VoicesListView() {
   const [voices, setVoices] = useState<VoiceProfile[]>([]);
   const [meta, setMeta] = useState<PaginatedMeta>(EMPTY_META);
   const [isLoading, setIsLoading] = useState(true);
-  const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [columnsControl, setColumnsControl] = useState<ReactNode | null>(null);
 
@@ -68,7 +67,7 @@ export function VoicesListView() {
   const prevFiltersKeyRef = useRef(activeFiltersKey);
 
   const loadVoices = useCallback(async () => {
-    setIsRefreshing(true);
+    setIsLoading(true);
     setError(null);
     try {
       // API: listVoices() → GET /api/voices
@@ -88,7 +87,6 @@ export function VoicesListView() {
       setMeta({ ...EMPTY_META, limit: pageSize });
     } finally {
       setIsLoading(false);
-      setIsRefreshing(false);
     }
   }, [activeFilters, page, pageSize]);
 
@@ -103,7 +101,6 @@ export function VoicesListView() {
     }
 
     let cancelled = false;
-    setIsRefreshing(true);
     if (voices.length === 0) setIsLoading(true);
     setError(null);
     (async () => {
@@ -130,7 +127,6 @@ export function VoicesListView() {
       } finally {
         if (!cancelled) {
           setIsLoading(false);
-          setIsRefreshing(false);
         }
       }
     })();
@@ -210,39 +206,37 @@ export function VoicesListView() {
                 </Button>
               </div>
             ) : (
-              <>
+              <ListTableCard className="flex flex-col overflow-hidden">
+                <VoiceFiltersSidebar
+                  embedded
+                  filters={filters}
+                  onChange={setFilters}
+                  onReset={handleReset}
+                  columnsControl={columnsControl}
+                />
                 {showInitialLoader ? (
                   <AppLoader
-                    variant="section"
+                    variant="compact"
                     label="Loading voices"
                     hint="Fetching voice catalog"
                   />
                 ) : (
-                  <ListTableCard className="flex flex-col overflow-hidden">
-                    <VoiceFiltersSidebar
-                      embedded
-                      filters={filters}
-                      onChange={setFilters}
-                      onReset={handleReset}
-                      columnsControl={columnsControl}
-                    />
-                    <VoicesTable
-                      embedded
-                      voices={voices}
-                      isLoading={isRefreshing}
-                      onColumnsControlReady={setColumnsControl}
-                    />
-                    {!showInitialLoader && meta.total > 0 ? (
-                      <VoicesPagination
-                        meta={meta}
-                        onPageChange={setPage}
-                        onLimitChange={setPageSize}
-                        className="shrink-0 border-t border-border/50 bg-card px-3 py-2.5 sm:px-4"
-                      />
-                    ) : null}
-                  </ListTableCard>
+                  <VoicesTable
+                    embedded
+                    voices={voices}
+                    isLoading={false}
+                    onColumnsControlReady={setColumnsControl}
+                  />
                 )}
-              </>
+                {!showInitialLoader && meta.total > 0 ? (
+                  <VoicesPagination
+                    meta={meta}
+                    onPageChange={setPage}
+                    onLimitChange={setPageSize}
+                    className="shrink-0 border-t border-border/50 bg-card px-3 py-2.5 sm:px-4"
+                  />
+                ) : null}
+              </ListTableCard>
             )}
           </div>
 

@@ -7,6 +7,7 @@ import { motion } from "framer-motion";
 import { Inbox, ArrowUp, ArrowDown, ArrowUpDown, type LucideIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { AppLoader } from "@/components/shared/app-loader";
 import { EmptyState } from "@/components/shared/empty-state";
 import {
   TableColumnDnd,
@@ -106,7 +107,6 @@ export function DataTable<T>({
   isRowSelected,
   getRowAccentClassName,
   getRowClassName,
-  skeletonRows = 5,
   columnLayoutKey,
   fillHeight = false,
   scrollBodyClassName,
@@ -197,7 +197,13 @@ export function DataTable<T>({
   );
 
   if (isLoading) {
-    return <DataTableSkeleton columns={columns.length} rows={skeletonRows} embedded={embedded} />;
+    return (
+      <AppLoader
+        variant="compact"
+        label="Loading"
+        hint="Fetching latest data"
+      />
+    );
   }
 
   if (data.length === 0) {

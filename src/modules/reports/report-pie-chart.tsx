@@ -5,7 +5,7 @@ import { PieChartIcon } from "lucide-react";
 import { useMemo } from "react";
 import { useMounted } from "@/hooks";
 import { AnalyticsCard } from "./analytics-card";
-import { Skeleton } from "@/components/ui/skeleton";
+import { AppLoader } from "@/components/shared/app-loader";
 import type { ReportPieSlice } from "@/types/reports";
 
 const TOOLTIP_STYLE = {
@@ -44,7 +44,11 @@ export function ReportPieChart({
   if (isLoading) {
     return (
       <AnalyticsCard title={title} description={description}>
-        <Skeleton className="h-[200px] w-full rounded-[4px]" />
+        <AppLoader
+          variant="compact"
+          label="Loading analytics"
+          hint="Fetching latest data"
+        />
       </AnalyticsCard>
     );
   }

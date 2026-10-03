@@ -4,7 +4,7 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import { Bell, Check, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
+import { AppLoader } from "@/components/shared/app-loader";
 import { EmptyState } from "@/components/shared/empty-state";
 import { formatRelativeTime } from "@/lib/utils";
 import { cn } from "@/lib/utils";
@@ -29,18 +29,11 @@ export function NotificationsList({
 }: NotificationsListProps) {
   if (isLoading) {
     return (
-      <div className="space-y-3 rounded-[6px] border border-border/60 bg-card p-4 shadow-card">
-        {Array.from({ length: 6 }).map((_, i) => (
-          <div key={i} className="flex gap-4 py-3">
-            <Skeleton className="size-2.5 shrink-0 rounded-full" />
-            <div className="flex-1 space-y-2">
-              <Skeleton className="h-4 w-2/3" />
-              <Skeleton className="h-3 w-full" />
-              <Skeleton className="h-3 w-1/4" />
-            </div>
-          </div>
-        ))}
-      </div>
+      <AppLoader
+        variant="compact"
+        label="Loading notifications"
+        hint="Fetching latest data"
+      />
     );
   }
 

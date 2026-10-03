@@ -7,7 +7,7 @@ import {
   ScrollText,
 } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Skeleton } from "@/components/ui/skeleton";
+import { AppLoader } from "@/components/shared/app-loader";
 import { EmptyState } from "@/components/shared/empty-state";
 import { formatRelativeTime, getInitials } from "@/lib/utils";
 import { ActivityLogActionBadge } from "./activity-log-action-badge";
@@ -28,17 +28,11 @@ export function ActivityLogsTimeline({
 }: ActivityLogsTimelineProps) {
   if (isLoading) {
     return (
-      <div className="space-y-4 rounded-[6px] border border-border/60 bg-card p-6 shadow-card">
-        {Array.from({ length: 6 }).map((_, i) => (
-          <div key={i} className="flex gap-4">
-            <Skeleton className="size-8 rounded-full" />
-            <div className="flex-1 space-y-2">
-              <Skeleton className="h-4 w-1/3" />
-              <Skeleton className="h-16 w-full" />
-            </div>
-          </div>
-        ))}
-      </div>
+      <AppLoader
+        variant="compact"
+        label="Loading activity"
+        hint="Fetching latest data"
+      />
     );
   }
 

@@ -2,7 +2,7 @@
 
 import { useMemo } from "react";
 import { HelpCircle } from "lucide-react";
-import { ChartSkeleton } from "@/modules/dashboard/dashboard-skeleton";
+import { AppLoader } from "@/components/shared/app-loader";
 import { cn } from "@/lib/utils";
 import type { AnalyticsQuestionDetail } from "@/types/reports";
 
@@ -115,7 +115,7 @@ export function ReportQuestionAnalytics({
     : "@[720px]/qa:grid-cols-[24px_minmax(0,1fr)_64px_56px_48px_minmax(88px,1fr)] @[960px]/qa:grid-cols-[28px_minmax(0,1fr)_88px_72px_56px_minmax(120px,160px)]";
 
   return (
-    <section className="@container/qa flex h-full min-h-0 w-full min-w-0 flex-col overflow-hidden rounded-[6px] border border-border/70 bg-card shadow-[0_4px_18px_rgba(44,59,89,0.05)]">
+    <section className="@container/qa flex w-full min-w-0 flex-col overflow-hidden rounded-[6px] border border-border/70 bg-card shadow-[0_4px_18px_rgba(44,59,89,0.05)]">
       <header className="flex shrink-0 flex-wrap items-center justify-between gap-2 border-b border-border/40 px-3 py-1.5 sm:px-3.5">
         <div className="flex min-w-0 items-baseline gap-2">
           <h2 className="font-sans text-[12px] font-semibold tracking-tight text-foreground">
@@ -152,7 +152,11 @@ export function ReportQuestionAnalytics({
 
       {isLoading ? (
         <div className="p-2.5">
-          <ChartSkeleton height={96} />
+          <AppLoader
+            variant="compact"
+            label="Loading analytics"
+            hint="Fetching latest data"
+          />
         </div>
       ) : !data.length ? (
         <div className="flex items-center gap-2 px-3.5 py-4 text-sm text-muted-foreground">
@@ -160,7 +164,7 @@ export function ReportQuestionAnalytics({
           No question data for this period
         </div>
       ) : (
-        <div className="flex min-h-0 min-w-0 w-full flex-1 flex-col overflow-hidden">
+        <div className="flex min-w-0 w-full flex-col overflow-hidden">
           <div
             className={cn(
               "hidden shrink-0 items-center gap-2 border-b border-border/30 px-3 py-1.5 text-[9px] font-semibold uppercase tracking-[0.06em] text-muted-foreground @[720px]/qa:grid sm:px-3.5",
@@ -176,7 +180,7 @@ export function ReportQuestionAnalytics({
             <span>Answer rate</span>
           </div>
 
-          <div className="min-h-0 min-w-0 w-full flex-1 overflow-x-auto overflow-y-auto overscroll-contain">
+          <div className="min-w-0 w-full overflow-x-auto">
             {sorted.map((row, index) => {
               const answered = row.usersAnswered ?? row.answered;
               const skipped = row.usersSkipped ?? row.unanswered;

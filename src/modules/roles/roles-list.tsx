@@ -118,21 +118,21 @@ export function RolesListView() {
           roleCount={roles.length}
         />
 
-        {isLoading ? (
-          <AppLoader
-            variant="section"
-            label="Loading roles"
-            hint="Fetching latest data"
+        <ListTableCard className="flex flex-col overflow-hidden">
+          <RolesToolbar
+            filtersOnly
+            search={search}
+            onSearchChange={setSearch}
+            onCreateClick={openCreate}
+            columnsControl={columnsControl}
           />
-        ) : (
-          <ListTableCard className="flex flex-col overflow-hidden">
-            <RolesToolbar
-              filtersOnly
-              search={search}
-              onSearchChange={setSearch}
-              onCreateClick={openCreate}
-              columnsControl={columnsControl}
+          {isLoading && roles.length === 0 ? (
+            <AppLoader
+              variant="compact"
+              label="Loading roles"
+              hint="Fetching latest data"
             />
+          ) : (
             <RolesTable
               embedded
               roles={roles}
@@ -142,8 +142,8 @@ export function RolesListView() {
               isLoading={false}
               onColumnsControlReady={setColumnsControl}
             />
-          </ListTableCard>
-        )}
+          )}
+        </ListTableCard>
       </motion.div>
 
       <DeleteRoleDialog

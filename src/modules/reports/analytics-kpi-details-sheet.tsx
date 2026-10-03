@@ -15,7 +15,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { DataPagination } from "@/components/shared/data-pagination";
-import { Skeleton } from "@/components/ui/skeleton";
+import { AppLoader } from "@/components/shared/app-loader";
 import { cn } from "@/lib/utils";
 import {
   useAnalyticsClientDetail,
@@ -27,11 +27,6 @@ import {
 } from "@/modules/reports/analytics-kpi-filter";
 import type { AnalyticsDetailRow, ReportKpi } from "@/types/reports";
 import { KPI_HINT } from "@/modules/reports/analytics-theme";
-
-const OUTCOME_STYLE: Record<string, string> = {
-  connected: "bg-emerald-500/12 text-emerald-700 dark:text-emerald-300",
-  missed: "bg-sky-500/12 text-sky-700 dark:text-sky-300",
-};
 
 const SURVEY_STYLE: Record<string, string> = {
   complete: "bg-emerald-500/12 text-emerald-700 dark:text-emerald-300",
@@ -91,11 +86,11 @@ function ClientQuestionsPanel({ resultId }: { resultId: string }) {
 
   if (isLoading) {
     return (
-      <div className="space-y-2 px-3 py-3">
-        <Skeleton className="h-8 w-full rounded-[6px]" />
-        <Skeleton className="h-8 w-full rounded-[6px]" />
-        <Skeleton className="h-8 w-3/4 rounded-[6px]" />
-      </div>
+      <AppLoader
+        variant="compact"
+        label="Loading analytics"
+        hint="Fetching latest data"
+      />
     );
   }
 
@@ -220,7 +215,6 @@ function ClientDetailPopup({
                 {row.surveyName}
               </DialogDescription>
               <div className="mt-3 flex flex-wrap gap-1.5">
-                <StatusBadge label={row.callOutcome} tone={OUTCOME_STYLE} />
                 <StatusBadge label={row.surveyStatus} tone={SURVEY_STYLE} />
               </div>
               <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
@@ -278,10 +272,7 @@ function DetailRow({
         </div>
       </td>
       <td className="py-2.5 pr-3 align-top">
-        <div className="space-y-1">
-          <StatusBadge label={row.callOutcome} tone={OUTCOME_STYLE} />
-          <StatusBadge label={row.surveyStatus} tone={SURVEY_STYLE} />
-        </div>
+        <StatusBadge label={row.surveyStatus} tone={SURVEY_STYLE} />
       </td>
       <td className="py-2.5 pr-3 align-top text-sm tabular-nums text-foreground">
         {row.durationLabel}
@@ -409,11 +400,11 @@ export function AnalyticsKpiDetailsSheet({
         </p>
 
         {isLoading ? (
-          <div className="space-y-2">
-            {Array.from({ length: 8 }).map((_, i) => (
-              <Skeleton key={i} className="h-14 w-full rounded-[6px]" />
-            ))}
-          </div>
+          <AppLoader
+            variant="compact"
+            label="Loading analytics"
+            hint="Fetching latest data"
+          />
         ) : !data?.rows.length ? (
           <div className="flex flex-col items-center justify-center py-16 text-center">
             <Phone className="size-10 text-muted-foreground/40" />

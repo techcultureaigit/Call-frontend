@@ -16,7 +16,7 @@ import {
   rectSortingStrategy,
   useSortable,
 } from "@dnd-kit/sortable";
-import { Skeleton } from "@/components/ui/skeleton";
+import { AppLoader } from "@/components/shared/app-loader";
 import { cn } from "@/lib/utils";
 import type { ReportKpi } from "@/types/reports";
 import type { AnalyticsKpiFilterId } from "@/modules/reports/analytics-kpi-filter";
@@ -193,11 +193,11 @@ export function AnalyticsKpiGrid({
 
   if (isLoading) {
     return (
-      <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 xl:grid-cols-3">
-        {Array.from({ length: 3 }).map((_, i) => (
-          <Skeleton key={i} className="h-[76px] rounded-[6px]" />
-        ))}
-      </div>
+      <AppLoader
+        variant="compact"
+        label="Loading analytics"
+        hint="Fetching latest data"
+      />
     );
   }
 

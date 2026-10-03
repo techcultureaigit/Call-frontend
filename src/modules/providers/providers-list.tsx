@@ -139,19 +139,23 @@ export function ProvidersListView() {
           modelCount={modelCount}
         />
 
-        {isLoading ? (
-          <AppLoader variant="section" label="Loading" hint="Fetching providers" />
-        ) : (
-          <ListTableCard className="flex flex-col overflow-hidden">
-            <ProviderToolbar
-              filtersOnly
-              search={search}
-              onSearchChange={setSearch}
-              type={type}
-              onTypeChange={setType}
-              onCreateClick={openCreate}
-              columnsControl={columnsControl}
+        <ListTableCard className="flex flex-col overflow-hidden">
+          <ProviderToolbar
+            filtersOnly
+            search={search}
+            onSearchChange={setSearch}
+            type={type}
+            onTypeChange={setType}
+            onCreateClick={openCreate}
+            columnsControl={columnsControl}
+          />
+          {isLoading && items.length === 0 ? (
+            <AppLoader
+              variant="compact"
+              label="Loading providers"
+              hint="Fetching latest data"
             />
+          ) : (
             <ProviderTable
               embedded
               items={items}
@@ -162,8 +166,8 @@ export function ProvidersListView() {
               }}
               onColumnsControlReady={setColumnsControl}
             />
-          </ListTableCard>
-        )}
+          )}
+        </ListTableCard>
       </motion.div>
 
       <ProviderFormDialog

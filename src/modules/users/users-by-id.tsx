@@ -19,7 +19,7 @@ import { UserRound } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, type ReactNode } from "react";
 
-/** Viewport-centered popup while fetching by id (same as list / delete / save). */
+/** Content-area loader while fetching by id (same card as survey lists). */
 export function UsersFetchLoader({
   label = "Loading",
 }: {

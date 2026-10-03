@@ -20,7 +20,7 @@ export type AnalyticsSectionId = (typeof ANALYTICS_SECTION_IDS)[number];
 export const ANALYTICS_SECTION_LABELS: Record<AnalyticsSectionId, string> = {
   kpis: "KPI cards",
   survey_status: "Survey status",
-  disconnect_reason: "Disconnect reason",
+  disconnect_reason: "Hangup cause",
   question_analytics: "Question analytics",
 };
 

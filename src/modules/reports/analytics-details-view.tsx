@@ -26,7 +26,7 @@ import {
   TOOLBAR_FILTER_SELECT_CLASS,
   TOOLBAR_ACTION_BUTTON_CLASS,
 } from "@/components/shared/toolbar-styles";
-import { Skeleton } from "@/components/ui/skeleton";
+import { AppLoader } from "@/components/shared/app-loader";
 import { Button } from "@/components/ui/button";
 import { SearchableSelect } from "@/components/ui/searchable-select";
 import {
@@ -62,16 +62,11 @@ import type {
 const STATUS_BADGE_CLASS =
   "bg-muted/60 text-foreground ring-1 ring-inset ring-border/50";
 
-const OUTCOME_STYLE: Record<string, string> = {
-  connected: STATUS_BADGE_CLASS,
-  missed: STATUS_BADGE_CLASS,
-};
-
 const SURVEY_STYLE: Record<string, string> = {
-  complete: "bg-[#2c3b59]/8 text-[#2c3b59] ring-1 ring-inset ring-[#2c3b59]/15",
-  partially_complete: STATUS_BADGE_CLASS,
-  incomplete: STATUS_BADGE_CLASS,
-  missed: STATUS_BADGE_CLASS,
+  complete: "bg-emerald-500/10 text-emerald-700 ring-1 ring-inset ring-emerald-500/25",
+  partially_complete: "bg-amber-500/10 text-amber-700 ring-1 ring-inset ring-amber-500/25",
+  incomplete: "bg-amber-500/10 text-amber-800 ring-1 ring-inset ring-amber-500/20",
+  missed: "bg-rose-500/10 text-rose-700 ring-1 ring-inset ring-rose-500/25",
 };
 
 function playableRecordingSrc(url?: string | null): string {
@@ -107,12 +102,6 @@ const METRIC_HINT: Record<AnalyticsKpiFilterId, string> = {
   avg_duration: "Calls ranked by duration",
   recording: "Calls that have a recording",
 };
-
-const CALL_OUTCOME_OPTIONS = [
-  { label: "All call outcomes", value: "all" },
-  { label: "Connected", value: "connected" },
-  { label: "Missed", value: "missed" },
-];
 
 const SURVEY_STATUS_OPTIONS = [
   { label: "All survey statuses", value: "all" },
@@ -268,11 +257,11 @@ function ClientQuestionCards({
 
   if (isLoading) {
     return (
-      <div className="space-y-2">
-        {Array.from({ length: 4 }).map((_, i) => (
-          <Skeleton key={i} className="h-10 w-full rounded-[6px]" />
-        ))}
-      </div>
+      <AppLoader
+        variant="compact"
+        label="Loading analytics"
+        hint="Fetching latest data"
+      />
     );
   }
 
@@ -411,7 +400,6 @@ function ClientDetailPopup({
                 {row.surveyName}
               </DialogDescription>
               <div className="mt-3 flex flex-wrap gap-1.5">
-                <StatusBadge label={row.callOutcome} tone={OUTCOME_STYLE} />
                 <StatusBadge label={row.surveyStatus} tone={SURVEY_STYLE} />
               </div>
               <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
@@ -564,13 +552,6 @@ function ClientsTable({
         ),
       },
       {
-        id: "call",
-        header: "Call",
-        cell: (row) => (
-          <StatusBadge label={row.callOutcome} tone={OUTCOME_STYLE} />
-        ),
-      },
-      {
         id: "status",
         header: "Status",
         cell: (row) => (
@@ -659,7 +640,6 @@ export function AnalyticsDetailsView() {
     1,
     Number(searchParams.get("limit") || "10") || 10
   );
-  const callOutcome = searchParams.get("callOutcome") || "all";
   const surveyStatus = searchParams.get("surveyStatus") || "all";
   const searchFromUrl = searchParams.get("q") || "";
 
@@ -719,17 +699,14 @@ export function AnalyticsDetailsView() {
   useEffect(() => {
     setPopupOpen(false);
     setSelectedRow(null);
-  }, [metric, page, limit, dateFrom, dateTo, surveyId, debouncedSearch, callOutcome, surveyStatus]);
+  }, [metric, page, limit, dateFrom, dateTo, surveyId, debouncedSearch, surveyStatus]);
 
   const hasActiveFilters =
-    Boolean(debouncedSearch) || callOutcome !== "all" || surveyStatus !== "all";
+    Boolean(debouncedSearch) || surveyStatus !== "all";
 
   const clearFilters = () => {
     setSearch("");
-    updateParams(
-      { q: null, callOutcome: null, surveyStatus: null },
-      true
-    );
+    updateParams({ q: null, callOutcome: null, surveyStatus: null }, true);
   };
 
   const { data: kpisData } = useAnalyticsKpis({
@@ -747,7 +724,6 @@ export function AnalyticsDetailsView() {
       page,
       limit,
       search: debouncedSearch || undefined,
-      callOutcome: callOutcome !== "all" ? callOutcome : undefined,
       surveyStatus: surveyStatus !== "all" ? surveyStatus : undefined,
     },
     true
@@ -862,17 +838,6 @@ export function AnalyticsDetailsView() {
           filters={
             <>
               <SearchableSelect
-                value={callOutcome}
-                onChange={(value) =>
-                  updateParams({ callOutcome: value }, true)
-                }
-                options={CALL_OUTCOME_OPTIONS}
-                searchPlaceholder="Search outcomes…"
-                className={TOOLBAR_FILTER_SELECT_CLASS}
-                disabled={isLoading && rows.length === 0}
-                aria-label="Filter by call outcome"
-              />
-              <SearchableSelect
                 value={surveyStatus}
                 onChange={(value) =>
                   updateParams({ surveyStatus: value }, true)
@@ -904,11 +869,11 @@ export function AnalyticsDetailsView() {
           onLimitChange={setLimit}
         >
           {showLoader && rows.length === 0 ? (
-            <div className="space-y-0 divide-y divide-border/40 p-2">
-              {Array.from({ length: 8 }).map((_, i) => (
-                <Skeleton key={i} className="h-12 w-full rounded-[4px]" />
-              ))}
-            </div>
+            <AppLoader
+              variant="compact"
+              label="Loading analytics"
+              hint="Fetching latest data"
+            />
           ) : null}
 
           {!showLoader && rows.length === 0 ? (

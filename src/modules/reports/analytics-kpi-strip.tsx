@@ -1,6 +1,6 @@
 "use client";
 
-import { Skeleton } from "@/components/ui/skeleton";
+import { AppLoader } from "@/components/shared/app-loader";
 import { cn } from "@/lib/utils";
 import type { ReportKpi } from "@/types/reports";
 
@@ -22,11 +22,11 @@ export function AnalyticsKpiStrip({
 }) {
   if (isLoading) {
     return (
-      <div className="grid grid-cols-3 gap-px overflow-hidden rounded-[8px] border border-border/40 bg-border/30 sm:grid-cols-6">
-        {Array.from({ length: 6 }).map((_, i) => (
-          <Skeleton key={i} className="h-[52px] rounded-none bg-card" />
-        ))}
-      </div>
+      <AppLoader
+        variant="compact"
+        label="Loading analytics"
+        hint="Fetching latest data"
+      />
     );
   }
 

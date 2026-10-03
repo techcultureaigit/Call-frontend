@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 import { PageContainer } from "@/components/layout";
+import { AppLoader } from "@/components/shared/app-loader";
 import { usePageMeta } from "@/hooks";
 import {
   useAnalyticsBreakdowns,
@@ -73,7 +74,12 @@ export function ReportsView({ lockedSurveyId }: { lockedSurveyId: string }) {
   const liveProcessing =
     kpisData?.surveyDates?.schedulingStatus === "processing";
 
-  const isLoading = kpisLoading || breakdownsLoading;
+  const isLoading = kpisLoading || breakdownsLoading || questionsLoading;
+  /** One loader for the dashboard body — not a spinner inside every card. */
+  const showDashboardLoader =
+    (kpisLoading && !kpisData) ||
+    (breakdownsLoading && !breakdownsData) ||
+    (questionsLoading && !questionData);
   const isFetching = kpisFetching;
   const surveyName = kpisData?.surveyName ?? breakdownsData?.surveyName;
   const totalCalls = Number(
@@ -290,28 +296,37 @@ export function ReportsView({ lockedSurveyId }: { lockedSurveyId: string }) {
           </p>
         ) : null}
 
-        <div className="flex min-h-0 min-w-0 flex-1 flex-col">
-          <AnalyticsReportSections
-            fillHeight
-            sectionOrder={layout.sections}
-            reorderMode={reorderMode}
-            onReorderSections={reorderSections}
-            onReorderKpis={reorderKpis}
-            renderSection={renderSection}
-            renderKpiOverlay={(kpiId) => {
-              const kpi = findOrderedKpi(
-                kpisData?.kpis ?? [],
-                layout.kpis,
-                kpiId
-              );
-              if (!kpi) return null;
-              return (
-                <div className="w-[min(220px,30vw)] cursor-grabbing">
-                  <KpiCardBody kpi={kpi} reorderMode isDragging />
-                </div>
-              );
-            }}
-          />
+        <div className="relative flex min-h-[min(68svh,40rem)] min-w-0 flex-1 flex-col">
+          {showDashboardLoader ? (
+            <AppLoader
+              variant="compact"
+              label="Loading analytics"
+              hint="Fetching latest data"
+              className="min-h-[min(68svh,40rem)] flex-1 rounded-[8px] border border-border/50 bg-card"
+            />
+          ) : (
+            <AnalyticsReportSections
+              fillHeight
+              sectionOrder={layout.sections}
+              reorderMode={reorderMode}
+              onReorderSections={reorderSections}
+              onReorderKpis={reorderKpis}
+              renderSection={renderSection}
+              renderKpiOverlay={(kpiId) => {
+                const kpi = findOrderedKpi(
+                  kpisData?.kpis ?? [],
+                  layout.kpis,
+                  kpiId
+                );
+                if (!kpi) return null;
+                return (
+                  <div className="w-[min(220px,30vw)] cursor-grabbing">
+                    <KpiCardBody kpi={kpi} reorderMode isDragging />
+                  </div>
+                );
+              }}
+            />
+          )}
         </div>
 
         {isFetching && !isLoading ? (

@@ -10,7 +10,8 @@ import { DailyCallsChart } from "./daily-calls-chart";
 import { CallOutcomeChart } from "./call-outcome-chart";
 import { RecentActivities } from "./recent-activities";
 import { RecentNotificationsList } from "./recent-notifications-list";
-import { DashboardSkeleton, KpiGridSkeleton } from "./dashboard-skeleton";
+import { AppLoader } from "@/components/shared/app-loader";
+import { KpiGridSkeleton } from "./dashboard-skeleton";
 import { DashboardHeader } from "./dashboard-header";
 
 const DASHBOARD_KPI_IDS = [
@@ -62,7 +63,12 @@ export function DashboardView() {
   if (isLoading && !data) {
     return (
       <PageContainer size="full">
-        <DashboardSkeleton />
+        <AppLoader
+          variant="compact"
+          label="Loading dashboard"
+          hint="Fetching latest data"
+          className="min-h-[min(70svh,36rem)]"
+        />
       </PageContainer>
     );
   }

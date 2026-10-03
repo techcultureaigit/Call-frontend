@@ -10,7 +10,7 @@ import {
 /** Auto-clear stuck overlay (e.g. aborted request without matching stop). */
 const GLOBAL_LOADER_MAX_MS = 12_000;
 
-/** One fullscreen loader for mutations — list GETs use local AppLoader instead. */
+/** One content-column loader for in-flight API work. List pages also use AppLoader in their table. */
 export function GlobalApiLoader() {
   const active = useApiLoadingStore(selectIsGlobalLoading);
   const label = useApiLoadingStore((s) => s.label);

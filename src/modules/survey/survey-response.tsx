@@ -26,7 +26,6 @@ import type {
   SurveyResultTranscription,
   SurveyResultsSurveyMeta,
 } from "./survey-types";
-import { SurveyFetchLoader } from "./survey-by-id";
 import type { SurveyDisplayStatus } from "./survey-lib";
 import { SurveyStatusBadge } from "./survey-dialogs";
 import { PageContainer } from "@/components/layout";
@@ -62,7 +61,9 @@ import { cn } from "@/lib/utils";
 import { getContactFileOpenUrl, isS3FileUrl } from "@/lib/utils/contact-file-url";
 import { formatAgentCreatedAt as formatSurveyCreatedAt } from "@/lib/utils/date";
 import { motion } from "framer-motion";
-import { ArrowLeft, Bot, CalendarClock, Clock3, Download, Eye, FileSpreadsheet, FileText, HelpCircle, MessageSquareText, Phone, Sparkles, UserRound, Users, MessageCircle, Pause, Play, Radio } from "lucide-react";
+import { ArrowLeft, Bot, CalendarClock, Clock3, Download, Eye, FileSpreadsheet, FileText, HelpCircle, Info, MessageSquareText, Phone, Sparkles, UserRound, Users, MessageCircle, Pause, Play, Radio } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import * as XLSX from "xlsx";
 import { useRouter } from "next/navigation";
 import {
   useCallback,
@@ -109,8 +110,8 @@ const CALL_EXACT_FIELDS = [
   "answer_stamp",
   "end_stamp",
   "caller_id_number",
+  "hangup_cause_code",
   "hangup_cause_description",
-  "reason_key",
 ] as const;
 
 const CALL_FIELD_LABELS: Record<string, string> = {
@@ -118,8 +119,8 @@ const CALL_FIELD_LABELS: Record<string, string> = {
   answer_stamp: "Answer stamp",
   end_stamp: "End stamp",
   caller_id_number: "Caller ID number",
+  hangup_cause_code: "Hangup cause code",
   hangup_cause_description: "Hangup cause description",
-  reason_key: "Reason key",
 };
 
 function getCallFieldValue(
@@ -633,20 +634,47 @@ function TruncatedQuestionCell({
   );
 }
 
+function HangupDetailInfo({ detail }: { detail: string }) {
+  const text = detail.trim();
+  if (!text) return null;
+  return (
+    <TooltipProvider delayDuration={150}>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <button
+            type="button"
+            data-row-ignore-click
+            className="inline-flex size-5 shrink-0 items-center justify-center rounded-full border border-primary/20 bg-primary/10 text-primary hover:bg-primary/15"
+            aria-label="Hangup cause detail"
+          >
+            <Info className="size-3" />
+          </button>
+        </TooltipTrigger>
+        <TooltipContent className="max-w-sm whitespace-normal px-3 py-2 text-left text-xs leading-relaxed">
+          {text}
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
+  );
+}
+
 function CallInfoChip({
   label,
   value,
   icon: Icon,
+  detail,
 }: {
   label: string;
   value: string;
   icon?: typeof Phone;
+  detail?: string;
 }) {
   return (
     <div className="rounded-[6px] border border-border/50 bg-card/80 px-3 py-2 shadow-sm">
       <div className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
         {Icon ? <Icon className="size-3 opacity-70" /> : null}
         {label}
+        {detail ? <HangupDetailInfo detail={detail} /> : null}
       </div>
       <p className="mt-0.5 truncate text-sm font-medium text-foreground" title={value}>
         {value || "---"}
@@ -750,6 +778,19 @@ function TranscriptionChatModal({
                   </div>
                 </DialogDescription>
               </div>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="h-8 shrink-0 gap-1.5 rounded-md px-2.5 text-xs"
+                disabled={loading || transcriptions.length === 0}
+                onClick={() =>
+                  downloadTranscriptionFile(transcriptions, customerNumber)
+                }
+              >
+                <Download className="size-3.5" />
+                Download
+              </Button>
             </div>
           </DialogHeader>
         </div>
@@ -757,9 +798,11 @@ function TranscriptionChatModal({
         <div className="relative flex min-h-0 flex-1 flex-col overflow-hidden bg-muted/20">
           <div className="min-h-0 max-h-[calc(92vh-7.5rem)] flex-1 overflow-y-auto overscroll-contain p-3 sm:p-4">
             {loading ? (
-              <div className="flex items-center justify-center py-16">
-                <SurveyFetchLoader label="Loading conversation" />
-              </div>
+              <AppLoader
+                variant="compact"
+                label="Loading conversation"
+                hint="Fetching transcript"
+              />
             ) : (
               <>
                 {error ? (
@@ -793,15 +836,16 @@ function ResponseDetailsModal({
   const call = row?.call ?? null;
 
   const callChips = useMemo(() => {
-    if (!call) return [] as { label: string; value: string; icon?: typeof Phone }[];
-    const chips: { label: string; value: string; icon?: typeof Phone }[] = [];
+    if (!call) return [] as { label: string; value: string; icon?: typeof Phone; detail?: string }[];
+    const chips: { label: string; value: string; icon?: typeof Phone; detail?: string }[] = [];
     const push = (
       label: string,
       value: string | undefined,
-      icon?: typeof Phone
+      icon?: typeof Phone,
+      detail?: string
     ) => {
       if (!value) return;
-      chips.push({ label, value, icon });
+      chips.push({ label, value, icon, detail });
     };
 
     push("Duration", call.duration, Clock3);
@@ -809,8 +853,13 @@ function ResponseDetailsModal({
     push("Answer stamp", call.answer_stamp, CalendarClock);
     push("End stamp", call.end_stamp, CalendarClock);
     push("Caller ID number", call.caller_id_number, Phone);
-    push("Hangup cause description", call.hangup_cause_description);
-    push("Reason key", call.reason_key);
+    push("Hangup cause code", call.hangup_cause_code);
+    push(
+      "Hangup cause description",
+      call.hangup_cause_description,
+      undefined,
+      call.hangup_cause_detail
+    );
     return chips;
   }, [call]);
 
@@ -886,6 +935,7 @@ function ResponseDetailsModal({
                     label={chip.label}
                     value={chip.value}
                     icon={chip.icon}
+                    detail={chip.detail}
                   />
                 ))}
               </div>
@@ -926,6 +976,38 @@ function formatTranscriptionTime(value: string | null | undefined): string {
     minute: "2-digit",
     second: "2-digit",
   });
+}
+
+function transcriptionSpeakerLabel(speaker: string): string {
+  return speaker === "CUSTOMER" ? "Customer" : "Agent";
+}
+
+/** Save the open call transcript as an Excel sheet. */
+function downloadTranscriptionFile(
+  transcriptions: SurveyResultTranscription[],
+  customerNumber?: string
+) {
+  if (!transcriptions.length) return;
+  const rows = transcriptions.map((turn, index) => [
+    index + 1,
+    formatTranscriptionTime(turn.timestamp),
+    transcriptionSpeakerLabel(turn.speaker),
+    turn.text_content ?? "",
+  ]);
+  const sheet = XLSX.utils.aoa_to_sheet([
+    ["#", "Time", "Speaker", "Message"],
+    ...rows,
+  ]);
+  sheet["!cols"] = [
+    { wch: 6 },
+    { wch: 14 },
+    { wch: 12 },
+    { wch: 80 },
+  ];
+  const book = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(book, sheet, "Transcription");
+  const safe = (customerNumber || "call").replace(/[^\dA-Za-z]+/g, "");
+  XLSX.writeFile(book, `transcript-${safe || "call"}.xlsx`);
 }
 
 function TranscriptionChat({
@@ -1252,7 +1334,16 @@ function ResultsInlineQaTable({
         cellClassName: "max-w-[14rem]",
         cell: (row: SurveyResultRow) => {
           const value = getCallFieldValue(row.call, col.key);
-          return <TableReadMore text={value || "---"} />;
+          if (col.key !== "hangup_cause_description") {
+            return <TableReadMore text={value || "---"} />;
+          }
+          const detail = getCallFieldValue(row.call, "hangup_cause_detail");
+          return (
+            <div className="flex min-w-0 items-start gap-1.5">
+              <TableReadMore text={value || "---"} />
+              {detail ? <HangupDetailInfo detail={detail} /> : null}
+            </div>
+          );
         },
       })),
       ...questionColumns.map((col, index) => {
@@ -1735,16 +1826,12 @@ export function SurveyResponseView({ surveyId }: SurveyResultsViewProps) {
             onPageChange={setPage}
             onLimitChange={setPageSize}
           >
-            {showLoader ? (
-              loading ? (
-                <SurveyFetchLoader label="Loading results" />
-              ) : (
-                <AppLoader
-                  variant="section"
-                  label="Loading results"
-                  hint="Fetching latest data"
-                />
-              )
+            {showLoader && sortedRows.length === 0 ? (
+              <AppLoader
+                variant="compact"
+                label="Loading results"
+                hint="Fetching latest data"
+              />
             ) : null}
 
             {!showLoader && error ? (
@@ -1767,7 +1854,7 @@ export function SurveyResponseView({ surveyId }: SurveyResultsViewProps) {
               </div>
             ) : null}
 
-            {!showLoader && !error && sortedRows.length > 0 ? (
+            {!error && sortedRows.length > 0 ? (
               <ResultsInlineQaTable
                 rows={sortedRows}
                 questionColumns={questionColumns}
@@ -2071,7 +2158,12 @@ export function SurveyResponseDetailView({
           </div>
 
           {loading ? (
-            <SurveyFetchLoader label="Loading response" />
+            <AppLoader
+              variant="compact"
+              label="Loading response"
+              hint="Fetching latest data"
+              className="min-h-[280px]"
+            />
           ) : error ? (
             <div className="rounded-[6px] border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive">
               {error}
@@ -2130,11 +2222,30 @@ export function SurveyResponseDetailView({
                     <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
                       Call transcription
                     </p>
-                    <span className="text-[11px] text-muted-foreground">
-                      {result.transcriptions?.length
-                        ? `${result.transcriptions.length} messages`
-                        : "No transcript"}
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[11px] text-muted-foreground">
+                        {result.transcriptions?.length
+                          ? `${result.transcriptions.length} messages`
+                          : "No transcript"}
+                      </span>
+                      {result.transcriptions?.length ? (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          className="h-7 gap-1.5 rounded-md px-2 text-xs"
+                          onClick={() =>
+                            downloadTranscriptionFile(
+                              result.transcriptions ?? [],
+                              result.customer_number
+                            )
+                          }
+                        >
+                          <Download className="size-3.5" />
+                          Download
+                        </Button>
+                      ) : null}
+                    </div>
                   </div>
                   <TranscriptionChat
                     transcriptions={result.transcriptions ?? []}

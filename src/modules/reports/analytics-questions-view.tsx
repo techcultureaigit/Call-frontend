@@ -7,6 +7,8 @@ import {
   ArrowLeft,
   BarChart3,
   CheckCircle2,
+  ChevronLeft,
+  ChevronRight,
   HelpCircle,
   MessageSquare,
   Phone,
@@ -16,7 +18,7 @@ import {
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { PageContainer } from "@/components/layout";
-import { Skeleton } from "@/components/ui/skeleton";
+import { AppLoader } from "@/components/shared/app-loader";
 import { usePageMeta } from "@/hooks";
 import { cn } from "@/lib/utils";
 import { PAGE_TITLE_CLASS } from "@/components/shared/page-heading";
@@ -37,7 +39,8 @@ const ANSWER_COLORS = [
 ];
 
 const QUESTION_LIST_VISIBLE = 5;
-const USER_TABLE_VISIBLE = 8;
+const USER_PAGE_SIZE = 15;
+const USER_PAGE_SIZE_OPTIONS = [10, 15, 20, 50] as const;
 
 /** Show `visible` rows, then scroll the rest. Page scroll at 150% stays independent. */
 function useClipAfterRows(
@@ -192,13 +195,7 @@ function SummaryStrip({
   isLoading?: boolean;
 }) {
   if (isLoading) {
-    return (
-      <div className="grid grid-cols-3 gap-2">
-        {Array.from({ length: 3 }).map((_, i) => (
-          <Skeleton key={i} className="h-[58px] rounded-[6px]" />
-        ))}
-      </div>
-    );
+    return null;
   }
 
   const items = [
@@ -396,6 +393,8 @@ function QuestionDetailPanel({
   index: number;
 }) {
   const [userSearch, setUserSearch] = useState("");
+  const [userPage, setUserPage] = useState(1);
+  const [userLimit, setUserLimit] = useState(USER_PAGE_SIZE);
 
   const answered = question.usersAnswered ?? question.answered;
   const total = (question.totalUsers ?? question.total) || 0;
@@ -420,15 +419,24 @@ function QuestionDetailPanel({
     });
   }, [users, userSearch]);
 
-  const userClip = useClipAfterRows(
-    USER_TABLE_VISIBLE,
-    filteredUsers.length,
-    question.questionId
+  const userTotal = filteredUsers.length;
+  const userTotalPages = Math.max(1, Math.ceil(userTotal / userLimit));
+  const safeUserPage = Math.min(userPage, userTotalPages);
+  const pageFrom = userTotal === 0 ? 0 : (safeUserPage - 1) * userLimit + 1;
+  const pageTo = Math.min(safeUserPage * userLimit, userTotal);
+  const pageUsers = filteredUsers.slice(
+    (safeUserPage - 1) * userLimit,
+    safeUserPage * userLimit
   );
 
   useEffect(() => {
     setUserSearch("");
+    setUserPage(1);
   }, [question.surveyId, question.questionId]);
+
+  useEffect(() => {
+    setUserPage(1);
+  }, [userSearch, userLimit]);
 
   return (
     <motion.div
@@ -523,9 +531,8 @@ function QuestionDetailPanel({
         <AnsweredSkippedBar answered={answered} skipped={skipped} total={total} />
       </div>
 
-      {/* Natural height — no nested vertical scroll; page scrolls outside */}
-      <div className="flex min-w-0 flex-col gap-4 p-4 sm:flex-row sm:p-5">
-        <section className="min-w-0 flex-1">
+      <div className="grid min-w-0 grid-cols-1 items-stretch gap-4 p-4 sm:grid-cols-2 sm:p-5">
+        <section className="flex h-[460px] min-h-0 min-w-0 flex-col">
           <div className="mb-3 flex items-center justify-between gap-2">
             <div className="flex items-center gap-2">
               <MessageSquare className="size-4 text-muted-foreground" />
@@ -539,7 +546,7 @@ function QuestionDetailPanel({
           </div>
 
           {answers.length ? (
-            <div className="space-y-2">
+            <div className="min-h-0 flex-1 space-y-2 overflow-y-auto overscroll-contain pr-0.5">
               {answers.map((ans, i) => (
                 <div
                   key={`${ans.name}-${i}`}
@@ -554,7 +561,7 @@ function QuestionDetailPanel({
                             ANSWER_COLORS[i % ANSWER_COLORS.length],
                         }}
                       />
-                      <span className="font-medium leading-snug" title={ans.name}>
+                      <span className="line-clamp-2 font-medium leading-snug" title={ans.name}>
                         {ans.name}
                       </span>
                     </span>
@@ -588,7 +595,7 @@ function QuestionDetailPanel({
           )}
         </section>
 
-        <section className="min-w-0 flex-1">
+        <section className="flex h-[460px] min-h-0 min-w-0 flex-col">
           <div className="mb-2 flex items-center justify-between gap-2">
             <div className="flex min-w-0 items-center gap-2">
               <Phone className="size-4 shrink-0 text-muted-foreground" />
@@ -600,7 +607,7 @@ function QuestionDetailPanel({
               <span className="shrink-0 rounded-[6px] border border-border/50 bg-muted/40 px-2.5 py-0.5 text-[11px] font-semibold tabular-nums text-muted-foreground">
                 {userSearch.trim()
                   ? `${filteredUsers.length} of ${users.length}`
-                  : `${users.length} shown`}
+                  : `${users.length} users`}
               </span>
             ) : null}
           </div>
@@ -619,39 +626,26 @@ function QuestionDetailPanel({
               </div>
 
               {filteredUsers.length ? (
-                <div
-                  ref={userClip.ref}
-                  style={userClip.style}
-                  className={cn(
-                    "overflow-x-auto overscroll-contain rounded-[8px] border border-border/55",
-                    userClip.className
-                  )}
-                >
-                  <table
-                    data-clip-content=""
-                    className="w-full min-w-[360px] border-collapse text-left text-xs"
-                  >
-                    <thead
-                      data-clip-header=""
-                      className="sticky top-0 z-10 bg-muted/80"
-                    >
+                <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-[8px] border border-border/55">
+                  <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
+                  <table className="w-full table-fixed border-collapse text-left text-xs">
+                    <thead className="sticky top-0 z-10 bg-muted">
                       <tr className="border-b border-border/55 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                        <th className="px-3 py-2.5">Phone</th>
-                        <th className="px-3 py-2.5">Answer</th>
-                        <th className="px-3 py-2.5 text-right">When</th>
+                        <th className="w-[34%] px-2.5 py-2">Phone</th>
+                        <th className="w-[36%] px-2.5 py-2">Answer</th>
+                        <th className="w-[30%] px-2.5 py-2 text-right">When</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {filteredUsers.map((user, i) => (
+                      {pageUsers.map((user, i) => (
                         <tr
-                          key={`${user.phone}-${i}`}
-                          data-clip-row=""
+                          key={`${user.phone}-${user.answeredAt ?? ""}-${i}`}
                           className="border-b border-border/35 transition-colors last:border-b-0 hover:bg-muted/20"
                         >
-                          <td className="whitespace-nowrap px-3 py-2.5 font-medium tabular-nums text-foreground">
+                          <td className="truncate px-2.5 py-2 font-medium tabular-nums text-foreground">
                             {user.phone}
                           </td>
-                          <td className="max-w-[180px] px-3 py-2.5">
+                          <td className="px-2.5 py-2">
                             <span
                               className="inline-block max-w-full truncate rounded-[4px] bg-muted/50 px-1.5 py-0.5 text-[11px] font-medium text-foreground"
                               title={user.answer}
@@ -659,13 +653,62 @@ function QuestionDetailPanel({
                               {user.answer || "—"}
                             </span>
                           </td>
-                          <td className="whitespace-nowrap px-3 py-2.5 text-right text-[11px] text-muted-foreground">
+                          <td className="truncate px-2.5 py-2 text-right text-[11px] text-muted-foreground">
                             {formatDate(user.answeredAt)}
                           </td>
                         </tr>
                       ))}
                     </tbody>
                   </table>
+                  </div>
+                  <div className="flex flex-col gap-2 border-t border-border/50 bg-muted/20 px-2.5 py-2">
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="min-w-0 truncate text-[11px] text-muted-foreground">
+                        <span className="font-medium text-foreground">
+                          {pageFrom}–{pageTo}
+                        </span>{" "}
+                        of {userTotal}
+                      </p>
+                      <div className="flex shrink-0 items-center gap-1">
+                        <button
+                          type="button"
+                          aria-label="Previous page"
+                          disabled={safeUserPage <= 1}
+                          onClick={() => setUserPage(safeUserPage - 1)}
+                          className="inline-flex size-7 items-center justify-center rounded-[6px] border border-border/60 bg-card text-foreground disabled:opacity-40"
+                        >
+                          <ChevronLeft className="size-3.5" />
+                        </button>
+                        <span className="min-w-[3.25rem] text-center text-[11px] font-medium tabular-nums text-foreground">
+                          {safeUserPage}/{userTotalPages}
+                        </span>
+                        <button
+                          type="button"
+                          aria-label="Next page"
+                          disabled={safeUserPage >= userTotalPages}
+                          onClick={() => setUserPage(safeUserPage + 1)}
+                          className="inline-flex size-7 items-center justify-center rounded-[6px] border border-border/60 bg-card text-foreground disabled:opacity-40"
+                        >
+                          <ChevronRight className="size-3.5" />
+                        </button>
+                      </div>
+                    </div>
+                    <label className="flex items-center justify-between gap-2 text-[11px] text-muted-foreground">
+                      Rows
+                      <select
+                        aria-label="Rows per page"
+                        value={userLimit}
+                        onChange={(e) => setUserLimit(Number(e.target.value))}
+                        className="h-7 rounded-[6px] border border-border/60 bg-card px-2 text-[11px] font-medium text-foreground"
+                      >
+                        {USER_PAGE_SIZE_OPTIONS.map((size) => (
+                          <option key={size} value={size}>
+                            {size}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                  </div>
                 </div>
               ) : (
                 <div className="flex flex-col items-center justify-center rounded-[8px] border border-dashed border-border/55 py-10 text-center">
@@ -680,7 +723,7 @@ function QuestionDetailPanel({
             <div className="flex flex-col items-center justify-center rounded-[8px] border border-dashed border-border/55 py-10 text-center">
               <Phone className="size-8 text-muted-foreground/30" />
               <p className="mt-2 text-sm text-muted-foreground">
-                No user samples for this question
+                No users answered this question
               </p>
             </div>
           )}
@@ -842,10 +885,12 @@ export function AnalyticsQuestionsView() {
         </div>
 
         {isLoading ? (
-          <div className="grid gap-3 lg:grid-cols-12">
-            <Skeleton className="h-[360px] rounded-[6px] lg:col-span-4" />
-            <Skeleton className="h-[360px] rounded-[6px] lg:col-span-8" />
-          </div>
+          <AppLoader
+            variant="compact"
+            label="Loading analytics"
+            hint="Fetching latest data"
+            className="min-h-[360px]"
+          />
         ) : !questions.length ? (
           <div className="flex min-h-[280px] flex-col items-center justify-center rounded-[6px] border border-border/60 bg-card text-center shadow-card">
             <HelpCircle className="size-10 text-muted-foreground/40" />

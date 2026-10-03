@@ -7,7 +7,6 @@ import {
   CheckCircle2,
   XCircle,
 } from "lucide-react";
-import { Skeleton } from "@/components/ui/skeleton";
 import { formatCompactNumber } from "@/lib/utils";
 
 export function NotificationsStatsBar({
@@ -25,17 +24,7 @@ export function NotificationsStatsBar({
   };
   isLoading?: boolean;
 }) {
-  if (isLoading) {
-    return (
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
-        {Array.from({ length: 5 }).map((_, i) => (
-          <Skeleton key={i} className="h-20 rounded-[6px]" />
-        ))}
-      </div>
-    );
-  }
-
-  if (!stats) return null;
+  if (isLoading || !stats) return null;
 
   const items = [
     {

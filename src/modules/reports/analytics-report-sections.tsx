@@ -87,12 +87,6 @@ function SortableSectionShell({
       ref={setNodeRef}
       className={cn(
         "relative isolate flex min-w-0 w-full max-w-full flex-col gap-2",
-        fillHeight && id === "kpis" && "shrink-0",
-        fillHeight && id === "survey_status" && "shrink-0 self-stretch",
-        fillHeight && id === "disconnect_reason" && "shrink-0 self-stretch",
-        fillHeight &&
-          id === "question_analytics" &&
-          "flex min-h-[calc(5*2.85rem)] flex-1 flex-col",
         isDragging && "opacity-35"
       )}
       style={
@@ -121,17 +115,7 @@ function SortableSectionShell({
           </span>
         </div>
       ) : null}
-      <div
-        className={cn(
-          "min-w-0 w-full",
-          (id === "survey_status" || id === "disconnect_reason") &&
-            "flex min-h-0 flex-col self-stretch [&>*]:min-h-0 [&>*]:flex-1",
-          id === "question_analytics" &&
-            fillHeight &&
-            "flex min-h-0 flex-1 flex-col [&>*]:min-h-0 [&>*]:flex-1",
-          isDragging && "pointer-events-none"
-        )}
-      >
+      <div className={cn("min-w-0 w-full", isDragging && "pointer-events-none")}>
         {children}
       </div>
     </div>
@@ -210,23 +194,15 @@ export function AnalyticsReportSections({
   }, [activeId, activeType]);
 
   const gridClassName = fillHeight
-    ? "flex min-h-0 w-full min-w-0 flex-1 flex-col gap-2.5"
+    ? "flex w-full min-w-0 flex-col gap-2.5"
     : "grid w-full min-w-0 grid-cols-1 items-stretch gap-2.5 min-[900px]:grid-cols-2";
 
   const sectionClass = (id: AnalyticsSectionId) =>
-    fillHeight
-      ? cn(
-          "min-w-0 w-full",
-          (id === "kpis" ||
-            id === "survey_status" ||
-            id === "disconnect_reason") &&
-            "shrink-0",
-          (id === "survey_status" || id === "disconnect_reason") &&
-            "flex min-h-0 flex-col self-stretch [&>*]:min-h-0 [&>*]:flex-1",
-          id === "question_analytics" &&
-            "flex min-h-[calc(5*2.85rem)] flex-1 flex-col [&>*]:min-h-0 [&>*]:flex-1"
-        )
-      : "min-w-0 w-full max-w-full";
+    cn(
+      "min-w-0 w-full max-w-full",
+      (id === "survey_status" || id === "disconnect_reason") &&
+        "flex h-full flex-col [&>*]:h-full [&>*]:min-h-0"
+    );
 
   const renderFillItem = (id: AnalyticsSectionId) =>
     reorderMode ? (
@@ -253,7 +229,7 @@ export function AnalyticsReportSections({
             ) : (
               <div
                 key={row.join("-")}
-                className="grid w-full min-w-0 shrink-0 grid-cols-1 items-stretch gap-2.5 min-[900px]:grid-cols-2"
+                className="grid w-full min-w-0 grid-cols-1 items-stretch gap-2.5 min-[900px]:grid-cols-2"
               >
                 {row.map((id) => renderFillItem(id))}
               </div>

@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import {
   Cell,
   Pie,
@@ -18,7 +17,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { useMounted } from "@/hooks";
-import { ChartSkeleton } from "@/modules/dashboard/dashboard-skeleton";
+import { AppLoader } from "@/components/shared/app-loader";
 import { AnalyticsCard } from "@/modules/reports/analytics-card";
 import {
   Tooltip as UiTooltip,
@@ -264,7 +263,6 @@ export function ReportDashboardDonut({
   onSliceSelect?: (filter: AnalyticsKpiFilterId) => void;
 }) {
   const mounted = useMounted();
-  const [sliceHover, setSliceHover] = useState(false);
   const styleMap = variant === "reason" ? REASON_STYLE : SURVEY_STYLE;
   const total = data.reduce((sum, d) => sum + (d.count ?? 0), 0);
   let extraReasonIndex = 0;
@@ -293,19 +291,19 @@ export function ReportDashboardDonut({
     TONE.navy.fill;
 
   const title =
-    variant === "reason" ? "Disconnect reason" : "Survey status";
+    variant === "reason" ? "Hangup cause" : "Survey status";
   const description =
     variant === "reason"
-      ? "Who ended the connected call — caller or agent"
+      ? "Hangup cause description for every call"
       : "Complete = all answers · Partial = some · Incomplete = picked up, none · Missed = not picked up";
   const HeaderIcon = variant === "survey" ? Clock3 : PhoneOff;
   const emptyCopy =
     variant === "reason"
-      ? "No disconnect reasons on connected calls."
+      ? "No hangup cause recorded."
       : "No call activity in this period.";
   const totalLabel = (
     <span className="text-[11px] font-medium tabular-nums text-muted-foreground">
-      {total.toLocaleString()} {variant === "reason" ? "Connected" : "Total"}
+      {total.toLocaleString()} {variant === "reason" ? "Calls" : "Total"}
     </span>
   );
 
@@ -321,9 +319,13 @@ export function ReportDashboardDonut({
         description={description}
         icon={HeaderIcon}
         compact
-        className="h-full w-full overflow-visible shadow-[0_4px_18px_rgba(44,59,89,0.05)]"
+        className="h-full w-full shadow-[0_4px_18px_rgba(44,59,89,0.05)]"
       >
-        <ChartSkeleton height={140} />
+        <AppLoader
+          variant="compact"
+          label="Loading analytics"
+          hint="Fetching latest data"
+        />
       </AnalyticsCard>
     );
   }
@@ -335,7 +337,7 @@ export function ReportDashboardDonut({
         description={description}
         icon={HeaderIcon}
         compact
-        className="h-full w-full overflow-visible shadow-[0_4px_18px_rgba(44,59,89,0.05)]"
+        className="h-full w-full shadow-[0_4px_18px_rgba(44,59,89,0.05)]"
       >
         <p className="py-4 text-center text-sm text-muted-foreground">
           {emptyCopy}
@@ -382,9 +384,9 @@ export function ReportDashboardDonut({
         icon={HeaderIcon}
         action={totalLabel}
         compact
-        className="h-full w-full overflow-visible shadow-[0_4px_18px_rgba(44,59,89,0.05)]"
+        className="h-full w-full shadow-[0_4px_18px_rgba(44,59,89,0.05)]"
       >
-        <div className="@container/donut flex min-h-0 w-full min-w-0 flex-1 flex-col justify-center overflow-visible">
+        <div className="@container/donut flex h-[232px] w-full min-w-0 flex-col justify-center overflow-y-auto">
           {variant === "survey" ? (
             <>
               {/* Wide card: left | donut | right */}
@@ -420,8 +422,6 @@ export function ReportDashboardDonut({
                             animationBegin={80}
                             animationDuration={900}
                             animationEasing="ease-out"
-                            onMouseEnter={() => setSliceHover(true)}
-                            onMouseLeave={() => setSliceHover(false)}
                             onClick={(_, index) => {
                               const name = styled[index]?.name;
                               if (name) handleSelect(name);
@@ -458,19 +458,17 @@ export function ReportDashboardDonut({
                         </PieChart>
                       </ResponsiveContainer>
                     )}
-                    {!sliceHover ? (
-                      <div className="pointer-events-none absolute inset-0 z-[1] flex flex-col items-center justify-center px-3">
-                        <p
-                          className="font-sans text-[16px] font-semibold tabular-nums leading-none tracking-tight"
-                          style={{ color: centerFill }}
-                        >
-                          {centerPct}%
-                        </p>
-                        <p className="mt-1 max-w-[80px] text-center text-[8px] font-semibold uppercase leading-tight tracking-[0.12em] text-muted-foreground">
-                          {centerLabel}
-                        </p>
-                      </div>
-                    ) : null}
+                    <div className="pointer-events-none absolute inset-0 z-[1] flex flex-col items-center justify-center px-3">
+                      <p
+                        className="font-sans text-[16px] font-semibold tabular-nums leading-none tracking-tight"
+                        style={{ color: centerFill }}
+                      >
+                        {centerPct}%
+                      </p>
+                      <p className="mt-1 line-clamp-3 max-w-[80px] text-center text-[8px] font-semibold uppercase leading-tight tracking-[0.12em] text-muted-foreground">
+                        {centerLabel}
+                      </p>
+                    </div>
                   </div>
                 </div>
 
@@ -541,37 +539,31 @@ export function ReportDashboardDonut({
               </div>
             </>
           ) : (
-            <div className="flex min-h-0 w-full min-w-0 flex-1 flex-col items-center justify-center gap-2 overflow-visible @[380px]/donut:flex-row @[380px]/donut:items-center @[380px]/donut:gap-3">
-              <div className="relative mx-auto size-[100px] shrink-0 overflow-visible @[380px]/donut:size-[112px]">
+            <div className="flex h-full w-full min-w-0 items-center gap-3">
+              <div className="relative size-[104px] shrink-0">
                 {mounted && (
                   <ResponsiveContainer width="100%" height="100%">
-                    <PieChart margin={{ top: 4, right: 4, bottom: 4, left: 4 }}>
+                    <PieChart margin={{ top: 2, right: 2, bottom: 2, left: 2 }}>
                       <Pie
                         data={styled}
                         cx="50%"
                         cy="50%"
-                        innerRadius={34}
-                        outerRadius={48}
-                        paddingAngle={2.5}
+                        innerRadius={32}
+                        outerRadius={46}
+                        paddingAngle={2}
                         dataKey="value"
-                        strokeWidth={3}
+                        strokeWidth={2}
                         stroke="var(--card)"
                         cornerRadius={4}
                         isAnimationActive
                         animationDuration={800}
-                        onMouseEnter={() => setSliceHover(true)}
-                        onMouseLeave={() => setSliceHover(false)}
-                        onClick={(_, index) => {
-                          const name = styled[index]?.name;
-                          if (name) handleSelect(name);
-                        }}
                       >
                         {styled.map((entry) => (
                           <Cell
                             key={entry.name}
                             fill={entry.fill}
                             stroke="var(--card)"
-                            strokeWidth={3}
+                            strokeWidth={2}
                           />
                         ))}
                       </Pie>
@@ -590,19 +582,72 @@ export function ReportDashboardDonut({
                     </PieChart>
                   </ResponsiveContainer>
                 )}
-                {!sliceHover ? (
-                  <div className="pointer-events-none absolute inset-0 z-[1] flex flex-col items-center justify-center">
-                    <p className="text-base font-semibold tabular-nums">
-                      {centerPct}%
-                    </p>
-                    <p className="text-[8px] font-semibold uppercase tracking-wider text-muted-foreground">
-                      {centerLabel}
-                    </p>
-                  </div>
-                ) : null}
+                <div className="pointer-events-none absolute inset-0 z-[1] flex flex-col items-center justify-center">
+                  <p
+                    className="font-sans text-[15px] font-semibold tabular-nums leading-none"
+                    style={{ color: centerFill }}
+                  >
+                    {centerPct}%
+                  </p>
+                  <p className="mt-0.5 text-[8px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+                    Top
+                  </p>
+                </div>
               </div>
-              <div className="grid min-w-0 w-full flex-1 grid-cols-1 gap-1.5 overflow-visible">
-                {styled.map((item) => renderTile(item))}
+              <div className="flex h-full min-h-0 min-w-0 flex-1 flex-col gap-0.5 overflow-y-auto overscroll-contain pr-0.5">
+                {styled.map((item) => (
+                  <UiTooltip key={item.name} delayDuration={250}>
+                    <TooltipTrigger asChild>
+                      <div
+                        className={cn(
+                          "grid grid-cols-[minmax(0,1fr)_2.6rem] items-center gap-2 rounded-[6px] px-1.5 py-1",
+                          item.name === centerSlice?.name && "bg-muted/45"
+                        )}
+                      >
+                        <div className="min-w-0">
+                          <div className="flex min-w-0 items-center gap-1.5">
+                            <span
+                              className="size-1.5 shrink-0 rounded-full"
+                              style={{ backgroundColor: item.fill }}
+                            />
+                            <span className="truncate text-[11px] font-medium leading-tight text-foreground">
+                              {item.name}
+                            </span>
+                          </div>
+                          <div className="mt-1 ml-3 h-[3px] overflow-hidden rounded-full bg-muted/70">
+                            <div
+                              className="h-full rounded-full"
+                              style={{
+                                width: `${Math.min(100, Math.max(item.value, item.value > 0 ? 2 : 0))}%`,
+                                backgroundColor: item.fill,
+                              }}
+                            />
+                          </div>
+                        </div>
+                        <div className="text-right tabular-nums">
+                          <p className="text-[11px] font-semibold leading-none text-foreground">
+                            {item.count ?? 0}
+                          </p>
+                          <p className="mt-0.5 text-[9px] leading-none text-muted-foreground">
+                            {item.value}%
+                          </p>
+                        </div>
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent
+                      side="top"
+                      collisionPadding={12}
+                      className="z-[90] max-w-[260px] space-y-0.5 px-3 py-2"
+                    >
+                      <p className="text-xs font-semibold text-popover-foreground">
+                        {item.name}
+                      </p>
+                      <p className="text-[11px] tabular-nums text-muted-foreground">
+                        {item.count ?? 0} calls · {item.value}%
+                      </p>
+                    </TooltipContent>
+                  </UiTooltip>
+                ))}
               </div>
             </div>
           )}
