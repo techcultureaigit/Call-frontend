@@ -209,6 +209,7 @@ export interface AnalyticsDetailRow {
   durationLabel: string;
   extractedAt: string | null;
   hasRecording: boolean;
+  aws_call_recording_url?: string | null;
   hangupCause: string;
   answeredQuestions: number;
   totalQuestions: number;

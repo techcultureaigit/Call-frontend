@@ -8,7 +8,575 @@ const region = process.env.AWS_REGION || "ap-south-1";
 const bucket = process.env.AWS_S3_BUCKET || "";
 const contactsFolder = process.env.AWS_S3_CONTACTS_FOLDER || "survey-contacts";
 const voicesFolder = process.env.AWS_S3_VOICES_FOLDER || "voice-previews";
-const allowedFolders = [contactsFolder, voicesFolder];
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+const recordingsFolder =
+  process.env.AWS_S3_RECORDINGS_FOLDER || "call-recordings";
+const allowedFolders = [contactsFolder, voicesFolder, recordingsFolder];
 
 const s3 = new S3Client({
   region,
@@ -77,6 +645,33 @@ export function getS3ObjectKey(urlOrKey: string): string {
   return "";
 }
 
+/**
+ * Stored URLs look like call-recordings/{10-digit cli}/{id}.
+ * Objects are stored as call-recordings/91{cli}/{id}.mp3.
+ */
+function recordingKeyCandidates(key: string): string[] {
+  const list: string[] = [];
+  const add = (value: string) => {
+    if (value && !list.includes(value)) list.push(value);
+  };
+
+  const nested = key.match(/^call-recordings\/(\d+)\/([^/]+)$/i);
+  if (nested) {
+    const phone = nested[1];
+    const file = nested[2];
+    const id = file.replace(/\.[^.]+$/, "");
+    const ext = file.includes(".") ? file.slice(file.lastIndexOf(".")) : ".mp3";
+    const withCountry = phone.startsWith("91") ? phone : `91${phone}`;
+    add(`call-recordings/${withCountry}/${id}${ext}`);
+    add(`call-recordings/${phone}/${id}${ext}`);
+    add(`call-recordings/${id}.mp3`);
+  }
+
+  add(key);
+  if (!/\.[a-z0-9]+$/i.test(key)) add(`${key}.mp3`);
+  return list;
+}
+
 function isNoSuchKey(error: unknown): boolean {
   const err = error as { name?: string; Code?: string; $metadata?: { httpStatusCode?: number } };
   return (
@@ -117,20 +712,27 @@ export async function getS3Object(urlOrKey: string) {
     throw new Error("AWS S3 is not configured on the frontend (.env)");
   }
 
-  let key = getS3ObjectKey(urlOrKey);
+  const key = getS3ObjectKey(urlOrKey);
   if (!key) {
     throw new Error("Not an S3 object URL");
   }
 
-  try {
-    return await s3.send(new GetObjectCommand({ Bucket: bucket, Key: key }));
-  } catch (error) {
-    if (!isNoSuchKey(error)) throw error;
-    const fallback = await findLatestMatchingKey(key);
-    if (!fallback || fallback === key) {
-      throw new Error(`The specified key does not exist (${key})`);
+  const candidates = key.startsWith(`${recordingsFolder}/`)
+    ? recordingKeyCandidates(key)
+    : [key];
+  let missingKey = key;
+  for (const candidate of candidates) {
+    try {
+      return await s3.send(new GetObjectCommand({ Bucket: bucket, Key: candidate }));
+    } catch (error) {
+      if (!isNoSuchKey(error)) throw error;
+      missingKey = candidate;
     }
-    key = fallback;
-    return s3.send(new GetObjectCommand({ Bucket: bucket, Key: key }));
   }
+
+  const fallback = await findLatestMatchingKey(candidates[0] || key);
+  if (!fallback || candidates.includes(fallback)) {
+    throw new Error(`The specified key does not exist (${missingKey})`);
+  }
+  return s3.send(new GetObjectCommand({ Bucket: bucket, Key: fallback }));
 }

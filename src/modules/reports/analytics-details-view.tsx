@@ -38,6 +38,7 @@ import {
 } from "@/components/ui/dialog";
 import { usePageMeta, useDebounce } from "@/hooks";
 import { cn } from "@/lib/utils";
+import { getContactFileOpenUrl, isS3FileUrl } from "@/lib/utils/contact-file-url";
 import { PAGE_TITLE_CLASS } from "@/components/shared/page-heading";
 import {
   useAnalyticsClientDetail,
@@ -72,6 +73,28 @@ const SURVEY_STYLE: Record<string, string> = {
   incomplete: STATUS_BADGE_CLASS,
   missed: STATUS_BADGE_CLASS,
 };
+
+function playableRecordingSrc(url?: string | null): string {
+  const value = url?.trim() || "";
+  if (!value) return "";
+  return isS3FileUrl(value) ? getContactFileOpenUrl(value) : value;
+}
+
+function RecordingPlayer({ src }: { src: string }) {
+  const playable = playableRecordingSrc(src);
+  if (!playable) return null;
+  return (
+    <audio
+      controls
+      preload="none"
+      src={playable}
+      data-row-ignore-click
+      className="mt-1 h-8 w-full max-w-[220px]"
+      aria-label="Call recording"
+      onClick={(event) => event.stopPropagation()}
+    />
+  );
+}
 
 const METRIC_HINT: Record<AnalyticsKpiFilterId, string> = {
   total_calls: KPI_HINT.total_calls,
@@ -409,6 +432,11 @@ function ClientDetailPopup({
                   <span className="line-clamp-1">{row.hangupCause}</span>
                 ) : null}
               </div>
+              {row.aws_call_recording_url ? (
+                <div className="mt-3">
+                  <RecordingPlayer src={row.aws_call_recording_url} />
+                </div>
+              ) : null}
             </DialogHeader>
 
             <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 py-4">
@@ -509,7 +537,15 @@ function ClientsTable({
             <p className={cn(TABLE_PRIMARY_TEXT_CLASS, "tabular-nums")}>
               {row.phone}
             </p>
-            {row.hasRecording ? (
+            {row.aws_call_recording_url ? (
+              <div data-row-ignore-click>
+                <p className={cn(TABLE_SUBTEXT_CLASS, "inline-flex items-center gap-1")}>
+                  <Mic className="size-3" />
+                  Recording
+                </p>
+                <RecordingPlayer src={row.aws_call_recording_url} />
+              </div>
+            ) : row.hasRecording ? (
               <p className={cn(TABLE_SUBTEXT_CLASS, "inline-flex items-center gap-1")}>
                 <Mic className="size-3" />
                 Recording

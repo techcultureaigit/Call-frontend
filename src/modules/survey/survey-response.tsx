@@ -59,6 +59,7 @@ import {
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { usePageMeta, usePermissions, usePaginatedList } from "@/hooks";
 import { cn } from "@/lib/utils";
+import { getContactFileOpenUrl, isS3FileUrl } from "@/lib/utils/contact-file-url";
 import { formatAgentCreatedAt as formatSurveyCreatedAt } from "@/lib/utils/date";
 import { motion } from "framer-motion";
 import { ArrowLeft, Bot, CalendarClock, Clock3, Download, Eye, FileSpreadsheet, FileText, HelpCircle, MessageSquareText, Phone, Sparkles, UserRound, Users, MessageCircle, Pause, Play, Radio } from "lucide-react";
@@ -225,7 +226,7 @@ function getRowSortValue(
       row.call?.duration ?? row.recording_duration_seconds
     );
   }
-  if (key === "audio") return row.recording_url ? 1 : 0;
+  if (key === "audio") return row.aws_call_recording_url ? 1 : 0;
 
   if (key.startsWith("call:")) {
     const field = key.slice(5);
@@ -325,10 +326,6 @@ function enrichRowAnswers(
         a.question && a.question !== a.questionId
           ? a.question
           : questions.find((q) => q.id === a.questionId)?.question || a.question,
-      recording_url:
-        a.recording_url ||
-        resolveAnswerRecordingUrl(a, null) ||
-        undefined,
     }));
   }
 
@@ -347,16 +344,21 @@ function enrichRowAnswers(
     .map((questionId) => {
       const meta = questions.find((q) => q.id === questionId);
       const raw = extracted[questionId];
-      const built: SurveyResultAnswer = {
+      return {
         questionId,
         question: meta?.question || questionId,
         type: meta?.type || "text",
         answer: resolveOptionLabel(meta, raw),
         rawAnswer: raw,
       };
-      const recording = resolveAnswerRecordingUrl(built, null);
-      return recording ? { ...built, recording_url: recording } : built;
     });
+}
+
+/** Play private S3 recordings through the session proxy (same path as voices). */
+function toPlayableRecordingSrc(src: string): string {
+  const value = src.trim();
+  if (!value || !isS3FileUrl(value)) return value;
+  return getContactFileOpenUrl(value);
 }
 
 function formatPlayerTime(seconds: number): string {
@@ -480,6 +482,7 @@ function InlineRecordingPlayer({
   };
 
   const pct = duration > 0 ? (current / duration) * 100 : 0;
+  const playableSrc = toPlayableRecordingSrc(src);
 
   return (
     <div
@@ -488,7 +491,7 @@ function InlineRecordingPlayer({
         fullWidth ? "w-full" : "mx-auto w-full min-w-[180px] max-w-[260px]"
       )}
     >
-      <audio ref={audioRef} src={src} preload="metadata" />
+      <audio ref={audioRef} src={playableSrc} preload="metadata" />
       <button
         type="button"
         onClick={toggle}
@@ -525,25 +528,9 @@ function InlineRecordingPlayer({
       <span className="shrink-0 text-[11px] tabular-nums text-muted-foreground">
         {formatPlayerTime(duration)}
       </span>
-      <DownloadRecordingButton src={src} />
+      <DownloadRecordingButton src={playableSrc} />
     </div>
   );
-}
-
-function resolveAnswerRecordingUrl(
-  answer: SurveyResultAnswer,
-  rowRecording?: string | null
-): string | null {
-  if (answer.recording_url) return answer.recording_url;
-  const raw = answer.rawAnswer;
-  if (raw && typeof raw === "object") {
-    const obj = raw as Record<string, unknown>;
-    for (const key of ["recording_url", "recordingUrl", "audio_url", "audioUrl", "url"]) {
-      const v = obj[key];
-      if (typeof v === "string" && v.trim()) return v.trim();
-    }
-  }
-  return rowRecording || null;
 }
 
 function QuestionNumberPopup({
@@ -801,7 +788,7 @@ function ResponseDetailsModal({
   row: SurveyResultRow | null;
 }) {
   const answers = row?.answers ?? [];
-  const rowRecording = row?.recording_url ?? null;
+  const rowRecording = row?.aws_call_recording_url ?? null;
   const durationSeconds = row?.recording_duration_seconds ?? null;
   const call = row?.call ?? null;
 
@@ -1334,12 +1321,7 @@ function ResultsInlineQaTable({
         headerClassName: "text-center",
         cellClassName: "min-w-55",
         cell: (row) => {
-          const rowRecording =
-            row.recording_url ||
-            row.answers
-              .map((a) => resolveAnswerRecordingUrl(a, null))
-              .find(Boolean) ||
-            null;
+          const rowRecording = row.aws_call_recording_url || null;
           return (
             <div className="flex items-center gap-2" data-row-ignore-click>
               {rowRecording ? (
@@ -1857,7 +1839,6 @@ function ResponseQaTable({
     <div className="space-y-2.5">
       {answers.length ? (
         answers.map((answer, index) => {
-          const recordingUrl = resolveAnswerRecordingUrl(answer, null);
           return (
             <div
               key={answer.questionId}
@@ -1883,12 +1864,6 @@ function ResponseQaTable({
                   <span className="inline-flex max-w-full rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-sm font-semibold text-primary">
                     {answer.answer?.trim() ? answer.answer : "---"}
                   </span>
-                  {recordingUrl ? (
-                    <InlineRecordingPlayer
-                      src={recordingUrl}
-                      durationSeconds={recordingDurationSeconds}
-                    />
-                  ) : null}
                 </div>
               </div>
             </div>
@@ -1932,7 +1907,6 @@ function ResponseQaTable({
 
           {answers.length ? (
             answers.map((answer, index) => {
-              const recordingUrl = resolveAnswerRecordingUrl(answer, null);
               return (
                 <tr
                   key={answer.questionId}
@@ -1955,12 +1929,6 @@ function ResponseQaTable({
                       <span className="inline-flex rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-sm font-semibold text-primary">
                         {answer.answer?.trim() ? answer.answer : "---"}
                       </span>
-                      {recordingUrl ? (
-                        <InlineRecordingPlayer
-                          src={recordingUrl}
-                          durationSeconds={recordingDurationSeconds}
-                        />
-                      ) : null}
                     </div>
                   </td>
                 </tr>
@@ -2135,7 +2103,7 @@ export function SurveyResponseDetailView({
               </header>
 
               <div className="space-y-5 px-5 py-4 sm:px-6">
-                {result.recording_url ? (
+                {result.aws_call_recording_url ? (
                   <section className="flex flex-wrap items-center gap-2.5 rounded-[8px] border border-border/50 bg-muted/15 px-3 py-2">
                     <div className="flex shrink-0 items-center gap-2">
                       <span className="flex size-7 items-center justify-center rounded-[6px] border border-primary/20 bg-primary/10 text-primary">
@@ -2147,7 +2115,7 @@ export function SurveyResponseDetailView({
                     </div>
                     <div className="w-full max-w-[280px] sm:w-[280px]">
                       <InlineRecordingPlayer
-                        src={result.recording_url}
+                        src={result.aws_call_recording_url}
                         durationSeconds={
                           result.recording_duration_seconds ?? null
                         }

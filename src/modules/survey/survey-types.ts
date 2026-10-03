@@ -16,8 +16,6 @@ export interface SurveyResultAnswer {
   type: string;
   answer: string;
   rawAnswer: unknown;
-  /** Present only when this answer has its own recording */
-  recording_url?: string | null;
 }
 
 export interface SurveyResultTranscription {
@@ -56,8 +54,7 @@ export interface SurveyResultRow {
   extracted_data?: Record<string, unknown>;
   answers: SurveyResultAnswer[];
   survey_id: string;
-  /** Resolved once at root (not repeated inside `call`) */
-  recording_url?: string | null;
+  aws_call_recording_url?: string | null;
   recording_duration_seconds?: number | null;
   call?: SurveyResultCallData | null;
   /** True when this response has chat turns (list + detail) */
