@@ -1,18 +1,24 @@
 "use client";
 
 import {
+  Bar,
+  CartesianGrid,
   Cell,
+  ComposedChart,
+  Legend,
+  Line,
   Pie,
   PieChart,
   ResponsiveContainer,
   Tooltip,
+  XAxis,
+  YAxis,
 } from "recharts";
 import {
   CheckCircle2,
   CircleDashed,
   Clock3,
   Headset,
-  Info,
   PhoneMissed,
   PhoneOff,
   type LucideIcon,
@@ -146,29 +152,161 @@ function DonutTooltip({
   );
 }
 
-function HangupDetailInfo({ detail }: { detail: string }) {
-  const text = detail.trim();
-  if (!text) return null;
+const CHART_FONT = {
+  fontSize: 11,
+  fontFamily: "inherit",
+  fill: "#64748b",
+} as const;
+
+function causeAxisLines(name: string): [string, string] {
+  const words = name.trim().split(/\s+/).filter(Boolean);
+  const lines: string[] = [];
+  let current = "";
+  for (const word of words) {
+    const piece = word.length > 12 ? `${word.slice(0, 10)}…` : word;
+    const next = current ? `${current} ${piece}` : piece;
+    if (next.length > 12 && current) {
+      lines.push(current);
+      current = piece;
+      if (lines.length === 2) break;
+    } else {
+      current = next;
+    }
+  }
+  if (lines.length < 2 && current) lines.push(current);
+  const shown = lines.join(" ");
+  if (words.join(" ").length > shown.length && lines[0]) {
+    const last = lines.length === 1 ? 0 : 1;
+    const base = (lines[last] ?? "").replace(/…$/, "");
+    lines[last] = `${base.slice(0, 10)}…`;
+  }
+  return [lines[0] ?? "", lines[1] ?? ""];
+}
+
+function HangupAxisTick({
+  x = 0,
+  y = 0,
+  payload,
+}: {
+  x?: number;
+  y?: number;
+  payload?: { value?: string };
+}) {
+  const [first, second] = String(payload?.value ?? "").split("\n");
   return (
-    <UiTooltip delayDuration={150}>
-      <TooltipTrigger asChild>
-        <button
-          type="button"
-          className="inline-flex size-4 shrink-0 items-center justify-center rounded-full border border-primary/20 bg-primary/10 text-primary hover:bg-primary/15"
-          aria-label="Hangup cause detail"
-          onPointerDown={(event) => event.stopPropagation()}
+    <g transform={`translate(${x},${y})`}>
+      <text textAnchor="middle" fill="#64748b" fontSize={10} fontFamily="inherit">
+        <tspan x={0} dy={12}>
+          {first}
+        </tspan>
+        {second ? (
+          <tspan x={0} dy={12}>
+            {second}
+          </tspan>
+        ) : null}
+      </text>
+    </g>
+  );
+}
+
+function HangupMixedTooltip({
+  active,
+  payload,
+}: {
+  active?: boolean;
+  payload?: Array<{ payload?: ReportPieSlice & { label?: string } }>;
+}) {
+  if (!active || !payload?.length) return null;
+  const row = payload[0]?.payload;
+  if (!row) return null;
+  return (
+    <div className="pointer-events-none z-[80] w-max max-w-[260px] whitespace-normal rounded-[6px] border border-border/60 bg-popover px-3 py-2 font-sans shadow-elevated">
+      <p className="text-xs font-semibold leading-snug text-foreground">{row.name}</p>
+      <p className="mt-0.5 text-xs tabular-nums leading-tight text-muted-foreground">
+        {row.count ?? 0} calls · {row.value}%
+      </p>
+      {row.detail ? (
+        <p className="mt-1 text-[11px] leading-snug text-muted-foreground">{row.detail}</p>
+      ) : null}
+    </div>
+  );
+}
+
+function HangupMixedChart({
+  rows,
+}: {
+  rows: Array<ReportPieSlice & { label: string }>;
+}) {
+  const mounted = useMounted();
+  if (!mounted) return <div className="h-full w-full" />;
+  return (
+    <div className="h-full w-full min-w-0 font-sans text-[11px] text-muted-foreground [&_.recharts-legend-item-text]:!text-foreground [&_.recharts-legend-item-text]:![font-family:inherit] [&_.recharts-cartesian-axis-tick_text]:![font-family:inherit]">
+      <ResponsiveContainer width="100%" height="100%">
+        <ComposedChart
+          data={rows}
+          margin={{ top: 12, right: 8, left: 0, bottom: 4 }}
+          style={{ fontFamily: "inherit" }}
         >
-          <Info className="size-2.5" />
-        </button>
-      </TooltipTrigger>
-      <TooltipContent
-        side="top"
-        collisionPadding={12}
-        className="z-[90] max-w-sm whitespace-normal px-3 py-2 text-left text-xs leading-relaxed"
-      >
-        {text}
-      </TooltipContent>
-    </UiTooltip>
+          <CartesianGrid vertical={false} stroke="#e7edf6" />
+          <XAxis
+            dataKey="label"
+            interval={0}
+            tick={<HangupAxisTick />}
+            tickLine={false}
+            axisLine={{ stroke: "#e2e8f0" }}
+            height={36}
+          />
+          <YAxis
+            yAxisId="calls"
+            tick={CHART_FONT}
+            tickLine={false}
+            axisLine={false}
+            width={36}
+            allowDecimals={false}
+          />
+          <YAxis
+            yAxisId="share"
+            orientation="right"
+            tick={CHART_FONT}
+            tickLine={false}
+            axisLine={false}
+            width={36}
+            tickFormatter={(value) => `${value}%`}
+          />
+          <Tooltip
+            content={<HangupMixedTooltip />}
+            cursor={{ fill: "rgba(44,59,89,0.04)" }}
+            wrapperStyle={{ outline: "none", zIndex: 80, pointerEvents: "none" }}
+          />
+          <Legend
+            verticalAlign="top"
+            align="center"
+            wrapperStyle={{ fontFamily: "inherit", fontSize: 11, paddingBottom: 8 }}
+          />
+          <Bar
+            yAxisId="calls"
+            dataKey="count"
+            name="Calls"
+            radius={[4, 4, 0, 0]}
+            maxBarSize={36}
+          >
+            {rows.map((entry) => (
+              <Cell key={entry.name} fill={entry.fill} />
+            ))}
+          </Bar>
+          <Line
+            yAxisId="share"
+            type="monotone"
+            dataKey="value"
+            name="Share %"
+            stroke="#60a5fa"
+            strokeWidth={2}
+            dot={{ r: 3, fill: "#60a5fa", strokeWidth: 0 }}
+            activeDot={{ r: 4 }}
+          />
+        </ComposedChart>
+      </ResponsiveContainer>
+    </div>
   );
 }
 
@@ -417,7 +555,12 @@ export function ReportDashboardDonut({
         compact
         className="h-full w-full shadow-[0_4px_18px_rgba(44,59,89,0.05)]"
       >
-        <div className="@container/donut flex h-[232px] w-full min-w-0 flex-col justify-center overflow-y-auto">
+        <div
+          className={cn(
+            "@container/donut flex w-full min-w-0 flex-col justify-center overflow-y-auto",
+            variant === "reason" ? "h-[400px]" : "h-[232px]"
+          )}
+        >
           {variant === "survey" ? (
             <>
               {/* Wide card: left | donut | right */}
@@ -570,123 +713,16 @@ export function ReportDashboardDonut({
               </div>
             </>
           ) : (
-            <div className="flex h-full w-full min-w-0 items-center gap-3">
-              <div className="relative size-[104px] shrink-0">
-                {mounted && (
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart margin={{ top: 2, right: 2, bottom: 2, left: 2 }}>
-                      <Pie
-                        data={styled}
-                        cx="50%"
-                        cy="50%"
-                        innerRadius={32}
-                        outerRadius={46}
-                        paddingAngle={2}
-                        dataKey="value"
-                        strokeWidth={2}
-                        stroke="var(--card)"
-                        cornerRadius={4}
-                        isAnimationActive
-                        animationDuration={800}
-                      >
-                        {styled.map((entry) => (
-                          <Cell
-                            key={entry.name}
-                            fill={entry.fill}
-                            stroke="var(--card)"
-                            strokeWidth={2}
-                          />
-                        ))}
-                      </Pie>
-                      <Tooltip
-                        content={<DonutTooltip />}
-                        cursor={false}
-                        wrapperStyle={{
-                          outline: "none",
-                          zIndex: 80,
-                          overflow: "visible",
-                          pointerEvents: "none",
-                        }}
-                        allowEscapeViewBox={{ x: true, y: true }}
-                        offset={16}
-                      />
-                    </PieChart>
-                  </ResponsiveContainer>
-                )}
-                <div className="pointer-events-none absolute inset-0 z-[1] flex flex-col items-center justify-center">
-                  <p
-                    className="font-sans text-[15px] font-semibold tabular-nums leading-none"
-                    style={{ color: centerFill }}
-                  >
-                    {centerPct}%
-                  </p>
-                  <p className="mt-0.5 text-[8px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
-                    Top
-                  </p>
-                </div>
-              </div>
-              <div className="flex h-full min-h-0 min-w-0 flex-1 flex-col gap-0.5 overflow-y-auto overscroll-contain pr-0.5">
-                {styled.map((item) => (
-                  <div
-                    key={item.name}
-                    className={cn(
-                      "grid grid-cols-[minmax(0,1fr)_2.6rem] items-center gap-2 rounded-[6px] px-1.5 py-1",
-                      item.name === centerSlice?.name && "bg-muted/45"
-                    )}
-                  >
-                    <div className="min-w-0">
-                      <div className="flex min-w-0 items-center gap-1">
-                        <UiTooltip delayDuration={250}>
-                          <TooltipTrigger asChild>
-                            <div className="flex min-w-0 items-center gap-1.5">
-                              <span
-                                className="size-1.5 shrink-0 rounded-full"
-                                style={{ backgroundColor: item.fill }}
-                              />
-                              <span className="min-w-0 truncate text-[11px] font-medium leading-tight text-foreground">
-                                {item.name}
-                              </span>
-                            </div>
-                          </TooltipTrigger>
-                          <TooltipContent
-                            side="top"
-                            collisionPadding={12}
-                            className="z-[90] max-w-[260px] space-y-0.5 px-3 py-2"
-                          >
-                            <p className="text-xs font-semibold text-popover-foreground">
-                              {item.name}
-                            </p>
-                            <p className="text-[11px] tabular-nums text-muted-foreground">
-                              {item.count ?? 0} calls · {item.value}%
-                            </p>
-                          </TooltipContent>
-                        </UiTooltip>
-                        {item.detail ? (
-                          <HangupDetailInfo detail={item.detail} />
-                        ) : null}
-                      </div>
-                      <div className="mt-1 ml-3 h-[3px] overflow-hidden rounded-full bg-muted/70">
-                        <div
-                          className="h-full rounded-full"
-                          style={{
-                            width: `${Math.min(100, Math.max(item.value, item.value > 0 ? 2 : 0))}%`,
-                            backgroundColor: item.fill,
-                          }}
-                        />
-                      </div>
-                    </div>
-                    <div className="text-right tabular-nums">
-                      <p className="text-[11px] font-semibold leading-none text-foreground">
-                        {item.count ?? 0}
-                      </p>
-                      <p className="mt-0.5 text-[9px] leading-none text-muted-foreground">
-                        {item.value}%
-                      </p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
+            <HangupMixedChart
+              rows={styled
+                .slice()
+                .sort((a, b) => (b.count ?? 0) - (a.count ?? 0))
+                .map((item) => ({
+                  ...item,
+                  label: causeAxisLines(item.name).filter(Boolean).join("\n"),
+                  count: item.count ?? 0,
+                }))}
+            />
           )}
         </div>
       </AnalyticsCard>
