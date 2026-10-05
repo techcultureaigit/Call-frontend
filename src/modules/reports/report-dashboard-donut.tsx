@@ -2,11 +2,10 @@
 
 import {
   Bar,
+  BarChart,
   CartesianGrid,
   Cell,
-  ComposedChart,
   Legend,
-  Line,
   Pie,
   PieChart,
   ResponsiveContainer,
@@ -242,7 +241,7 @@ function HangupMixedChart({
   return (
     <div className="h-full w-full min-w-0 font-sans text-[11px] text-muted-foreground [&_.recharts-legend-item-text]:!text-foreground [&_.recharts-legend-item-text]:![font-family:inherit] [&_.recharts-cartesian-axis-tick_text]:![font-family:inherit]">
       <ResponsiveContainer width="100%" height="100%">
-        <ComposedChart
+        <BarChart
           data={rows}
           margin={{ top: 12, right: 8, left: 0, bottom: 4 }}
           style={{ fontFamily: "inherit" }}
@@ -257,21 +256,11 @@ function HangupMixedChart({
             height={36}
           />
           <YAxis
-            yAxisId="calls"
             tick={CHART_FONT}
             tickLine={false}
             axisLine={false}
             width={36}
             allowDecimals={false}
-          />
-          <YAxis
-            yAxisId="share"
-            orientation="right"
-            tick={CHART_FONT}
-            tickLine={false}
-            axisLine={false}
-            width={36}
-            tickFormatter={(value) => `${value}%`}
           />
           <Tooltip
             content={<HangupMixedTooltip />}
@@ -283,28 +272,12 @@ function HangupMixedChart({
             align="center"
             wrapperStyle={{ fontFamily: "inherit", fontSize: 11, paddingBottom: 8 }}
           />
-          <Bar
-            yAxisId="calls"
-            dataKey="count"
-            name="Calls"
-            radius={[4, 4, 0, 0]}
-            maxBarSize={36}
-          >
+          <Bar dataKey="count" name="Calls" radius={[4, 4, 0, 0]} maxBarSize={36}>
             {rows.map((entry) => (
               <Cell key={entry.name} fill={entry.fill} />
             ))}
           </Bar>
-          <Line
-            yAxisId="share"
-            type="monotone"
-            dataKey="value"
-            name="Share %"
-            stroke="#60a5fa"
-            strokeWidth={2}
-            dot={{ r: 3, fill: "#60a5fa", strokeWidth: 0 }}
-            activeDot={{ r: 4 }}
-          />
-        </ComposedChart>
+        </BarChart>
       </ResponsiveContainer>
     </div>
   );

@@ -719,12 +719,7 @@ function drawHangupBars(doc: PdfDoc, y: number, slices: ChartSlice[], totalLabel
     .sort((a, b) => b.count - a.count);
   if (!rows.length) return y;
 
-  const shares = rows.map((slice) => {
-    const parsed = Number(String(slice.share).replace("%", ""));
-    return Number.isFinite(parsed) ? parsed : 0;
-  });
   const maxCount = Math.max(...rows.map((slice) => slice.count), 1);
-  const maxShare = Math.max(...shares, 1);
   const plotH = 62;
   const labelH = 12;
   const headerH = 16;
@@ -742,24 +737,15 @@ function drawHangupBars(doc: PdfDoc, y: number, slices: ChartSlice[], totalLabel
   paint(doc, totalLabel, 8, MUTED);
   doc.text(totalLabel, pw(doc) - MARGIN - 4, y + 6, { align: "right" });
 
-  const lineBlue: Rgb = [96, 165, 250];
   const legendY = y + 12.2;
   doc.setFillColor(...hexRgb(rows[0]?.fill || "#93c5fd"));
-  doc.roundedRect(MARGIN + cardW / 2 - 24, legendY - 2, 3.6, 2.2, 0.3, 0.3, "F");
+  doc.roundedRect(MARGIN + cardW / 2 - 10, legendY - 2, 3.6, 2.2, 0.3, 0.3, "F");
   paint(doc, "Calls", 8, INK);
-  doc.text("Calls", MARGIN + cardW / 2 - 19, legendY);
-  doc.setDrawColor(...lineBlue);
-  doc.setLineWidth(0.55);
-  doc.line(MARGIN + cardW / 2 + 4, legendY - 0.8, MARGIN + cardW / 2 + 10, legendY - 0.8);
-  doc.setFillColor(...lineBlue);
-  doc.circle(MARGIN + cardW / 2 + 7, legendY - 0.8, 0.7, "F");
-  paint(doc, "Share %", 8, INK);
-  doc.text("Share %", MARGIN + cardW / 2 + 12, legendY);
+  doc.text("Calls", MARGIN + cardW / 2 - 5, legendY);
 
-  const plotLeft = MARGIN + 16;
-  const plotRight = MARGIN + cardW - 14;
-  const plotTop = y + headerH + 2;
-  const plotBottom = plotTop + plotH;
+  const plotLeft = MARGIN + 14;
+  const plotRight = MARGIN + cardW - 8;
+  const plotBottom = y + headerH + 2 + plotH;
   const plotW = plotRight - plotLeft;
   const slot = plotW / rows.length;
 
@@ -769,16 +755,11 @@ function drawHangupBars(doc: PdfDoc, y: number, slices: ChartSlice[], totalLabel
     const gy = plotBottom - (plotH * tick) / 4;
     doc.line(plotLeft, gy, plotRight, gy);
     const countLabel = String(Math.round((maxCount * tick) / 4));
-    const shareLabel = `${Math.round((maxShare * tick) / 4)}%`;
     paint(doc, countLabel, 7.5, MUTED);
     doc.text(countLabel, plotLeft - 1.4, gy + 0.9, { align: "right" });
-    paint(doc, shareLabel, 7.5, MUTED);
-    doc.text(shareLabel, plotRight + 1.4, gy + 0.9);
   }
 
-  const points: { x: number; y: number }[] = [];
   rows.forEach((slice, index) => {
-    const share = shares[index] ?? 0;
     const cx = plotLeft + slot * index + slot / 2;
     const barW = Math.min(7.2, slot * 0.5);
     const barH = (plotH * slice.count) / maxCount;
@@ -792,29 +773,12 @@ function drawHangupBars(doc: PdfDoc, y: number, slices: ChartSlice[], totalLabel
       0.5,
       "F"
     );
-    points.push({
-      x: cx,
-      y: plotBottom - (plotH * share) / maxShare,
-    });
 
     const lines = causePdfLines(slice.name).filter(Boolean);
     lines.forEach((line, lineIndex) => {
       paint(doc, line, 6.5, MUTED);
       doc.text(line, cx, plotBottom + 3.4 + lineIndex * 2.8, { align: "center" });
     });
-  });
-
-  doc.setDrawColor(...lineBlue);
-  doc.setLineWidth(0.55);
-  for (let i = 0; i < points.length - 1; i += 1) {
-    const from = points[i];
-    const to = points[i + 1];
-    if (!from || !to) continue;
-    doc.line(from.x, from.y, to.x, to.y);
-  }
-  doc.setFillColor(...lineBlue);
-  points.forEach((point) => {
-    doc.circle(point.x, point.y, 0.8, "F");
   });
 
   doc.setLineWidth(0.3);
