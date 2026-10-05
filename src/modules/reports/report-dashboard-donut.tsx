@@ -12,6 +12,7 @@ import {
   CircleDashed,
   Clock3,
   Headset,
+  Info,
   PhoneMissed,
   PhoneOff,
   type LucideIcon,
@@ -136,8 +137,38 @@ function DonutTooltip({
         <p className="mt-1 text-[10px] leading-snug text-muted-foreground">
           {STATUS_HINT[name]}
         </p>
+      ) : row?.detail ? (
+        <p className="mt-1 text-[10px] leading-snug text-muted-foreground">
+          {row.detail}
+        </p>
       ) : null}
     </div>
+  );
+}
+
+function HangupDetailInfo({ detail }: { detail: string }) {
+  const text = detail.trim();
+  if (!text) return null;
+  return (
+    <UiTooltip delayDuration={150}>
+      <TooltipTrigger asChild>
+        <button
+          type="button"
+          className="inline-flex size-4 shrink-0 items-center justify-center rounded-full border border-primary/20 bg-primary/10 text-primary hover:bg-primary/15"
+          aria-label="Hangup cause detail"
+          onPointerDown={(event) => event.stopPropagation()}
+        >
+          <Info className="size-2.5" />
+        </button>
+      </TooltipTrigger>
+      <TooltipContent
+        side="top"
+        collisionPadding={12}
+        className="z-[90] max-w-sm whitespace-normal px-3 py-2 text-left text-xs leading-relaxed"
+      >
+        {text}
+      </TooltipContent>
+    </UiTooltip>
   );
 }
 
@@ -596,57 +627,63 @@ export function ReportDashboardDonut({
               </div>
               <div className="flex h-full min-h-0 min-w-0 flex-1 flex-col gap-0.5 overflow-y-auto overscroll-contain pr-0.5">
                 {styled.map((item) => (
-                  <UiTooltip key={item.name} delayDuration={250}>
-                    <TooltipTrigger asChild>
-                      <div
-                        className={cn(
-                          "grid grid-cols-[minmax(0,1fr)_2.6rem] items-center gap-2 rounded-[6px] px-1.5 py-1",
-                          item.name === centerSlice?.name && "bg-muted/45"
-                        )}
-                      >
-                        <div className="min-w-0">
-                          <div className="flex min-w-0 items-center gap-1.5">
-                            <span
-                              className="size-1.5 shrink-0 rounded-full"
-                              style={{ backgroundColor: item.fill }}
-                            />
-                            <span className="truncate text-[11px] font-medium leading-tight text-foreground">
+                  <div
+                    key={item.name}
+                    className={cn(
+                      "grid grid-cols-[minmax(0,1fr)_2.6rem] items-center gap-2 rounded-[6px] px-1.5 py-1",
+                      item.name === centerSlice?.name && "bg-muted/45"
+                    )}
+                  >
+                    <div className="min-w-0">
+                      <div className="flex min-w-0 items-center gap-1">
+                        <UiTooltip delayDuration={250}>
+                          <TooltipTrigger asChild>
+                            <div className="flex min-w-0 items-center gap-1.5">
+                              <span
+                                className="size-1.5 shrink-0 rounded-full"
+                                style={{ backgroundColor: item.fill }}
+                              />
+                              <span className="min-w-0 truncate text-[11px] font-medium leading-tight text-foreground">
+                                {item.name}
+                              </span>
+                            </div>
+                          </TooltipTrigger>
+                          <TooltipContent
+                            side="top"
+                            collisionPadding={12}
+                            className="z-[90] max-w-[260px] space-y-0.5 px-3 py-2"
+                          >
+                            <p className="text-xs font-semibold text-popover-foreground">
                               {item.name}
-                            </span>
-                          </div>
-                          <div className="mt-1 ml-3 h-[3px] overflow-hidden rounded-full bg-muted/70">
-                            <div
-                              className="h-full rounded-full"
-                              style={{
-                                width: `${Math.min(100, Math.max(item.value, item.value > 0 ? 2 : 0))}%`,
-                                backgroundColor: item.fill,
-                              }}
-                            />
-                          </div>
-                        </div>
-                        <div className="text-right tabular-nums">
-                          <p className="text-[11px] font-semibold leading-none text-foreground">
-                            {item.count ?? 0}
-                          </p>
-                          <p className="mt-0.5 text-[9px] leading-none text-muted-foreground">
-                            {item.value}%
-                          </p>
-                        </div>
+                            </p>
+                            <p className="text-[11px] tabular-nums text-muted-foreground">
+                              {item.count ?? 0} calls · {item.value}%
+                            </p>
+                          </TooltipContent>
+                        </UiTooltip>
+                        {item.detail ? (
+                          <HangupDetailInfo detail={item.detail} />
+                        ) : null}
                       </div>
-                    </TooltipTrigger>
-                    <TooltipContent
-                      side="top"
-                      collisionPadding={12}
-                      className="z-[90] max-w-[260px] space-y-0.5 px-3 py-2"
-                    >
-                      <p className="text-xs font-semibold text-popover-foreground">
-                        {item.name}
+                      <div className="mt-1 ml-3 h-[3px] overflow-hidden rounded-full bg-muted/70">
+                        <div
+                          className="h-full rounded-full"
+                          style={{
+                            width: `${Math.min(100, Math.max(item.value, item.value > 0 ? 2 : 0))}%`,
+                            backgroundColor: item.fill,
+                          }}
+                        />
+                      </div>
+                    </div>
+                    <div className="text-right tabular-nums">
+                      <p className="text-[11px] font-semibold leading-none text-foreground">
+                        {item.count ?? 0}
                       </p>
-                      <p className="text-[11px] tabular-nums text-muted-foreground">
-                        {item.count ?? 0} calls · {item.value}%
+                      <p className="mt-0.5 text-[9px] leading-none text-muted-foreground">
+                        {item.value}%
                       </p>
-                    </TooltipContent>
-                  </UiTooltip>
+                    </div>
+                  </div>
                 ))}
               </div>
             </div>

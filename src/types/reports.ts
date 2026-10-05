@@ -16,6 +16,8 @@ export interface ReportPieSlice {
   value: number;
   count?: number;
   fill?: string;
+  /** Longer hangup explanation shown from the chart info button. */
+  detail?: string;
 }
 
 export interface AnalyticsCallCounts {
