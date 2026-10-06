@@ -713,6 +713,54 @@ function causePdfLines(name: string): [string, string] {
   return [lines[0] ?? "", lines[1] ?? ""];
 }
 
+function digitCount(value: number) {
+  if (value === 0) return 1;
+  return Math.floor(Math.log10(Math.abs(value)) + 1e-12) + 1;
+}
+
+function formatAxisStep(
+  roughStep: number,
+  allowDecimals: boolean,
+  correctionFactor: number
+) {
+  if (roughStep <= 0) return 0;
+  const digits = digitCount(roughStep);
+  const magnitude = 10 ** digits;
+  const ratio = roughStep / magnitude;
+  const scale = digits !== 1 ? 0.05 : 0.1;
+  const amended =
+    (Math.ceil(ratio / scale - 1e-12) + correctionFactor) * scale;
+  const step = amended * magnitude;
+  return allowDecimals ? step : Math.ceil(step - 1e-12);
+}
+
+/**
+ * Y-axis ticks for the hangup chart. Matches the website Recharts axis:
+ * domain starts at 0, five ticks, integers only (getNiceTickValues).
+ */
+function hangupAxisTicks(maxCount: number, tickCount = 5) {
+  const count = Math.max(tickCount, 2);
+  const hi = Math.max(0, maxCount);
+  if (hi === 0) return [0, 1, 2, 3, 4].slice(0, count);
+
+  const stepFor = (correction: number): number[] => {
+    const step = formatAxisStep(hi / (count - 1), false, correction);
+    if (!step) return [0, hi];
+    let up = Math.ceil(hi / step - 1e-12);
+    const scaleCount = up + 1;
+    if (scaleCount > count) return stepFor(correction + 1);
+    if (scaleCount < count) up += count - scaleCount;
+    const axisMax = up * step;
+    const ticks: number[] = [];
+    for (let value = 0; value <= axisMax + 1e-9; value += step) {
+      ticks.push(Math.abs(value) < 1e-9 ? 0 : Math.round(value));
+    }
+    return ticks;
+  };
+
+  return stepFor(0);
+}
+
 function drawHangupBars(doc: PdfDoc, y: number, slices: ChartSlice[], totalLabel: string) {
   const rows = [...slices]
     .filter((slice) => slice.count > 0)
@@ -720,6 +768,8 @@ function drawHangupBars(doc: PdfDoc, y: number, slices: ChartSlice[], totalLabel
   if (!rows.length) return y;
 
   const maxCount = Math.max(...rows.map((slice) => slice.count), 1);
+  const ticks = hangupAxisTicks(maxCount);
+  const axisMax = ticks[ticks.length - 1] || maxCount;
   const plotH = 62;
   const labelH = 12;
   const headerH = 16;
@@ -751,10 +801,10 @@ function drawHangupBars(doc: PdfDoc, y: number, slices: ChartSlice[], totalLabel
 
   doc.setDrawColor(231, 237, 246);
   doc.setLineWidth(0.2);
-  for (let tick = 0; tick <= 4; tick += 1) {
-    const gy = plotBottom - (plotH * tick) / 4;
+  for (const tick of ticks) {
+    const gy = plotBottom - (plotH * tick) / axisMax;
     doc.line(plotLeft, gy, plotRight, gy);
-    const countLabel = String(Math.round((maxCount * tick) / 4));
+    const countLabel = String(tick);
     paint(doc, countLabel, 7.5, MUTED);
     doc.text(countLabel, plotLeft - 1.4, gy + 0.9, { align: "right" });
   }
@@ -762,7 +812,7 @@ function drawHangupBars(doc: PdfDoc, y: number, slices: ChartSlice[], totalLabel
   rows.forEach((slice, index) => {
     const cx = plotLeft + slot * index + slot / 2;
     const barW = Math.min(7.2, slot * 0.5);
-    const barH = (plotH * slice.count) / maxCount;
+    const barH = (plotH * slice.count) / axisMax;
     doc.setFillColor(...hexRgb(slice.fill));
     doc.roundedRect(
       cx - barW / 2,
