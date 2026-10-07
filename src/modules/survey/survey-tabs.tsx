@@ -1240,7 +1240,8 @@ function readThenShowDrafts(row: Record<string, unknown>): ThenShowDraft[] {
           `sq-${Date.now()}-${index}-${Math.random().toString(36).slice(2, 7)}`,
         type: String(q.type || "text").trim() || "text",
         question: String(q.question || "").trim(),
-        instruction: String(q.instruction || "").trim(),
+        // Keep raw instruction so Enter/newlines are not stripped while typing
+        instruction: String(q.instruction || ""),
         optionsPipe: optionsToPipe(q.options),
       };
     });
@@ -1256,7 +1257,7 @@ function readThenShowDrafts(row: Record<string, unknown>): ThenShowDraft[] {
       id: createSurveyQuestionId(),
       type: String(row.thenShowType || "text").trim() || "text",
       question: legacyQuestion,
-      instruction: String(row.thenShowInstruction || "").trim(),
+      instruction: String(row.thenShowInstruction || ""),
       optionsPipe: optionsToPipe(
         row.thenShowOptions as SurveyQuestionOption[] | undefined
       ),
@@ -1652,7 +1653,6 @@ function ConditionsEditor({
                   }
                   onBlur={onPersistCurrent}
                   rows={2}
-                  maxLength={500}
                   className="w-full rounded-[6px] border border-input bg-transparent px-3 py-2 text-sm shadow-subtle focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                   placeholder={thenTypeHint.placeholder}
                 />
@@ -1670,13 +1670,6 @@ function ConditionsEditor({
       ) : null}
     </div>
   );
-}
-
-function getQuestionInstruction(q: SurveyQuestion): string {
-  if (typeof q.instruction === "string" && q.instruction.trim()) {
-    return q.instruction.trim();
-  }
-  return "";
 }
 
 function normalizeQuestionKey(text: string): string {
@@ -2239,7 +2232,9 @@ export function SurveyQuestionsTab({
                 options.length > 0
                   ? options.map((opt) => String(opt?.label ?? "")).join("|")
                   : "";
-              const instruction = getQuestionInstruction(q);
+              // Raw value — do not trim while editing (trim eats Enter/newlines)
+              const instruction =
+                typeof q.instruction === "string" ? q.instruction : "";
               const conditions = readConditions(q);
               const logicOn = conditions.length > 0;
               const typeHint = getSurveyQuestionTypeHint(questionTypeValue);
@@ -2340,7 +2335,6 @@ export function SurveyQuestionsTab({
                           }
                           onBlur={persistCurrent}
                           rows={2}
-                          maxLength={500}
                           className="w-full rounded-[6px] border border-input bg-transparent px-3 py-2 text-sm shadow-subtle focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                           placeholder={typeHint.placeholder}
                         />
