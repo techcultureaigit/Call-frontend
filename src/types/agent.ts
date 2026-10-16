@@ -65,6 +65,8 @@ export interface AgentPersonaConfig {
   language: string;
   audioCacheEnabled: boolean;
   callBargeInEnabled: boolean;
+  use_realtime_model?: boolean;
+  realtime?: AgentStackConfig;
   maxCallDurationMinutes: number;
   analyticsEnabled: boolean;
   aiComprehendEnabled: boolean;
@@ -233,6 +235,8 @@ export type AgentSchedulingStatus =
 export interface Agent extends Timestamps {
   id: ID;
   name: string;
+  use_realtime_model?: boolean;
+  realtime_model?: string;
   /** Replaces legacy status — draft by default; scheduled on schedule action */
   scheduling_status: AgentSchedulingStatus;
   language: string;

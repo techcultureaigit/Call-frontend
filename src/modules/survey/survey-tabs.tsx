@@ -42,6 +42,7 @@ import {
   selectedModelValue,
 } from "@/modules/providers/provider-options";
 import type { ProviderItem } from "@/modules/providers/provider-types";
+import { providerLabel } from "@/modules/providers/provider-types";
 import { cn } from "@/lib/utils";
 import {
   fetchClientContactsFromUrl,
@@ -50,7 +51,7 @@ import {
 import type { ClientContactRow } from "./survey-contacts";
 import { getContactFileOpenUrl } from "@/lib/utils/contact-file-url";
 import type { AgentPromptsConfig as SurveyPromptsConfig, AgentPersonaConfig as SurveyPersonaConfig, AgentStackConfig as SurveyStackConfig, AgentSurveyQuestion as SurveyQuestion, AgentSurveyQuestionOption as SurveyQuestionOption, AgentSurveyQuestionsConfig as SurveyQuestionsConfig, AgentClientContactConfig as SurveyClientContactConfig } from "@/types/agent";
-import { Users, BrainCircuit, ChevronDown, ChevronLeft, ChevronRight, GripVertical, HelpCircle, Mic, Pause, Phone, Play, Volume2, Download, ExternalLink, Plus, Trash2, Upload, X } from "lucide-react";
+import { Users, BrainCircuit, ChevronDown, ChevronLeft, ChevronRight, GripVertical, HelpCircle, Mic, Pause, Phone, Play, Volume2, Download, ExternalLink, Plus, Trash2, Upload, X, Sparkles } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { useEffect, useMemo, useState, useRef } from "react";
 import type { ReactNode } from "react";
@@ -441,7 +442,9 @@ function PipelineStage({
   onChange: (next: SurveyStackConfig) => void;
   extra?: ReactNode;
 }) {
-  const providerValue = stack.providerId || "";
+  const providerValue =
+    stack.providerId ||
+    (providerOptions.length === 1 ? providerOptions[0].value : "");
 
   return (
     <article className="flex flex-col overflow-hidden rounded-[6px] border border-border/60 bg-card shadow-card">
@@ -670,6 +673,58 @@ export function PersonaTab({
     };
   }, []);
 
+  const sttProviders = providersForType(providers, "stt");
+  const llmProviders = providersForType(providers, "llm");
+  const ttsProviders = providersForType(providers, "tts");
+
+  const googleProvider = useMemo(() => {
+    return (
+      providers.find(
+        (p) =>
+          p.type === "llm" &&
+          (p.name?.toLowerCase() === "google" ||
+            p.displayName?.toLowerCase() === "google" ||
+            p.provider?.toLowerCase() === "google") &&
+          p.isActive !== false &&
+          p.active !== false
+      ) ||
+      providers.find(
+        (p) =>
+          (p.name?.toLowerCase() === "google" ||
+            p.displayName?.toLowerCase() === "google" ||
+            p.provider?.toLowerCase() === "google") &&
+          p.isActive !== false &&
+          p.active !== false
+      )
+    );
+  }, [providers]);
+
+  const googleProviderId = googleProvider?.id || "google";
+  const liveModel = googleProvider?.models?.find(
+    (m) =>
+      m.name === "models/gemini-3.8-live" ||
+      m.id === "models/gemini-3.8-live" ||
+      m.name?.toLowerCase() === "gemini-3.8-live"
+  );
+  const googleModelId =
+    liveModel?.id || liveModel?.name || "models/gemini-3.8-live";
+
+  const realtimeProviders = useMemo(() => {
+    return [{ label: "Google", value: googleProviderId }];
+  }, [googleProviderId]);
+
+  const realtimeModels = useMemo(() => {
+    return [{ label: "models/gemini-3.8-live", value: googleModelId }];
+  }, [googleModelId]);
+
+  const sttProviderId = values.stt.providerId || "";
+  const llmProviderId = values.llm.providerId || "";
+  const ttsProviderId = values.tts.providerId || "";
+
+  const sttModels = modelsForProviderId(providers, sttProviderId);
+  const llmModels = modelsForProviderId(providers, llmProviderId);
+  const ttsModels = modelsForProviderId(providers, ttsProviderId);
+
   // Resolve legacy surveys → providerId + modelId once providers load
   useEffect(() => {
     if (!providers.length) return;
@@ -713,28 +768,33 @@ export function PersonaTab({
     const nextStt = patchStack("stt", values.stt);
     const nextLlm = patchStack("llm", values.llm);
     const nextTts = patchStack("tts", values.tts);
-    if (!nextStt && !nextLlm && !nextTts) return;
+    let nextRealtime: SurveyStackConfig | null = null;
+    if (values.use_realtime_model) {
+      if (
+        values.realtime?.provider !== "Google" ||
+        values.realtime?.model !== "models/gemini-3.8-live" ||
+        values.realtime?.providerId !== googleProviderId ||
+        values.realtime?.modelId !== googleModelId
+      ) {
+        nextRealtime = {
+          providerId: googleProviderId,
+          provider: "Google",
+          modelId: googleModelId,
+          model: "models/gemini-3.8-live",
+        };
+      }
+    }
+    if (!nextStt && !nextLlm && !nextTts && !nextRealtime) return;
 
     onChange({
       ...values,
       stt: nextStt ?? values.stt,
       llm: nextLlm ?? values.llm,
       tts: nextTts ?? values.tts,
+      realtime: nextRealtime ?? values.realtime,
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [providers]);
-
-  const sttProviders = providersForType(providers, "stt");
-  const llmProviders = providersForType(providers, "llm");
-  const ttsProviders = providersForType(providers, "tts");
-
-  const sttProviderId = values.stt.providerId || "";
-  const llmProviderId = values.llm.providerId || "";
-  const ttsProviderId = values.tts.providerId || "";
-
-  const sttModels = modelsForProviderId(providers, sttProviderId);
-  const llmModels = modelsForProviderId(providers, llmProviderId);
-  const ttsModels = modelsForProviderId(providers, ttsProviderId);
+  }, [providers, googleProviderId, googleModelId, values.use_realtime_model]);
 
   const language = values.language;
   const ttsProviderKey =
@@ -742,13 +802,24 @@ export function PersonaTab({
     (ttsProviderId ? providerNameById(providers, ttsProviderId) : "");
 
   const onStackChange = (
-    key: "stt" | "llm" | "tts",
+    key: "stt" | "llm" | "tts" | "realtime",
     next: SurveyStackConfig
   ) => {
+    if (key === "realtime") {
+      update("realtime", {
+        ...next,
+        providerId: googleProviderId,
+        provider: "Google",
+        modelId: googleModelId,
+        model: "models/gemini-3.8-live",
+      });
+      return;
+    }
     if (next.providerId) {
       const name = providerNameById(providers, next.providerId);
       const models = modelsForProviderId(providers, next.providerId, false);
-      const providerChanged = next.providerId !== values[key].providerId;
+      const currentStack = values[key] ?? { provider: "", model: "" };
+      const providerChanged = next.providerId !== currentStack.providerId;
       const modelId = providerChanged ? "" : next.modelId || "";
       const modelOpt = models.find((m) => m.value === modelId);
       update(key, {
@@ -766,6 +837,23 @@ export function PersonaTab({
       provider: "",
       model: "",
     });
+  };
+
+  const toggleRealtime = (enabled: boolean) => {
+    if (enabled) {
+      onChange({
+        ...values,
+        use_realtime_model: true,
+        realtime: {
+          providerId: googleProviderId,
+          provider: "Google",
+          modelId: googleModelId,
+          model: "models/gemini-3.8-live",
+        },
+      });
+      return;
+    }
+    update("use_realtime_model", false);
   };
 
   return (
@@ -876,6 +964,23 @@ export function PersonaTab({
               onCheckedChange={(v) => update("callBargeInEnabled", v)}
             />
           </div>
+          <div className="flex items-center justify-between gap-3 rounded-[6px] border border-border/50 bg-card px-3 py-2.5 shadow-card sm:col-span-2 lg:col-span-1">
+            <div className="min-w-0">
+              <div className="flex items-center gap-1.5">
+                <Sparkles className="size-3 text-brand" />
+                <p className="text-sm font-medium text-foreground">
+                  Realtime model
+                </p>
+              </div>
+              <p className="text-[11px] text-muted-foreground">
+                Single end-to-end realtime model
+              </p>
+            </div>
+            <Switch
+              checked={Boolean(values.use_realtime_model)}
+              onCheckedChange={toggleRealtime}
+            />
+          </div>
         </div>
       </section>
 
@@ -883,92 +988,134 @@ export function PersonaTab({
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <h3 className="text-sm font-semibold tracking-tight">
-              Speech pipeline
+              {values.use_realtime_model ? "Realtime model" : "Speech pipeline"}
             </h3>
             <p className="text-xs text-muted-foreground">
-              Primary providers and models for each stage.
+              {values.use_realtime_model
+                ? "Single end-to-end model for conversational speech."
+                : "Primary providers and models for each stage."}
             </p>
           </div>
-          <div className="hidden items-center gap-1.5 text-[11px] font-semibold text-muted-foreground md:flex">
-            <span className="rounded-full bg-brand/10 px-2 py-0.5 text-brand">
-              Listen
-            </span>
-            <span aria-hidden>→</span>
-            <span className="rounded-full bg-brand/10 px-2 py-0.5 text-brand">
-              Reason
-            </span>
-            <span aria-hidden>→</span>
-            <span className="rounded-full bg-brand/10 px-2 py-0.5 text-brand">
-              Speak
-            </span>
+          <div className="flex items-center gap-2.5">
+            <label className="flex cursor-pointer items-center gap-2 rounded-full border border-border/60 bg-card px-3 py-1 shadow-subtle transition-colors hover:border-brand/40">
+              <Sparkles className="size-3.5 text-brand" />
+              <span className="text-xs font-medium text-foreground">
+                Realtime model
+              </span>
+              <Switch
+                checked={Boolean(values.use_realtime_model)}
+                onCheckedChange={toggleRealtime}
+              />
+            </label>
+
+            {!values.use_realtime_model ? (
+              <div className="hidden items-center gap-1.5 text-[11px] font-semibold text-muted-foreground md:flex">
+                <span className="rounded-full bg-brand/10 px-2 py-0.5 text-brand">
+                  Listen
+                </span>
+                <span aria-hidden>→</span>
+                <span className="rounded-full bg-brand/10 px-2 py-0.5 text-brand">
+                  Reason
+                </span>
+                <span aria-hidden>→</span>
+                <span className="rounded-full bg-brand/10 px-2 py-0.5 text-brand">
+                  Speak
+                </span>
+              </div>
+            ) : (
+              <span className="hidden items-center gap-1 rounded-full bg-brand/10 px-2.5 py-0.5 text-[11px] font-semibold text-brand md:inline-flex">
+                End-to-End
+              </span>
+            )}
           </div>
         </div>
 
-        <div className="grid gap-4 xl:grid-cols-3">
-          <PipelineStage
-            step="01 · Listen"
-            title="Speech to text"
-            subtitle="Convert caller audio into text"
-            icon={Mic}
-            stack={values.stt}
-            providerOptions={withCurrentOption(
-              sttProviders,
-              sttProviderId,
-              values.stt.provider
-            )}
-            modelOptions={withCurrentOption(
-              sttModels,
-              values.stt.modelId,
-              values.stt.model
-            )}
-            onChange={(next) => onStackChange("stt", next)}
-          />
-          <PipelineStage
-            step="02 · Reason"
-            title="Language model"
-            subtitle="Decide what to say next"
-            icon={BrainCircuit}
-            stack={values.llm}
-            providerOptions={withCurrentOption(
-              llmProviders,
-              llmProviderId,
-              values.llm.provider
-            )}
-            modelOptions={withCurrentOption(
-              llmModels,
-              values.llm.modelId,
-              values.llm.model
-            )}
-            onChange={(next) => onStackChange("llm", next)}
-          />
-          <PipelineStage
-            step="03 · Speak"
-            title="Text to speech"
-            subtitle="Voice the survey’s reply"
-            icon={Volume2}
-            stack={values.tts}
-            providerOptions={withCurrentOption(
-              ttsProviders,
-              ttsProviderId,
-              values.tts.provider
-            )}
-            modelOptions={withCurrentOption(
-              ttsModels,
-              values.tts.modelId,
-              values.tts.model
-            )}
-            onChange={(next) => onStackChange("tts", next)}
-            extra={
-              <VoiceSelectField
-                value={values.tts.voiceName ?? ""}
-                speed={values.tts.tts_speed ?? DEFAULT_VOICE_SPEED}
-                voiceId={values.tts.voice}
-                previewUrl={values.tts.voicePreviewUrl}
-                onOpen={() => setVoicePickerOpen(true)}
-              />
-            }
-          />
-        </div>
+        {values.use_realtime_model ? (
+          <div className="grid gap-4 xl:grid-cols-3">
+            <PipelineStage
+              step="01 · Realtime"
+              title="Realtime model"
+              subtitle="End-to-end speech to speech model"
+              icon={Sparkles}
+              stack={{
+                ...values.realtime,
+                provider: "Google",
+                providerId: googleProviderId,
+                model: "models/gemini-3.8-live",
+                modelId: googleModelId,
+              }}
+              providerOptions={realtimeProviders}
+              modelOptions={realtimeModels}
+              onChange={(next) => onStackChange("realtime", next)}
+            />
+          </div>
+        ) : (
+          <div className="grid gap-4 xl:grid-cols-3">
+            <PipelineStage
+              step="01 · Listen"
+              title="Speech to text"
+              subtitle="Convert caller audio into text"
+              icon={Mic}
+              stack={values.stt}
+              providerOptions={withCurrentOption(
+                sttProviders,
+                sttProviderId,
+                values.stt.provider
+              )}
+              modelOptions={withCurrentOption(
+                sttModels,
+                values.stt.modelId,
+                values.stt.model
+              )}
+              onChange={(next) => onStackChange("stt", next)}
+            />
+            <PipelineStage
+              step="02 · Reason"
+              title="Language model"
+              subtitle="Decide what to say next"
+              icon={BrainCircuit}
+              stack={values.llm}
+              providerOptions={withCurrentOption(
+                llmProviders,
+                llmProviderId,
+                values.llm.provider
+              )}
+              modelOptions={withCurrentOption(
+                llmModels,
+                values.llm.modelId,
+                values.llm.model
+              )}
+              onChange={(next) => onStackChange("llm", next)}
+            />
+            <PipelineStage
+              step="03 · Speak"
+              title="Text to speech"
+              subtitle="Voice the survey’s reply"
+              icon={Volume2}
+              stack={values.tts}
+              providerOptions={withCurrentOption(
+                ttsProviders,
+                ttsProviderId,
+                values.tts.provider
+              )}
+              modelOptions={withCurrentOption(
+                ttsModels,
+                values.tts.modelId,
+                values.tts.model
+              )}
+              onChange={(next) => onStackChange("tts", next)}
+              extra={
+                <VoiceSelectField
+                  value={values.tts.voiceName ?? ""}
+                  speed={values.tts.tts_speed ?? DEFAULT_VOICE_SPEED}
+                  voiceId={values.tts.voice}
+                  previewUrl={values.tts.voicePreviewUrl}
+                  onOpen={() => setVoicePickerOpen(true)}
+                />
+              }
+            />
+          </div>
+        )}
       </section>
 
       <section className="space-y-4">

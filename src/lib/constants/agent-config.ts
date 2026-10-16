@@ -249,6 +249,11 @@ export const DEFAULT_AGENT_CONFIG: AgentConfig = {
     language: "hi",
     audioCacheEnabled: false,
     callBargeInEnabled: false,
+    use_realtime_model: false,
+    realtime: {
+      provider: "Google",
+      model: "models/gemini-3.8-live",
+    },
     maxCallDurationMinutes: 15,
     analyticsEnabled: true,
     aiComprehendEnabled: false,

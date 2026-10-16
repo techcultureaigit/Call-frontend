@@ -118,6 +118,18 @@ export function backendSurveyToAgent(s: BackendSurvey): Survey {
       ? String(rawVoice.previewUrl ?? "")
       : "";
 
+  const use_realtime_model = Boolean(
+    s.use_realtime_model ?? persona.use_realtime_model
+  );
+  const rawRealtime = persona.realtime ?? {};
+  const mappedRealtime = mapStack(rawRealtime);
+  if (!mappedRealtime.model && s.realtime_model) {
+    mappedRealtime.model = String(s.realtime_model);
+  }
+  if (!mappedRealtime.provider && s.realtime_provider) {
+    mappedRealtime.provider = String(s.realtime_provider);
+  }
+
   const config: SurveyConfig = {
     persona: {
       ...DEFAULT_SURVEY_CONFIG.persona,
@@ -126,6 +138,7 @@ export function backendSurveyToAgent(s: BackendSurvey): Survey {
       maxCallDurationMinutes: persona.maxCallDurationMinutes ?? 15,
       audioCacheEnabled: Boolean(persona.audioCacheEnabled),
       callBargeInEnabled: Boolean(persona.callBargeInEnabled),
+      use_realtime_model,
       stt: mapStack(persona.stt),
       llm: mapStack(persona.llm),
       tts: {
@@ -137,6 +150,7 @@ export function backendSurveyToAgent(s: BackendSurvey): Survey {
           persona.tts?.tts_speed ?? persona.tts?.speed
         ),
       },
+      realtime: mappedRealtime,
       noise_type: persona.noise_type || DEFAULT_SURVEY_CONFIG.persona.noise_type,
       volume: clampNoiseVolume(persona.volume),
     },
@@ -192,6 +206,8 @@ export function backendSurveyToAgent(s: BackendSurvey): Survey {
   return {
     id,
     name: s.name ?? "",
+    use_realtime_model,
+    realtime_model: s.realtime_model || mappedRealtime.model || "",
     scheduling_status,
     language: persona.language ?? "hi",
     modelMode: "pipeline",
@@ -224,14 +240,35 @@ export function agentToBackendPayload(
   } | null
 ) {
   const c = survey.config;
+  const isRealtime = Boolean(c.persona.use_realtime_model);
+  const realtimeModelName = isRealtime
+    ? (c.persona.realtime?.model || "models/gemini-3.8-live")
+    : (c.persona.realtime?.model || "");
+  const realtimeProviderName = isRealtime
+    ? (c.persona.realtime?.provider || "Google")
+    : (c.persona.realtime?.provider || "");
+  const realtimeModelId = c.persona.realtime?.modelId || null;
+  const realtimeProviderId = c.persona.realtime?.providerId || null;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const payload: Record<string, any> = {
     name: c.persona.name.trim() || "Untitled Survey",
+    use_realtime_model: isRealtime,
+    realtime_model: realtimeModelName,
+    realtime_provider: realtimeProviderName,
+    realtime_model_id: realtimeModelId,
+    realtime_provider_id: realtimeProviderId,
     persona: {
       language: c.persona.language,
       maxCallDurationMinutes: c.persona.maxCallDurationMinutes,
       audioCacheEnabled: Boolean(c.persona.audioCacheEnabled),
       callBargeInEnabled: Boolean(c.persona.callBargeInEnabled),
+      use_realtime_model: isRealtime,
+      realtime: {
+        modelId: realtimeModelId,
+        providerId: realtimeProviderId,
+        provider: realtimeProviderName,
+        model: realtimeModelName,
+      },
       stt: {
         modelId: c.persona.stt.modelId || null,
         providerId: c.persona.stt.providerId || null,
@@ -239,10 +276,10 @@ export function agentToBackendPayload(
         model: c.persona.stt.model || "",
       },
       llm: {
-        modelId: c.persona.llm.modelId || null,
-        providerId: c.persona.llm.providerId || null,
-        provider: c.persona.llm.provider || "",
-        model: c.persona.llm.model || "",
+        modelId: (isRealtime ? realtimeModelId : c.persona.llm.modelId) || null,
+        providerId: (isRealtime ? realtimeProviderId : c.persona.llm.providerId) || null,
+        provider: (isRealtime ? realtimeProviderName : c.persona.llm.provider) || "",
+        model: (isRealtime ? realtimeModelName : c.persona.llm.model) || "",
       },
       tts: {
         modelId: c.persona.tts.modelId || null,

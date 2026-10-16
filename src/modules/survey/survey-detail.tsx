@@ -32,7 +32,7 @@ import {
 } from "@/modules/voices/voice-playback";
 import type { Agent as Survey } from "@/types/agent";
 import { motion } from "framer-motion";
-import { ArrowLeft, BarChart3, CalendarClock, Clock, Copy, FileUp, Globe, MessageSquare, Mic, Pencil, Volume2, Bot } from "lucide-react";
+import { ArrowLeft, BarChart3, CalendarClock, Clock, Copy, FileUp, Globe, MessageSquare, Mic, Pencil, Volume2, Bot, Sparkles } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -178,6 +178,13 @@ export function SurveyDetailView({ survey }: { survey: Survey }) {
   }, [applyMeta, resetPageMeta]);
 
   const persona = currentSurvey.config.persona;
+  const isRealtime = Boolean(
+    persona.use_realtime_model ?? currentSurvey.use_realtime_model
+  );
+  const realtime = persona.realtime ?? {
+    provider: "",
+    model: currentSurvey.realtime_model || "",
+  };
   const voice = persona.tts.voiceName?.trim() || "—";
   const voicePreviewUrl = persona.tts.voicePreviewUrl?.trim() || "";
   const language = getSurveyLanguageLabel(persona.language || currentSurvey.language);
@@ -354,6 +361,9 @@ export function SurveyDetailView({ survey }: { survey: Survey }) {
                   <DetailField label="Max duration">
                     {persona.maxCallDurationMinutes} min
                   </DetailField>
+                  <DetailField label="Realtime model">
+                    {onOff(isRealtime)}
+                  </DetailField>
                   <DetailField label="Audio cache">
                     {onOff(persona.audioCacheEnabled)}
                   </DetailField>
@@ -369,41 +379,55 @@ export function SurveyDetailView({ survey }: { survey: Survey }) {
                 </div>
 
                 <p className="pt-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                  Speech pipeline · Listen → Reason → Speak
+                  {isRealtime
+                    ? "Realtime model · End-to-End"
+                    : "Speech pipeline · Listen → Reason → Speak"}
                 </p>
-                <div className="grid gap-3 sm:grid-cols-3">
-                  <PipelineStage
-                    step="01 · STT"
-                    title="Listen"
-                    icon={Mic}
-                    provider={stt.provider}
-                    model={stt.model}
-                  />
-                  <PipelineStage
-                    step="02 · LLM"
-                    title="Reason"
-                    icon={Bot}
-                    provider={llm.provider}
-                    model={llm.model}
-                  />
-                  <PipelineStage
-                    step="03 · TTS"
-                    title="Speak"
-                    icon={Volume2}
-                    provider={
-                      [
-                        tts.provider,
-                        tts.voiceName,
-                        tts.voiceName
-                          ? getVoiceSpeedLabel(tts.tts_speed)
-                          : "",
-                      ]
-                        .filter(Boolean)
-                        .join(" · ")
-                    }
-                    model={tts.model}
-                  />
-                </div>
+                {isRealtime ? (
+                  <div className="grid gap-3 sm:grid-cols-3">
+                    <PipelineStage
+                      step="Realtime"
+                      title="Realtime model"
+                      icon={Sparkles}
+                      provider={realtime.provider || "Google"}
+                      model={realtime.model || currentSurvey.realtime_model || "models/gemini-3.8-live"}
+                    />
+                  </div>
+                ) : (
+                  <div className="grid gap-3 sm:grid-cols-3">
+                    <PipelineStage
+                      step="01 · STT"
+                      title="Listen"
+                      icon={Mic}
+                      provider={stt.provider}
+                      model={stt.model}
+                    />
+                    <PipelineStage
+                      step="02 · LLM"
+                      title="Reason"
+                      icon={Bot}
+                      provider={llm.provider}
+                      model={llm.model}
+                    />
+                    <PipelineStage
+                      step="03 · TTS"
+                      title="Speak"
+                      icon={Volume2}
+                      provider={
+                        [
+                          tts.provider,
+                          tts.voiceName,
+                          tts.voiceName
+                            ? getVoiceSpeedLabel(tts.tts_speed)
+                            : "",
+                        ]
+                          .filter(Boolean)
+                          .join(" · ")
+                      }
+                      model={tts.model}
+                    />
+                  </div>
+                )}
               </div>
             </StepSection>
 
